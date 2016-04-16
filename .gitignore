@@ -29,4 +29,5 @@
 *.hex
 
 # Debug files
+Debug/
 *.dSYM/
