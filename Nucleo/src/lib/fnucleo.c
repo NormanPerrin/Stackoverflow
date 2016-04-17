@@ -1,0 +1,3 @@
+#include "fnucleo.h"
+
+// Funciones

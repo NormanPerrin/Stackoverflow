@@ -1,0 +1,3 @@
+#include "fconsola.h"
+
+// Funciones
