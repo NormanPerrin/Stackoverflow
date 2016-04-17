@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <lib/fswap.h>
+#include "lib/fswap.h"
 
 int main(void) {
 
