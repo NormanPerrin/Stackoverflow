@@ -1,5 +1,13 @@
 # Elestac
 
+## Checkpoint 1 (30 abril):
+- [x] ~~agregar commons~~
+  - [ ] implementar librerías
+- [x] ~~agregar parser~~
+  - [ ] implementar parser en programa de ejemplo
+- [ ] conectar módulos
+  - [ ] función handshake
+
 ## Instalar ambiente de trabajo
 1. `git clone http://github.com/sisoputnfrba/tp-2016-1c-Cazadores-de-cucos.git`
 2. Abrir eclipse
