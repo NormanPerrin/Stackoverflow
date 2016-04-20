@@ -15,17 +15,40 @@
 4. Browse - Seleccionan la carpeta de 1 módulo o proceso
 5. Repiten para las demás
 
-## Trabajar con ramas
-1. `git branch` - *nos va a mostrar los branch existentes*
-2. `git checkout nombreBranch` - *nos posiciona en ese branch*
-3. *Hacemos algún cambio y commiteamos*
-4. `git pull origin master`
-5. `git push origin nombreBranch`
-6. *Podemos hacer pull request desde la página o sino*
-7. `git checkout master`
-8. `git merge nombreBranch`
-9. `git push origin master`
-10. `git branch -d nombreBranch`
+## Vamos a trabajar todos sobre la rama 'master'. Comandos necesarios:
+1. *Indicar la direcicón de mi proyecto:* `cd /home/utnso/...` (donde lo tengan guardado)
+2. *Averiguar el estado de mi proyecto:* `git status`
+3. *Bajar del repo la última versión del proyecto:* `git pull` (siempre antes de un push)
+4. *Agregar (todos) los cambios realizados:* `git add .`
+5. *Agregar solo un cambio realizado:* `git add nombre_del_archivo`
+5. *Hacer el commit correspondiente:* `git commit -m "los cambios que hice"`
+6. *Actualizar la versión existente en Github (subir lo que hice):* `git push`
+
+Más comandos acá (branches, etc.): http://blog.desdelinux.net/guia-rapida-para-utilizar-github/
+
+## Para implementar/usar alguna de las common libraries en un .c/.h debe incluirse así:
+
+- Logging: `#include <commons/log.h>`
+
+- Manipulación de Strings: `<commons/string.h>`
+
+- Manipulación de archivos de configuración: `<commons/config.h>`
+
+- Manejo/Funciones de fechas: `<commons/temporal.h>`
+
+- Manejo de array de bits: `<commons/bitarray.h>`
+
+- Información de procesos: `<commons/process.h>`
+
+- Manejo simple de archivos de texto: `<commons/txt.h>`
+
+Conjunto de elementos:
+
+- List: `#include <commons/collections/list.h>`
+
+- Dictionary: `#include <commons/collections/dictionary.h>`
+
+- Queue: `#include <commons/collections/queue.h>`
 
 ## Debuguear
 - [Tutorial de UTN](https://youtu.be/XsefDXRfA9k)
