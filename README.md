@@ -12,8 +12,11 @@
 1. `git clone http://github.com/sisoputnfrba/tp-2016-1c-Cazadores-de-cucos.git`
 2. Abrir eclipse
 3. File - New - Import - General - Existing...
-4. Browse - Seleccionan la carpeta de 1 módulo o proceso
-5. Repiten para las demás
+4. Browse - Seleccionan la carpeta "tp-2016-1c-Cazadores-de-cucos" y OK
+5. Ahora hay que hacer que linken las librerías
+  1. Ir con consola a la carpeta de commons de nuestro repositorio
+  2. Escribimos en consola: `sudo make install`
+  3. Repetimos para el parser
 
 ## Vamos a trabajar todos sobre la rama 'master'. Comandos necesarios:
 1. *Indicar la direcicón de mi proyecto:* `cd /home/utnso/...` (donde lo tengan guardado)
