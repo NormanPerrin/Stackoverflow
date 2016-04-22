@@ -10,7 +10,7 @@
 	* @NAME: reservarMemoria
 	* @DESC: Crea dinámicamente y devuelve un puntero a void
 	* @PARAMS:
-	*		size - Tamaño en bytes del bit array
+	*		size - Tamaño en bytes del puntero
 	*/
 	void* reservarMemoria(int size);
 
