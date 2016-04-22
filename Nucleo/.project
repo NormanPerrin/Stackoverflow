@@ -3,6 +3,7 @@
 	<name>Nucleo</name>
 	<comment></comment>
 	<projects>
+		<project>utilidades</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
