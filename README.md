@@ -17,6 +17,19 @@
   1. Ir con consola a la carpeta de commons de nuestro repositorio
   2. Escribimos en consola: `sudo make install`
   3. Repetimos para el parser
+6. Agregamos el path para la shared library para eclipse
+  1. Run - Run Configurations - Environment - New
+  2. Name: LD_LIBRARY_PATH
+  3. Value: ${workspace_loc}/utilidades/Debug (pueden ir a Variables, buscar work y agregarlo)
+  4. Aply
+7. Para linkear la shared para consola
+  1. Abren la shell. Van a home con "~"
+  2. Escriben: vim .bashrc
+  3. Apretan la "i" y van abajo de todo
+  4. Escriben: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/Escritorio/tp-2016../utilidades/Debug`
+  5. Aprietan Ctrl + C y escriben ":wq" y enter
+  6. Para verificar que les funcionó pueden ir al directorio del ejecutable y escribir: `ldd Swap` y les debería aparecer la shared con una dirección
+  7. Si no quieren hacer todo esto pueden optar por usar el comando `export` cuando lo necesiten estando en el directorio del ejecutable. Pero cada vez que abran una consola nueva lo van a tener que escribir de nuevo
 
 ## Vamos a trabajar todos sobre la rama 'master'. Comandos necesarios:
 1. *Indicar la direcicón de mi proyecto:* `cd /home/utnso/...` (donde lo tengan guardado)
