@@ -6,6 +6,7 @@ t_configuracion* abrirArchivoConfig(char *ruta) {
 
 	t_configuracion *ret = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
 
+	ret->backlog = config_get_int_value(config, "BACKLOG");
 	ret->puerto = config_get_int_value(config, "PUERTO");
 	ret->ip_swap = reservarMemoria(CHAR*16);
 	ret->ip_swap = config_get_string_value(config, "IP_SWAP");

@@ -7,6 +7,7 @@
 // Estructuras
 
 typedef struct {
+	int backlog;
 	int puerto; // para conexiones de CPU y Núcleo
 	char *ip_swap;
 	int puerto_swap;
