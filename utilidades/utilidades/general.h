@@ -1,10 +1,15 @@
 #ifndef UTILIDADES_GENERAL_H_
 #define UTILIDADES_GENERAL_H_
 
-	#define FALSE 0
-	#define TRUE 1
-	#define INT (sizeof(int))
-	#define CHAR (sizeof(char))
+#include <commons/config.h>
+#include <errno.h>	// Incluye perror
+
+#define FALSE 0
+#define TRUE 1
+#define ERROR -1
+#define INT (sizeof(int))
+#define CHAR (sizeof(char))
+#define manejarError(mensajeError) {perror(mensajeError); abort();} // Función para el tratamiento de errores
 
 	/**
 	* @NAME: reservarMemoria
@@ -14,5 +19,9 @@
 	*/
 	void* reservarMemoria(int size);
 
+	// Lectura Archivo de Configuración
+	void leerArchivoDeConfiguracion(char * ruta);
+	int comprobarQueExistaArchivo(char * ruta);
+	void setearValores_config(t_config * archivoConfig); // Hay que redefinirlo en cada proceso (Ejemplo en Núcleo)
 
 #endif

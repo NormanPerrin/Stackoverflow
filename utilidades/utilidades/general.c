@@ -10,3 +10,27 @@ void* reservarMemoria(int size) {
 	}
 	return puntero;
 }
+
+
+void leerArchivoDeConfiguracion(char * ruta) {
+	t_config * archivoConfig;
+
+	if (comprobarQueExistaArchivo(ruta) == ERROR)
+		manejarError("Error: Archivo de configuración no encontrado");
+
+	printf("El archivo de configuración ha sido leído correctamente");
+
+	archivoConfig = config_create(ruta);
+	setearValores_config(archivoConfig); // Redefinido en cada proceso (Ejemplo en Núcleo)
+	config_destroy(archivoConfig); // Destruye la estructura auxiliar config
+}
+
+int comprobarQueExistaArchivo(char* ruta) {
+	FILE * archivoConfig = fopen(ruta, "r");
+	if (archivoConfig!=NULL){
+		fclose(archivoConfig);
+		return TRUE;
+	}
+	return ERROR;
+}
+
