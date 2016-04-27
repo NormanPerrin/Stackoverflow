@@ -5,21 +5,34 @@
 #include <utilidades/general.h>
 #include <commons/config.h>
 #include <commons/log.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 
-// Variables globales
-int puerto; // Puerto para recibir conexiones de Núcleo y CPUs
-const char * ipSwap; // IP del Swap
-int puertoSwap; // Puerto donde se encuentra escuchando el proceso Swap
-
 // Estructuras
+typedef struct {
+	int backlog;
+	int puerto; // para conexiones de CPU y Núcleo
+	char *ip_swap;
+	int puerto_swap;
+	int marcos;
+	int marco_size;
+	int marco_x_proceso;
+	int entradas_tlb;
+	int retardo;
+} t_configuracion;
 
 // Cabeceras
-void setearValores_config(t_config * archivoConfig);
+void abrirArchivoConfig();
 void conectarConSwap();
 void escucharANucleo();
 void escucharACPU();
 void esperarPaqueteDelCliente(int fd_escucha, int fd_nuevoCliente);
+/* void crearHilos(); // Más adelante para implementar con hilos
+void establecerConexionSwap();
+void servidor();
+void consola();*/
 
 #endif /* LIB_FUMC_H_ */
