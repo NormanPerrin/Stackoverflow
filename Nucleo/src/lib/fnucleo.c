@@ -16,31 +16,6 @@ void setearValores_config(t_config * archivoConfig){
 
 }
 
-void pasarCadenasArray(char** cadenas, char** variablesConfig){
-	char* cadenaAux;
-	int cantidadCadenas, i;
-
-	cantidadCadenas = NELEMS(variablesConfig);
-
-	for(i=0; i<(cantidadCadenas-1); i++){
-		cadenaAux = variablesConfig[0];
-		// Creo una nueva cadena y asigno su direccion a cadenas[i]
-		cadenas[i] = (char*) malloc(strlen(cadenaAux+1));
-		// Copio el contenido de cadenaAux a cadenas[i]
-		strcpy(cadenas[i],cadenaAux);
-		}
-	}
-
-void pasarEnterosArray(int* numeros, char** variablesConfig){
-	int cantidadNumeros, i;
-
-	cantidadNumeros = NELEMS(variablesConfig);
-
-	for(i=0; i<(cantidadNumeros-1); i++){
-		numeros[i] = atoi(variablesConfig[i]);
-	}
-}
-
 void escucharACPU(){
 	int fd_escuchaCPU, fd_nuevoCPU;
 
@@ -105,8 +80,9 @@ void testLecturaArchivoDeConfiguracion(){
 	printf("Dispositivos de I/O: "); imprimirCadenas(ioID);
 	printf("Retardos de I/O: "); imprimirNumeros(retardosIO);
 	printf("Variables compartidas: "); imprimirCadenas(variablesCompartidas);
-
 }
+
+// --Funciones MUY auxiliares
 
 void imprimirCadenas(char** cadenas){
 	int i;
@@ -120,4 +96,29 @@ void imprimirNumeros(int* numeros){
 		for(i=0; i<NELEMS(numeros);i++){
 			printf("%d\n",numeros[i]);
 		}
+}
+
+void pasarCadenasArray(char** cadenas, char** variablesConfig){
+	char* cadenaAux;
+	int cantidadCadenas, i;
+
+	cantidadCadenas = NELEMS(variablesConfig);
+
+	for(i=0; i<(cantidadCadenas-1); i++){
+		cadenaAux = variablesConfig[0];
+		// Creo una nueva cadena y asigno su direccion a cadenas[i]
+		cadenas[i] = (char*) malloc(strlen(cadenaAux+1));
+		// Copio el contenido de cadenaAux a cadenas[i]
+		strcpy(cadenas[i],cadenaAux);
+		}
+	}
+
+void pasarEnterosArray(int* numeros, char** variablesConfig){
+	int cantidadNumeros, i;
+
+	cantidadNumeros = NELEMS(variablesConfig);
+
+	for(i=0; i<(cantidadNumeros-1); i++){
+		numeros[i] = atoi(variablesConfig[i]);
+	}
 }

@@ -5,7 +5,7 @@
 
 int main(void) {
 
-
+	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
 
 	return EXIT_SUCCESS;
 }

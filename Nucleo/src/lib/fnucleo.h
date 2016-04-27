@@ -10,13 +10,11 @@
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 
 // Variables Globales
-
-//int puerto_Nucleo;
 int puertoPrograma;
 int puertoCPU;
 int quantum;
 int retardoQuantum;
-// arrays:
+// --Arrays
 char** semaforosID;
 int* semaforosValInicial;
 char** ioID;
@@ -27,16 +25,15 @@ t_log* logger;
 // Estructuras
 
 // Cabeceras
-
 void escucharACPU(); // Conexión con CPUs
 void escucharAConsola(); // Conexión con Consolas
-void abrirArchivoDeConfiguracion(char *ruta);
 void setearValores_config(t_config * archivoConfig);
-void pasarCadenasArray(char** cadenas, char** variablesConfig);
-void pasarEnterosArray(int* numeros, char** variablesConfig);
 void crearLogger();
+// --Funciones MUY auxiliares
 void imprimirCadenas(char** cadenas);
 void imprimirNumeros(int* numeros);
+void pasarCadenasArray(char** cadenas, char** variablesConfig);
+void pasarEnterosArray(int* numeros, char** variablesConfig);
 
 // Tests (PROVISORIOS)
 void testLecturaArchivoDeConfiguracion(); // Imprimo todas las variables, para ver si se setearon bien

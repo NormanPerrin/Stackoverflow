@@ -5,7 +5,9 @@
 
 int main(void) {
 
+	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
 
+	void conectarConNucleo(); // Conexión con Núcleo
 
 	return EXIT_SUCCESS;
 }
