@@ -7,6 +7,8 @@ int main(void) {
 
 	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
 
+	conectarConSwap(); // Conexión con Swap
+
 	escucharANucleo(); // Conexión con Núcleo
 
 	escucharACPU(); // Conexión con CPU

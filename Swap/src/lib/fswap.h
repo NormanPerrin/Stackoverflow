@@ -8,9 +8,13 @@
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 
+// Variables globales
+int puertoEscuchaUMC;
+
 // Estructuras
 
 // Cabeceras
 void setearValores_config(t_config * archivoConfig);
+void escucharAUMC();
 
 #endif /* FSWAP_H_ */

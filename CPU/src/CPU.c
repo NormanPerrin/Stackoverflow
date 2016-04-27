@@ -8,7 +8,9 @@ int main(void) {
 
 	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
 
-	void conectarConNucleo(); // Conexión con Núcleo
+	conectarConNucleo(); // Conexión con Núcleo
+
+	conectarConUMC(); // Conexión con UMC
 
 	return EXIT_SUCCESS;
 }

@@ -25,7 +25,7 @@ void escucharACPU(){
 			fd_nuevoCPU= aceptarConexionSocket(fd_escuchaCPU);
 
 			printf("CPU conectado. Esperando mensajes\n");
-			/*escucharSocket(fd_nuevoCPU, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
+			/*escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
 
 			char package[PACKAGESIZE];
 				int status = 1;		// Estructura que manjea el status de los recieve.
@@ -69,7 +69,7 @@ void conectarConUMC(){
 	fd_serverUMC = nuevoSocket();
 		asociarSocket(fd_serverUMC, puertoUMC);
 		conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
-		// Creo un paquete (string) de size PACKAGESIZE, que le enviaré al Núcleo
+		// Creo un paquete (string) de size PACKAGESIZE, que le enviaré a la UMC
 		int enviar = 1;
 			char message[PACKAGESIZE];
 

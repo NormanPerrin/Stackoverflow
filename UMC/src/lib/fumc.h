@@ -10,11 +10,14 @@
 
 // Variables globales
 int puerto; // Puerto para recibir conexiones de Núcleo y CPUs
+const char * ipSwap; // IP del Swap
+int puertoSwap; // Puerto donde se encuentra escuchando el proceso Swap
 
 // Estructuras
 
 // Cabeceras
 void setearValores_config(t_config * archivoConfig);
+void conectarConSwap();
 void escucharANucleo();
 void escucharACPU();
 void esperarPaqueteDelCliente(int fd_escucha, int fd_nuevoCliente);

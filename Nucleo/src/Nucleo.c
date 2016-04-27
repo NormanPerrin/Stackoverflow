@@ -10,11 +10,11 @@ int main(void) {
 
 	testLecturaArchivoDeConfiguracion(); // COmparo con los valores de ejemplo del archivo
 
-	void conectarConUMC(); // Conexión con UMC
+	conectarConUMC(); // Conexión con UMC
 
-	void escucharAConsola(); // Conexión con Consolas
+	escucharAConsola(); // Conexión con Consolas
 
-	void escucharACPU(); // Conexión con CPUs
+	escucharACPU(); // Conexión con CPUs
 
 	return EXIT_SUCCESS;
 }
