@@ -5,11 +5,7 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
-
-	escucharANucleo(); // Conexión con Núcleo
-
-	escucharACPU(); // Conexión con CPU
+	
 
 	return EXIT_SUCCESS;
 }
