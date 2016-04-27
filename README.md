@@ -2,10 +2,10 @@
 
 ## Checkpoint 1 (30 abril):
 - [x] ~~agregar commons~~
-  - [ ] implementar librerías
+  - [x] implementar librerías -> usamos config
 - [x] ~~agregar parser~~
   - [ ] implementar parser en programa de ejemplo
-- [ ] conectar módulos
+- [x] conectar módulos -> implementamos sockets
   - [ ] función handshake
 
 ## Instalar ambiente de trabajo
@@ -45,25 +45,15 @@ Más comandos acá (branches, etc.): http://blog.desdelinux.net/guia-rapida-para
 ## Para implementar/usar alguna de las common libraries en un .c/.h debe incluirse así:
 
 - Logging: `#include <commons/log.h>`
-
 - Manipulación de Strings: `<commons/string.h>`
-
 - Manipulación de archivos de configuración: `<commons/config.h>`
-
 - Manejo/Funciones de fechas: `<commons/temporal.h>`
-
 - Manejo de array de bits: `<commons/bitarray.h>`
-
 - Información de procesos: `<commons/process.h>`
-
 - Manejo simple de archivos de texto: `<commons/txt.h>`
-
 Conjunto de elementos:
-
 - List: `#include <commons/collections/list.h>`
-
 - Dictionary: `#include <commons/collections/dictionary.h>`
-
 - Queue: `#include <commons/collections/queue.h>`
 
 ## Debuguear
