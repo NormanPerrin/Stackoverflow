@@ -1,11 +1,21 @@
 #include "fswap.h"
 
+t_configuracion *config;
 // Funciones
 
-void setearValores_config(t_config * archivoConfig){
+void abrirArchivoConfig(char *ruta){
 
-// Desarrollar seteo
+	 t_config *configuracion = config_create(ruta);
+	 t_configuracion *ret = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
 
+
+	   puertoEscuchaUMC = config_get_int_value(configuracion, "PUERTO");
+	   ret->nombreSWap = config_get_int_value (configuracion, "Nombre_Swap");
+	   ret->cantidadPaginas = config_get_int_value(configuracion, "Cantidad_Paginas");
+	   ret->tamañioPagina = config_get_int_value(configuracion, "Tamaño_Pagina");
+	   ret->retardoCompactacion = config_get_int_value(configuracion, "Retardo_Compactacion");
+
+	 	config = ret;
 }
 
 void escucharAUMC(){

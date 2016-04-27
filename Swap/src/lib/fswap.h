@@ -12,9 +12,17 @@
 int puertoEscuchaUMC;
 
 // Estructuras
+typedef struct {
+
+    char nombreSWap;
+	int cantidadPaginas;
+	int tamañioPagina;
+	int retardoCompactacion;
+
+} t_configuracion;
 
 // Cabeceras
-void setearValores_config(t_config * archivoConfig);
+void abrirArchivoConfig();
 void escucharAUMC();
 
 #endif /* FSWAP_H_ */
