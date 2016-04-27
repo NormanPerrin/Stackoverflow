@@ -63,6 +63,26 @@ void escucharAConsola(){
 				close(fd_escuchaConsola);
 } // Soy servidor, espero mensajes de alguna Consola
 
+void conectarConUMC(){
+	int fd_serverUMC;
+
+	fd_serverUMC = nuevoSocket();
+		asociarSocket(fd_serverUMC, puertoUMC);
+		conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
+		// Creo un paquete (string) de size PACKAGESIZE, que le enviaré al Núcleo
+		int enviar = 1;
+			char message[PACKAGESIZE];
+
+			printf("Conectado a la UMC. Ya se puede enviar mensajes. Escriba 'exit' para salir\n");
+
+			while(enviar){
+				fgets(message, PACKAGESIZE, stdin);	// Lee una línea en el stdin (lo que escribimos en la consola) hasta encontrar un \n (y lo incluye) o llegar a PACKAGESIZE
+				if (!strcmp(message,"exit\n")) enviar = 0; // Chequeo que no se quiera salir
+				if (enviar) enviarPorSocket(fd_serverUMC, message, strlen(message) + 1); // Sólo envío si no quiere salir
+			}
+			close(fd_serverUMC);
+	} // Soy cliente de la UMC, es  decir, soy el que inicia la conexión con ella
+
 void crearLogger(){
 	char * archivoLogNucleo = strdup("NUCLEO_LOG.log");
 	logger = log_create("NUCLEO_LOG.log",archivoLogNucleo,false,LOG_LEVEL_INFO);

@@ -12,6 +12,8 @@
 // Variables Globales
 int puertoPrograma;
 int puertoCPU;
+int puertoUMC; // Puerto donde se encuentra escuchando el proceso UMC (no viene de archivo de config)
+const char * ipUMC; // IP del proceso UMC
 int quantum;
 int retardoQuantum;
 // --Arrays
@@ -25,6 +27,7 @@ t_log* logger;
 // Estructuras
 
 // Cabeceras
+void conectarConUMC();
 void escucharACPU(); // Conexión con CPUs
 void escucharAConsola(); // Conexión con Consolas
 void setearValores_config(t_config * archivoConfig);

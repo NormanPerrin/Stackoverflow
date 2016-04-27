@@ -10,6 +10,8 @@ int main(void) {
 
 	testLecturaArchivoDeConfiguracion(); // COmparo con los valores de ejemplo del archivo
 
+	void conectarConUMC(); // Conexión con UMC
+
 	void escucharAConsola(); // Conexión con Consolas
 
 	void escucharACPU(); // Conexión con CPUs
