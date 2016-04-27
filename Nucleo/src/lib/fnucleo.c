@@ -31,7 +31,6 @@ void pasarCadenasArray(char** cadenas, char** variablesConfig){
 		}
 	}
 
-
 void pasarEnterosArray(int* numeros, char** variablesConfig){
 	int cantidadNumeros, i;
 
@@ -42,10 +41,83 @@ void pasarEnterosArray(int* numeros, char** variablesConfig){
 	}
 }
 
-void escucharCPU(){
+void escucharACPU(){
+	int fd_escuchaCPU, fd_nuevoCPU;
+
+			fd_escuchaCPU = nuevoSocket();
+			asociarSocket(fd_escuchaCPU, puertoCPU);
+			escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);
+			fd_nuevoCPU= aceptarConexionSocket(fd_escuchaCPU);
+
+			printf("CPU conectado. Esperando mensajes\n");
+			/*escucharSocket(fd_nuevoCPU, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
+
+			char package[PACKAGESIZE];
+				int status = 1;		// Estructura que manjea el status de los recieve.
+				// Vamos a ESPERAR que nos manden los paquetes, y los imprimos por pantalla
+				while (status != 0){
+					status = recibirPorSocket(fd_nuevoCPU, (void*) package, PACKAGESIZE);
+					if (status != 0) printf("%s", package);
+
+				}
+				close(fd_nuevoCPU);
+					close(fd_escuchaCPU);
+
+} // Soy servidor, espero mensajes de algún CPU
+
+void escucharAConsola(){
+	int fd_escuchaConsola, fd_nuevaConsola;
+
+		fd_escuchaConsola = nuevoSocket();
+		asociarSocket(fd_escuchaConsola, puertoPrograma);
+		escucharSocket(fd_escuchaConsola, CONEXIONES_PERMITIDAS);
+		fd_nuevaConsola= aceptarConexionSocket(fd_escuchaConsola);
+
+		printf("Consola conectada. Esperando mensajes\n");
+		/*escucharSocket(fd_escuchaConsola, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
+
+		char package[PACKAGESIZE];
+			int status = 1;		// Estructura que manjea el status de los recieve.
+			// Vamos a ESPERAR que nos manden los paquetes, y los imprimimos por pantalla
+			while (status != 0){
+				status = recibirPorSocket(fd_nuevaConsola, (void*) package, PACKAGESIZE);
+				if (status != 0) printf("%s", package);
+
+			}
+			close(fd_nuevaConsola);
+				close(fd_escuchaConsola);
+} // Soy servidor, espero mensajes de alguna Consola
+
+void crearLogger(){
+	char * archivoLogNucleo = strdup("NUCLEO_LOG.log");
+	logger = log_create("NUCLEO_LOG.log",archivoLogNucleo,false,LOG_LEVEL_INFO);
+	free(archivoLogNucleo);
+	archivoLogNucleo = NULL;
+}
+
+void testLecturaArchivoDeConfiguracion(){
+	printf("Puerto de Programa: %d\n",puertoPrograma);
+	printf("Puerto de CPU: %d\n",puertoCPU);
+	printf("Quantum de Round Robin: %d\n",quantum);
+	printf("Retardo de Quantum: %d\n",retardoQuantum);
+	printf("Semaforos: "); imprimirCadenas(semaforosID);
+	printf("Cantidad de Semaforos: "); imprimirNumeros(semaforosValInicial);
+	printf("Dispositivos de I/O: "); imprimirCadenas(ioID);
+	printf("Retardos de I/O: "); imprimirNumeros(retardosIO);
+	printf("Variables compartidas: "); imprimirCadenas(variablesCompartidas);
 
 }
 
-void escucharConsola(){
+void imprimirCadenas(char** cadenas){
+	int i;
+	for(i=0; i<NELEMS(cadenas);i++){
+		printf("%s\n",cadenas[i]);
+	}
+}
 
+void imprimirNumeros(int* numeros){
+	int i;
+		for(i=0; i<NELEMS(numeros);i++){
+			printf("%d\n",numeros[i]);
+		}
 }

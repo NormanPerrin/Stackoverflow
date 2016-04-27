@@ -8,5 +8,11 @@ int main(void) {
 
 	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
 
+	testLecturaArchivoDeConfiguracion(); // COmparo con los valores de ejemplo del archivo
+
+	void escucharAConsola(); // Conexión con Consolas
+
+	void escucharACPU(); // Conexión con CPUs
+
 	return EXIT_SUCCESS;
 }
