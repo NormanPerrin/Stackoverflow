@@ -39,7 +39,7 @@ void escucharSocket(int sockfd, int conexionesEntrantesPermitidas) {
 		}
 
 // Obtención de una conexión entrante pendiente
-int aceptarConexionSocket(int sockfd) {
+int aceptarConexionSocket(int sockfd) { // TODO ver si quiero hacer un abort al error de cliente
 	struct sockaddr_storage unCliente;
 	unsigned int addres_size = sizeof(unCliente);
 
@@ -92,7 +92,7 @@ int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes) {
 }
 
 // Recibir sirve para la comunicación a través de sockets
-int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) {
+int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) { // TODO ver si con flag del recv puedo hacer lo mismo que el while
 	int bytes_recibidos;
 	int totalBytes = 0;
 

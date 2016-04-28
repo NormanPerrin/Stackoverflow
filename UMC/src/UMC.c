@@ -4,18 +4,12 @@
 
 int main(void) {
 
-	abrirArchivoConfig("config.txt"); // Abro archivo de configuración
+	leerArchivoDeConfiguracion("config.txt"); // Abro archivo de configuración
 
-	conectarConSwap(); // Conexión con Swap
+//	conectarConSwap(); // Conexión con Swap
 
-	escucharANucleo(); // Conexión con Núcleo
+	crearHilos(); // Creo hilos Servidor y Consola
 
-	escucharACPU(); // Conexión con CPU
-
-	/*void establecerConexionSwap();
-
-	// Creo hilos Servidor y Consola
-	crearHilos();*/
-
+	liberarEstructuraConfig();
 	return EXIT_SUCCESS;
 }

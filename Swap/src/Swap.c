@@ -7,7 +7,7 @@ int main(void) {
 
 	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
 
-	escucharAUMC(); // Conexión con UMC
+	escucharUMC(); // Conexión con UMC
 
 	return EXIT_SUCCESS;
 }

@@ -3,99 +3,34 @@
 // Globales
 t_configuracion *config;
 int flag = FALSE; // exit del programa
+int sockClienteDeSwap; // Se lo va a llamar a necesidad en distintas funciones
 
-void abrirArchivoConfig(char *ruta) {
 
-	t_config *configuracion = config_create(ruta);
-
-	t_configuracion *ret = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
-
-	ret->backlog = config_get_int_value(configuracion, "BACKLOG");
-	ret->puerto = config_get_int_value(configuracion, "PUERTO");
-	ret->ip_swap = reservarMemoria(CHAR*16);
-	ret->ip_swap = config_get_string_value(configuracion, "IP_SWAP");
-	ret->puerto_swap = config_get_int_value(configuracion, "PUERTO_SWAP");
-	ret->marcos = config_get_int_value(configuracion, "MARCOS");
-	ret->marco_size = config_get_int_value(configuracion, "MARCO_SIZE");
-	ret->marco_x_proceso = config_get_int_value(configuracion, "MARCO_X_PROC");
-	ret->entradas_tlb = config_get_int_value(configuracion, "ENTRADAS_TLB");
-	ret->retardo = config_get_int_value(configuracion, "RETARDO");
-
-	config = ret;
+void setearValores_config(t_config * archivoConfig) {
+	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
+	config->backlog = config_get_int_value(archivoConfig, "BACKLOG");
+	config->puerto = config_get_int_value(archivoConfig, "PUERTO");
+	config->ip_swap = config_get_string_value(archivoConfig, "IP_SWAP");
+	config->puerto_swap = config_get_int_value(archivoConfig, "PUERTO_SWAP");
+	config->marcos = config_get_int_value(archivoConfig, "MARCOS");
+	config->marco_size = config_get_int_value(archivoConfig, "MARCO_SIZE");
+	config->marco_x_proceso = config_get_int_value(archivoConfig, "MARCO_X_PROC");
+	config->entradas_tlb = config_get_int_value(archivoConfig, "ENTRADAS_TLB");
+	config->retardo = config_get_int_value(archivoConfig, "RETARDO");
 }
 
-
-void escucharANucleo(){
-	int fd_escuchaNucleo, fd_nuevoNucleo;
-
-				fd_escuchaNucleo = nuevoSocket();
-				asociarSocket(fd_escuchaNucleo, config->puerto);
-				escucharSocket(fd_escuchaNucleo, CONEXIONES_PERMITIDAS);
-				fd_nuevoNucleo= aceptarConexionSocket(fd_escuchaNucleo);
-
-				printf("Núcleo conectado. Esperando mensajes\n");
-				esperarPaqueteDelCliente(fd_escuchaNucleo, fd_nuevoNucleo);
-
-} // Soy servidor, espero mensajes del Núcleo
-
-void escucharACPU(){
-	int fd_escuchaCPU, fd_nuevoCPU;
-
-				fd_escuchaCPU = nuevoSocket();
-				asociarSocket(fd_escuchaCPU, config->puerto);
-				escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);
-				fd_nuevoCPU= aceptarConexionSocket(fd_escuchaCPU);
-
-				printf("CPU conectado. Esperando mensajes\n");
-				esperarPaqueteDelCliente(fd_escuchaCPU, fd_nuevoCPU);
-
-} // Soy servidor, espero mensajes de algún CPU
 
 void conectarConSwap(){
-	int fd_serverSwap;
-
-	fd_serverSwap = nuevoSocket();
-			asociarSocket(fd_serverSwap, config->puerto_swap);
-			conectarSocket(fd_serverSwap, config->ip_swap, config->puerto_swap);
-			// Creo un paquete (string) de size PACKAGESIZE, que le enviaré al Swap
-			int enviar = 1;
-				char message[PACKAGESIZE];
-
-				printf("Conectado al Swap. Ya se puede enviar mensajes. Escriba 'exit' para salir\n");
-
-				while(enviar){
-					fgets(message, PACKAGESIZE, stdin);	// Lee una línea en el stdin (lo que escribimos en la consola) hasta encontrar un \n (y lo incluye) o llegar a PACKAGESIZE
-					if (!strcmp(message,"exit\n")) enviar = 0; // Chequeo que no se quiera salir
-					if (enviar) enviarPorSocket(fd_serverSwap, message, strlen(message) + 1); // Sólo envío si no quiere salir
-				}
-				close(fd_serverSwap);
-		} // Soy cliente del Swap, es  decir, soy el que inicia la conexión con él
-
-void esperarPaqueteDelCliente(int fd_escucha, int fd_nuevoCliente){
-
-	/*escucharSocket(fd_escucha, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
-
-			char package[PACKAGESIZE];
-				int status = 1;		// Estructura que manjea el status de los recieve.
-				// Vamos a ESPERAR que nos manden los paquetes, y los imprimos por pantalla
-				while (status != 0){
-					status = recibirPorSocket(fd_nuevoCliente, (void*) package, PACKAGESIZE);
-					if (status != 0) printf("%s", package);
-
-				}
-				close(fd_nuevoCliente);
-					close(fd_escucha);
+	sockClienteDeSwap = nuevoSocket();
+	asociarSocket(sockClienteDeSwap, config->puerto_swap);
+	conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
 }
 
-// Más adelante para implementar hilos
 
-/*void crearHilos() {
-
+void crearHilos() {
 	pthread_t hilo_servidor, hilo_consola;
-
 	pthread_create(&hilo_servidor, NULL, (void*)servidor, NULL);
 	pthread_create(&hilo_consola, NULL, (void*)consola, NULL);
-
 	pthread_join(hilo_servidor, NULL);
 	pthread_join(hilo_consola, NULL);
 }
@@ -103,24 +38,16 @@ void esperarPaqueteDelCliente(int fd_escucha, int fd_nuevoCliente){
 
 void servidor() {
 
-	int sockCliente;
 	int sockServidor = nuevoSocket();
 	asociarSocket(sockServidor, config->puerto);
 	escucharSocket(sockServidor, config->backlog);
 
-	if(!flag) {
-		sockCliente = aceptarConexionSocket(sockServidor);
-	}
-
-	char *head = reservarMemoria(CHAR*2);
-
 	while(!flag) {
-		recibirPorSocket(sockCliente, head, CHAR*2);
-		int head_val = head[0]-'0';
-		printf("head: %d\n", head_val);
+		int sockCliente = aceptarConexionSocket(sockServidor); // TODO fijarse si abortar programa al error del accept()
+		handshake(sockCliente);
+		crearHiloCliente(sockCliente); // TODO hacer validación de cliente antes de crearle un hilo para que no sea cualquier gil
 	}
 
-	free(head);
 	close(sockServidor);
 }
 
@@ -146,9 +73,40 @@ void consola() {
 	free(mensaje);
 }
 
-void establecerConexionSwap() {
-	int sockClienteSwap = nuevoSocket();
-	asociarSocket(sockClienteSwap, config->puerto_swap);
-	conectarSocket(sockClienteSwap, config->ip_swap, config->puerto_swap);
+
+void crearHiloCliente(int sockCliente) {
+	pthread_t hilo_cliente;
+	pthread_create(&hilo_cliente, NULL, (void*)cliente, &sockCliente);
+	pthread_join(hilo_cliente, NULL);
 }
-*/
+
+void cliente(void* fdCliente) {
+
+	int sockCliente = *((int*)fdCliente);
+	char *buff = (char*)reservarMemoria(PACKAGESIZE);
+	int ret = 0;
+
+	while(ret > 0) { // en 0 se desconecta y en negativo hubo error
+		ret = recibirPorSocket(sockCliente, buff, 6); // TODO PACKAGESIZE
+		buff[5] = '\0';
+		printf("Cliente #%d: %s\n", sockCliente, buff);
+	}
+
+	free(buff);
+	close(sockCliente);
+}
+
+
+void liberarEstructuraConfig() {
+	free(config->ip_swap);
+	free(config);
+}
+
+
+void handshake(int sockCliente) {
+	enviarPorSocket(sockCliente, "Hola!", CHAR*6); // TODO ver que mensajes intercambiamos
+	char *buff = (char*)reservarMemoria(CHAR*6);
+	recibirPorSocket(sockCliente, buff, CHAR*6);
+	buff[5] = '\0';
+	printf("Handshake: %s\n", buff);
+}

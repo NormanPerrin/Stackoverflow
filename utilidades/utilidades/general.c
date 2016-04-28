@@ -16,9 +16,9 @@ void leerArchivoDeConfiguracion(char * ruta) {
 	t_config * archivoConfig;
 
 	if (comprobarQueExistaArchivo(ruta) == ERROR)
-		manejarError("Error: Archivo de configuración no encontrado");
+		manejarError("Error: Archivo de configuración no encontrado\n");
 
-	printf("El archivo de configuración ha sido leído correctamente");
+	printf("El archivo de configuración ha sido leído correctamente\n");
 
 	archivoConfig = config_create(ruta);
 	setearValores_config(archivoConfig); // Redefinido en cada proceso (Ejemplo en Núcleo)
