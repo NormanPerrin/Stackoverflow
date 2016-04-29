@@ -5,6 +5,7 @@
 void setearValores_config(t_config * archivoConfig){
 	puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
 	puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
+	puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
 	ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
 	quantum = config_get_int_value(archivoConfig, "QUANTUM");
 	retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");

@@ -7,11 +7,6 @@
 #include <unistd.h>
 #include <string.h>
 
-/*#define RUTA_CONFIG_NUCLEO "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Nucleo/config.txt"
-#define RUTA_CONFIG_CPU "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/CPU/configCPU.txt"
-#define RUTA_CONFIG_SWAP "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Swap/config.txt"
-#define RUTA_CONFIG_UMC "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/UMC/config.txt"*/
-
 #define FALSE 0
 #define TRUE 1
 #define ERROR -1

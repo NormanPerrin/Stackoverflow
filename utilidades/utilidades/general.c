@@ -60,12 +60,3 @@ void handshake_cliente(int sockClienteDe, char *mensaje) {
 
 	enviarPorSocket(sockClienteDe, mensaje, CHAR*2);
 }
-
-/*int comprobarQueExistaArchivo(char* ruta){
-	FILE * archivoConfig = fopen(ruta, "r");
-	if (archivoConfig!=NULL){
-		fclose(archivoConfig);
-		return TRUE;
-	}
-	return ERROR;
-}*/
