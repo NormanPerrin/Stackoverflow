@@ -3,9 +3,8 @@
 // Funciones
 
 void setearValores_config(t_config * archivoConfig){
-
-// Desarrollar seteo
-
+	ipNucleo = config_get_int_value(archivoConfig, "IP_NUCLEO");
+	ipUMC = config_get_int_value(archivoConfig, "IP_UMC");
 }
 
 void conectarConNucleo(){
