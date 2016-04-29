@@ -6,7 +6,7 @@ void* reservarMemoria(int size) {
 	void* puntero = malloc(size);
 	if(puntero == NULL) {
 		fprintf(stderr, "Error al reservar memoria\n");
-		exit(-1);
+		exit(ERROR);
 	}
 	return puntero;
 }
@@ -27,11 +27,36 @@ void leerArchivoDeConfiguracion(char * ruta) {
 	}
 }
 
-int comprobarQueExistaArchivo(char *ruta) {
-	if(access(ruta, F_OK) != ERROR){
-		return TRUE; // Existe el archivo
+int comprobarQueExistaArchivo(char * ruta) {
+	if( access(ruta, F_OK ) != ERROR ) {
+	    return TRUE;
+	} else {
+	    return ERROR;
 	}
-	return ERROR; // El archivo no existe
+}
+
+void handshake_servidor(int sockCliente, char *mensaje) {
+
+	enviarPorSocket(sockCliente, mensaje, sizeof mensaje);
+
+//	char *buff = (char*)reservarMemoria(CHAR*10);
+//
+//	recibirPorSocket(sockCliente, buff, CHAR*10);
+//
+//	buff[9] = '\0';
+//	printf("Handshake: %s\n", buff);
+//
+//	free(buff);
+}
+
+void handshake_cliente(int sockClienteDe, char *mensaje) {
+
+	char *buff = (char*)reservarMemoria(CHAR*6);
+	recibirPorSocket(sockClienteDe, buff, CHAR*6);
+	buff[5] = '\0';
+	printf("Handshake: %s\n", buff);
+
+	free(buff);
 }
 
 /*int comprobarQueExistaArchivo(char* ruta){

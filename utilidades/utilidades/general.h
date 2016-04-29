@@ -3,8 +3,14 @@
 
 #include <commons/config.h>
 #include <errno.h>	// Incluye perror
+#include "sockets.h"
 #include <unistd.h>
 #include <string.h>
+
+/*#define RUTA_CONFIG_NUCLEO "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Nucleo/config.txt"
+#define RUTA_CONFIG_CPU "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/CPU/configCPU.txt"
+#define RUTA_CONFIG_SWAP "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Swap/config.txt"
+#define RUTA_CONFIG_UMC "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/UMC/config.txt"*/
 
 #define FALSE 0
 #define TRUE 1
@@ -25,5 +31,7 @@
 	void leerArchivoDeConfiguracion(char * ruta);
 	int comprobarQueExistaArchivo(char * ruta);
 	void setearValores_config(t_config * archivoConfig); // Hay que redefinirlo en cada proceso (Ejemplo en Núcleo)
+	void handshake_servidor(int sockCliente, char *mensaje); // Envía mensaje handshake al socketCliente y luego se queda esperando mensaje de confirmación
+	void handshake_cliente(int sockClienteDe, char *mensaje);
 
 #endif

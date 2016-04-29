@@ -25,8 +25,8 @@ void setearValores_config(t_config * archivoConfig) {
 
 void conectarConSwap(){
 	sockClienteDeSwap = nuevoSocket();
-	asociarSocket(sockClienteDeSwap, config->puerto_swap);
 	conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
+	handshake_cliente(sockClienteDeSwap, "UMC\n");
 }
 
 
@@ -47,9 +47,8 @@ void servidor() {
 
 	while(!exitFlag) {
 		int sockCliente = aceptarConexionSocket(sockServidor); // TODO fijarse si abortar programa al error del accept()
-		handshake(sockCliente);
-
-		crearHiloCliente(sockCliente); // TODO RESPONDIDO (VER): hacer validación de cliente antes de crearle un hilo para que no sea cualquier gil -> ¿con un if-else, o algún log?
+		handshake_servidor(sockCliente, "UMC\n");
+		crearHiloCliente(sockCliente); // TODO hacer validación de cliente antes de crearle un hilo para que no sea cualquier gil
 	}
 
 	close(sockServidor);
@@ -88,11 +87,11 @@ void cliente(void* fdCliente) {
 
 	int sockCliente = *((int*)fdCliente);
 	char *buff = (char*)reservarMemoria(PACKAGESIZE);
-	int ret = 0;
+	int ret = 1;
 
-	while(ret > 0) { // en 0 se desconecta y en negativo hubo error
-		ret = recibirPorSocket(sockCliente, buff, 6); // TODO PACKAGESIZE
-		buff[5] = '\0';
+	while(ret > 0 && !exitFlag) { // en 0 se desconecta y en negativo hubo error
+		ret = recibirPorSocket(sockCliente, buff, 2); // TODO PACKAGESIZE
+		buff[1] = '\0';
 		printf("Cliente #%d: %s\n", sockCliente, buff);
 	}
 
@@ -104,13 +103,4 @@ void cliente(void* fdCliente) {
 void liberarEstructuraConfig() {
 	free(config->ip_swap);
 	free(config);
-}
-
-
-void handshake(int sockCliente) {
-	enviarPorSocket(sockCliente, "Hola!", CHAR*6); // TODO RESPONDIDO (VER): ver qué mensajes intercambiamos-> Pueden ser saludos, ej: "Hola, CPU", "Hola Consola", etc.
-	char *buff = (char*)reservarMemoria(CHAR*6);
-	recibirPorSocket(sockCliente, buff, CHAR*6);
-	buff[5] = '\0';
-	printf("Handshake: %s\n", buff);
 }

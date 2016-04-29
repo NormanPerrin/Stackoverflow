@@ -8,13 +8,12 @@
 
 	#define CONEXIONES_PERMITIDAS 10
 	#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-
-	// Variables globales
-	int puertoEscuchaUMC;
+	#define RUTA_CONFIG_SWAP "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Swap/config.txt"
 
 	// Estructuras
 	typedef struct {
-		char nombreSwap;
+		int puerto;
+		char *nombreSwap;
 		int cantidadPaginas;
 		int tamanioPagina;
 		int retardoCompactacion;
@@ -23,5 +22,6 @@
 	// Cabeceras
 	void setearValores_config(t_config * archivoConfig);
 	void escucharUMC();
+	void liberarEstructuraConfig();
 
 #endif /* FSWAP_H_ */

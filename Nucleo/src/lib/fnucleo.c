@@ -93,7 +93,7 @@ void crearLogger(){
 	archivoLogNucleo = NULL;
 }
 
-void testLecturaArchivoDeConfiguracion(){
+/*void testLecturaArchivoDeConfiguracion(){
 	printf("Puerto de Programa: %d\n",puertoPrograma);
 	printf("Puerto de CPU: %d\n",puertoCPU);
 	printf("Quantum de Round Robin: %d\n",quantum);
@@ -103,23 +103,23 @@ void testLecturaArchivoDeConfiguracion(){
 	printf("Dispositivos de I/O: "); imprimirCadenas(ioID);
 	printf("Retardos de I/O: "); imprimirNumeros(retardosIO);
 	printf("Variables compartidas: "); imprimirCadenas(variablesCompartidas);
-}
+}*/
 
 // --Funciones MUY auxiliares
 
-void imprimirCadenas(char** cadenas){
+/*void imprimirCadenas(char** cadenas){
 	int i;
 	for(i=0; i<NELEMS(cadenas);i++){
-		printf("%s\n",cadenas[i]);
+		printf("%s, ", cadenas[i]);
 	}
 }
 
 void imprimirNumeros(int* numeros){
 	int i;
 		for(i=0; i<NELEMS(numeros);i++){
-			printf("%d\n",numeros[i]);
+			printf("%d, ", numeros[i]);
 		}
-}
+}*/
 
 void pasarCadenasArray(char** cadenas, char** variablesConfig){
 	int cantidadCadenas, i;

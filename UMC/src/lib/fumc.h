@@ -10,6 +10,7 @@
 	#include <stdlib.h>
 
 	#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
+	#define RUTA_CONFIG_UMC "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/UMC/config.txt"
 
 	// Estructuras
 	typedef struct {
@@ -33,6 +34,5 @@
 	void crearHiloCliente(int sockCliente); // Crea un hilo cliente al aceptar conexión
 	void cliente(void* sockCliente); // Maneja pedidos del cliente
 	void liberarEstructuraConfig();
-	void handshake(int sockCliente);
 
 #endif /* LIB_FUMC_H_ */

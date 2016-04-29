@@ -5,7 +5,9 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
+	leerArchivoDeConfiguracion(RUTA_CONFIG_CONSOLA); // Abro archivo configuración
+
+	testLecturaArchivoDeCOnfiguracion();
 
 	conectarConNucleo(); // Conexión con Núcleo
 

@@ -1,4 +1,4 @@
-Puerto_Escucha=9022
+Puerto_Escucha=8077
 Nombre_Swap=swap.data
 Cantidad_Paginas=512
 Tamaño_Pagina=256

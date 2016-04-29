@@ -6,10 +6,10 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
+	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO); // Abro archivo configuración
 
-	testLecturaArchivoDeConfiguracion(); // Comparo con los valores de ejemplo del archivo
-
+	/*testLecturaArchivoDeConfiguracion(); // Comparo con los valores de ejemplo del archivo
+*/
 	conectarConUMC(); // Conexión con UMC
 
 	escucharAConsola(); // Conexión con Consolas
