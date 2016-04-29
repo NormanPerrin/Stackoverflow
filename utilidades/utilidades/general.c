@@ -57,6 +57,5 @@ void handshake_cliente(int sockClienteDe, char *mensaje) {
 	printf("Handshake: %s\n", buff);
 
 	free(buff);
-
 	enviarPorSocket(sockClienteDe, mensaje, CHAR*2);
 }

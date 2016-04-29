@@ -40,6 +40,6 @@ void pasarCadenasArray(char** cadenas, char** variablesConfig);
 void pasarEnterosArray(int* numeros, char** variablesConfig);
 
 // Tests (PROVISORIOS)
-/*void testLecturaArchivoDeConfiguracion(); // Imprimo todas las variables, para ver si se setearon bien
-*/
+void testLecturaArchivoDeConfiguracion(); // Imprimo todas las variables, para ver si se setearon bien
+
 #endif /* LIB_FNUCLEO_H_ */
