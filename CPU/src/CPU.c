@@ -6,7 +6,7 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion("configCPU.txt"); // Abro archivo configuración
+	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU); // Abro archivo configuración
 
 	conectarConNucleo(); // Conexión con Núcleo
 

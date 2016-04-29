@@ -12,7 +12,7 @@ int nuevoSocket() {
 }
 
 // Asociación del socket con algún puerto local
-struct sockaddr_in asociarSocket(int sockfd, int puerto) {
+struct sockaddr_in asociarSocket(int fd_socket, int puerto) {
 	struct sockaddr_in miDireccionSocket;
 
 	miDireccionSocket.sin_family = AF_INET;
@@ -22,29 +22,29 @@ struct sockaddr_in asociarSocket(int sockfd, int puerto) {
 
 // Si el puerto ya está siendo utilizado, lanzamos un error
 	int enUso = 1;
-	int puertoYaAsociado = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char*) &enUso, sizeof(enUso));
+	int puertoYaAsociado = setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char*) &enUso, sizeof(enUso));
 		if (puertoYaAsociado == ERROR)	manejarError("Error: [Puerto] La dirección de socket ya está siendo utilizada");
 
 // Ya comprobado el error de puerto, llamamos a bind
-	int retornoBind = bind(sockfd, (struct sockaddr *) &miDireccionSocket,sizeof(miDireccionSocket));
+	int retornoBind = bind(fd_socket, (struct sockaddr *) &miDireccionSocket,sizeof(miDireccionSocket));
 		if ( retornoBind == ERROR) manejarError("Error: No se pudo asociar el socket a un puerto");
 
 	return miDireccionSocket;
 }
 
 // Ponemos al socket a escuchar conexiones entrantes
-void escucharSocket(int sockfd, int conexionesEntrantesPermitidas) {
-	int retornoListen = listen(sockfd, conexionesEntrantesPermitidas); // SOMAXCONN: máximo tamaño de la cola
+void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas) {
+	int retornoListen = listen(fd_socket, conexionesEntrantesPermitidas); // SOMAXCONN: máximo tamaño de la cola
 		if ( retornoListen == ERROR) manejarError("Error: No se pudo poner al socket a escuchar conexiones entrantes");
 		}
 
 // Obtención de una conexión entrante pendiente
-int aceptarConexionSocket(int sockfd) { // TODO RESPONDIDO (VER): Cambié manejarError por error_ show (sin abort)
+int aceptarConexionSocket(int fd_socket) { // TODO RESPONDIDO (VER): Cambié manejarError por error_ show (sin abort)
 	struct sockaddr_storage unCliente;
 	unsigned int addres_size = sizeof(unCliente);
 
-	int fdCliente = accept(sockfd, (struct sockaddr*) &unCliente, &addres_size);
-		if(fdCliente == ERROR) error_show("Error: No se pudo obtener una conexión entrante pendiente");
+	int fdCliente = accept(fd_socket, (struct sockaddr*) &unCliente, &addres_size);
+		if(fdCliente == ERROR) error_show("No se pudo obtener una conexión entrante pendiente");
 
 	return fdCliente;
 }
@@ -54,7 +54,7 @@ int aceptarConexionSocket(int sockfd) { // TODO RESPONDIDO (VER): Cambié maneja
 // *******************************
 
 // Conexión del socket con una máquina remota (Servidor)
-int conectarSocket(int sockfd, const char * ipDestino, int puerto){
+int conectarSocket(int fd_socket, char * ipDestino, int puerto){
 	struct sockaddr_in direccionServidor;
 
 	direccionServidor.sin_family = AF_INET;
@@ -62,7 +62,7 @@ int conectarSocket(int sockfd, const char * ipDestino, int puerto){
 	direccionServidor.sin_addr.s_addr = inet_addr(ipDestino);
 	memset(&(direccionServidor.sin_zero), '\0', 8);
 
-	int retornoConnect = connect(sockfd, (struct sockaddr *) &direccionServidor, sizeof(struct sockaddr));
+	int retornoConnect = connect(fd_socket, (struct sockaddr *) &direccionServidor, sizeof(struct sockaddr));
 		if ( retornoConnect == ERROR) manejarError("Error: No se pudo realizar la conexión entre el socket y el servidor");
 
 	return 0;
@@ -118,8 +118,8 @@ int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) { // TODO R
 // ***********************************
 
 // Cierre de la conexión del file descriptor del socket
-void cerrarSocket(int sockfd) {
-	int retornoClose = close(sockfd);
+void cerrarSocket(int fd_socket) {
+	int retornoClose = close(fd_socket);
 		if (retornoClose == ERROR) manejarError("Error: No se pudo cerrar la conexión del file descriptor del socket");
 }
 

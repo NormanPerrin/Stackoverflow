@@ -6,7 +6,7 @@ void* reservarMemoria(int size) {
 	void* puntero = malloc(size);
 	if(puntero == NULL) {
 		fprintf(stderr, "Error al reservar memoria\n");
-		exit(-1);
+		exit(ERROR);
 	}
 	return puntero;
 }
@@ -15,23 +15,24 @@ void* reservarMemoria(int size) {
 void leerArchivoDeConfiguracion(char * ruta) {
 	t_config * archivoConfig;
 
-	if (comprobarQueExistaArchivo(ruta) == ERROR)
+	if (comprobarQueExistaArchivo(ruta) == ERROR){
 		manejarError("Error: Archivo de configuración no encontrado\n");
-
-	printf("El archivo de configuración ha sido leído correctamente\n");
+	}else{
 
 	archivoConfig = config_create(ruta);
 	setearValores_config(archivoConfig); // Redefinido en cada proceso (Ejemplo en Núcleo)
-	config_destroy(archivoConfig); // Destruye la estructura auxiliar config
+	config_destroy(archivoConfig); // Libero la estructura archivoConfig
+
+	printf("El archivo de configuración ha sido leído correctamente\n");
+	}
 }
 
-int comprobarQueExistaArchivo(char* ruta) {
-	FILE * archivoConfig = fopen(ruta, "r");
-	if (archivoConfig!=NULL){
-		fclose(archivoConfig);
-		return TRUE;
+int comprobarQueExistaArchivo(char * ruta) {
+	if( access(ruta, F_OK ) != ERROR ) {
+	    return TRUE;
+	} else {
+	    return ERROR;
 	}
-	return ERROR;
 }
 
 void handshake_servidor(int sockCliente, char *mensaje) {
@@ -59,3 +60,12 @@ void handshake_cliente(int sockClienteDe, char *mensaje) {
 
 	enviarPorSocket(sockClienteDe, mensaje, CHAR*2);
 }
+
+/*int comprobarQueExistaArchivo(char* ruta){
+	FILE * archivoConfig = fopen(ruta, "r");
+	if (archivoConfig!=NULL){
+		fclose(archivoConfig);
+		return TRUE;
+	}
+	return ERROR;
+}*/

@@ -8,6 +8,7 @@
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
+#define RUTA_CONFIG_NUCLEO "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Nucleo/config.txt"
 
 // Variables Globales
 int puertoPrograma;
@@ -33,12 +34,12 @@ void escucharAConsola(); // Conexión con Consolas
 void setearValores_config(t_config * archivoConfig);
 void crearLogger();
 // --Funciones MUY auxiliares
-void imprimirCadenas(char** cadenas);
-void imprimirNumeros(int* numeros);
+/*void imprimirCadenas(char** cadenas);
+void imprimirNumeros(int* numeros);*/
 void pasarCadenasArray(char** cadenas, char** variablesConfig);
 void pasarEnterosArray(int* numeros, char** variablesConfig);
 
 // Tests (PROVISORIOS)
-void testLecturaArchivoDeConfiguracion(); // Imprimo todas las variables, para ver si se setearon bien
-
+/*void testLecturaArchivoDeConfiguracion(); // Imprimo todas las variables, para ver si se setearon bien
+*/
 #endif /* LIB_FNUCLEO_H_ */

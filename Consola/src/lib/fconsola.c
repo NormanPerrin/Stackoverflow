@@ -3,11 +3,8 @@
 // Funciones
 
 void setearValores_config(t_config * archivoConfig){
-	char *ipTemp;
-
 	puertoNucleo = config_get_int_value(archivoConfig, "PUERTO_NUCLEO");
-	ipTemp = config_get_string_value(archivoConfig, "IP_NUCLEO");
-	strcpy(ipNucleo, ipTemp);
+	ipNucleo = strdup(config_get_string_value(archivoConfig, "IP_NUCLEO"));
 }
 
 void conectarConNucleo(){
@@ -29,3 +26,8 @@ int fd_serverConsola;
 		}
 		close(fd_serverConsola);
 } // Soy cliente del Núcleo, es  decir, soy el que inicia la conexión con él
+
+void testLecturaArchivoDeCOnfiguracion(){
+	printf("Puerto Núcleo: %d\n", puertoNucleo);
+	printf("IP Núcleo: %s\n", ipNucleo);
+}
