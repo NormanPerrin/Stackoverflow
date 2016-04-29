@@ -29,7 +29,7 @@ void escucharUMC(){
 
 	sockUMC = aceptarConexionSocket(sockServidor);
 	printf("UMC conectada. Esperando mensajes\n");
-	handshake_servidor(sockUMC, "Swap\n");
+	handshake_servidor(sockUMC, "S");
 
 	char package[PACKAGESIZE];
 	int status = 1;		// Estructura que manjea el status de los recieve.
