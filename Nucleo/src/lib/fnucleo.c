@@ -122,17 +122,12 @@ void imprimirNumeros(int* numeros){
 }
 
 void pasarCadenasArray(char** cadenas, char** variablesConfig){
-	char* cadenaAux;
 	int cantidadCadenas, i;
 
 	cantidadCadenas = NELEMS(variablesConfig);
 
 	for(i=0; i<(cantidadCadenas-1); i++){
-		cadenaAux = variablesConfig[0];
-		// Creo una nueva cadena y asigno su direccion a cadenas[i]
-		cadenas[i] = (char*) malloc(strlen(cadenaAux+1));
-		// Copio el contenido de cadenaAux a cadenas[i]
-		strcpy(cadenas[i],cadenaAux);
+		cadenas[i]= strdup(variablesConfig[i]);
 		}
 	}
 

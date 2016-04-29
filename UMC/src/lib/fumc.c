@@ -10,12 +10,10 @@ void setearValores_config(t_config * archivoConfig) {
 
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
 	config->ip_swap = (char*)reservarMemoria(CHAR*20);
-	char *ip_temp;
 
 	config->backlog = config_get_int_value(archivoConfig, "BACKLOG");
 	config->puerto = config_get_int_value(archivoConfig, "PUERTO");
-	ip_temp = config_get_string_value(archivoConfig, "IP_SWAP");
-	strcpy(config->ip_swap, ip_temp);
+	config->ip_swap = strdup(config_get_string_value(archivoConfig, "IP_SWAP"));
 	config->puerto_swap = config_get_int_value(archivoConfig, "PUERTO_SWAP");
 	config->marcos = config_get_int_value(archivoConfig, "MARCOS");
 	config->marco_size = config_get_int_value(archivoConfig, "MARCO_SIZE");

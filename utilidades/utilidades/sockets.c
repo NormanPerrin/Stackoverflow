@@ -44,7 +44,7 @@ int aceptarConexionSocket(int sockfd) { // TODO RESPONDIDO (VER): Cambié maneja
 	unsigned int addres_size = sizeof(unCliente);
 
 	int fdCliente = accept(sockfd, (struct sockaddr*) &unCliente, &addres_size);
-		if(fdCliente == ERROR) error_show("Error: No se pudo obtener una conexión entrante pendiente");
+		if(fdCliente == ERROR) error_show("No se pudo obtener una conexión entrante pendiente");
 
 	return fdCliente;
 }
