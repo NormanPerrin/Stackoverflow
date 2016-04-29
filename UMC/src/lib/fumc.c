@@ -50,7 +50,8 @@ void servidor() {
 	while(!exitFlag) {
 		int sockCliente = aceptarConexionSocket(sockServidor); // TODO fijarse si abortar programa al error del accept()
 		handshake(sockCliente);
-		crearHiloCliente(sockCliente); // TODO hacer validación de cliente antes de crearle un hilo para que no sea cualquier gil
+
+		crearHiloCliente(sockCliente); // TODO RESPONDIDO (VER): hacer validación de cliente antes de crearle un hilo para que no sea cualquier gil -> ¿con un if-else, o algún log?
 	}
 
 	close(sockServidor);
@@ -109,7 +110,7 @@ void liberarEstructuraConfig() {
 
 
 void handshake(int sockCliente) {
-	enviarPorSocket(sockCliente, "Hola!", CHAR*6); // TODO ver qué mensajes intercambiamos
+	enviarPorSocket(sockCliente, "Hola!", CHAR*6); // TODO RESPONDIDO (VER): ver qué mensajes intercambiamos-> Pueden ser saludos, ej: "Hola, CPU", "Hola Consola", etc.
 	char *buff = (char*)reservarMemoria(CHAR*6);
 	recibirPorSocket(sockCliente, buff, CHAR*6);
 	buff[5] = '\0';
