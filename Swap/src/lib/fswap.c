@@ -7,10 +7,10 @@ t_configuracion *config;
 // Funciones
 void setearValores_config(t_config * archivoConfig){
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
-	puertoEscuchaUMC = config_get_int_value(archivoConfig, "PUERTO");
+	puertoEscuchaUMC = config_get_int_value(archivoConfig, "Puerto_Escucha");
 	config->nombreSwap = config_get_int_value (archivoConfig, "Nombre_Swap");
 	config->cantidadPaginas = config_get_int_value(archivoConfig, "Cantidad_Paginas");
-	config->tamanioPagina = config_get_int_value(archivoConfig, "Tamaniobo_Pagina");
+	config->tamanioPagina = config_get_int_value(archivoConfig, "Tamanio_Pagina");
 	config->retardoCompactacion = config_get_int_value(archivoConfig, "Retardo_Compactacion");
 }
 

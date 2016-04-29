@@ -8,7 +8,7 @@ int main(void) {
 
 	leerArchivoDeConfiguracion("config.txt"); // Abro archivo configuración
 
-	testLecturaArchivoDeConfiguracion(); // COmparo con los valores de ejemplo del archivo
+	testLecturaArchivoDeConfiguracion(); // Comparo con los valores de ejemplo del archivo
 
 	conectarConUMC(); // Conexión con UMC
 

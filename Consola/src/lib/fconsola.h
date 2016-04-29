@@ -9,7 +9,7 @@
 
 // Variables globales
 int puertoNucleo; // Puerto donde se encuentra escuchando el proceso Núcleo
-const char * ipNucleo; // IP del proceso Núcleo
+char *ipNucleo; // IP del proceso Núcleo
 
 // Estructuras
 

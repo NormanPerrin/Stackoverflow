@@ -10,6 +10,8 @@ void setearValores_config(t_config * archivoConfig){
 	strcpy(ipNucleo, ipTemp1);
 	ipTemp2 = config_get_string_value(archivoConfig, "IP_UMC");
 	strcpy(ipUMC, ipTemp2);
+	puertoNucleo = config_get_int_value(archivoConfig, "PUERTO_NUCLEO");
+	puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
 }
 
 void conectarConNucleo(){
