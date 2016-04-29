@@ -3,8 +3,13 @@
 // Funciones
 
 void setearValores_config(t_config * archivoConfig){
-	ipNucleo = config_get_int_value(archivoConfig, "IP_NUCLEO");
-	ipUMC = config_get_int_value(archivoConfig, "IP_UMC");
+	char *ipTemp1;
+	char *ipTemp2;
+
+	ipTemp1 = config_get_string_value(archivoConfig, "IP_NUCLEO");
+	strcpy(ipNucleo, ipTemp1);
+	ipTemp2 = config_get_string_value(archivoConfig, "IP_UMC");
+	strcpy(ipUMC, ipTemp2);
 }
 
 void conectarConNucleo(){
