@@ -3,9 +3,7 @@
 // Funciones
 
 void setearValores_config(t_config * archivoConfig){
-
-// Desarrollar seteo
-
+	puertoNucleo = config_get_int_value(archivoConfig, "PUERTO_NUCLEO");
 }
 
 void conectarConNucleo(){

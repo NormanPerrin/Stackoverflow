@@ -22,15 +22,13 @@ void leerArchivoDeConfiguracion(char * ruta) {
 
 	archivoConfig = config_create(ruta);
 	setearValores_config(archivoConfig); // Redefinido en cada proceso (Ejemplo en Núcleo)
-	config_destroy(archivoConfig); // Destruye la estructura auxiliar config
+	config_destroy(archivoConfig); // Libero la estructura archivoConfig
+
 }
 
-int comprobarQueExistaArchivo(char* ruta) {
-	FILE * archivoConfig = fopen(ruta, "r");
-	if (archivoConfig!=NULL){
-		fclose(archivoConfig);
-		return TRUE;
+int comprobarQueExistaArchivo(char *ruta) {
+	if(access(ruta, F_OK) != ERROR){
+		return TRUE; // Existe el archivo
 	}
-	return ERROR;
+	return ERROR; // El archivo no existe
 }
-

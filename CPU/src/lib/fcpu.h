@@ -9,9 +9,9 @@
 
 // Variables globales
 int puertoNucleo; // Puerto donde se encuentra escuchando el proceso Núcleo
-const char * ipNucleo; // IP del proceso Núcleo
+const char * ipNucleo = "127.0.0.1"; // IP del proceso Núcleo
 int puertoUMC;
-const char * ipUMC;
+const char * ipUMC = "127.0.0.1";
 
 // Estructuras
 

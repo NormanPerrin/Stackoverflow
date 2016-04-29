@@ -109,7 +109,7 @@ void liberarEstructuraConfig() {
 
 
 void handshake(int sockCliente) {
-	enviarPorSocket(sockCliente, "Hola!", CHAR*6); // TODO ver que mensajes intercambiamos
+	enviarPorSocket(sockCliente, "Hola!", CHAR*6); // TODO ver qué mensajes intercambiamos
 	char *buff = (char*)reservarMemoria(CHAR*6);
 	recibirPorSocket(sockCliente, buff, CHAR*6);
 	buff[5] = '\0';

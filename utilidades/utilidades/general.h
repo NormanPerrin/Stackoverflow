@@ -3,6 +3,7 @@
 
 #include <commons/config.h>
 #include <errno.h>	// Incluye perror
+#include <unistd.h>
 
 #define FALSE 0
 #define TRUE 1

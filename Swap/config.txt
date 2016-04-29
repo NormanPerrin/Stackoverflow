@@ -1,0 +1,5 @@
+Puerto_Escucha=9022
+Nombre_Swap=swap.data
+Cantidad_Paginas=512
+Tamaño_Pagina=256
+Retardo_Compactacion=60000
