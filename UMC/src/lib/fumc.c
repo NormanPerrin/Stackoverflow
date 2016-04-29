@@ -2,15 +2,20 @@
 
 // Globales
 t_configuracion *config;
-int flag = FALSE; // exit del programa
+int exitFlag = FALSE; // exit del programa
 int sockClienteDeSwap; // Se lo va a llamar a necesidad en distintas funciones
 
 
 void setearValores_config(t_config * archivoConfig) {
+
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
+	config->ip_swap = (char*)reservarMemoria(CHAR*20);
+	char *ip_temp;
+
 	config->backlog = config_get_int_value(archivoConfig, "BACKLOG");
 	config->puerto = config_get_int_value(archivoConfig, "PUERTO");
-	config->ip_swap = config_get_string_value(archivoConfig, "IP_SWAP");
+	ip_temp = config_get_string_value(archivoConfig, "IP_SWAP");
+	strcpy(config->ip_swap, ip_temp);
 	config->puerto_swap = config_get_int_value(archivoConfig, "PUERTO_SWAP");
 	config->marcos = config_get_int_value(archivoConfig, "MARCOS");
 	config->marco_size = config_get_int_value(archivoConfig, "MARCO_SIZE");
@@ -42,7 +47,7 @@ void servidor() {
 	asociarSocket(sockServidor, config->puerto);
 	escucharSocket(sockServidor, config->backlog);
 
-	while(!flag) {
+	while(!exitFlag) {
 		int sockCliente = aceptarConexionSocket(sockServidor); // TODO fijarse si abortar programa al error del accept()
 		handshake(sockCliente);
 		crearHiloCliente(sockCliente); // TODO hacer validación de cliente antes de crearle un hilo para que no sea cualquier gil
@@ -57,13 +62,13 @@ void consola() {
 	printf("Hola! Ingresá \"#\" para salir\n");
 	char *mensaje = reservarMemoria(CHAR*20);
 
-	while(!flag) {
+	while(!exitFlag) {
 
 		scanf("%s", mensaje);
 
 		if(!strcmp(mensaje, "#")) {
 			printf("Saliendo de UMC\n");
-			flag = TRUE;
+			exitFlag = TRUE;
 		} else {
 			printf("Consola: %s\n", mensaje);
 		}
