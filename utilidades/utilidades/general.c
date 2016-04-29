@@ -36,24 +36,26 @@ int comprobarQueExistaArchivo(char* ruta) {
 
 void handshake_servidor(int sockCliente, char *mensaje) {
 
-	enviarPorSocket(sockCliente, mensaje, sizeof mensaje);
+	enviarPorSocket(sockCliente, mensaje, CHAR*2);
 
-//	char *buff = (char*)reservarMemoria(CHAR*10);
-//
-//	recibirPorSocket(sockCliente, buff, CHAR*10);
-//
-//	buff[9] = '\0';
-//	printf("Handshake: %s\n", buff);
-//
-//	free(buff);
+	char *buff = (char*)reservarMemoria(CHAR*2);
+
+	recibirPorSocket(sockCliente, buff, CHAR*2);
+
+	buff[1] = '\0';
+	printf("Handshake: %s\n", buff);
+
+	free(buff);
 }
 
 void handshake_cliente(int sockClienteDe, char *mensaje) {
 
-	char *buff = (char*)reservarMemoria(CHAR*6);
-	recibirPorSocket(sockClienteDe, buff, CHAR*6);
-	buff[5] = '\0';
+	char *buff = (char*)reservarMemoria(CHAR*2);
+	recibirPorSocket(sockClienteDe, buff, CHAR*2);
+	buff[1] = '\0';
 	printf("Handshake: %s\n", buff);
 
 	free(buff);
+
+	enviarPorSocket(sockClienteDe, mensaje, CHAR*2);
 }

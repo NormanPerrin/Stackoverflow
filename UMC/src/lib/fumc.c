@@ -28,7 +28,7 @@ void setearValores_config(t_config * archivoConfig) {
 void conectarConSwap(){
 	sockClienteDeSwap = nuevoSocket();
 	conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
-	handshake_cliente(sockClienteDeSwap, "UMC\n");
+	handshake_cliente(sockClienteDeSwap, "U");
 }
 
 
@@ -49,7 +49,7 @@ void servidor() {
 
 	while(!exitFlag) {
 		int sockCliente = aceptarConexionSocket(sockServidor); // TODO fijarse si abortar programa al error del accept()
-		handshake_servidor(sockCliente, "UMC\n");
+		handshake_servidor(sockCliente, "U");
 		crearHiloCliente(sockCliente); // TODO hacer validación de cliente antes de crearle un hilo para que no sea cualquier gil
 	}
 
