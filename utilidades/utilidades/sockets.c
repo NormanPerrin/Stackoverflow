@@ -39,12 +39,12 @@ void escucharSocket(int sockfd, int conexionesEntrantesPermitidas) {
 		}
 
 // Obtención de una conexión entrante pendiente
-int aceptarConexionSocket(int sockfd) { // TODO ver si quiero hacer un abort al error de cliente
+int aceptarConexionSocket(int sockfd) { // TODO RESPONDIDO (VER): Cambié manejarError por error_ show (sin abort)
 	struct sockaddr_storage unCliente;
 	unsigned int addres_size = sizeof(unCliente);
 
 	int fdCliente = accept(sockfd, (struct sockaddr*) &unCliente, &addres_size);
-		if(fdCliente == ERROR) manejarError("Error: No se pudo obtener una conexión entrante pendiente");
+		if(fdCliente == ERROR) error_show("Error: No se pudo obtener una conexión entrante pendiente");
 
 	return fdCliente;
 }
@@ -92,7 +92,7 @@ int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes) {
 }
 
 // Recibir sirve para la comunicación a través de sockets
-int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) { // TODO ver si con flag del recv puedo hacer lo mismo que el while
+int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) { // TODO RESPONDIDO (VER): ver si con algún flag de recv se puede reeplazar al while -> Mm, por lo visto no, leí sobre los flags de recv acá: http://man7.org/linux/man-pages/man2/recv.2.html, y no hay nada útil
 	int bytes_recibidos;
 	int totalBytes = 0;
 

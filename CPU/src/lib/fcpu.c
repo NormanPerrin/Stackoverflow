@@ -12,7 +12,7 @@ int fd_serverCPU;
 
 	fd_serverCPU = nuevoSocket();
 	asociarSocket(fd_serverCPU, puertoNucleo);
-	conectarSocket(fd_serverCPU, ipNucleo, puertoNucleo);
+	conectarSocket(fd_serverCPU, dirIPNucleo, puertoNucleo);
 	// Creo un paquete (string) de size PACKAGESIZE, que le enviaré al Núcleo
 	int enviar = 1;
 		char message[PACKAGESIZE];
