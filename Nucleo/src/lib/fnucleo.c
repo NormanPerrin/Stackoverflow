@@ -3,14 +3,17 @@
 // Funciones
 
 void setearValores_config(t_config * archivoConfig){
+	char *ipTemp;
 
 	puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
 	puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
+	ipTemp = config_get_string_value(archivoConfig, "IP_UMC");
+	strcpy(ipUMC, ipTemp);
 	quantum = config_get_int_value(archivoConfig, "QUANTUM");
 	retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
 	pasarCadenasArray(semaforosID, config_get_array_value(archivoConfig, "SEM_IDS"));
 	pasarCadenasArray(ioID, config_get_array_value(archivoConfig, "IO_IDS"));
-	pasarCadenasArray(variablesCompartidas, config_get_array_value(archivoConfig, "SEHARED_VARS"));
+	pasarCadenasArray(variablesCompartidas, config_get_array_value(archivoConfig, "SHARED_VARS"));
 	pasarEnterosArray(semaforosValInicial, config_get_array_value(archivoConfig, "SEM_INIT"));
 	pasarEnterosArray(retardosIO, config_get_array_value(archivoConfig, "IO_SLEEP"));
 

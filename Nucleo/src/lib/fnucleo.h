@@ -13,7 +13,7 @@
 int puertoPrograma;
 int puertoCPU;
 int puertoUMC; // Puerto donde se encuentra escuchando el proceso UMC (no viene de archivo de config)
-const char * ipUMC; // IP del proceso UMC
+char *ipUMC; // IP del proceso UMC
 int quantum;
 int retardoQuantum;
 // --Arrays

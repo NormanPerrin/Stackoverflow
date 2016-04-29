@@ -3,9 +3,11 @@
 // Funciones
 
 void setearValores_config(t_config * archivoConfig){
+	char *ipTemp;
 
-// Desarrollar seteo
-
+	puertoNucleo = config_get_int_value(archivoConfig, "PUERTO_NUCLEO");
+	ipTemp = config_get_string_value(archivoConfig, "IP_NUCLEO");
+	strcpy(ipNucleo, ipTemp);
 }
 
 void conectarConNucleo(){
