@@ -27,7 +27,7 @@ int fd_serverConsola;
 		close(fd_serverConsola);
 } // Soy cliente del Núcleo, es  decir, soy el que inicia la conexión con él
 
-void testLecturaArchivoDeCOnfiguracion(){
+void testLecturaArchivoDeConfiguracion(){
 	printf("Puerto Núcleo: %d\n", puertoNucleo);
 	printf("IP Núcleo: %s\n", ipNucleo);
 }

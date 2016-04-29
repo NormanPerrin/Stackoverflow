@@ -11,5 +11,6 @@ int main(int argc, char **argv) {
 	crearHilos(); // Creo hilos Servidor y Consola
 
 	liberarEstructuraConfig();
+
 	return EXIT_SUCCESS;
 }

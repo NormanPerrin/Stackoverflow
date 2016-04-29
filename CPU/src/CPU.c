@@ -8,6 +8,8 @@ int main(void) {
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU); // Abro archivo configuración
 
+	testLecturaArchivoDeConfiguracion();
+
 	conectarConNucleo(); // Conexión con Núcleo
 
 	conectarConUMC(); // Conexión con UMC

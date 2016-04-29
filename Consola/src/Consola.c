@@ -7,7 +7,7 @@ int main(void) {
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CONSOLA); // Abro archivo configuración
 
-	testLecturaArchivoDeCOnfiguracion();
+	testLecturaArchivoDeConfiguracion();
 
 	conectarConNucleo(); // Conexión con Núcleo
 

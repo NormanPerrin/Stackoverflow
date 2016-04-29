@@ -20,5 +20,6 @@ char *ipUMC;
 void conectarConNucleo();
 void conectarConUMC();
 void setearValores_config(t_config * archivoConfig);
+void testLecturaArchivoDeConfiguracion();
 
 #endif /* LIB_FCPU_H_ */

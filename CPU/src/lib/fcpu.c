@@ -49,3 +49,10 @@ int fd_serverCPU;
 		}
 		close(fd_serverCPU);
 } // Soy cliente de la UMC, es  decir, soy el que inicia la conexión con ella
+
+void testLecturaArchivoDeConfiguracion(){
+	printf("Puerto Núcleo: %d\n", puertoNucleo);
+	printf("IP Núcleo: %s\n", ipNucleo);
+	printf("Puerto UMC: %d\n", puertoUMC);
+	printf("IP UMC: %s\n", ipUMC);
+}

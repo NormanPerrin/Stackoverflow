@@ -34,8 +34,8 @@ void escucharAConsola(); // Conexión con Consolas
 void setearValores_config(t_config * archivoConfig);
 void crearLogger();
 // --Funciones MUY auxiliares
-/*void imprimirCadenas(char** cadenas);
-void imprimirNumeros(int* numeros);*/
+void imprimirCadenas(char** cadenas);
+void imprimirNumeros(int* numeros);
 void pasarCadenasArray(char** cadenas, char** variablesConfig);
 void pasarEnterosArray(int* numeros, char** variablesConfig);
 

@@ -17,6 +17,6 @@ char * ipNucleo; // IP del proceso Núcleo
 // Cabeceras
 void conectarConNucleo();
 void setearValores_config(t_config * archivoConfig);
-void testLecturaArchivoDeCOnfiguracion();
+void testLecturaArchivoDeConfiguracion();
 
 #endif /* LIB_FCONSOLA_H_ */
