@@ -9,5 +9,6 @@ int main(void) {
 
 	escucharUMC(); // Conexión con UMC
 
+	liberarEstructuraConfig();
 	return EXIT_SUCCESS;
 }

@@ -3,6 +3,7 @@
 
 #include <commons/config.h>
 #include <errno.h>	// Incluye perror
+#include "sockets.h"
 
 #define FALSE 0
 #define TRUE 1
@@ -23,5 +24,7 @@
 	void leerArchivoDeConfiguracion(char * ruta);
 	int comprobarQueExistaArchivo(char * ruta);
 	void setearValores_config(t_config * archivoConfig); // Hay que redefinirlo en cada proceso (Ejemplo en Núcleo)
+	void handshake_servidor(int sockCliente, char *mensaje); // Envía mensaje handshake al socketCliente y luego se queda esperando mensaje de confirmación
+	void handshake_cliente(int sockClienteDe, char *mensaje);
 
 #endif

@@ -33,6 +33,5 @@
 	void crearHiloCliente(int sockCliente); // Crea un hilo cliente al aceptar conexión
 	void cliente(void* sockCliente); // Maneja pedidos del cliente
 	void liberarEstructuraConfig();
-	void handshake(int sockCliente);
 
 #endif /* LIB_FUMC_H_ */
