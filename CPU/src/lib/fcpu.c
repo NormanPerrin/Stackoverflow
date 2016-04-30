@@ -32,3 +32,10 @@ void testLecturaArchivoDeConfiguracion(){
 	printf("Puerto UMC: %d\n", puertoUMC);
 	printf("IP UMC: %s\n", ipUMC);
 }
+
+void validarArgumentos(int argc, char **argv) {
+	if(argc != 2) {
+		printf("Ingrese el archivo de configuración como argumento\n");
+		exit(-1);
+	}
+}

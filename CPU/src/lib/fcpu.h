@@ -20,5 +20,6 @@ void conectarConNucleo();
 void conectarConUMC();
 void setearValores_config(t_config * archivoConfig);
 void testLecturaArchivoDeConfiguracion();
+void validarArgumentos(int argc, char **argv);
 
 #endif /* LIB_FCPU_H_ */

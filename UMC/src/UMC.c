@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
 
 	leerArchivoDeConfiguracion(argv[1]); // Abro archivo de configuración
 
-	conectarConSwap(); // Conexión con Swap
+//	conectarConSwap(); // Conexión con Swap
 
 	crearHilos(); // Creo hilos Servidor y Consola
 
