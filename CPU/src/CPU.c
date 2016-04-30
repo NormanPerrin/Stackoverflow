@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 
 	testLecturaArchivoDeConfiguracion();
 
-//	conectarConNucleo(); // Conexión con Núcleo
+	conectarConNucleo(); // Conexión con Núcleo
 
 	conectarConUMC(); // Conexión con UMC
 

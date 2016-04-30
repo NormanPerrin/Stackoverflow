@@ -24,18 +24,27 @@ void escucharACPU(){
 			asociarSocket(fd_escuchaCPU, puertoCPU);
 			escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);
 			fd_nuevoCPU= aceptarConexionSocket(fd_escuchaCPU);
-
 			printf("CPU conectado. Esperando mensajes\n");
+			handshake_servidor(fd_nuevoCPU, "N");
+
+				char package[PACKAGESIZE];
+				int status = 1;		// Estructura que manjea el status de los recieve.
+
+				while (status > 0){
+					status = recibirPorSocket(fd_nuevoCPU, package, CHAR*2);
+					package[1] = '\0';
+					printf("CPU: %s\n", package);
+				}
 			/*escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
 
-			char package[PACKAGESIZE];
+			/*char package[PACKAGESIZE];
 				int status = 1;		// Estructura que manjea el status de los recieve.
 				// Vamos a ESPERAR que nos manden los paquetes, y los imprimos por pantalla
 				while (status != 0){
 					status = recibirPorSocket(fd_nuevoCPU, (void*) package, PACKAGESIZE);
 					if (status != 0) printf("%s", package);
 
-				}
+				}*/
 				close(fd_nuevoCPU);
 					close(fd_escuchaCPU);
 
@@ -50,16 +59,26 @@ void escucharAConsola(){
 		fd_nuevaConsola= aceptarConexionSocket(fd_escuchaConsola);
 
 		printf("Consola conectada. Esperando mensajes\n");
+		handshake_servidor(fd_nuevaConsola, "N");
+
+			char package[PACKAGESIZE];
+			int status = 1;		// Estructura que manjea el status de los recieve.
+
+			while (status > 0){
+				status = recibirPorSocket(fd_nuevaConsola, package, CHAR*2);
+				package[1] = '\0';
+				printf("Consola: %s\n", package);
+			}
 		/*escucharSocket(fd_escuchaConsola, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
 
-		char package[PACKAGESIZE];
+		/*char package[PACKAGESIZE];
 			int status = 1;		// Estructura que manjea el status de los recieve.
 			// Vamos a ESPERAR que nos manden los paquetes, y los imprimimos por pantalla
 			while (status != 0){
 				status = recibirPorSocket(fd_nuevaConsola, (void*) package, PACKAGESIZE);
 				if (status != 0) printf("%s", package);
 
-			}
+			}*/
 			close(fd_nuevaConsola);
 				close(fd_escuchaConsola);
 } // Soy servidor, espero mensajes de alguna Consola
@@ -69,8 +88,9 @@ void conectarConUMC(){
 
 	fd_serverUMC = nuevoSocket();
 		conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
+		handshake_cliente(fd_serverUMC, "N");
 		// Creo un paquete (string) de size PACKAGESIZE, que le enviaré a la UMC
-		int enviar = 1;
+		/*int enviar = 1;
 			char message[PACKAGESIZE];
 
 			printf("Conectado a la UMC. Ya se puede enviar mensajes. Escriba 'exit' para salir\n");
@@ -79,8 +99,8 @@ void conectarConUMC(){
 				fgets(message, PACKAGESIZE, stdin);	// Lee una línea en el stdin (lo que escribimos en la consola) hasta encontrar un \n (y lo incluye) o llegar a PACKAGESIZE
 				if (!strcmp(message,"exit\n")) enviar = 0; // Chequeo que no se quiera salir
 				if (enviar) enviarPorSocket(fd_serverUMC, message, strlen(message) + 1); // Sólo envío si no quiere salir
-			}
-			close(fd_serverUMC);
+			}*/
+			//close(fd_serverUMC);
 	} // Soy cliente de la UMC, es  decir, soy el que inicia la conexión con ella
 
 void crearLogger(){
