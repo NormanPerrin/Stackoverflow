@@ -17,19 +17,21 @@ struct sockaddr_in asociarSocket(int fd_socket, int puerto) {
 
 	miDireccionSocket.sin_family = AF_INET;
 	miDireccionSocket.sin_port = htons(puerto);
-	miDireccionSocket.sin_addr.s_addr = 0; // Al poner en cero este campo, le estamos indicando a la función que elija un IP por nosotros
+	inet_aton("127.0.0.1", &(miDireccionSocket.sin_addr));
+	// miDireccionSocket.sin_addr.s_addr = inet_addr("127.0.0.1"); Con htons(INADDR_ANY) (o bien, 0) usa la dirección IP de la máquina en la que se encuentra
 	memset(&(miDireccionSocket.sin_zero), '\0', 8); // Rellena con ceros el resto de la estructura
 
 // Si el puerto ya está siendo utilizado, lanzamos un error
 	int enUso = 1;
 	int puertoYaAsociado = setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char*) &enUso, sizeof(enUso));
-		if (puertoYaAsociado == ERROR)	manejarError("Error: [Puerto] La dirección de socket ya está siendo utilizada");
+		if (puertoYaAsociado == ERROR)
+			manejarError("Error: [Puerto] La dirección de socket ya está siendo utilizada");
 
 // Ya comprobado el error de puerto, llamamos a bind
-	int retornoBind = bind(fd_socket, (struct sockaddr *) &miDireccionSocket,sizeof(miDireccionSocket));
+	int retornoBind = bind(fd_socket, (struct sockaddr *) &miDireccionSocket, sizeof(struct sockaddr));
 		if ( retornoBind == ERROR) manejarError("Error: No se pudo asociar el socket a un puerto");
 
-	return miDireccionSocket;
+		return miDireccionSocket;
 }
 
 // Ponemos al socket a escuchar conexiones entrantes
@@ -40,10 +42,10 @@ void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas) {
 
 // Obtención de una conexión entrante pendiente
 int aceptarConexionSocket(int fd_socket) { // TODO RESPONDIDO (VER): Cambié manejarError por error_ show (sin abort)
-	struct sockaddr_storage unCliente;
-	unsigned int addres_size = sizeof(unCliente);
+	struct sockaddr_in unCliente;//struct sockaddr_storage unCliente;
+	int addres_size = sizeof(unCliente);
 
-	int fdCliente = accept(fd_socket, (struct sockaddr*) &unCliente, &addres_size);
+	int fdCliente = accept(fd_socket, (struct sockaddr *) &unCliente, &addres_size);
 		if(fdCliente == ERROR) error_show("No se pudo obtener una conexión entrante pendiente");
 
 	return fdCliente;
@@ -59,25 +61,25 @@ int conectarSocket(int fd_socket, char * ipDestino, int puerto){
 
 	direccionServidor.sin_family = AF_INET;
 	direccionServidor.sin_port = htons(puerto);
-	direccionServidor.sin_addr.s_addr = inet_addr(ipDestino);
+	inet_aton(ipDestino, &(direccionServidor.sin_addr));//direccionServidor.sin_addr.s_addr = inet_addr(ipDestino);
 	memset(&(direccionServidor.sin_zero), '\0', 8);
 
 	int retornoConnect = connect(fd_socket, (struct sockaddr *) &direccionServidor, sizeof(struct sockaddr));
 		if ( retornoConnect == ERROR) manejarError("Error: No se pudo realizar la conexión entre el socket y el servidor");
 
-	return 0;
+	return FALSE;
 }
 // **********************************
 // *    Enviar y Recibir Datos	    *
 // **********************************
 
 // Enviar sirve para la comunicación a través de sockets
-int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes) {
+int enviarPorSocket(int fdServidor, const void * mensaje, int tamanioBytes) {
 	int bytes_enviados;
 	int totalBytes = 0;
 
 	while (totalBytes < tamanioBytes) {
-		bytes_enviados = send(fdCliente, mensaje + totalBytes, tamanioBytes, 0); /* send: devuelve el múmero de bytes que se enviaron en realidad,
+		bytes_enviados = send(fdServidor, mensaje + totalBytes, tamanioBytes, 0); /* send: devuelve el múmero de bytes que se enviaron en realidad,
 		pero estos podrían ser menos de los que pedimos que se enviaran, por eso realizamos la siguiente validación */
 		// El último argumento, cero, significa que no le paso ningún Flag
 		if (bytes_enviados == ERROR) {

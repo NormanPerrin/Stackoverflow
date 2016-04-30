@@ -14,7 +14,6 @@ void conectarConNucleo(){
 int fd_serverCPU;
 
 	fd_serverCPU = nuevoSocket();
-	asociarSocket(fd_serverCPU, puertoNucleo);
 	conectarSocket(fd_serverCPU, ipNucleo, puertoNucleo);
 	// Creo un paquete (string) de size PACKAGESIZE, que le enviaré al Núcleo
 	int enviar = 1;
@@ -34,7 +33,6 @@ void conectarConUMC(){
 int fd_serverCPU;
 
 	fd_serverCPU = nuevoSocket();
-	asociarSocket(fd_serverCPU, puertoUMC);
 	conectarSocket(fd_serverCPU, ipUMC, puertoUMC);
 	// Creo un paquete (string) de size PACKAGESIZE, que le enviaré a la UMC
 	int enviar = 1;

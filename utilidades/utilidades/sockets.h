@@ -15,6 +15,8 @@
 #include <fcntl.h> // Incluye fcntl
 #include <commons/error.h>
 
+#define FALSE 0
+#define TRUE 1
 #define ERROR -1 // Las llamadas al sistema utilizadas retornan -1 en caso de error
 #define manejarError(mensajeError) {perror(mensajeError);} //--abort(); Función para el tratamiento de errores, muestra mensaje a través de perror
 
@@ -24,7 +26,7 @@
 // *******************************************************************
 
 // Funciones para el Servidor
-int  nuevoSocket(); // Sin parámetros, tiene como argumentos a las constantes: AF_INET, SOCK_STREAM, 0
+int  nuevoSocket();
 struct sockaddr_in asociarSocket(int fd_socket, int puerto);
 void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas); // El segundo int corresponde al backlog (conexiones permitidas en la cola de entrada)
 int  aceptarConexionSocket(int fd_socket);
@@ -33,7 +35,7 @@ int  aceptarConexionSocket(int fd_socket);
 int conectarSocket(int fd_socket, char * ipDestino, int puerto);
 
 // Funciones para el Envío y la Recepción de datos
-int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes); // Retorna el número de bytes enviados, o bien, -1 si falla y 0 si se desconecta
+int enviarPorSocket(int fdServidor, const void * mensaje, int tamanioBytes); // Retorna el número de bytes enviados, o bien, -1 si falla y 0 si se desconecta
 int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) ; // Retorna el número de bytes recibidos, o bien, -1 si falla y 0 si se desconecta
 
 // Función para cerrar un File Descriptor

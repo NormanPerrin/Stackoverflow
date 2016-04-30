@@ -11,7 +11,6 @@ void conectarConNucleo(){
 int fd_serverConsola;
 
 	fd_serverConsola = nuevoSocket();
-	asociarSocket(fd_serverConsola, puertoNucleo);
 	conectarSocket(fd_serverConsola, ipNucleo, puertoNucleo);
 	// Creo un paquete (string) de size PACKAGESIZE, que le enviaré al Núcleo
 	int enviar = 1;

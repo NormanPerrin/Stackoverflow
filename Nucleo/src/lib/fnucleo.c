@@ -68,7 +68,6 @@ void conectarConUMC(){
 	int fd_serverUMC;
 
 	fd_serverUMC = nuevoSocket();
-		asociarSocket(fd_serverUMC, puertoUMC);
 		conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
 		// Creo un paquete (string) de size PACKAGESIZE, que le enviaré a la UMC
 		int enviar = 1;
@@ -105,36 +104,34 @@ void testLecturaArchivoDeConfiguracion(){
 
 // --Funciones MUY auxiliares
 
-void imprimirCadenas(char** cadenas){
+void imprimirCadenas(char ** cadenas){
 	int i;
-	for(i=0; i<NELEMS(cadenas);i++){
+	for(i=0; i<NELEMS(cadenas); i++){
 		printf("%s, ", cadenas[i]);
-	}
+			}
 }
 
-void imprimirNumeros(int* numeros){
+void imprimirNumeros(int * numeros){
 	int i;
-		for(i=0; i<NELEMS(numeros);i++){
+	for(i=0; i<NELEMS(numeros); i++){
 			printf("%d, ", numeros[i]);
 		}
 }
 
-void pasarCadenasArray(char** cadenas, char** variablesConfig){
-	int cantidadCadenas, i;
-
-	cantidadCadenas = NELEMS(variablesConfig);
-
-	for(i=0; i<(cantidadCadenas-1); i++){
+void pasarCadenasArray(char ** cadenas, char ** variablesConfig){
+	int i = 0;
+	while(variablesConfig[i] != NULL){
 		cadenas[i]= strdup(variablesConfig[i]);
+		i++;
 		}
 	}
 
-void pasarEnterosArray(int* numeros, char** variablesConfig){
-	int cantidadNumeros, i;
-
-	cantidadNumeros = NELEMS(variablesConfig);
-
-	for(i=0; i<(cantidadNumeros-1); i++){
-		numeros[i] = atoi(variablesConfig[i]);
+void pasarEnterosArray(int * numeros, char ** variablesConfig){
+int i = 0;
+char* stringNum;
+	while(variablesConfig[i] != NULL){
+	 stringNum = strdup(variablesConfig[i]);
+	 numeros[i] = atoi(stringNum);
+	 	 i++;
 	}
 }
