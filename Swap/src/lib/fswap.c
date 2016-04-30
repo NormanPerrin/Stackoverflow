@@ -49,3 +49,11 @@ void liberarEstructuraConfig() {
 	free(config->nombreSwap);
 	free(config);
 }
+
+
+void validarArgumentos(int argc, char **argv) {
+	if(argc != 2) {
+		printf("Debe ingresar la ruta del archivo de configuración como único parámetro\n");
+		exit(1);
+	}
+}

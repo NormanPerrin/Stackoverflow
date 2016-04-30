@@ -3,9 +3,11 @@
 #include <utilidades/general.h>
 #include "lib/fswap.h"
 
-int main(void) {
+int main(int argc, char **argv) {
 
-	leerArchivoDeConfiguracion("configSwap.txt"); // Abro archivo configuración
+	validarArgumentos(argc, argv);
+
+	leerArchivoDeConfiguracion(argv[1]); // Abro archivo configuración
 
 	escucharUMC(); // Conexión con UMC
 

@@ -22,5 +22,7 @@
 	void setearValores_config(t_config * archivoConfig);
 	void escucharUMC();
 	void liberarEstructuraConfig();
+	void validarArgumentos(int argc, char **argv);
+
 
 #endif /* FSWAP_H_ */
