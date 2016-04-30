@@ -27,6 +27,6 @@
 	int comprobarQueExistaArchivo(char * ruta);
 	void setearValores_config(t_config * archivoConfig); // Hay que redefinirlo en cada proceso (Ejemplo en Núcleo)
 	void handshake_servidor(int sockCliente, char *mensaje); // Envía mensaje handshake al socketCliente y luego se queda esperando mensaje de confirmación
-	void handshake_cliente(int sockClienteDe, char *mensaje);
+	void handshake_cliente(int sockClienteDe, char *mensaje); // Se queda en espera de mensaje de servidor y luego envía un mensaje
 
 #endif

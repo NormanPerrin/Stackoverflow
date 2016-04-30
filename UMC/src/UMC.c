@@ -4,7 +4,9 @@
 
 int main(int argc, char **argv) {
 
-	leerArchivoDeConfiguracion("configUMC.txt"); // Abro archivo de configuración
+	validarArgumentos(argc, argv);
+
+	leerArchivoDeConfiguracion(argv[1]); // Abro archivo de configuración
 
 	conectarConSwap(); // Conexión con Swap
 
