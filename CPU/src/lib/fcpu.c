@@ -15,8 +15,9 @@ int fd_serverCPU;
 
 	fd_serverCPU = nuevoSocket();
 	conectarSocket(fd_serverCPU, ipNucleo, puertoNucleo);
+	handshake_cliente(fd_serverCPU, "P");
 	// Creo un paquete (string) de size PACKAGESIZE, que le enviaré al Núcleo
-	int enviar = 1;
+	/*int enviar = 1;
 		char message[PACKAGESIZE];
 
 		printf("Conectado al Núcleo. Ya se puede enviar mensajes. Escriba 'exit' para salir\n");
@@ -26,7 +27,7 @@ int fd_serverCPU;
 			if (!strcmp(message,"exit\n")) enviar = 0; // Chequeo que no se quiera salir
 			if (enviar) enviarPorSocket(fd_serverCPU, message, strlen(message) + 1); // Sólo envío si no quiere salir
 		}
-		close(fd_serverCPU);
+		close(fd_serverCPU);*/
 } // Soy cliente del Núcleo, es  decir, soy el que inicia la conexión con él
 
 void conectarConUMC(){
@@ -34,8 +35,9 @@ int fd_serverCPU;
 
 	fd_serverCPU = nuevoSocket();
 	conectarSocket(fd_serverCPU, ipUMC, puertoUMC);
+	handshake_cliente(fd_serverCPU, "P");
 	// Creo un paquete (string) de size PACKAGESIZE, que le enviaré a la UMC
-	int enviar = 1;
+	/*int enviar = 1;
 		char message[PACKAGESIZE];
 
 		printf("Conectado a la UMC. Ya se puede enviar mensajes. Escriba 'exit' para salir\n");
@@ -45,7 +47,7 @@ int fd_serverCPU;
 			if (!strcmp(message,"exit\n")) enviar = 0; // Chequeo que no se quiera salir
 			if (enviar) enviarPorSocket(fd_serverCPU, message, strlen(message) + 1); // Sólo envío si no quiere salir
 		}
-		close(fd_serverCPU);
+		close(fd_serverCPU);*/
 } // Soy cliente de la UMC, es  decir, soy el que inicia la conexión con ella
 
 void testLecturaArchivoDeConfiguracion(){
