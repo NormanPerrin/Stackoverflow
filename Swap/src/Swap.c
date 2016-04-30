@@ -12,5 +12,6 @@ int main(int argc, char **argv) {
 	escucharUMC(); // Conexión con UMC
 
 	liberarEstructuraConfig();
+
 	return EXIT_SUCCESS;
 }

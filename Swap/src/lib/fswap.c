@@ -8,7 +8,6 @@ int sockUMC;
 void setearValores_config(t_config * archivoConfig){
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
 	config->nombreSwap = (char*)reservarMemoria(CHAR*30);
-
 	config->puerto = config_get_int_value(archivoConfig, "Puerto_Escucha");
 	config->nombreSwap = strdup(config_get_string_value (archivoConfig, "Nombre_Swap"));
 	config->cantidadPaginas = config_get_int_value(archivoConfig, "Cantidad_Paginas");
