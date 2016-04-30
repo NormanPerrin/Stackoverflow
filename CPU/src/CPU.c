@@ -6,7 +6,7 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU); // Abro archivo configuración
+	leerArchivoDeConfiguracion("configCPU.txt"); // Abro archivo configuración
 
 	testLecturaArchivoDeConfiguracion();
 

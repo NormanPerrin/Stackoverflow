@@ -8,7 +8,6 @@
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-#define RUTA_CONFIG_NUCLEO "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Nucleo/config.txt"
 
 // Variables Globales
 int puertoPrograma;

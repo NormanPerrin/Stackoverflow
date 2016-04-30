@@ -5,7 +5,7 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO); // Abro archivo configuración
+	leerArchivoDeConfiguracion("configNucleo.txt"); // Abro archivo configuración
 
 	testLecturaArchivoDeConfiguracion(); // Comparo con los valores de ejemplo del archivo
 

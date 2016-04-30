@@ -10,7 +10,6 @@
 	#include <stdlib.h>
 
 	#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-	#define RUTA_CONFIG_UMC "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/UMC/config.txt"
 
 	// Estructuras
 	typedef struct {

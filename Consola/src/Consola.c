@@ -5,7 +5,7 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion(RUTA_CONFIG_CONSOLA); // Abro archivo configuración
+	leerArchivoDeConfiguracion("configConsola.txt"); // Abro archivo configuración
 
 	testLecturaArchivoDeConfiguracion();
 

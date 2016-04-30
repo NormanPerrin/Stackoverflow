@@ -6,7 +6,6 @@
 #include <commons/config.h>
 #include <commons/log.h>
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-#define RUTA_CONFIG_CONSOLA "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Consola/src/Consola.c"
 
 // Variables globales
 int puertoNucleo; // Puerto donde se encuentra escuchando el proceso Núcleo
