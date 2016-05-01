@@ -8,10 +8,10 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void conectarConNucleo(){
-int fd_serverConsola;
-
+	int fd_serverConsola;
 	fd_serverConsola = nuevoSocket();
-	conectarSocket(fd_serverConsola, ipNucleo, puertoNucleo);
+	int ret = conectarSocket(fd_serverConsola, ipNucleo, puertoNucleo);
+	validar_conexion(ret, 1); // Al ser cliente es terminante
 	handshake_cliente(fd_serverConsola, "C");
 }
 
@@ -19,3 +19,18 @@ void testLecturaArchivoDeConfiguracion(){
 	printf("Puerto Núcleo: %d\n", puertoNucleo);
 	printf("IP Núcleo: %s\n", ipNucleo);
 }
+
+void liberarRecusos() {
+	free(ipNucleo);
+}
+
+int validar_servidor(char *id) {
+	if(!strcmp(id, "N")) {
+		printf("Servidor aceptado\n");
+		return TRUE;
+	} else {
+		printf("Servidor rechazado\n");
+		return FALSE;
+	}
+}
+int validar_cliente(char *id) {return 0;}

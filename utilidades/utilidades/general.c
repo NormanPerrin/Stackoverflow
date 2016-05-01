@@ -35,27 +35,79 @@ int comprobarQueExistaArchivo(char * ruta) {
 	}
 }
 
-void handshake_servidor(int sockCliente, char *mensaje) {
+int handshake_servidor(int sockCliente, char *mensaje) {
 
-	enviarPorSocket(sockCliente, mensaje, CHAR*2);
+	enviarPorSocket(sockCliente, mensaje, HANDSHAKE_SIZE);
 
-	char *buff = (char*)reservarMemoria(CHAR*2);
+	char *buff = (char*)reservarMemoria(HANDSHAKE_SIZE);
+	int status = recibirPorSocket(sockCliente, buff, HANDSHAKE_SIZE);
 
-	recibirPorSocket(sockCliente, buff, CHAR*2);
+	if( validar_recive(status, 0) == TRUE ) { // El cliente envió un mensaje
 
-	buff[1] = '\0';
-	printf("Handshake: %s\n", buff);
+		buff[HANDSHAKE_SIZE-1] = '\0';
+		if (validar_cliente(buff)) {
+			printf("Handshake: %s\n", buff);
+			free(buff);
+			return TRUE;
+		} else {
+			free(buff);
+			return FALSE;
+		}
 
-	free(buff);
+	} else { // Hubo algún error o se desconectó el cliente
+
+		free(buff);
+		return FALSE;
+
+	}
+
+	return FALSE; // No debería llegar acá pero lo pongo por el warning
 }
 
 void handshake_cliente(int sockClienteDe, char *mensaje) {
 
-	char *buff = (char*)reservarMemoria(CHAR*2);
-	recibirPorSocket(sockClienteDe, buff, CHAR*2);
-	buff[1] = '\0';
-	printf("Handshake: %s\n", buff);
+	char *buff = (char*)reservarMemoria(HANDSHAKE_SIZE);
+	int status = recibirPorSocket(sockClienteDe, buff, HANDSHAKE_SIZE);
+	validar_recive(status, 1); // Es terminante ya que la conexión es con el servidor
 
-	free(buff);
-	enviarPorSocket(sockClienteDe, mensaje, CHAR*2);
+	buff[HANDSHAKE_SIZE-1] = '\0';
+	if( validar_servidor(buff) == FALSE) {
+		free(buff);
+		exit(ERROR);
+	} else {
+		printf("Handshake: %s\n", buff);
+		free(buff);
+		enviarPorSocket(sockClienteDe, mensaje, HANDSHAKE_SIZE);
+	}
+}
+
+int validar_conexion(int ret, int modo) {
+
+	if(ret == ERROR) {
+
+		if(modo == 1) { // Modo terminante
+			exit(ERROR);
+		} else { // Sino no es terminante
+			return FALSE;
+		}
+	} else { // No hubo error
+		printf("Alguien se conectó\n");
+		return TRUE;
+	}
+}
+
+int validar_recive(int status, int modo) {
+
+	if( (status == ERROR) || (status == 0) ) {
+
+		if(modo == 1) { // Modo terminante
+			exit(ERROR);
+		} else { // Modo no terminante
+			return FALSE;
+		}
+
+	} else {
+		return TRUE;
+	}
+
 }

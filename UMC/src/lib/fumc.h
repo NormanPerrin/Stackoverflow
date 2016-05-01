@@ -6,11 +6,9 @@
 	#include <commons/config.h>
 	#include <commons/log.h>
 	#include <pthread.h>
-	#include <stdio.h>
-	#include <stdlib.h>
 
 	#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-#define RUTA_CONFIG_UMC "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/UMC/configUMC.txt"
+	#define RUTA_CONFIG_UMC "configUMC.txt"
 
 	// Estructuras
 	typedef struct {
@@ -33,7 +31,9 @@
 	void consola(); // Entrada por stdin
 	void crearHiloCliente(int sockCliente); // Crea un hilo cliente al aceptar conexión
 	void cliente(void* sockCliente); // Maneja pedidos del cliente
-	void liberarEstructuraConfig();
-	void validarArgumentos(int argc, char **argv);
+	void liberarEstructura();
+	void liberarRecusos();
+	int validar_cliente(char *id); // Valida que el cliente sea CPU o Nucleo
+	int validar_servidor(char *id); // Valida que el servidor sea Swap
 
 #endif /* LIB_FUMC_H_ */

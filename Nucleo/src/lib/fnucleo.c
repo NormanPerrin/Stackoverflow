@@ -9,11 +9,11 @@ void setearValores_config(t_config * archivoConfig){
 	ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
 	quantum = config_get_int_value(archivoConfig, "QUANTUM");
 	retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
-//	pasarCadenasArray(semaforosID, config_get_array_value(archivoConfig, "SEM_IDS"));
-//	pasarCadenasArray(ioID, config_get_array_value(archivoConfig, "IO_IDS"));
-//	pasarCadenasArray(variablesCompartidas, config_get_array_value(archivoConfig, "SHARED_VARS"));
-//	pasarEnterosArray(semaforosValInicial, config_get_array_value(archivoConfig, "SEM_INIT"));
-//	pasarEnterosArray(retardosIO, config_get_array_value(archivoConfig, "IO_SLEEP"));
+	pasarCadenasArray(semaforosID, config_get_array_value(archivoConfig, "SEM_IDS"));
+	pasarCadenasArray(ioID, config_get_array_value(archivoConfig, "IO_IDS"));
+	pasarCadenasArray(variablesCompartidas, config_get_array_value(archivoConfig, "SHARED_VARS"));
+	pasarEnterosArray(semaforosValInicial, config_get_array_value(archivoConfig, "SEM_INIT"));
+	pasarEnterosArray(retardosIO, config_get_array_value(archivoConfig, "IO_SLEEP"));
 
 }
 
@@ -23,9 +23,19 @@ void escucharACPU(){
 			fd_escuchaCPU = nuevoSocket();
 			asociarSocket(fd_escuchaCPU, puertoCPU);
 			escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);
-			fd_nuevoCPU= aceptarConexionSocket(fd_escuchaCPU);
-			printf("CPU conectado. Esperando mensajes\n");
-			handshake_servidor(fd_nuevoCPU, "N");
+
+			int ret_handshake = 0;
+			while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
+
+				fd_nuevoCPU = aceptarConexionSocket(fd_escuchaCPU);
+
+				if (validar_conexion(fd_nuevoCPU, 0) == FALSE) {
+					continue;
+				} else {
+					ret_handshake = handshake_servidor(fd_nuevoCPU, "N");
+				}
+
+			} // Cuando sale hay una conexión válida y verificada
 
 				char package[PACKAGESIZE];
 				int status = 1;		// Estructura que manjea el status de los recieve.
@@ -56,10 +66,19 @@ void escucharAConsola(){
 		fd_escuchaConsola = nuevoSocket();
 		asociarSocket(fd_escuchaConsola, puertoPrograma);
 		escucharSocket(fd_escuchaConsola, CONEXIONES_PERMITIDAS);
-		fd_nuevaConsola= aceptarConexionSocket(fd_escuchaConsola);
 
-		printf("Consola conectada. Esperando mensajes\n");
-		handshake_servidor(fd_nuevaConsola, "N");
+		int ret_handshake = 0;
+		while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
+
+			fd_nuevaConsola = aceptarConexionSocket(fd_nuevaConsola);
+
+			if (validar_conexion(fd_nuevaConsola, 0) == FALSE) {
+				continue;
+			} else {
+				ret_handshake = handshake_servidor(fd_nuevaConsola, "N");
+			}
+
+		} // Cuando sale hay una conexión válida y verificada
 
 			char package[PACKAGESIZE];
 			int status = 1;		// Estructura que manjea el status de los recieve.
@@ -87,7 +106,8 @@ void conectarConUMC(){
 	int fd_serverUMC;
 
 	fd_serverUMC = nuevoSocket();
-		conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
+		int ret = conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
+		validar_conexion(ret, 1);
 		handshake_cliente(fd_serverUMC, "N");
 		// Creo un paquete (string) de size PACKAGESIZE, que le enviaré a la UMC
 		/*int enviar = 1;
@@ -153,5 +173,25 @@ char* stringNum;
 	 stringNum = strdup(variablesConfig[i]);
 	 numeros[i] = atoi(stringNum);
 	 	 i++;
+	}
+}
+
+int validar_cliente(char *id) {
+	if( !strcmp(id, "C") || !strcmp(id, "P") ) {
+		printf("Cliente aceptado\n");
+		return TRUE;
+	} else {
+		printf("Cliente rechazado\n");
+		return FALSE;
+	}
+}
+
+int validar_servidor(char *id) {
+	if(!strcmp(id, "U")) {
+		printf("Servidor aceptado\n");
+		return TRUE;
+	} else {
+		printf("Servidor rechazado\n");
+		return FALSE;
 	}
 }

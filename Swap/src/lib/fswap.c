@@ -1,8 +1,8 @@
 #include "fswap.h"
 
 // Globales
-t_configuracion *config;
-int sockUMC;
+t_configuracion *config; // guarda valores config
+int sockUMC; // socket cliente UMC
 
 // Funciones
 void setearValores_config(t_config * archivoConfig){
@@ -24,15 +24,25 @@ void escucharUMC(){
 	asociarSocket(sockServidor, config->puerto);
 	escucharSocket(sockServidor, 1);
 
-	sockUMC = aceptarConexionSocket(sockServidor);
-	printf("UMC conectada. Esperando mensajes\n");
-	handshake_servidor(sockUMC, "S");
+	int ret_handshake = 0;
+	while(ret_handshake == 0) { // Mientras que el cliente adecuado no se conecte
+
+		sockUMC = aceptarConexionSocket(sockServidor);
+
+		if ( validar_conexion(sockUMC, 0) == FALSE ) {
+			continue;
+		} else {
+			ret_handshake = handshake_servidor(sockUMC, "S");
+		}
+
+	}
 
 	char package[PACKAGESIZE];
 	int status = 1;		// Estructura que manjea el status de los recieve.
 
 	while (status > 0){
 		status = recibirPorSocket(sockUMC, package, CHAR*2);
+		validar_recive(status, 1);
 		package[1] = '\0';
 		printf("UMC: %s\n", package);
 	}
@@ -42,15 +52,23 @@ void escucharUMC(){
 }
 
 
-void liberarEstructuraConfig() {
+void liberarEstructura() {
 	free(config->nombreSwap);
 	free(config);
 }
 
+void liberarRecusos() {
+	// liberar otros recursos
+	liberarEstructura();
+}
 
-void validarArgumentos(int argc, char **argv) {
-	if(argc != 2) {
-		printf("Debe ingresar la ruta del archivo de configuración como único parámetro\n");
-		exit(1);
+int validar_cliente(char *id) {
+	if(!strcmp(id, "U")) {
+		printf("Cliente aceptado\n");
+		return TRUE;
+	} else {
+		printf("Cliente rechazado\n");
+		return FALSE;
 	}
 }
+int validar_servidor(char *id){return 0;}

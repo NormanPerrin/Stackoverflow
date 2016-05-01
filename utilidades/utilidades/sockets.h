@@ -18,7 +18,7 @@
 #define FALSE 0
 #define TRUE 1
 #define ERROR -1 // Las llamadas al sistema utilizadas retornan -1 en caso de error
-#define manejarError(mensajeError) {perror(mensajeError);} //--abort(); Función para el tratamiento de errores, muestra mensaje a través de perror
+#define manejarError(mensajeError) {perror(mensajeError);} // Función para el tratamiento de errores, muestra mensaje a través de perror
 
 
 // *******************************************************************

@@ -1,17 +1,13 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <utilidades/general.h>
 #include "lib/fswap.h"
 
-int main(int argc, char **argv) {
+int main(void) {
 
-	validarArgumentos(argc, argv);
-
-	leerArchivoDeConfiguracion(argv[1]); // Abro archivo configuración
+	leerArchivoDeConfiguracion(RUTA_CONFIG_SWAP); // Abro archivo configuración
 
 	escucharUMC(); // Conexión con UMC
 
-	liberarEstructuraConfig();
+	liberarRecusos(); // Libera memoria asignada
 
 	return EXIT_SUCCESS;
 }

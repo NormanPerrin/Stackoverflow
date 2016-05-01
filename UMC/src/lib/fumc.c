@@ -1,16 +1,14 @@
 #include "fumc.h"
 
 // Globales
-t_configuracion *config;
+t_configuracion *config; // guarda valores del config
 int exitFlag = FALSE; // exit del programa
-int sockClienteDeSwap; // Se lo va a llamar a necesidad en distintas funciones
+int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
 
 
 void setearValores_config(t_config * archivoConfig) {
-
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
 	config->ip_swap = (char*)reservarMemoria(CHAR*20);
-
 	config->backlog = config_get_int_value(archivoConfig, "BACKLOG");
 	config->puerto = config_get_int_value(archivoConfig, "PUERTO");
 	config->ip_swap = strdup(config_get_string_value(archivoConfig, "IP_SWAP"));
@@ -25,7 +23,8 @@ void setearValores_config(t_config * archivoConfig) {
 
 void conectarConSwap(){
 	sockClienteDeSwap = nuevoSocket();
-	conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
+	int ret = conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
+	validar_conexion(ret, 1);
 	handshake_cliente(sockClienteDeSwap, "U");
 }
 
@@ -41,14 +40,26 @@ void crearHilos() {
 
 void servidor() {
 
-	int sockServidor = nuevoSocket();
+	sockServidor = nuevoSocket();
 	asociarSocket(sockServidor, config->puerto);
 	escucharSocket(sockServidor, config->backlog);
 
 	while(!exitFlag) {
-		int sockCliente = aceptarConexionSocket(sockServidor); // TODO fijarse si abortar programa al error del accept()
-		handshake_servidor(sockCliente, "U");
-		crearHiloCliente(sockCliente); // TODO hacer validación de cliente antes de crearle un hilo para que no sea cualquier gil
+
+		int sockCliente, ret_handshake = 0;
+
+		while(ret_handshake == 0) {
+
+			sockCliente = aceptarConexionSocket(sockServidor);
+			if( validar_conexion(sockCliente, 0) == FALSE ) {
+				continue;
+			} else {
+				ret_handshake = handshake_servidor(sockCliente, "U");
+			}
+
+		}
+
+		crearHiloCliente(sockCliente);
 	}
 
 	close(sockServidor);
@@ -80,7 +91,6 @@ void consola() {
 void crearHiloCliente(int sockCliente) {
 	pthread_t hilo_cliente;
 	pthread_create(&hilo_cliente, NULL, (void*)cliente, &sockCliente);
-	pthread_join(hilo_cliente, NULL);
 }
 
 void cliente(void* fdCliente) {
@@ -89,10 +99,17 @@ void cliente(void* fdCliente) {
 	char *buff = (char*)reservarMemoria(PACKAGESIZE);
 	int ret = 1;
 
-	while(ret > 0 && !exitFlag) { // en 0 se desconecta y en negativo hubo error
-		ret = recibirPorSocket(sockCliente, buff, 2); // TODO PACKAGESIZE
-		buff[1] = '\0';
-		printf("Cliente #%d: %s\n", sockCliente, buff);
+	while(ret > 0 && !exitFlag) {
+
+		ret = recibirPorSocket(sockCliente, buff, CHAR*2);
+
+		if( validar_recive(ret, 0) == FALSE) { // Si se desconecta una CPU o hay error en mensaje no pasa nada. Por eso no terminante
+			break;
+		} else {
+			buff[1] = '\0';
+			printf("Cliente #%d: %s\n", sockCliente, buff);
+		}
+
 	}
 
 	free(buff);
@@ -100,16 +117,33 @@ void cliente(void* fdCliente) {
 }
 
 
-void liberarEstructuraConfig() {
+void liberarEstructura() {
 	free(config->ip_swap);
 	free(config);
 }
 
+void liberarRecusos() {
+	// liberar otros recursos
+	liberarEstructura();
+}
 
-void validarArgumentos(int argc, char **argv) {
 
-	if(argc != 2) {
-		printf("Debe ingresar la ruta del archivo de configuración como único parámetro\n");
-		exit(1);
+int validar_cliente(char *id) {
+	if( !strcmp(id, "N") || !strcmp(id, "P") ) {
+		printf("Cliente aceptado\n");
+		return TRUE;
+	} else {
+		printf("Cliente rechazado\n");
+		return FALSE;
+	}
+}
+
+int validar_servidor(char *id) {
+	if(!strcmp(id, "S")) {
+		printf("Servidor aceptado\n");
+		return TRUE;
+	} else {
+		printf("Servidor rechazado\n");
+		return FALSE;
 	}
 }
