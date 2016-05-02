@@ -29,7 +29,7 @@
 	void crearHilos(); // Crea hilos servidor y consola
 	void servidor(); // Las conexiones de CPU y Núcleo se van a realizar por acá
 	void consola(); // Entrada por stdin
-	void crearHiloCliente(int sockCliente); // Crea un hilo cliente al aceptar conexión
+	void crearHiloCliente(int *sockCliente); // Crea un hilo cliente al aceptar conexión
 	void cliente(void* sockCliente); // Maneja pedidos del cliente
 	void liberarEstructura();
 	void liberarRecusos();

@@ -46,15 +46,16 @@ void servidor() {
 
 	while(!exitFlag) {
 
-		int sockCliente, ret_handshake = 0;
+		int ret_handshake = 0;
+		int *sockCliente = (int*)reservarMemoria(INT);
 
 		while(ret_handshake == 0) {
 
-			sockCliente = aceptarConexionSocket(sockServidor);
-			if( validar_conexion(sockCliente, 0) == FALSE ) {
+			*sockCliente = aceptarConexionSocket(sockServidor);
+			if( validar_conexion(*sockCliente, 0) == FALSE ) {
 				continue;
 			} else {
-				ret_handshake = handshake_servidor(sockCliente, "U");
+				ret_handshake = handshake_servidor(*sockCliente, "U");
 			}
 
 		}
@@ -88,9 +89,9 @@ void consola() {
 }
 
 
-void crearHiloCliente(int sockCliente) {
+void crearHiloCliente(int *sockCliente) {
 	pthread_t hilo_cliente;
-	pthread_create(&hilo_cliente, NULL, (void*)cliente, &sockCliente);
+	pthread_create(&hilo_cliente, NULL, (void*)cliente, sockCliente);
 }
 
 void cliente(void* fdCliente) {
