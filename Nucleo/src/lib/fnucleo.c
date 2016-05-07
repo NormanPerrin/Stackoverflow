@@ -1,6 +1,5 @@
 #include "fnucleo.h"
 
-// Funciones
 
 void setearValores_config(t_config * archivoConfig){
 	puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
@@ -9,42 +8,49 @@ void setearValores_config(t_config * archivoConfig){
 	ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
 	quantum = config_get_int_value(archivoConfig, "QUANTUM");
 	retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
-	pasarCadenasArray(semaforosID, config_get_array_value(archivoConfig, "SEM_IDS"));
-	pasarCadenasArray(ioID, config_get_array_value(archivoConfig, "IO_IDS"));
-	pasarCadenasArray(variablesCompartidas, config_get_array_value(archivoConfig, "SHARED_VARS"));
-	pasarEnterosArray(semaforosValInicial, config_get_array_value(archivoConfig, "SEM_INIT"));
-	pasarEnterosArray(retardosIO, config_get_array_value(archivoConfig, "IO_SLEEP"));
-
+//	pasarCadenasArray(semaforosID, config_get_array_value(archivoConfig, "SEM_IDS"));
+//	pasarCadenasArray(ioID, config_get_array_value(archivoConfig, "IO_IDS"));
+//	pasarCadenasArray(variablesCompartidas, config_get_array_value(archivoConfig, "SHARED_VARS"));
+//	pasarEnterosArray(semaforosValInicial, config_get_array_value(archivoConfig, "SEM_INIT"));
+//	pasarEnterosArray(retardosIO, config_get_array_value(archivoConfig, "IO_SLEEP"));
 }
 
 void escucharACPU(){
-	int fd_escuchaCPU, fd_nuevoCPU;
+	int fd_nuevoCPU;
 
-			fd_escuchaCPU = nuevoSocket();
-			asociarSocket(fd_escuchaCPU, puertoCPU);
-			escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);
+	fd_escuchaCPU = nuevoSocket();
+	asociarSocket(fd_escuchaCPU, puertoCPU);
+	escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);
 
-			int ret_handshake = 0;
-			while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
+	int ret_handshake = 0;
+	while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
 
-				fd_nuevoCPU = aceptarConexionSocket(fd_escuchaCPU);
+		fd_nuevoCPU = aceptarConexionSocket(fd_escuchaCPU);
 
-				if (validar_conexion(fd_nuevoCPU, 0) == FALSE) {
-					continue;
-				} else {
-					ret_handshake = handshake_servidor(fd_nuevoCPU, "N");
-				}
+		if (validar_conexion(fd_nuevoCPU, 0) == FALSE) {
+			continue;
+		} else {
+			ret_handshake = handshake_servidor(fd_nuevoCPU, "N");
+		}
 
-			} // Cuando sale hay una conexión válida y verificada
+	} // Cuando sale hay una conexión válida y verificada
 
-				char package[PACKAGESIZE];
-				int status = 1;		// Estructura que manjea el status de los recieve.
+	char *package = (char*)reservarMemoria(PACKAGESIZE);
+	int status = 1;		// Estructura que manjea el status de los recieve.
 
-				while (status > 0){
-					status = recibirPorSocket(fd_nuevoCPU, package, CHAR*2);
-					package[1] = '\0';
-					printf("CPU: %s\n", package);
-				}
+	while (status > 0){ // TODO ver protocolo mensajes con CPU
+
+		status = recibirPorSocket(fd_nuevoCPU, package, CHAR*2);
+
+		if ( validar_recive(status, 0) != 1 ) { // desconexión o error
+			free(package);
+			break;
+		} else {
+			package[1] = '\0';
+			printf("Consola: %s\n", package);
+		}
+
+	}
 			/*escucharSocket(fd_escuchaCPU, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
 
 			/*char package[PACKAGESIZE];
@@ -55,39 +61,48 @@ void escucharACPU(){
 					if (status != 0) printf("%s", package);
 
 				}*/
-				close(fd_nuevoCPU);
-					close(fd_escuchaCPU);
+	close(fd_nuevoCPU);
+	close(fd_escuchaCPU);
 
 } // Soy servidor, espero mensajes de algún CPU
 
 void escucharAConsola(){
+
 	int fd_escuchaConsola, fd_nuevaConsola;
 
-		fd_escuchaConsola = nuevoSocket();
-		asociarSocket(fd_escuchaConsola, puertoPrograma);
-		escucharSocket(fd_escuchaConsola, CONEXIONES_PERMITIDAS);
+	fd_escuchaConsola = nuevoSocket();
+	asociarSocket(fd_escuchaConsola, puertoPrograma);
+	escucharSocket(fd_escuchaConsola, CONEXIONES_PERMITIDAS);
 
-		int ret_handshake = 0;
-		while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
+	int ret_handshake = 0;
+	while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
 
-			fd_nuevaConsola = aceptarConexionSocket(fd_nuevaConsola);
+		fd_nuevaConsola = aceptarConexionSocket(fd_escuchaConsola);
 
-			if (validar_conexion(fd_nuevaConsola, 0) == FALSE) {
-				continue;
-			} else {
-				ret_handshake = handshake_servidor(fd_nuevaConsola, "N");
-			}
+		if (validar_conexion(fd_nuevaConsola, 0) == FALSE) {
+			continue;
+		} else {
+			ret_handshake = handshake_servidor(fd_nuevaConsola, "N");
+		}
 
-		} // Cuando sale hay una conexión válida y verificada
+	} // Cuando sale hay una conexión válida y verificada
 
-			char package[PACKAGESIZE];
-			int status = 1;		// Estructura que manjea el status de los recieve.
+	char *package = (char*)reservarMemoria(PACKAGESIZE);
+	int status = 1;		// Estructura que manjea el status de los recieve.
 
-			while (status > 0){
-				status = recibirPorSocket(fd_nuevaConsola, package, CHAR*2);
-				package[1] = '\0';
-				printf("Consola: %s\n", package);
-			}
+	while (status > 0) { // TODO ver protocolo mensajes con Consola
+
+		status = recibirPorSocket(fd_nuevaConsola, package, CHAR*2);
+
+		if ( validar_recive(status, 0) != 1 ) { // desconexión o error
+			free(package);
+			break;
+		} else {
+			package[1] = '\0';
+			printf("Consola: %s\n", package);
+		}
+
+	}
 		/*escucharSocket(fd_escuchaConsola, CONEXIONES_PERMITIDAS);*/// Ponemos a esuchar de nuevo al socket escucha
 
 		/*char package[PACKAGESIZE];
@@ -98,17 +113,16 @@ void escucharAConsola(){
 				if (status != 0) printf("%s", package);
 
 			}*/
-			close(fd_nuevaConsola);
-				close(fd_escuchaConsola);
+	close(fd_nuevaConsola);
+	close(fd_escuchaConsola);
 } // Soy servidor, espero mensajes de alguna Consola
 
 void conectarConUMC(){
-	int fd_serverUMC;
 
 	fd_serverUMC = nuevoSocket();
-		int ret = conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
-		validar_conexion(ret, 1);
-		handshake_cliente(fd_serverUMC, "N");
+	int ret = conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
+	validar_conexion(ret, 1); // al ser cliente es terminante
+	handshake_cliente(fd_serverUMC, "N");
 		// Creo un paquete (string) de size PACKAGESIZE, que le enviaré a la UMC
 		/*int enviar = 1;
 			char message[PACKAGESIZE];

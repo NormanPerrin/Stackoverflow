@@ -33,8 +33,8 @@ void crearHilos() {
 	pthread_t hilo_servidor, hilo_consola;
 	pthread_create(&hilo_servidor, NULL, (void*)servidor, NULL);
 	pthread_create(&hilo_consola, NULL, (void*)consola, NULL);
-	pthread_join(hilo_servidor, NULL);
 	pthread_join(hilo_consola, NULL);
+	pthread_join(hilo_servidor, NULL);
 }
 
 

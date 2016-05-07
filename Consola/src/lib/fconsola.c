@@ -1,6 +1,12 @@
 #include "fconsola.h"
 
-// Funciones
+
+void validar_argumentos(int arg) {
+	if(arg != 2) {
+		printf("Debe ingresar el archivo a ejecutar como parámetro\n");
+		exit(1);
+	}
+}
 
 void setearValores_config(t_config * archivoConfig){
 	puertoNucleo = config_get_int_value(archivoConfig, "PUERTO_NUCLEO");
@@ -8,7 +14,6 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void conectarConNucleo(){
-	int fd_serverConsola;
 	fd_serverConsola = nuevoSocket();
 	int ret = conectarSocket(fd_serverConsola, ipNucleo, puertoNucleo);
 	validar_conexion(ret, 1); // Al ser cliente es terminante
@@ -34,3 +39,14 @@ int validar_servidor(char *id) {
 	}
 }
 int validar_cliente(char *id) {return 0;}
+
+void enviar_script(char *ruta) {
+	enviarPorSocket(fd_serverConsola, ruta, sizeof(ruta));
+}
+
+void esperar_mensajes() {
+	while(TRUE) {
+		int head; // TODO arreglar protocolo
+		recibirPorSocket(fd_serverConsola, &head, INT);
+	}
+}

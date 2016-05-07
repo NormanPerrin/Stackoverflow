@@ -17,6 +17,8 @@ int puertoUMC; // Puerto donde se encuentra escuchando el proceso UMC (no viene 
 char *ipUMC; // IP del proceso UMC
 int quantum;
 int retardoQuantum;
+int fd_escuchaCPU; // servidor de CPU
+int fd_serverUMC; // cliente de UMC
 // --Arrays
 char** semaforosID;
 int* semaforosValInicial;
