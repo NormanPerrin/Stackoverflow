@@ -1,12 +1,31 @@
 # Elestac
 
-## Checkpoint 1 (30 abril):
-- [x] ~~agregar commons~~
-  - [x] implementar librerías -> usamos config
-- [x] ~~agregar parser~~
-  - [ ] implementar parser en programa de ejemplo
-- [x] conectar módulos -> implementamos sockets
-  - [ ] función handshake
+## Objetivos generales:
+- [x] ~~Agregar commons~~
+- [ ] Parser
+  - [ ] Implementar parser
+- [ ] Conectar módulos
+  - [x] Función handshake
+  - [x] Identificar módulo al conectar
+  - [ ] Permitir múltiples conexiones
+    - [x] UMC
+    - [ ] Núcleo
+  - [ ] Implementar protocolos de comunicación y definir mensajes a enviar
+  - [ ] Implementar espera activa de mensajes
+
+### Objetivos para el próximo checkpoint
+- Núcleo
+  - [ ] Crear y gestionar PCBs en función del algoritmo RR 
+- UMC
+  - [x] Recibir múltiples conexiones
+  - [ ] Tabla de páginas sincronizada
+  - [ ] Interpretar solicitudes
+- CPU
+  - [ ] Invocar primitivas según parser (funcionalidad básica)
+- Swap
+  - [ ] Operar sobre archivo binario
+  - [ ] Generar estructuras de gestión
+  - [ ] Pedidos de creación, finalización y lectura funcionales
 
 ## Instalar ambiente de trabajo
 1. `git clone http://github.com/sisoputnfrba/tp-2016-1c-Cazadores-de-cucos.git`
@@ -20,13 +39,13 @@
 6. Agregamos el path para la shared library para eclipse
   1. Run - Run Configurations - Environment - New
   2. Name: LD_LIBRARY_PATH
-  3. Value: ${workspace_loc}/utilidades/Debug (pueden ir a Variables, buscar work y agregarlo)
+  3. Value: ${workspace_loc}/utilidades/Debug (Pueden ir a Variables, buscar work y agregarlo. Cada uno tiene valores diferentes)
   4. Aply
 7. Para linkear la shared para consola
   1. Abren la shell. Van a home con "~"
   2. Escriben: vim .bashrc
   3. Apretan la "i" y van abajo de todo
-  4. Escriben: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/Escritorio/tp-2016../utilidades/Debug`
+  4. Escriben: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/Escritorio/tp-2016../utilidades/Debug` (cada uno tiene valores diferentes)
   5. Aprietan Ctrl + C y escriben ":wq" y enter
   6. Para verificar que les funcionó pueden ir al directorio del ejecutable y escribir: `ldd Swap` y les debería aparecer la shared con una dirección
   7. Si no quieren hacer todo esto pueden optar por usar el comando `export` cuando lo necesiten estando en el directorio del ejecutable. Pero cada vez que abran una consola nueva lo van a tener que escribir de nuevo
@@ -63,7 +82,7 @@ Conjunto de elementos:
 - Para debuggear hilos usar breakpoints
 
 ## Links importantes
-- [Enunciado](http://www.utn.so/wp-content/uploads/2016/04/1C2016-Elestac-1.pdf)
+- [Enunciado]()
 - [Tutorial básico GitHub](https://youtu.be/cEGIFZDyszA?list=PL6gx4Cwl9DGAKWClAD_iKpNC0bGHxGhcx)
 - [Direccionario UTN](http://faq.utn.so/)
 - [Git Difftool](https://youtu.be/iCGrKFH2oeo)
