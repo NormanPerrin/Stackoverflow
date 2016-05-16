@@ -3,6 +3,7 @@
 
 #include <utilidades/sockets.h>
 #include <utilidades/general.h>
+#include <pthread.h>
 #include <commons/config.h>
 #include <commons/log.h>
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
@@ -17,7 +18,6 @@ int puertoUMC; // Puerto donde se encuentra escuchando el proceso UMC (no viene 
 char *ipUMC; // IP del proceso UMC
 int quantum;
 int retardoQuantum;
-int fd_escuchaCPU; // servidor de CPU
 int fd_serverUMC; // cliente de UMC
 // --Arrays
 char** semaforosID;
@@ -29,8 +29,11 @@ t_log* logger;
 
 // Estructuras
 
+
 // Cabeceras
 void conectarConUMC();
+void crear_hilos_conexion(); // Crea 2 hilos: 1 hilo escuchar_conexiones(CPU) y otro escuchar_conexiones(Consola);
+void escuchar_conexiones(); // Escucha conexiones CPU y Consola
 void escucharACPU(); // Conexión con CPUs
 void escucharAConsola(); // Conexión con Consolas
 void setearValores_config(t_config * archivoConfig);

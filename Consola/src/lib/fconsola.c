@@ -45,8 +45,22 @@ void enviar_script(char *ruta) {
 }
 
 void esperar_mensajes() {
+
 	while(TRUE) {
-		int head; // TODO arreglar protocolo
-		recibirPorSocket(fd_serverConsola, &head, INT);
+
+		fd_set readfd;
+		uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
+		int ret;
+
+		FD_ZERO(&readfd);
+		FD_SET(fd_serverConsola, &readfd);
+
+		seleccionarSocket(fd_serverConsola, &readfd, NULL, NULL, NULL, NULL);
+
+		if( FD_ISSET(fd_serverConsola, &readfd) ) {
+			ret = recibirPorSocket(fd_serverConsola, head, 1);
+			validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
+		}
+
 	}
 }

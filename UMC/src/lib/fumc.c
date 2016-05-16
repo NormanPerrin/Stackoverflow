@@ -115,6 +115,7 @@ void cliente(void* fdCliente) {
 
 	free(buff);
 	close(sockCliente);
+	pthread_exit( pthread_self() );
 }
 
 

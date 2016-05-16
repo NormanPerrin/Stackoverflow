@@ -11,9 +11,7 @@ int main(void) {
 
 	conectarConUMC(); // Conexión con UMC
 
-	escucharAConsola(); // Conexión con Consolas
-
-	escucharACPU(); // Conexión con CPUs
+	crear_hilos_conexion(); // Me pongo a escuchar conexiones CPU y Consola
 
 	return EXIT_SUCCESS;
 }

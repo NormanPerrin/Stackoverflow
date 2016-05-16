@@ -2,6 +2,7 @@
 #define UTILIDADES_GENERAL_H_
 
 	#include <commons/config.h>
+	#include <stdint.h>
 	#include <errno.h>	// Incluye perror
 	#include "sockets.h"
 	#include <unistd.h>

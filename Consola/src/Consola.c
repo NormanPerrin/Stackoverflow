@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
 
 //	enviar_script(argv[1]); // Envia ruta de script a Núcleo
 
-//	esperar_mensajes();
+	esperar_mensajes();
 
 	liberarRecusos(); // Libera memoria asignada
 
