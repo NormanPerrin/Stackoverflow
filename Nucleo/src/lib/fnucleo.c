@@ -90,7 +90,7 @@ void escuchar_conexiones(void *tipo_cliente) {
 				} else { // si no es una nueva conexión entonces es un nuevo mensaje
 
 					uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
-					int status = recibirPorSocket(newfd, head, 1);
+					int status = recibirPorSocket(i, head, 1);
 
 					if ( validar_recive(status, 0) != 1 ) { // desconexión o error
 						free(head);
