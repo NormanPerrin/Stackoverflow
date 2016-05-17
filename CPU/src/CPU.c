@@ -11,6 +11,8 @@ int main(void) {
 
 	conectarConUMC(); // Conexión con UMC
 
+	esperar_ejecucion();
+
 	liberarEstructura(); // Libero memoria reservada para setear config
 
 	return EXIT_SUCCESS;

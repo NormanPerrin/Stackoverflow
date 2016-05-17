@@ -16,9 +16,14 @@
 		char *ipUMC;
 	} t_configuracion;
 
+	// Globales
+	t_configuracion *config;
+	int fd_serverCPU, fd_serverCPU;
+
 	// Cabeceras
 	void conectarConNucleo();
 	void conectarConUMC();
+	void esperar_ejecucion(); // Espera PCB para ejecutar de Núcleo idefinidamente
 	void setearValores_config(t_config * archivoConfig);
 	void liberarEstructura(); // Libera la memoria reservada en setear config
 	int validar_servidor(char *id); // Valida si la conexión es UMC o Nucleo

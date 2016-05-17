@@ -74,7 +74,7 @@ void consola() {
 
 	while(!exitFlag) {
 
-		scanf("%s", mensaje);
+		scanf("%[^\n]%*c", mensaje);
 
 		if(!strcmp(mensaje, "#")) {
 			printf("Saliendo de UMC\n");
@@ -97,25 +97,24 @@ void crearHiloCliente(int *sockCliente) {
 void cliente(void* fdCliente) {
 
 	int sockCliente = *((int*)fdCliente);
-	char *buff = (char*)reservarMemoria(PACKAGESIZE);
+	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
 	int ret = 1;
 
 	while(ret > 0 && !exitFlag) {
 
-		ret = recibirPorSocket(sockCliente, buff, CHAR*2);
+		ret = recibirPorSocket(sockCliente, head, 1);
 
 		if( validar_recive(ret, 0) == FALSE) { // Si se desconecta una CPU o hay error en mensaje no pasa nada. Por eso no terminante
 			break;
 		} else {
-			buff[1] = '\0';
-			printf("Cliente #%d: %s\n", sockCliente, buff);
+			// Aplicar protocolo
+			printf("%d\n", *head);
 		}
 
 	}
 
-	free(buff);
+	free(head);
 	close(sockCliente);
-	pthread_exit( pthread_self() );
 }
 
 

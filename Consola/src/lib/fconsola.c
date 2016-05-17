@@ -46,13 +46,13 @@ void enviar_script(char *ruta) {
 
 void esperar_mensajes() {
 
+	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
+
 	while(TRUE) {
-
-		uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
 		int ret;
-
 		ret = recibirPorSocket(fd_serverConsola, head, 1);
 		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-
 	}
+
+	free(head);
 }

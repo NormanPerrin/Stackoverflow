@@ -9,7 +9,7 @@ int main(void) {
 
 //	testLecturaArchivoDeConfiguracion(); // Comparo con los valores de ejemplo del archivo
 
-//	conectarConUMC(); // Conexión con UMC
+	conectarConUMC(); // Conexión con UMC
 
 	crear_hilos_conexion(); // Me pongo a escuchar conexiones CPU y Consola
 

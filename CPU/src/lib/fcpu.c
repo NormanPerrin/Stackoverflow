@@ -1,7 +1,5 @@
 #include "fcpu.h"
 
-// Globales
-t_configuracion *config;
 
 // Funciones
 void setearValores_config(t_config * archivoConfig){
@@ -13,7 +11,6 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void conectarConNucleo() {
-	int fd_serverCPU;
 	fd_serverCPU = nuevoSocket();
 	int ret = conectarSocket(fd_serverCPU, config->ipNucleo, config->puertoNucleo);
 	validar_conexion(ret, 1); // Es terminante por ser cliente
@@ -21,7 +18,6 @@ void conectarConNucleo() {
 }
 
 void conectarConUMC(){
-	int fd_serverCPU;
 	fd_serverCPU = nuevoSocket();
 	int ret = conectarSocket(fd_serverCPU, config->ipUMC, config->puertoUMC);
 	validar_conexion(ret, 1);
@@ -44,3 +40,17 @@ int validar_servidor(char *id) {
 	}
 }
 int validar_cliente(char *id) {return 0;}
+
+
+void esperar_ejecucion() {
+
+	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
+
+	while(TRUE) {
+		int ret;
+		ret = recibirPorSocket(fd_serverCPU, head, 1);
+		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
+	}
+
+	free(head);
+}
