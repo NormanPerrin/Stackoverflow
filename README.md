@@ -5,11 +5,9 @@
 - [ ] Parser
   - [ ] Implementar parser
 - [ ] Conectar módulos
-  - [x] Función handshake
-  - [x] Identificar módulo al conectar
-  - [ ] Permitir múltiples conexiones
-    - [x] UMC
-    - [ ] Núcleo
+  - [x] ~~Función handshake~~
+  - [x] ~~Identificar módulo al conectar~~
+  - [x] ~~Permitir múltiples conexiones~~
   - [ ] Implementar protocolos de comunicación y definir mensajes a enviar
   - [ ] Implementar espera activa de mensajes
 
@@ -17,7 +15,7 @@
 - Núcleo
   - [ ] Crear y gestionar PCBs en función del algoritmo RR 
 - UMC
-  - [x] Recibir múltiples conexiones
+  - [x] ~~Recibir múltiples conexiones~~
   - [ ] Tabla de páginas sincronizada
   - [ ] Interpretar solicitudes
 - CPU
