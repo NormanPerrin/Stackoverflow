@@ -14,10 +14,10 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void conectarConNucleo(){
-	fd_serverConsola = nuevoSocket();
-	int ret = conectarSocket(fd_serverConsola, ipNucleo, puertoNucleo);
+	fd_nucleo = nuevoSocket();
+	int ret = conectarSocket(fd_nucleo, ipNucleo, puertoNucleo);
 	validar_conexion(ret, 1); // Al ser cliente es terminante
-	handshake_cliente(fd_serverConsola, "C");
+	handshake_cliente(fd_nucleo, "C");
 }
 
 void testLecturaArchivoDeConfiguracion(){
@@ -40,9 +40,14 @@ int validar_servidor(char *id) {
 }
 int validar_cliente(char *id) {return 0;}
 
+
 void enviar_script(char *ruta) {
-	enviarPorSocket(fd_serverConsola, ruta, sizeof(ruta));
+
+	// msg_t *msg_to_send;
+	// msg_to_send = aplicar_protocolo_enviar(ENVIAR_SCRIPT, ruta);
+	// enviarPorSocket(fd_nucleo, msg_to_send, sizeof(msg_to_send));
 }
+
 
 void esperar_mensajes() {
 
@@ -50,9 +55,29 @@ void esperar_mensajes() {
 
 	while(TRUE) {
 		int ret;
-		ret = recibirPorSocket(fd_serverConsola, head, 1);
+		ret = recibirPorSocket(fd_nucleo, head, 1);
 		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
+		tratar_mensaje(*head);
 	}
 
 	free(head);
+}
+
+void tratar_mensaje(function f) {
+
+	switch(f) {
+		case IMPRIMIR:
+			// Tratar imprimir
+			// char *msg_print;
+			// msg_print = (char*)aplicar_protocolo_recibir(IMPRIMIR, fd_nucleo);
+			// printf("%s\n", msg_print);
+		case IMPRIMIR_TEXTO:
+			// Tratar imprimir texto
+			// char *msg_print;
+			// msg_print = (char*)aplicar_protocolo_recibir(IMPRIMIR_TEXTO, fd_nucleo);
+			// printf("%s\n", msg_print);
+		default:
+			fprintf(stderr, "Mensaje incorrecto %d\n", f);
+	}
+
 }
