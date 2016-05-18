@@ -57,27 +57,8 @@ void esperar_mensajes() {
 		int ret;
 		ret = recibirPorSocket(fd_nucleo, head, 1);
 		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-		tratar_mensaje(*head);
+		aplicar_protocolo_recibir(fd_nucleo, *head);
 	}
 
 	free(head);
-}
-
-void tratar_mensaje(function f) {
-
-	switch(f) {
-		case IMPRIMIR:
-			// Tratar imprimir
-			// char *msg_print;
-			// msg_print = (char*)aplicar_protocolo_recibir(IMPRIMIR, fd_nucleo);
-			// printf("%s\n", msg_print);
-		case IMPRIMIR_TEXTO:
-			// Tratar imprimir texto
-			// char *msg_print;
-			// msg_print = (char*)aplicar_protocolo_recibir(IMPRIMIR_TEXTO, fd_nucleo);
-			// printf("%s\n", msg_print);
-		default:
-			fprintf(stderr, "Mensaje incorrecto %d\n", f);
-	}
-
 }

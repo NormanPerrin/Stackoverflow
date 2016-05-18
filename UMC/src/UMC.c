@@ -6,6 +6,8 @@ int main(void) {
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG_UMC); // Abro archivo de configuración
 
+	iniciarEstructuras(); // Crea memoria y estructuras de administracións
+
 	conectarConSwap(); // Conexión con Swap
 
 	crearHilos(); // Creo hilos Servidor y Consola

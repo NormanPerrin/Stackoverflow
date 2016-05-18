@@ -23,8 +23,22 @@
 		int retardo;
 	} t_configuracion;
 
+	typedef struct {
+		int frame;
+		int pid;
+		int marco;
+	} tp_t;
+
+
+	// Globales
+	t_configuracion *config; // guarda valores del config
+	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
+	void *memoria; // tha memory
+	tp_t *tabla_paginas;
+
 	// Cabeceras
 	void abrirArchivoConfig(char *ruta); // Setea todos los valores de configuración
+	void iniciarEstructuras(); // Crea memoria y estructuras de administracións
 	void conectarConSwap(); // Se crea al principio. Luego se llama a necesidad
 	void crearHilos(); // Crea hilos servidor y consola
 	void servidor(); // Las conexiones de CPU y Núcleo se van a realizar por acá

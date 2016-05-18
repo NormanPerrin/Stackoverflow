@@ -2,6 +2,7 @@
 #define LIB_FCONSOLA_H_
 
 #include <utilidades/general.h>
+#include <utilidades/comunicaciones.h>
 #include <commons/config.h>
 #include <commons/log.h>
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
@@ -14,10 +15,6 @@ char * ipNucleo; // IP del proceso Núcleo
 int fd_nucleo; // Socket consola - nucleo
 
 // Estructuras
-typedef enum {
-	IMPRIMIR = 1,
-	IMPRIMIR_TEXTO = 2
-} function;
 
 // Cabeceras
 void validar_argumentos(int arg); // Valida argumentos de entrada
@@ -29,6 +26,5 @@ int validar_servidor(char *id); // Valida si la conexión es de Núcleo
 int validar_cliente(char *id); // Es para poner su definición y que no jodan errores
 void enviar_script(char *ruta); // Envía ruta de script AnSISOP a Núcleo
 void esperar_mensajes(); // Espera mensajes de Núcleo: Fin, Imprimir, Imprimir_texto
-void tratar_mensaje(function f); // Genera cierto comportamiento según la función en número que se le pase
 
 #endif /* LIB_FCONSOLA_H_ */

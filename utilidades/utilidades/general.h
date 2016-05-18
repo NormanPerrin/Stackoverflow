@@ -8,9 +8,6 @@
 	#include <unistd.h>
 	#include <string.h>
 
-	#define FALSE 0
-	#define TRUE 1
-	#define ERROR -1
 	#define INT (sizeof(int))
 	#define CHAR (sizeof(char))
 	#define manejarError(mensajeError) {perror(mensajeError);} //--abort(); Función para el tratamiento de errores

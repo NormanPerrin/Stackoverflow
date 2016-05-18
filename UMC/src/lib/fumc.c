@@ -1,10 +1,7 @@
 #include "fumc.h"
 
 // Globales
-t_configuracion *config; // guarda valores del config
 int exitFlag = FALSE; // exit del programa
-int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
-
 
 void setearValores_config(t_config * archivoConfig) {
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
@@ -125,6 +122,8 @@ void liberarEstructura() {
 
 void liberarRecusos() {
 	// liberar otros recursos
+	free(memoria);
+	free(tabla_paginas);
 	liberarEstructura();
 }
 
@@ -147,4 +146,15 @@ int validar_servidor(char *id) {
 		printf("Servidor rechazado\n");
 		return FALSE;
 	}
+}
+
+
+void iniciarEstructuras() {
+
+	int mp_length = config->marcos * config->marco_size;
+	memoria = reservarMemoria(mp_length); // Google Chrome be like
+
+	int tp_lenght = config->marcos * sizeof(tp_t);
+	tabla_paginas = reservarMemoria(tp_lenght);
+
 }
