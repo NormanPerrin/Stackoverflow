@@ -62,3 +62,6 @@ void esperar_mensajes() {
 
 	free(head);
 }
+
+
+void imprimir(char *texto) { printf("IMPRIMIR: %s\n", texto); }

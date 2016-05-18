@@ -9,7 +9,7 @@
   - [x] ~~Identificar módulo al conectar~~
   - [x] ~~Permitir múltiples conexiones~~
   - [ ] Implementar protocolos de comunicación y definir mensajes a enviar
-  - [ ] Implementar espera activa de mensajes
+  - [x] Implementar espera activa de mensajes
 
 ### Objetivos para el próximo checkpoint
 - Núcleo

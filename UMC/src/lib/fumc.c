@@ -104,8 +104,7 @@ void cliente(void* fdCliente) {
 		if( validar_recive(ret, 0) == FALSE) { // Si se desconecta una CPU o hay error en mensaje no pasa nada. Por eso no terminante
 			break;
 		} else {
-			// Aplicar protocolo
-			printf("%d\n", *head);
+			aplicar_protocolo_recibir(sockCliente, *head);
 		}
 
 	}
@@ -124,6 +123,7 @@ void liberarRecusos() {
 	// liberar otros recursos
 	free(memoria);
 	free(tabla_paginas);
+	free(tlb);
 	liberarEstructura();
 }
 
@@ -151,10 +151,40 @@ int validar_servidor(char *id) {
 
 void iniciarEstructuras() {
 
-	int mp_length = config->marcos * config->marco_size;
-	memoria = reservarMemoria(mp_length); // Google Chrome be like
+	int length = config->marcos * config->marco_size;
+	memoria = reservarMemoria(length); // Google Chrome be like
 
-	int tp_lenght = config->marcos * sizeof(tp_t);
-	tabla_paginas = reservarMemoria(tp_lenght);
+	length = config->marcos * sizeof(tp_t);
+	tabla_paginas = reservarMemoria(length);
+
+	length = config->entradas_tlb * sizeof(tlb_t);
+	tlb = reservarMemoria(length);
 
 }
+
+
+int inciar_programa(int pid, int paginas) {
+
+	int i;
+	for(i = 0; i < paginas; i++) {
+
+		int pos = 0;
+		while( tabla_paginas[pos].pid != 0 ){
+			// si se paso de los marcos disponibles hubo un fallo
+			if(pos > config->marcos) return FALSE;
+			pos++;
+		}
+
+		tabla_paginas[pos].pagina = i;
+		tabla_paginas[pos].pid = pid;
+
+	}
+
+	iniciar_programa_t *arg = reservarMemoria(sizeof(iniciar_programa_t));
+	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg);
+
+	free(arg);
+	return TRUE;
+}
+
+

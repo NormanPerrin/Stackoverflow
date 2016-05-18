@@ -3,6 +3,7 @@
 
 	#include <utilidades/sockets.h>
 	#include <utilidades/general.h>
+	#include <utilidades/comunicaciones.h>
 	#include <commons/config.h>
 	#include <commons/log.h>
 	#include <pthread.h>
@@ -24,10 +25,19 @@
 	} t_configuracion;
 
 	typedef struct {
-		int frame;
+		int pagina;
 		int pid;
 		int marco;
+		int bit_presencia;
+		int bit_uso;
+		int bit_modificado;
 	} tp_t;
+
+	typedef struct {
+		int pagina;
+		int pid;
+		int marco;
+	} tlb_t;
 
 
 	// Globales
@@ -35,6 +45,7 @@
 	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
 	void *memoria; // tha memory
 	tp_t *tabla_paginas;
+	tlb_t *tlb;
 
 	// Cabeceras
 	void abrirArchivoConfig(char *ruta); // Setea todos los valores de configuración
@@ -49,5 +60,6 @@
 	void liberarRecusos();
 	int validar_cliente(char *id); // Valida que el cliente sea CPU o Nucleo
 	int validar_servidor(char *id); // Valida que el servidor sea Swap
+	int inciar_programa(int pid, int paginas);
 
 #endif /* LIB_FUMC_H_ */

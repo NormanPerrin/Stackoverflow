@@ -26,5 +26,6 @@ int validar_servidor(char *id); // Valida si la conexión es de Núcleo
 int validar_cliente(char *id); // Es para poner su definición y que no jodan errores
 void enviar_script(char *ruta); // Envía ruta de script AnSISOP a Núcleo
 void esperar_mensajes(); // Espera mensajes de Núcleo: Fin, Imprimir, Imprimir_texto
+void imprimir(); // Imprime por consola
 
 #endif /* LIB_FCONSOLA_H_ */
