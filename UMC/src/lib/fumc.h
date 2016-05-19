@@ -3,14 +3,13 @@
 
 	#include <utilidades/sockets.h>
 	#include <utilidades/general.h>
+	#include <utilidades/comunicaciones.h>
 	#include <commons/config.h>
 	#include <commons/log.h>
 	#include <pthread.h>
-	#include <stdio.h>
-	#include <stdlib.h>
 
 	#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-#define RUTA_CONFIG_UMC "/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/UMC/configUMC.txt"
+	#define RUTA_CONFIG_UMC "configUMC.txt"
 
 	// Estructuras
 	typedef struct {
@@ -25,15 +24,42 @@
 		int retardo;
 	} t_configuracion;
 
+	typedef struct {
+		int pagina;
+		int pid;
+		int marco;
+		int bit_presencia;
+		int bit_uso;
+		int bit_modificado;
+	} tp_t;
+
+	typedef struct {
+		int pagina;
+		int pid;
+		int marco;
+	} tlb_t;
+
+
+	// Globales
+	t_configuracion *config; // guarda valores del config
+	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
+	void *memoria; // tha memory
+	tp_t *tabla_paginas;
+	tlb_t *tlb;
+
 	// Cabeceras
 	void abrirArchivoConfig(char *ruta); // Setea todos los valores de configuración
+	void iniciarEstructuras(); // Crea memoria y estructuras de administracións
 	void conectarConSwap(); // Se crea al principio. Luego se llama a necesidad
 	void crearHilos(); // Crea hilos servidor y consola
 	void servidor(); // Las conexiones de CPU y Núcleo se van a realizar por acá
 	void consola(); // Entrada por stdin
-	void crearHiloCliente(int sockCliente); // Crea un hilo cliente al aceptar conexión
+	void crearHiloCliente(int *sockCliente); // Crea un hilo cliente al aceptar conexión
 	void cliente(void* sockCliente); // Maneja pedidos del cliente
-	void liberarEstructuraConfig();
-	void validarArgumentos(int argc, char **argv);
+	void liberarEstructura();
+	void liberarRecusos();
+	int validar_cliente(char *id); // Valida que el cliente sea CPU o Nucleo
+	int validar_servidor(char *id); // Valida que el servidor sea Swap
+	int inciar_programa(int pid, int paginas);
 
 #endif /* LIB_FUMC_H_ */

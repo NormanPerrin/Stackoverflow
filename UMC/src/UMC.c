@@ -2,17 +2,17 @@
 #include <stdlib.h>
 #include "lib/fumc.h"
 
-int main(int argc, char **argv) {
+int main(void) {
 
-	validarArgumentos(argc, argv);
+	leerArchivoDeConfiguracion(RUTA_CONFIG_UMC); // Abro archivo de configuración
 
-	leerArchivoDeConfiguracion(argv[1]); // Abro archivo de configuración
+	iniciarEstructuras(); // Crea memoria y estructuras de administracións
 
 	conectarConSwap(); // Conexión con Swap
 
 	crearHilos(); // Creo hilos Servidor y Consola
 
-	liberarEstructuraConfig();
+	liberarRecusos();
 
 	return EXIT_SUCCESS;
 }

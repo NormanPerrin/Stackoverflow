@@ -17,8 +17,7 @@ struct sockaddr_in asociarSocket(int fd_socket, int puerto) {
 
 	miDireccionSocket.sin_family = AF_INET;
 	miDireccionSocket.sin_port = htons(puerto);
-	inet_aton("127.0.0.1", &(miDireccionSocket.sin_addr));
-	// miDireccionSocket.sin_addr.s_addr = inet_addr("127.0.0.1"); Con htons(INADDR_ANY) (o bien, 0) usa la dirección IP de la máquina en la que se encuentra
+	miDireccionSocket.sin_addr.s_addr = 0; // Con htons(INADDR_ANY) (o bien, 0) usa la dirección IP de la máquina en la que se encuentra
 	memset(&(miDireccionSocket.sin_zero), '\0', 8); // Rellena con ceros el resto de la estructura
 
 // Si el puerto ya está siendo utilizado, lanzamos un error
@@ -41,11 +40,11 @@ void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas) {
 		}
 
 // Obtención de una conexión entrante pendiente
-int aceptarConexionSocket(int fd_socket) { // TODO RESPONDIDO (VER): Cambié manejarError por error_ show (sin abort)
+int aceptarConexionSocket(int fd_socket) {
 	struct sockaddr_in unCliente;//struct sockaddr_storage unCliente;
 	int addres_size = sizeof(unCliente);
 
-	int fdCliente = accept(fd_socket, (struct sockaddr *) &unCliente, &addres_size);
+	int fdCliente = accept(fd_socket, (struct sockaddr *)&unCliente, &addres_size);
 		if(fdCliente == ERROR) error_show("No se pudo obtener una conexión entrante pendiente");
 
 	return fdCliente;
@@ -65,9 +64,14 @@ int conectarSocket(int fd_socket, char * ipDestino, int puerto){
 	memset(&(direccionServidor.sin_zero), '\0', 8);
 
 	int retornoConnect = connect(fd_socket, (struct sockaddr *) &direccionServidor, sizeof(struct sockaddr));
-		if ( retornoConnect == ERROR) manejarError("Error: No se pudo realizar la conexión entre el socket y el servidor");
+		if ( retornoConnect == ERROR) {
+			manejarError("Error: No se pudo realizar la conexión entre el socket y el servidor");
+			return ERROR;
+		} else {
+			return 0;
+		}
 
-	return FALSE;
+	return FALSE; // No debería llegar acá pero para que no joda con el warning
 }
 // **********************************
 // *    Enviar y Recibir Datos	    *
@@ -94,24 +98,20 @@ int enviarPorSocket(int fdServidor, const void * mensaje, int tamanioBytes) {
 }
 
 // Recibir sirve para la comunicación a través de sockets
-int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) { // TODO RESPONDIDO (VER): ver si con algún flag de recv se puede reeplazar al while -> Mm, por lo visto no, leí sobre los flags de recv acá: http://man7.org/linux/man-pages/man2/recv.2.html, y no hay nada útil
+int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) {
+
 	int bytes_recibidos;
-	int totalBytes = 0;
 
-	while (totalBytes < tamanioBytes) {
-		bytes_recibidos = recv(fdCliente, buffer + totalBytes, tamanioBytes, 0);
-		// El último argumento, cero, significa que no le paso ningún Flag
-		// Aquí también se analiza el caso de error
-		// Desconexión: si el valor de retorno es ERROR o cero, significa que la máquina remota ha cerrado la conexión con el cliente
+	bytes_recibidos = recv(fdCliente, buffer, tamanioBytes, MSG_WAITALL);
 
-		if ((bytes_recibidos == ERROR) || (bytes_recibidos == 0)) {
-			perror("Error: El servidor ha cerrado la conexión y no se pudo recibir correctamente los datos.");
-			break;
-		}
-
-		totalBytes += bytes_recibidos;
-		tamanioBytes -= bytes_recibidos;
+	if (bytes_recibidos == ERROR) { // Error al recibir mensaje
+		perror("Error: no se pudo recibir correctamente los datos");
 	}
+
+	if (bytes_recibidos == 0) { // Conexión cerrada
+		printf("La conexión #%d se ha cerrado\n", fdCliente);
+	}
+
 	return bytes_recibidos; // En caso de éxito, se retorna la cantidad de bytes realmente recibida
 }
 

@@ -5,15 +5,13 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO); // Abro archivo configuración
+	abrirArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
 
-	testLecturaArchivoDeConfiguracion(); // Comparo con los valores de ejemplo del archivo
+	inicializarListas();
 
-	conectarConUMC(); // Conexión con UMC
+	conectarConUMC();
 
-	escucharAConsola(); // Conexión con Consolas
-
-	escucharACPU(); // Conexión con CPUs
+	crear_hilos_conexion();
 
 	return EXIT_SUCCESS;
 }

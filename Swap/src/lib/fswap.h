@@ -7,6 +7,7 @@
 	#include <commons/log.h>
 
 	#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
+	#define RUTA_CONFIG_SWAP "configSwap.txt"
 
 	// Estructuras
 	typedef struct {
@@ -20,8 +21,10 @@
 	// Cabeceras
 	void setearValores_config(t_config * archivoConfig);
 	void escucharUMC();
-	void liberarEstructuraConfig();
-	void validarArgumentos(int argc, char **argv);
+	void liberarEstructura(); // Libera memoria asignada en setear config
+	void liberarRecusos();
+	int validar_cliente(char *id); // Verifica que sea cliente UMC
+	int validar_servidor(char *id); // Para que no joda con error
 
 
 #endif /* FSWAP_H_ */

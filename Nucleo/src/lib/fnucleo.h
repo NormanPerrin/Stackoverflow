@@ -3,43 +3,67 @@
 
 #include <utilidades/sockets.h>
 #include <utilidades/general.h>
+#include <utilidades/comunicaciones.h>
+#include <pthread.h>
 #include <commons/config.h>
+#include <commons/string.h>
 #include <commons/log.h>
+#include <commons/collections/list.h>
+#include <commons/collections/dictionary.h>
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
+<<<<<<< HEAD
 #define RUTA_CONFIG_NUCLEO "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Nucleo/configNucleo.txt"
-
-// Variables Globales
-int puertoPrograma;
-int puertoCPU;
-int puertoUMC; // Puerto donde se encuentra escuchando el proceso UMC (no viene de archivo de config)
-char *ipUMC; // IP del proceso UMC
-int quantum;
-int retardoQuantum;
-// --Arrays
-char** semaforosID;
-int* semaforosValInicial;
-char** ioID;
-int* retardosIO;
-char** variablesCompartidas;
-t_log* logger;
+=======
+//#define RUTA_CONFIG_NUCLEO "configNucleo.txt"
+#define logearError(msg){log_error(logger, msg); return FALSE;}
 
 // Estructuras
+typedef struct {
+		int puertoPrograma;
+		int puertoCPU;
+		int puertoUMC;
+		char * ipUMC;
+		int quantum;
+		int retardoQuantum;
+		char ** semaforosID;
+		int * semaforosValInicial;
+		char ** ioID;
+		int * retardosIO;
+		char ** variablesCompartidas;
+		int cantidadPaginasStack;
+	} t_configuracion;
+>>>>>>> a16a0cb1740df36c1136dd228bc3c2dc435aa5bb
 
-// Cabeceras
-void conectarConUMC();
-void escucharACPU(); // Conexión con CPUs
-void escucharAConsola(); // Conexión con Consolas
+// Variables Globales
+t_configuracion * config;
+int fd_serverUMC; // cliente de UMC
+t_log * logger;
+t_list * listaProcesos;
+t_list * listaProcesosListos;
+t_list * listaProcesosBloqueados;
+t_list * listaCPU;
+
+// Cabeceras de Funciones
+void abrirArchivoDeConfiguracion(char * ruta);
 void setearValores_config(t_config * archivoConfig);
-void crearLogger();
-// --Funciones MUY auxiliares
-void imprimirCadenas(char** cadenas);
-void imprimirNumeros(int* numeros);
-void pasarCadenasArray(char** cadenas, char** variablesConfig);
-void pasarEnterosArray(int* numeros, char** variablesConfig);
+void inicializarListas();
 
-// Tests (PROVISORIOS)
-void testLecturaArchivoDeConfiguracion(); // Imprimo todas las variables, para ver si se setearon bien
+void conectarConUMC();
+void crear_hilos_conexion(); // Crea 2 hilos: 1 hilo escuchar_conexiones(CPU) y otro escuchar_conexiones(Consola);
+void escuchar_conexiones(); // Escucha conexiones CPU y Consola
+int validar_cliente(char *id); // Valida que el cliente sea CPU o Consola
+int validar_servidor(char *id); // Valida que el servidor sea UMC
+
+void crearLogger();
+
+int asignarPid();
+int noSeRepitePid(int pid);
+pcb* crearPCB(char * unPrograma);
+void liberarPCB(pcb * pcb);
+
+// Funciones auxiliares
+int* convertirStringsEnNumeros(char ** variablesConfig);
 
 #endif /* LIB_FNUCLEO_H_ */

@@ -1,20 +1,19 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <parser/parser.h>
 #include <utilidades/general.h>
 #include "lib/fcpu.h"
 
-int main(int argc, char **argv) {
+int main(void) {
 
-	validarArgumentos(argc, argv);
-
-	leerArchivoDeConfiguracion(argv[1]); // Abro archivo configuración
-
-	testLecturaArchivoDeConfiguracion();
+	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU); // Abro archivo configuración
 
 	conectarConNucleo(); // Conexión con Núcleo
 
 	conectarConUMC(); // Conexión con UMC
+
+	esperar_ejecucion();
+
+	liberarEstructura(); // Libero memoria reservada para setear config
 
 	return EXIT_SUCCESS;
 }

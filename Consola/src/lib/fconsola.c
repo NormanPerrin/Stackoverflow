@@ -1,6 +1,12 @@
 #include "fconsola.h"
 
-// Funciones
+
+void validar_argumentos(int arg) {
+	if(arg != 2) {
+		printf("Debe ingresar el archivo a ejecutar como parámetro\n");
+		exit(1);
+	}
+}
 
 void setearValores_config(t_config * archivoConfig){
 	puertoNucleo = config_get_int_value(archivoConfig, "PUERTO_NUCLEO");
@@ -8,26 +14,54 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void conectarConNucleo(){
-int fd_serverConsola;
-
-	fd_serverConsola = nuevoSocket();
-	conectarSocket(fd_serverConsola, ipNucleo, puertoNucleo);
-	handshake_cliente(fd_serverConsola, "C");
-	// Creo un paquete (string) de size PACKAGESIZE, que le enviaré al Núcleo
-	/*int enviar = 1;
-		char message[PACKAGESIZE];
-
-		printf("Conectado al Núcleo. Ya se puede enviar mensajes. Escriba 'exit' para salir\n");
-
-		while(enviar){
-			fgets(message, PACKAGESIZE, stdin);	// Lee una línea en el stdin (lo que escribimos en la consola) hasta encontrar un \n (y lo incluye) o llegar a PACKAGESIZE
-			if (!strcmp(message,"exit\n")) enviar = 0; // Chequeo que no se quiera salir
-			if (enviar) enviarPorSocket(fd_serverConsola, message, strlen(message) + 1); // Sólo envío si no quiere salir
-		}*/
-		//close(fd_serverConsola);
-} // Soy cliente del Núcleo, es  decir, soy el que inicia la conexión con él
+	fd_nucleo = nuevoSocket();
+	int ret = conectarSocket(fd_nucleo, ipNucleo, puertoNucleo);
+	validar_conexion(ret, 1); // Al ser cliente es terminante
+	handshake_cliente(fd_nucleo, "C");
+}
 
 void testLecturaArchivoDeConfiguracion(){
 	printf("Puerto Núcleo: %d\n", puertoNucleo);
 	printf("IP Núcleo: %s\n", ipNucleo);
 }
+
+void liberarRecusos() {
+	free(ipNucleo);
+}
+
+int validar_servidor(char *id) {
+	if(!strcmp(id, "N")) {
+		printf("Servidor aceptado\n");
+		return TRUE;
+	} else {
+		printf("Servidor rechazado\n");
+		return FALSE;
+	}
+}
+int validar_cliente(char *id) {return 0;}
+
+
+void enviar_script(char *ruta) {
+
+	// msg_t *msg_to_send;
+	// msg_to_send = aplicar_protocolo_enviar(ENVIAR_SCRIPT, ruta);
+	// enviarPorSocket(fd_nucleo, msg_to_send, sizeof(msg_to_send));
+}
+
+
+void esperar_mensajes() {
+
+	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
+
+	while(TRUE) {
+		int ret;
+		ret = recibirPorSocket(fd_nucleo, head, 1);
+		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
+		aplicar_protocolo_recibir(fd_nucleo, *head);
+	}
+
+	free(head);
+}
+
+
+void imprimir(char *texto) { printf("IMPRIMIR: %s\n", texto); }
