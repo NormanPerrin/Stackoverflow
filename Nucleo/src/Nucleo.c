@@ -5,7 +5,9 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
+	abrirArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
+
+	inicializarListas();
 
 	conectarConUMC();
 
