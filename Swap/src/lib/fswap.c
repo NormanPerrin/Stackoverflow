@@ -8,11 +8,11 @@ int sockUMC; // socket cliente UMC
 void setearValores_config(t_config * archivoConfig){
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
 	config->nombreSwap = (char*)reservarMemoria(CHAR*30);
-	config->puerto = config_get_int_value(archivoConfig, "Puerto_Escucha");
-	config->nombreSwap = strdup(config_get_string_value (archivoConfig, "Nombre_Swap"));
-	config->cantidadPaginas = config_get_int_value(archivoConfig, "Cantidad_Paginas");
-	config->tamanioPagina = config_get_int_value(archivoConfig, "Tamaño_Pagina");
-	config->retardoCompactacion = config_get_int_value(archivoConfig, "Retardo_Compactacion");
+	config->puerto = config_get_int_value(archivoConfig, "PUERTO_ESCUCHA");
+	config->nombreSwap = strdup(config_get_string_value (archivoConfig, "NOMBRE_SWAP"));
+	config->cantidadPaginas = config_get_int_value(archivoConfig, "CANTIDAD_PAGINAS");
+	config->tamanioPagina = config_get_int_value(archivoConfig, "TAMANIO_PAGINA");
+	config->retardoCompactacion = config_get_int_value(archivoConfig, "RETARDO_COMPACTACION");
 }
 
 

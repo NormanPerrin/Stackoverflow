@@ -2,12 +2,23 @@
 
 
 void setearValores_config(t_config * archivoConfig){
-	puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
-	puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
-	puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
-	ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
-	quantum = config_get_int_value(archivoConfig, "QUANTUM");
-	retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
+	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
+	char** aux_vectorStrings;
+
+	config->puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
+	config->puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
+	config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
+	config->ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
+	config->quantum = config_get_int_value(archivoConfig, "QUANTUM");
+	config->retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
+	config->semaforosID = config_get_array_value(archivoConfig, "SEM_IDS");
+	config->ioID = config_get_array_value(archivoConfig, "IO_IDS");
+	config->variablesCompartidas = config_get_array_value(archivoConfig, "SHARED_VARS");
+	aux_vectorStrings = config_get_array_value(archivoConfig, "SEM_INIT");
+	config->semaforosValInicial = pasarArrayDeStringsANumeros(aux_vectorStrings);
+	aux_vectorStrings = config_get_array_value(archivoConfig, "IO_SLEEP");
+	config->retardosIO = pasarArrayDeStringsANumeros(aux_vectorStrings);
+	config->cantidadPaginasStack = config_get_int_value(archivoConfig, "STACK_SIZE");
 //	pasarCadenasArray(semaforosID, config_get_array_value(archivoConfig, "SEM_IDS"));
 //	pasarCadenasArray(ioID, config_get_array_value(archivoConfig, "IO_IDS"));
 //	pasarCadenasArray(variablesCompartidas, config_get_array_value(archivoConfig, "SHARED_VARS"));
@@ -41,9 +52,9 @@ void escuchar_conexiones(void *tipo_cliente) {
 
 	int puerto; // seteo puerto según el tipo
 	if( ( *((int*)tipo_cliente) ) == 1 ) { // CPU
-		puerto = puertoCPU;
+		puerto = config->puertoCPU;
 	} else { // Consola
-		puerto = puertoPrograma;
+		puerto = config->puertoPrograma;
 	}
 
 	int newfd, listener, maxfd;
@@ -113,7 +124,7 @@ void escuchar_conexiones(void *tipo_cliente) {
 
 void conectarConUMC(){
 	fd_serverUMC = nuevoSocket();
-	int ret = conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
+	int ret = conectarSocket(fd_serverUMC, config->ipUMC, config->puertoUMC);
 	validar_conexion(ret, 1); // al ser cliente es terminante
 	handshake_cliente(fd_serverUMC, "N");
 } // Soy cliente de la UMC, es  decir, soy el que inicia la conexión con ella
@@ -125,35 +136,9 @@ void crearLogger(){
 	archivoLogNucleo = NULL;
 }
 
-void testLecturaArchivoDeConfiguracion(){
-	printf("Puerto de Programa: %d\n",puertoPrograma);
-	printf("Puerto de CPU: %d\n",puertoCPU);
-	printf("Quantum de Round Robin: %d\n",quantum);
-	printf("Retardo de Quantum: %d\n",retardoQuantum);
-	printf("Semaforos: "); imprimirCadenas(semaforosID);
-	printf("Cantidad de Semaforos: "); imprimirNumeros(semaforosValInicial);
-	printf("Dispositivos de I/O: "); imprimirCadenas(ioID);
-	printf("Retardos de I/O: "); imprimirNumeros(retardosIO);
-	printf("Variables compartidas: "); imprimirCadenas(variablesCompartidas);
-}
+// --Funciones auxiliares--
 
-// --Funciones MUY auxiliares
-
-void imprimirCadenas(char ** cadenas){
-	int i;
-	for(i=0; i<NELEMS(cadenas); i++){
-		printf("%s, ", cadenas[i]);
-			}
-}
-
-void imprimirNumeros(int * numeros){
-	int i;
-	for(i=0; i<NELEMS(numeros); i++){
-			printf("%d, ", numeros[i]);
-		}
-}
-
-void pasarCadenasArray(char ** cadenas, char ** variablesConfig){
+/*void pasarCadenasArray(char ** cadenas, char ** variablesConfig){
 	int i = 0;
 	while(variablesConfig[i] != NULL){
 		cadenas[i]= strdup(variablesConfig[i]);
@@ -169,6 +154,17 @@ char* stringNum;
 	 numeros[i] = atoi(stringNum);
 	 	 i++;
 	}
+}*/
+
+int* pasarArrayDeStringsANumeros(char ** strings){
+int i = 0;
+int* numeros = calloc(NELEMS(strings)-1, sizeof(int));
+
+	while(strings[i] != NULL){
+	  numeros[i] = atoi(strings[i]);
+	 	 i++;
+	}
+	return numeros;
 }
 
 int validar_cliente(char *id) {

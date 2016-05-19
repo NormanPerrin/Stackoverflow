@@ -11,20 +11,25 @@
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 #define RUTA_CONFIG_NUCLEO "configNucleo.txt" // Ruta archivo config
 
+// Estructuras
+typedef struct {
+		int puertoPrograma;
+		int puertoCPU;
+		int puertoUMC;
+		char *ipUMC;
+		int quantum;
+		int retardoQuantum;
+		char** semaforosID;
+		int* semaforosValInicial;
+		char** ioID;
+		int* retardosIO;
+		char** variablesCompartidas;
+		int cantidadPaginasStack;
+	} t_configuracion;
+
 // Variables Globales
-int puertoPrograma;
-int puertoCPU;
-int puertoUMC; // Puerto donde se encuentra escuchando el proceso UMC (no viene de archivo de config)
-char *ipUMC; // IP del proceso UMC
-int quantum;
-int retardoQuantum;
+t_configuracion *config;
 int fd_serverUMC; // cliente de UMC
-// --Arrays
-char** semaforosID;
-int* semaforosValInicial;
-char** ioID;
-int* retardosIO;
-char** variablesCompartidas;
 t_log* logger;
 
 // Estructuras
@@ -34,19 +39,15 @@ t_log* logger;
 void conectarConUMC();
 void crear_hilos_conexion(); // Crea 2 hilos: 1 hilo escuchar_conexiones(CPU) y otro escuchar_conexiones(Consola);
 void escuchar_conexiones(); // Escucha conexiones CPU y Consola
-void escucharACPU(); // Conexión con CPUs
-void escucharAConsola(); // Conexión con Consolas
+void escucharACPU();
+void escucharAConsola();
 void setearValores_config(t_config * archivoConfig);
 void crearLogger();
 int validar_cliente(char *id); // Valida que el cliente sea CPU o Consola
 int validar_servidor(char *id); // Valida que el servidor sea UMC
-// --Funciones MUY auxiliares
-void imprimirCadenas(char** cadenas);
-void imprimirNumeros(int* numeros);
+// --Funciones auxiliares--
+int* pasarArrayDeStringsANumeros(char** vectorStrings);
 void pasarCadenasArray(char** cadenas, char** variablesConfig);
 void pasarEnterosArray(int* numeros, char** variablesConfig);
-
-// Tests (PROVISORIOS)
-void testLecturaArchivoDeConfiguracion(); // Imprimo todas las variables, para ver si se setearon bien
 
 #endif /* LIB_FNUCLEO_H_ */

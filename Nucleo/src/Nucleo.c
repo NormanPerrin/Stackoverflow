@@ -5,13 +5,11 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO); // Abro archivo configuración
+	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
 
-//	testLecturaArchivoDeConfiguracion(); // Comparo con los valores de ejemplo del archivo
+	conectarConUMC();
 
-	conectarConUMC(); // Conexión con UMC
-
-	crear_hilos_conexion(); // Me pongo a escuchar conexiones CPU y Consola
+	crear_hilos_conexion();
 
 	return EXIT_SUCCESS;
 }
