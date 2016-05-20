@@ -171,21 +171,21 @@ void iniciarEstructuras() {
 void iniciarTP() {
 
 	int marco;
+	sem_wait(&mutex);
 	for(marco = 0; marco < entradas_tp; marco++) reset_entrada(marco);
+	sem_post(&mutex);
 
 	entradas_tp = config->marcos;
 }
 
 
 void reset_entrada(int pos) {
-	sem_wait(&mutex);
 	tabla_paginas[pos].pagina = -1;
 	tabla_paginas[pos].pid = -1;
 	tabla_paginas[pos].marco = -1;
 	tabla_paginas[pos].bit_uso = 0;
 	tabla_paginas[pos].bit_modificado = 0;
 	tabla_paginas[pos].bit_presencia = 0;
-	sem_post(&mutex);
 }
 
 
@@ -304,10 +304,31 @@ int escribir_bytes(int pid, int pagina, int offset, int tamanio, void *contenido
 
 
 void finalizar_programa(int pid) {
+
 	int pos;
+
+	sem_wait(&mutex);
+
 	for(pos = 0; pos < entradas_tp; pos++) {
 		if(tabla_paginas[pos].pid == pid) {
 			reset_entrada(pos);
 		}
+	}
+
+	sem_post(&mutex);
+}
+
+
+void pedir_pagina(int fd, int pid, int pagina) {
+
+	iniciar_programa_t *arg;
+	arg->pid = pid;
+	arg->paginas = pagina;
+	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, arg);
+
+	void *contenido;
+	contenido = aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO);
+	if(contenido == NULL) {
+		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, NULL);
 	}
 }

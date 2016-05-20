@@ -69,5 +69,9 @@
 	void eliminar_pagina(int pid, int pagina);
 	void reset_entrada(int pos);
 	void iniciarTP();
+	void finalizar_programa(int pid);
+	int escribir_bytes(int pid, int pagina, int offset, int tamanio, void *contenido);
+	void *leer_bytes(int pid, int pagina, int offset, int tamanio);
+	void pedir_pagina(int fd, int pid, int pagina);
 
 #endif /* LIB_FUMC_H_ */

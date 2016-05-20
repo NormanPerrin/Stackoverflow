@@ -14,10 +14,12 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 			// trato imprimir_texto
 
 		case INICIAR_PROGRAMA:
+		{
 			length = sizeof(iniciar_programa_t);
 			msg_to_send = reservarMemoria(sizeof(iniciar_programa_t));
 			enviarPorSocket(fd, msg_to_send, length);
 			break;
+		}
 
 		case LEER_BYTES:
 
@@ -38,14 +40,19 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 		case DEVOLVER_PAGINA:
 
 		case ENVIAR_PCB:
+		{
 			length = sizeof(pcb);
 			int * plength = (int *)length;
 			msg_to_send = serealizarPCB(estructura, plength);
 			enviarPorSocket(fd, msg_to_send, length);
 			break;
+		}
 
 		default:
+		{
 			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
+			break;
+		}
 
 	}
 
@@ -60,12 +67,14 @@ void *aplicar_protocolo_recibir(int fd, function protocolo) {
 	switch(protocolo) {
 
 		case IMPRIMIR:
+		{
 			length = msg_length(fd);
 			char* msg = (char*)msg_content(fd, length+1);
 			msg[length] = '\0';
-//			imprimir(msg); // TODO revisar por qué falla
+//			imprimir(msg); // TODO
 			free(msg);
 			break;
+		}
 
 		case IMPRIMIR_TEXTO:
 			// trato imprimir_texto
@@ -75,37 +84,36 @@ void *aplicar_protocolo_recibir(int fd, function protocolo) {
 			int pid, paginas, *ret;
 			pid = msg_length(fd);
 			paginas = msg_length(fd);
-//			ret = inciar_programa(pid, paginas); // TODO ver por qué falla
+//			ret = inciar_programa(pid, paginas); // TODO
 			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret);
 			break;
 		}
 
 		case LEER_BYTES:
 		{
-			int pid, paginas, offset;
+			int pid, paginas, offset, tamanio;
 			void *ret;
 			pid = msg_length(fd);
 			paginas = msg_length(fd);
-			offset = msg_length(fd); // TODO ver de cuanto puede ser la página (size)
-			// ret = leer_bytes(pid, pagina, offset);
+			offset = msg_length(fd);
+			tamanio = msg_length(fd);
+			// ret = leer_bytes(pid, pagina, offset, tamanio); // TODO
 			if(ret == NULL) {
-				iniciar_programa_t *arg;
-				arg->paginas = paginas;
-				arg->pid = pid;
-				aplicar_protocolo_enviar(fd, LEER_PAGINA, arg);
+				pedir_pagina(fd, pid, paginas);
 			}
 			break;
 		}
 
 		case ESCRIBIR_BYTES:
 		{
-			int pid, paginas, offset;
+			int pid, paginas, offset, tamanio;
 			void *ret;
 			pid = msg_length(fd);
 			paginas = msg_length(fd);
-			offset = msg_length(fd); // TODO ver de cuanto puede ser la página (size)
-			// ret = escribir_bytes(pid, pagina, offset);
-			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret);
+			offset = msg_length(fd);
+			tamanio = msg_length(fd);
+			// ret = escribir_bytes(pid, pagina, offset, tamanio); // TODO
+			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret); // TODO verificar ret antes
 			break;
 		}
 
@@ -113,7 +121,7 @@ void *aplicar_protocolo_recibir(int fd, function protocolo) {
 		{
 			int pid;
 			pid = msg_length(fd);
-			// finalizar_programa(pid);
+			// finalizar_programa(pid); // TODO
 			break;
 		}
 
@@ -121,8 +129,10 @@ void *aplicar_protocolo_recibir(int fd, function protocolo) {
 
 		case RESPUESTA_PEDIDO:
 		{
-			int *respuesta = reservarMemoria(INT);
-			*respuesta = msg_length(fd);
+			int *length = reservarMemoria(INT);
+			void *respuesta;
+			*length = msg_length(fd);
+			respuesta = msg_content(fd ,length);
 			return respuesta;
 			break;
 		}
@@ -138,7 +148,7 @@ void *aplicar_protocolo_recibir(int fd, function protocolo) {
 			length = msg_length(fd);
 			contenido = msg_content(fd, length);
 			// ret = escribir_pagina(pid, pagina, contenido); // TODO
-			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret);
+			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret); // TODO verificar ret antes
 			break;
 		}
 
@@ -147,9 +157,14 @@ void *aplicar_protocolo_recibir(int fd, function protocolo) {
 		case DEVOLVER_PAGINA:
 
 		default:
+		{
 			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
+			break;
+		}
 
 	}
+
+	return NULL;
 
 }
 
@@ -159,10 +174,7 @@ int msg_length(int fd) {
 	uint8_t *buff = reservarMemoria(INT);
 	recibirPorSocket(fd, buff, 1);
 
-	int ret = *buff;
-	free(buff);
-
-	return ret;
+	return buff;
 }
 
 
