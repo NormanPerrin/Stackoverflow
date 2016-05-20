@@ -17,7 +17,7 @@ struct sockaddr_in asociarSocket(int fd_socket, int puerto) {
 
 	miDireccionSocket.sin_family = AF_INET;
 	miDireccionSocket.sin_port = htons(puerto);
-	miDireccionSocket.sin_addr.s_addr = 0; // Con htons(INADDR_ANY) (o bien, 0) usa la dirección IP de la máquina en la que se encuentra
+	miDireccionSocket.sin_addr.s_addr = 0; // Con htons(INADDR_ANY) (o bien, 0) usa la dirección IP de la máquina actual
 	memset(&(miDireccionSocket.sin_zero), '\0', 8); // Rellena con ceros el resto de la estructura
 
 // Si el puerto ya está siendo utilizado, lanzamos un error
@@ -41,7 +41,7 @@ void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas) {
 
 // Obtención de una conexión entrante pendiente
 int aceptarConexionSocket(int fd_socket) {
-	struct sockaddr_in unCliente;//struct sockaddr_storage unCliente;
+	struct sockaddr_in unCliente; // sino: struct sockaddr_storage unCliente;
 	int addres_size = sizeof(unCliente);
 
 	int fdCliente = accept(fd_socket, (struct sockaddr *)&unCliente, &addres_size);
@@ -71,21 +71,22 @@ int conectarSocket(int fd_socket, char * ipDestino, int puerto){
 			return 0;
 		}
 
-	return FALSE; // No debería llegar acá pero para que no joda con el warning
+	return FALSE; // No debería llegar acá, pero para que no joda con el warning
 }
 // **********************************
 // *    Enviar y Recibir Datos	    *
 // **********************************
 
-// Enviar sirve para la comunicación a través de sockets
+// Enviar algo a través de sockets
 int enviarPorSocket(int fdServidor, const void * mensaje, int tamanioBytes) {
 	int bytes_enviados;
 	int totalBytes = 0;
 
 	while (totalBytes < tamanioBytes) {
-		bytes_enviados = send(fdServidor, mensaje + totalBytes, tamanioBytes, 0); /* send: devuelve el múmero de bytes que se enviaron en realidad,
-		pero estos podrían ser menos de los que pedimos que se enviaran, por eso realizamos la siguiente validación */
-		// El último argumento, cero, significa que no le paso ningún Flag
+		bytes_enviados = send(fdServidor, mensaje + totalBytes, tamanioBytes, 0); // El 0 significa que no le paso ningún Flag
+/* send: devuelve el múmero de bytes que se enviaron en realidad, pero como estos podrían ser menos
+ * de los que pedimos que se enviaran, realizamos la siguiente validación */
+
 		if (bytes_enviados == ERROR) {
 			break;
 		}
@@ -97,7 +98,7 @@ int enviarPorSocket(int fdServidor, const void * mensaje, int tamanioBytes) {
 	return bytes_enviados; // En caso de éxito, se retorna la cantidad de bytes realmente enviada
 }
 
-// Recibir sirve para la comunicación a través de sockets
+// Recibir algo a través de sockets
 int recibirPorSocket(int fdCliente, void * buffer, int tamanioBytes) {
 
 	int bytes_recibidos;
@@ -129,21 +130,25 @@ void cerrarSocket(int fd_socket) {
 // *    Selección entre Sockets Listos	    *
 // ******************************************
 
-// select: permite comprobar varios sockets al mismo tiempo. Indica cuáles están listos para leer o para escribir, y cuáles han generado excepciones
+/* select: permite comprobar varios sockets al mismo tiempo.
+Indica cuáles están listos para leer o para escribir, y cuáles han generado excepciones.
+Le pasamos nuestro conjunto de FD de sockets Listos y los parámetros de tiempo */
 void seleccionarSocket(int mayorValorDeFD,
-					   fd_set *fdListosParaLectura, fd_set *fdListosParaEscritura, fd_set *fdListosParaEjecucion,
-					   int* segundos, int* milisegundos) { // Le indicamos nuestro conjunto de FD de sockets Listos y los parámetros de tiempo
+		fd_set *fdListosParaLectura, fd_set *fdListosParaEscritura, fd_set *fdListosParaEjecucion,
+		int* segundos, int* milisegundos) {
 
 	inicioSeleccion:
 
-	// Si segundos o microsegundos valen NULL, el temporizador nunca expirará y se tendrá que esperar hasta que algún FD esté listo
+/* Si segundos o microsegundos valen NULL:
+ el temporizador nunca expirará y se tendrá que esperar hasta que algún FD esté listo */
 	if(segundos == NULL || milisegundos == NULL){
 		int retornoSelect = select((mayorValorDeFD + 1), fdListosParaLectura, fdListosParaEscritura, fdListosParaEjecucion, NULL);
 
 		if(retornoSelect == ERROR && errno != EINTR) manejarError("Error: No se pudo seleccionar ningún socket del conjunto");
 
 	}else{
-		// Si segundos y microsegundos valen cero, select regresará inmediatamente después de interrogar a todos los FD incluidos en los conjuntos de Listos
+/* Si segundos y microsegundos valen cero:
+select regresará inmediatamente después de interrogar a todos los FD incluidos en los conjuntos de Listos*/
 		struct timeval periodoMaximoDeEspera;
 
 		int seg = *segundos; // segundos

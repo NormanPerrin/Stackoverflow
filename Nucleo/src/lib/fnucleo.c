@@ -39,7 +39,7 @@ void inicializarListas(){
 
 // --CONEXIONES: CONSOLA(S), UMC Y CPU(S)--
 
-void crear_hilos_conexion() {
+void crearHilosEscucharConsolaYCpu() {
 
 	// Reservo memoria para pasarle los argumentos a los hilos y que no haya conflictos
 	int *cliente_cpu = (int*)reservarMemoria(INT);
@@ -130,7 +130,7 @@ void escuchar_conexiones(void *tipo_cliente) {
 
 	free(head);
 	close(listener);
-} // Soy servidor, espero mensajes de algún CPU
+} // Soy servidor, espero mensajes de CPU(s) y/O Consola(s)
 
 
 void conectarConUMC(){
