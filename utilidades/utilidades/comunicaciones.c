@@ -81,17 +81,48 @@ void *aplicar_protocolo_recibir(int fd, function protocolo) {
 		}
 
 		case LEER_BYTES:
+		{
+			int pid, paginas, offset;
+			void *ret;
+			pid = msg_length(fd);
+			paginas = msg_length(fd);
+			offset = msg_length(fd); // TODO ver de cuanto puede ser la página (size)
+			// ret = leer_bytes(pid, pagina, offset);
+			if(ret == NULL) {
+				iniciar_programa_t *arg;
+				arg->paginas = paginas;
+				arg->pid = pid;
+				aplicar_protocolo_enviar(fd, LEER_PAGINA, arg);
+			}
+			break;
+		}
 
 		case ESCRIBIR_BYTES:
+		{
+			int pid, paginas, offset;
+			void *ret;
+			pid = msg_length(fd);
+			paginas = msg_length(fd);
+			offset = msg_length(fd); // TODO ver de cuanto puede ser la página (size)
+			// ret = escribir_bytes(pid, pagina, offset);
+			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret);
+			break;
+		}
 
 		case FINALIZAR_PROGRAMA:
+		{
+			int pid;
+			pid = msg_length(fd);
+			// finalizar_programa(pid);
+			break;
+		}
 
 		case ENVIAR_SCRIPT:
 
 		case RESPUESTA_PEDIDO:
 		{
-			int respuesta;
-			respuesta = msg_length(fd);
+			int *respuesta = reservarMemoria(INT);
+			*respuesta = msg_length(fd);
 			return respuesta;
 			break;
 		}
@@ -99,6 +130,17 @@ void *aplicar_protocolo_recibir(int fd, function protocolo) {
 		case LEER_PAGINA:
 
 		case ESCRIBIR_PAGINA:
+		{
+			int pid, pagina, length, ret;
+			void *contenido;
+			pid = msg_length(fd);
+			pagina = msg_length(fd);
+			length = msg_length(fd);
+			contenido = msg_content(fd, length);
+			// ret = escribir_pagina(pid, pagina, contenido); // TODO
+			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret);
+			break;
+		}
 
 		case DEVOLVER_BYTES:
 
