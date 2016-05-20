@@ -10,7 +10,7 @@
 
 	#define INT (sizeof(int))
 	#define CHAR (sizeof(char))
-	#define manejarError(mensajeError) {perror(mensajeError);} //--abort(); Función para el tratamiento de errores
+	#define manejarError(mensajeError) {perror(mensajeError);} //Sin abort(). Tratamiento de errores
 	#define HANDSHAKE_SIZE CHAR*2 // Tamaño de consola\0
 
 	void* reservarMemoria(int size); // Hace lo mismo que el malloc pero se fija si hay error. Necesita casteo como malloc
