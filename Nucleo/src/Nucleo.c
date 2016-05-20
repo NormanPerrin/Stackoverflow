@@ -11,7 +11,7 @@ int main(void) {
 
 	conectarConUMC();
 
-	crear_hilos_conexion();
+	crearHilosEscucharConsolaYCpu();
 
 	return EXIT_SUCCESS;
 }

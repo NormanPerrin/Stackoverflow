@@ -175,29 +175,15 @@ void *msg_content(int fd, int length) {
 }
 
 // -- SERIALIZACIÓN/DESEAREALIZACIÓN DEL PCB --
+/*
 void * serealizarPCB(void * estructura, int * tamanio){
 	pcb * unPCB = (pcb *) estructura;
 
 	int desplazamiento = 0;
-	// *tamanio = sizeof(pcb) - y/o +
-
+	tamanio = sizeof(pcb) - y/o +
 	void * buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento,&(unPCB->pid), sizeof(int));
-	desplazamiento += sizeof(int); //pid
-	memcpy(buffer + desplazamiento, &(unPCB->pc), sizeof(int));
-	desplazamiento += sizeof(int);//pc
-	memcpy(buffer + desplazamiento, &(unPCB->cantPaginas), sizeof(int));
-	desplazamiento += sizeof(int);//cantidad de paginas
-	// falta campo unPCB->indiceEtiquetas.elements
-	memcpy(buffer + desplazamiento, &(unPCB->indiceEtiquetas.elements_amount), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(unPCB->indiceEtiquetas.table_current_size), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(unPCB->indiceEtiquetas.table_max_size), sizeof(int));
-	desplazamiento += sizeof(int);
-	// falta indice de stack
-	// falta indice de codigo
 
+	---- serializar pcb: memcpy del pcb al buffer ----
 
 	return buffer;
 }
@@ -206,26 +192,8 @@ pcb * deserealizarPCB(void * buffer){
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(sizeof(pcb));
 
-	memcpy(&unPcb->pid, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int); //pid
-	memcpy(&unPcb->pc, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int); //pc
-	memcpy(&unPcb->cantPaginas, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);//cantidad paginas
-		// falta indice de codigo
-	desplazamiento += sizeof(int);
-	memcpy(&unPcb->indiceEtiquetas.table_current_size, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	memcpy(&unPcb->indiceEtiquetas.table_max_size, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	// // falta campo unPCB->indiceEtiquetas.elements
-	memcpy(&unPcb->indiceEtiquetas.elements_amount, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	memcpy(&unPcb->indiceEtiquetas.table_current_size, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	memcpy(&unPcb->indiceEtiquetas.table_max_size, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int); //indice de etiqutas
-	// falta indice de stack
+	---- deserializar pcb: memcpy del buffer al pcb ----
 
 	return unPcb;
 }
+*/

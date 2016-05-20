@@ -16,7 +16,7 @@
 #define RUTA_CONFIG_NUCLEO "configNucleo.txt"
 #define logearError(msg){log_error(logger, msg); return FALSE;}
 
-// Estructuras
+// -- Estructuras --
 typedef struct {
 		int puertoPrograma;
 		int puertoCPU;
@@ -32,7 +32,21 @@ typedef struct {
 		int cantidadPaginasStack;
 	} t_configuracion;
 
-// Variables Globales
+typedef struct {
+	int id;
+	int fd;
+	int estado;
+} cpu;
+
+typedef enum {
+	LIBRE, OCUPADO
+} estadoCPU;
+
+typedef enum {
+	NEW, READY, EXEC, BLOCK, EXIT
+} estadoProceso; // t_cola
+
+// -- Variables Globales --
 t_configuracion * config;
 int fd_serverUMC; // cliente de UMC
 t_log * logger;
@@ -41,16 +55,14 @@ t_list * listaProcesosListos;
 t_list * listaProcesosBloqueados;
 t_list * listaCPU;
 
-// Cabeceras de Funciones
+// -- Cabeceras de Funciones --
 void abrirArchivoDeConfiguracion(char * ruta);
 void setearValores_config(t_config * archivoConfig);
 void inicializarListas();
 
 void conectarConUMC();
-void crear_hilos_conexion(); // Crea 2 hilos: 1 hilo escuchar_conexiones(CPU) y otro escuchar_conexiones(Consola);
-void escuchar_conexiones(); // Escucha conexiones CPU y Consola
-int validar_cliente(char *id); // Valida que el cliente sea CPU o Consola
-int validar_servidor(char *id); // Valida que el servidor sea UMC
+void crearHilosEscucharConsolaYCpu(); // 1 hilo escuchar_conexiones(CPU) y otro escuchar_conexiones(Consola)
+void escuchar_conexiones(); // Escucha conexiones CPU(s) y Consola(s)
 
 void crearLogger();
 
@@ -59,7 +71,9 @@ int noSeRepitePid(int pid);
 pcb* crearPCB(char * unPrograma);
 void liberarPCB(pcb * pcb);
 
-// Funciones auxiliares
+// -- Funciones auxiliares --
 int* convertirStringsEnNumeros(char ** variablesConfig);
+int validar_cliente(char *id); // Valida que el cliente sea CPU o Consola
+int validar_servidor(char *id); // Valida que el servidor sea UMC
 
 #endif /* LIB_FNUCLEO_H_ */

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// -- OPERACIONES CON MEMORIA --
 void* reservarMemoria(int size) {
 	void* puntero = malloc(size);
 	if(puntero == NULL) {
@@ -11,7 +12,7 @@ void* reservarMemoria(int size) {
 	return puntero;
 }
 
-
+// -- ARCHIVO DE CONFIGURACIÓN --
 void leerArchivoDeConfiguracion(char * ruta) {
 	t_config * archivoConfig;
 
@@ -35,6 +36,7 @@ int comprobarQueExistaArchivo(char * ruta) {
 	}
 }
 
+// -- CONEXIONES ENTRE MÓDULOS --
 int handshake_servidor(int sockCliente, char *mensaje) {
 
 	enviarPorSocket(sockCliente, mensaje, HANDSHAKE_SIZE);
@@ -109,5 +111,4 @@ int validar_recive(int status, int modo) {
 	} else {
 		return TRUE;
 	}
-
 }
