@@ -46,7 +46,7 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 
 
 
-void aplicar_protocolo_recibir(int fd, function protocolo) {
+void *aplicar_protocolo_recibir(int fd, function protocolo) {
 
 	int length;
 
@@ -65,10 +65,11 @@ void aplicar_protocolo_recibir(int fd, function protocolo) {
 
 		case INICIAR_PROGRAMA:
 		{
-			int pid, paginas;
+			int pid, paginas, *ret;
 			pid = msg_length(fd);
 			paginas = msg_length(fd);
-//			inciar_programa(pid, paginas); // TODO ver por qué falla
+//			ret = inciar_programa(pid, paginas); // TODO ver por qué falla
+			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret);
 			break;
 		}
 
@@ -81,6 +82,12 @@ void aplicar_protocolo_recibir(int fd, function protocolo) {
 		case ENVIAR_SCRIPT:
 
 		case RESPUESTA_PEDIDO:
+		{
+			int respuesta;
+			respuesta = msg_length(fd);
+			return respuesta;
+			break;
+		}
 
 		case LEER_PAGINA:
 

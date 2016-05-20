@@ -43,6 +43,7 @@
 	// Globales
 	t_configuracion *config; // guarda valores del config
 	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
+	int entradas_tp_llenas, entradas_tp_vacias;
 	void *memoria; // tha memory
 	tp_t *tabla_paginas;
 	tlb_t *tlb;
@@ -60,6 +61,7 @@
 	void liberarRecusos();
 	int validar_cliente(char *id); // Valida que el cliente sea CPU o Nucleo
 	int validar_servidor(char *id); // Valida que el servidor sea Swap
-	int inciar_programa(int pid, int paginas);
+	int inciar_programa(int pid, int paginas); // Llama a agregar_tp y le avisa a Swap
+	int agregar_tp(int pid, int paginas); // Agrega un proceso a la tabla de páginas
 
 #endif /* LIB_FUMC_H_ */

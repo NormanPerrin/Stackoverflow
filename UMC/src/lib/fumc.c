@@ -153,9 +153,12 @@ void iniciarEstructuras() {
 
 	int length = config->marcos * config->marco_size;
 	memoria = reservarMemoria(length); // Google Chrome be like
+	memcpy(memoria, '\0', length);
 
 	length = config->marcos * sizeof(tp_t);
 	tabla_paginas = reservarMemoria(length);
+	entradas_tp_vacias = config->marcos;
+	iniciarTP();
 
 	length = config->entradas_tlb * sizeof(tlb_t);
 	tlb = reservarMemoria(length);
@@ -163,28 +166,57 @@ void iniciarEstructuras() {
 }
 
 
+void iniciarTP() {
+
+	int length;
+
+	int marco;
+	for(marco = 0; marco < entradas_tp_vacias; marco++) {
+		tabla_paginas[marco].pagina = -1;
+		tabla_paginas[marco].pid = -1;
+		tabla_paginas[marco].marco = -1;
+		tabla_paginas[marco].bit_uso = 0;
+		tabla_paginas[marco].bit_modificado = 0;
+		tabla_paginas[marco].bit_presencia = 0;
+	}
+}
+
+
 int inciar_programa(int pid, int paginas) {
+
+	int ret = agregar_tp(pid, paginas);
+	if(ret == FALSE) return FALSE;
+
+	iniciar_programa_t *arg = reservarMemoria(sizeof(iniciar_programa_t));
+	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg);
+	ret = *( (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO) );
+
+	free(arg);
+	return ret;
+}
+
+
+int agregar_tp(int pid, int paginas) {
+
+	calcular_pedido(paginas);
 
 	int i;
 	for(i = 0; i < paginas; i++) {
 
 		int pos = 0;
-		while( tabla_paginas[pos].pid != 0 ){
-			// si se paso de los marcos disponibles hubo un fallo
-			if(pos > config->marcos) return FALSE;
-			pos++;
-		}
+		while( tabla_paginas[pos].pid != -1 ) pos++;
 
 		tabla_paginas[pos].pagina = i;
 		tabla_paginas[pos].pid = pid;
 
 	}
 
-	iniciar_programa_t *arg = reservarMemoria(sizeof(iniciar_programa_t));
-	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg);
-
-	free(arg);
 	return TRUE;
 }
 
 
+void calcular_pedido(int paginas) {
+
+
+
+}

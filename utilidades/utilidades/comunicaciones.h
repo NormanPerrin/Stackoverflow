@@ -29,7 +29,7 @@
 
 	// Cabeceras
 	void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura);
-	void aplicar_protocolo_recibir(int fd, function protocolo);
+	void *aplicar_protocolo_recibir(int fd, function protocolo);
 	int msg_length(int fd); // devuelve el tamaño del mensaje
 	void *msg_content(int fd, int length); // devuelve un puntero al contenido del mensaje
 	// Funciones particulares de cada módulo // TODO las funciones particulares fallan porque no todos los tienen definidos... no se cual podría ser una solución
