@@ -185,7 +185,7 @@ int buscarPosLibresEnBitMap(int paginas){
 }
 
 int eleminar_programa(int pid){  //falta en terminarla
-	int aPartirDe = buscarAPrtirDeEnTablaDePaginas(pid);
+	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
 
 	while(tablaPaginas[aPartirDe].pid==pid){
 		tablaPaginas[aPartirDe].pid=-1;

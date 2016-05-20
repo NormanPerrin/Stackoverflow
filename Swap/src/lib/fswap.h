@@ -51,5 +51,5 @@
 	int buscarPaginaEnTablaDePaginas(int pid ,int pagina);
 	void avanzarPaginas(int cantidad);
 	int eleminar_programa(int pid);
-	int buscarAPrtirDeEnTablaDePaginas(int pid);
+	int buscarAPartirDeEnTablaDePaginas(int pid);
 #endif /* FSWAP_H_ */
