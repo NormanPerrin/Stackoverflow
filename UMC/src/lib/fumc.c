@@ -53,6 +53,7 @@ void servidor() {
 				continue;
 			} else {
 				ret_handshake = handshake_servidor(*sockCliente, "U");
+				enviarPorSocket(*sockCliente,(int*)config->marco_size,INT);
 			}
 
 		}

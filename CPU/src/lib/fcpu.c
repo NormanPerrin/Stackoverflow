@@ -50,6 +50,7 @@ void esperar_ejecucion() {
 		int ret;
 		ret = recibirPorSocket(fd_serverCPU, head, 1);
 		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
+		aplicar_protocolo_recibir(fd_serverCPU, *head);
 	}
 
 	free(head);
