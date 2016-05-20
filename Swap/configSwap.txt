@@ -1,5 +1,5 @@
-Puerto_Escucha=8077
-Nombre_Swap=swap.data
-Cantidad_Paginas=512
-Tamaño_Pagina=256
-Retardo_Compactacion=60000
+PUERTO_ESCUCHA=8077
+NOMBRE_SWAP=swap.data
+CANTIDAD_PAGINAS=512
+TAMAÑO_PAGINA=256
+RETARDO_COMPACTACION=60000

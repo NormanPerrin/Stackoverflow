@@ -2,7 +2,7 @@
 
 void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 
-	void *msg_to_send;
+	void * msg_to_send;
 	int length;
 
 	switch(protocolo) {
@@ -36,6 +36,13 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 		case DEVOLVER_BYTES:
 
 		case DEVOLVER_PAGINA:
+
+		case ENVIAR_PCB:
+			length = sizeof(pcb);
+			int * plength = (int *)length;
+			msg_to_send = serealizarPCB(estructura, plength);
+			enviarPorSocket(fd, msg_to_send, length);
+			break;
 
 		default:
 			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
@@ -123,4 +130,60 @@ void *msg_content(int fd, int length) {
 	recibirPorSocket(fd, buff, length);
 
 	return buff;
+}
+
+// -- SERIALIZACIÓN/DESEAREALIZACIÓN DEL PCB --
+void * serealizarPCB(void * estructura, int * tamanio){
+	pcb * unPCB = (pcb *) estructura;
+
+	int desplazamiento = 0;
+	// *tamanio = sizeof(pcb) - y/o +
+
+	void * buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento,&(unPCB->pid), sizeof(int));
+	desplazamiento += sizeof(int); //pid
+	memcpy(buffer + desplazamiento, &(unPCB->pc), sizeof(int));
+	desplazamiento += sizeof(int);//pc
+	memcpy(buffer + desplazamiento, &(unPCB->cantPaginas), sizeof(int));
+	desplazamiento += sizeof(int);//cantidad de paginas
+	// falta campo unPCB->indiceEtiquetas.elements
+	memcpy(buffer + desplazamiento, &(unPCB->indiceEtiquetas.elements_amount), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->indiceEtiquetas.table_current_size), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->indiceEtiquetas.table_max_size), sizeof(int));
+	desplazamiento += sizeof(int);
+	// falta indice de stack
+	// falta indice de codigo
+
+
+	return buffer;
+}
+
+pcb * deserealizarPCB(void * buffer){
+	int desplazamiento = 0;
+	pcb * unPcb = malloc(sizeof(pcb));
+
+	memcpy(&unPcb->pid, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int); //pid
+	memcpy(&unPcb->pc, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int); //pc
+	memcpy(&unPcb->cantPaginas, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);//cantidad paginas
+		// falta indice de codigo
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->indiceEtiquetas.table_current_size, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->indiceEtiquetas.table_max_size, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	// // falta campo unPCB->indiceEtiquetas.elements
+	memcpy(&unPcb->indiceEtiquetas.elements_amount, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->indiceEtiquetas.table_current_size, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->indiceEtiquetas.table_max_size, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int); //indice de etiqutas
+	// falta indice de stack
+
+	return unPcb;
 }

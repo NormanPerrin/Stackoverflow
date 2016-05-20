@@ -1,20 +1,43 @@
 #include "fnucleo.h"
 
-
-void setearValores_config(t_config * archivoConfig){
-	puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
-	puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
-	puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
-	ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
-	quantum = config_get_int_value(archivoConfig, "QUANTUM");
-	retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
-//	pasarCadenasArray(semaforosID, config_get_array_value(archivoConfig, "SEM_IDS"));
-//	pasarCadenasArray(ioID, config_get_array_value(archivoConfig, "IO_IDS"));
-//	pasarCadenasArray(variablesCompartidas, config_get_array_value(archivoConfig, "SHARED_VARS"));
-//	pasarEnterosArray(semaforosValInicial, config_get_array_value(archivoConfig, "SEM_INIT"));
-//	pasarEnterosArray(retardosIO, config_get_array_value(archivoConfig, "IO_SLEEP"));
+// -- CONFIGURACIÓN INCIAL --
+void abrirArchivoDeConfiguracion(char * ruta){
+	leerArchivoDeConfiguracion(ruta);
+	/*if( seteoCorrecto() ){
+			log_info(logger, "El archivo de configuración ha sido leído correctamente");
+		}*/
 }
 
+void setearValores_config(t_config * archivoConfig){
+	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
+	char ** aux_vectorStrings;
+
+	config->puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
+	config->puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
+	config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
+	config->ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
+	config->quantum = config_get_int_value(archivoConfig, "QUANTUM");
+	config->retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
+	config->semaforosID = config_get_array_value(archivoConfig, "SEM_IDS");
+	config->ioID = config_get_array_value(archivoConfig, "IO_IDS");
+	config->variablesCompartidas = config_get_array_value(archivoConfig, "SHARED_VARS");
+	aux_vectorStrings = config_get_array_value(archivoConfig, "SEM_INIT");
+	config->semaforosValInicial = convertirStringsEnNumeros(aux_vectorStrings);
+	aux_vectorStrings = config_get_array_value(archivoConfig, "IO_SLEEP");
+	config->retardosIO = convertirStringsEnNumeros(aux_vectorStrings);
+	config->cantidadPaginasStack = config_get_int_value(archivoConfig, "STACK_SIZE");
+
+	free(aux_vectorStrings);
+}
+
+void inicializarListas(){
+	listaProcesos = list_create();
+	listaProcesosListos = list_create();
+	listaProcesosBloqueados = list_create();
+	listaCPU = list_create();
+}
+
+// --CONEXIONES: CONSOLA(S), UMC Y CPU(S)--
 
 void crear_hilos_conexion() {
 
@@ -36,14 +59,13 @@ void crear_hilos_conexion() {
 	free(cliente_consola);
 }
 
-
 void escuchar_conexiones(void *tipo_cliente) {
 
 	int puerto; // seteo puerto según el tipo
 	if( ( *((int*)tipo_cliente) ) == 1 ) { // CPU
-		puerto = puertoCPU;
+		puerto = config->puertoCPU;
 	} else { // Consola
-		puerto = puertoPrograma;
+		puerto = config->puertoPrograma;
 	}
 
 	int newfd, listener, maxfd;
@@ -113,62 +135,67 @@ void escuchar_conexiones(void *tipo_cliente) {
 
 void conectarConUMC(){
 	fd_serverUMC = nuevoSocket();
-	int ret = conectarSocket(fd_serverUMC, ipUMC, puertoUMC);
+	int ret = conectarSocket(fd_serverUMC, config->ipUMC, config->puertoUMC);
 	validar_conexion(ret, 1); // al ser cliente es terminante
 	handshake_cliente(fd_serverUMC, "N");
 } // Soy cliente de la UMC, es  decir, soy el que inicia la conexión con ella
 
+// --LOGGER--
 void crearLogger(){
 	char * archivoLogNucleo = strdup("NUCLEO_LOG.log");
-	logger = log_create("NUCLEO_LOG.log",archivoLogNucleo,false,LOG_LEVEL_INFO);
+	logger = log_create("NUCLEO_LOG.log", archivoLogNucleo, TRUE, LOG_LEVEL_INFO);
 	free(archivoLogNucleo);
 	archivoLogNucleo = NULL;
 }
 
-void testLecturaArchivoDeConfiguracion(){
-	printf("Puerto de Programa: %d\n",puertoPrograma);
-	printf("Puerto de CPU: %d\n",puertoCPU);
-	printf("Quantum de Round Robin: %d\n",quantum);
-	printf("Retardo de Quantum: %d\n",retardoQuantum);
-	printf("Semaforos: "); imprimirCadenas(semaforosID);
-	printf("Cantidad de Semaforos: "); imprimirNumeros(semaforosValInicial);
-	printf("Dispositivos de I/O: "); imprimirCadenas(ioID);
-	printf("Retardos de I/O: "); imprimirNumeros(retardosIO);
-	printf("Variables compartidas: "); imprimirCadenas(variablesCompartidas);
+// PROCESOS - PCB
+pcb * crearPCB(char * unPrograma){
+	pcb * nuevoPcb = malloc(sizeof(pcb));
+
+	nuevoPcb->pid = asignarPid();
+	nuevoPcb->pc = 0;
+	/*nuevoPcb->cantPaginas =;
+	nuevoPcb->indiceCodigo =;
+	nuevoPcb->indiceEtiquetas =;
+	nuevoPcb->indiceStack =;*/
+	return nuevoPcb;
 }
 
-// --Funciones MUY auxiliares
+int asignarPid(){
+	int randomPid = rand() % 1000; // número aleatorio entre 0 y 1000
 
-void imprimirCadenas(char ** cadenas){
+	while ( noSeRepitePid(randomPid) ){
+		randomPid = rand() % 1000;
+	}
+	return randomPid;
+}
+
+int noSeRepitePid(int pid){
 	int i;
-	for(i=0; i<NELEMS(cadenas); i++){
-		printf("%s, ", cadenas[i]);
-			}
-}
-
-void imprimirNumeros(int * numeros){
-	int i;
-	for(i=0; i<NELEMS(numeros); i++){
-			printf("%d, ", numeros[i]);
-		}
-}
-
-void pasarCadenasArray(char ** cadenas, char ** variablesConfig){
-	int i = 0;
-	while(variablesConfig[i] != NULL){
-		cadenas[i]= strdup(variablesConfig[i]);
-		i++;
+	pcb * unPcb;
+	for (i = 0; i < list_size(listaProcesos); i++){
+		unPcb = (pcb *)list_get(listaProcesos, i);
+		if(unPcb->pid == pid){
+			return FALSE;
 		}
 	}
+	return TRUE;
+}
 
-void pasarEnterosArray(int * numeros, char ** variablesConfig){
+void liberarPCB(pcb * pcb){
+	free(pcb);
+	pcb = NULL;
+}
+
+// --FUNCIONES AUXILIARES--
+int* convertirStringsEnNumeros(char ** variablesConfig){
 int i = 0;
-char* stringNum;
+int * aux;
 	while(variablesConfig[i] != NULL){
-	 stringNum = strdup(variablesConfig[i]);
-	 numeros[i] = atoi(stringNum);
+		aux[i] = atoi(variablesConfig[i]);
 	 	 i++;
 	}
+	return aux;
 }
 
 int validar_cliente(char *id) {
