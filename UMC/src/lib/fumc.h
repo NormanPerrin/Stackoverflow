@@ -7,6 +7,7 @@
 	#include <commons/config.h>
 	#include <commons/log.h>
 	#include <pthread.h>
+	#include <semaphore.h>
 
 	#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 	#define RUTA_CONFIG_UMC "configUMC.txt"
@@ -43,10 +44,11 @@
 	// Globales
 	t_configuracion *config; // guarda valores del config
 	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
-	int entradas_tp_llenas, entradas_tp_vacias;
+	int entradas_tp;
 	void *memoria; // tha memory
 	tp_t *tabla_paginas;
 	tlb_t *tlb;
+	sem_t mutex;
 
 	// Cabeceras
 	void abrirArchivoConfig(char *ruta); // Setea todos los valores de configuración
@@ -62,6 +64,10 @@
 	int validar_cliente(char *id); // Valida que el cliente sea CPU o Nucleo
 	int validar_servidor(char *id); // Valida que el servidor sea Swap
 	int inciar_programa(int pid, int paginas); // Llama a agregar_tp y le avisa a Swap
-	int agregar_tp(int pid, int paginas); // Agrega un proceso a la tabla de páginas
+	void agregar_tp(int pid, int paginas); // Agrega un proceso a la tabla de páginas
+	int buscar_pagina(int pid, int pagina);
+	void eliminar_pagina(int pid, int pagina);
+	void reset_entrada(int pos);
+	void iniciarTP();
 
 #endif /* LIB_FUMC_H_ */
