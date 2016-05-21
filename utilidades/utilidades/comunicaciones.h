@@ -67,6 +67,10 @@
 		char* etiquetas; // La serializacion de las etiquetas
 	} t_etiquetas;
 
+	typedef enum {
+		NEW, READY, EXEC, BLOCK, EXIT
+	} estadoProceso;
+
 	typedef struct pcb{
 		int pid;
 		int pc;
@@ -74,9 +78,11 @@
 		t_codigo indiceCodigo;
 		t_etiquetas indiceEtiquetas;
 		t_stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
-		int baseStack; // ver si va acá
-		int stackPointer;
-		int estadoProceso; // NEW READY EXEC BLOCK EXIT
+		// int baseStack; TODO: ver
+		// int * stackPointer; TODO: ver
+		int estado;
+		int fdCPU;
+		int quantum;
 	} __attribute__((packed)) pcb;
 
 
