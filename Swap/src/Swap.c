@@ -5,6 +5,8 @@ int main(void) {
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG_SWAP); // Abro archivo configuración
 
+	inicializarSwap();
+
 	escucharUMC(); // Conexión con UMC
 
 	liberarRecusos(); // Libera memoria asignada

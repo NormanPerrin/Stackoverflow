@@ -91,5 +91,7 @@
 	int inciar_programa(int pid, int paginas);
 	void * serealizarPCB(void * estructura, int * size);
 	pcb * deserealizarPCB(void * buffer);
+	void *leer_bytes(int pid, int pagina, int offset, int tamanio);
+	void pedir_pagina(int fd, int pid, int pagina);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */
