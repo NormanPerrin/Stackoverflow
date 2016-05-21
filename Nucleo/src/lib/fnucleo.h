@@ -13,9 +13,8 @@
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-<<<<<<< HEAD
+
 #define RUTA_CONFIG_NUCLEO "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Nucleo/configNucleo.txt"
-=======
 //#define RUTA_CONFIG_NUCLEO "configNucleo.txt"
 #define logearError(msg){log_error(logger, msg); return FALSE;}
 
@@ -34,7 +33,7 @@ typedef struct {
 		char ** variablesCompartidas;
 		int cantidadPaginasStack;
 	} t_configuracion;
->>>>>>> a16a0cb1740df36c1136dd228bc3c2dc435aa5bb
+
 
 // Variables Globales
 t_configuracion * config;
