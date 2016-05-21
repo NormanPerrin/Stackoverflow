@@ -30,20 +30,12 @@ void setearValores_config(t_config * archivoConfig){
 	free(aux_vectorStrings);
 }
 
-void inicializarListas(){
-	listaProcesos = list_create();
-	/*listaProcesosListos = list_create();
-	listaProcesosBloqueados = list_create();*/
+void inicializarListasYColas(){
 	listaCPU = list_create();
 	listaConsolas = list_create();
-}
-
-void inicializarColas(){
-	colaNew = queue_create();
+	listaProcesos = list_create();
 	colaReady = queue_create();
-	colaExec = queue_create();
 	colaBlock = queue_create();
-	colaExit = queue_create();
 }
 
 // --CONEXIONES: CONSOLA(S), UMC Y CPU(S)--
@@ -118,9 +110,9 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 			planificarProceso();
 			break;
 			}
-			/*case FIN_QUANTUM:{
+			case FIN_QUANTUM:{
 				// continuar
-			}*/
+			}
 									            	}
 			printf("CPU #%d: %d\n", unCPUActivo->fd_cpu, head);
 					}
@@ -198,35 +190,7 @@ int newfd, listener, maxfd;
 
 }
 
-/*void crearHilosEscucharConsolaYCpu() {
 
-	// Reservo memoria para pasarle los argumentos a los hilos y que no haya conflictos
-	int *cliente_cpu = (int*)reservarMemoria(INT);
-	int *cliente_consola = (int*)reservarMemoria(INT);
-	pthread_t hilo_cpu, hilo_consola;
-
-	*cliente_cpu = 1; // CPU
-	*cliente_consola = 0; // Consola
-
-	pthread_create(&hilo_cpu, NULL, (void*)escuchar_conexiones, cliente_cpu);
-	pthread_create(&hilo_consola, NULL, (void*)escuchar_conexiones, cliente_consola);
-
-	pthread_join(hilo_consola, NULL);
-	pthread_join(hilo_cpu, NULL);
-
-	free(cliente_cpu);
-	free(cliente_consola);
-}*/
-
-/*void escuchar_conexiones(void *tipo_cliente) {
-
-	int puerto; // seteo puerto según el tipo
-	if( ( *((int*)tipo_cliente) ) == 1 ) { // CPU
-		puerto = config->puertoCPU;
-	} else { // Consola
-		puerto = config->puertoPrograma;
-	}
-} // Soy servidor, espero mensajes de CPU(s) y/o Consola(s)*/
 
 void conectarConUMC(){
 	fd_serverUMC = nuevoSocket();
@@ -249,12 +213,13 @@ pcb * crearPCB(char * unPrograma){
 
 	int nuevoPid = asignarPid();
 	nuevoPcb->pid = nuevoPid;
-	/*nuevoPcb->cantPaginas = ;
-	nuevoPcb->baseStack = ;
+	nuevoPcb->cantPaginas = 0;
+	nuevoPcb->pc = 0;
+	nuevoPcb->estado = READY;
+	nuevoPcb->quantum = config->quantum; // TODO: provisorio, ver manejo CPU
+	/*nuevoPcb->baseStack = ;
 	nuevoPcb->stackPointer = ;*/
-	// El resto de los campos no los inicializa el Núcleo, sino CPU al correr el código
-	// proceso * nuevoProceso = malloc(sizeof(proceso));
-	//proceso->
+	// TODO: El resto de los campos no los inicializa el Núcleo, sino CPU al correr el código
 
 	return nuevoPcb;
 }
@@ -289,15 +254,30 @@ void liberarPCB(pcb * pcb){
 void ejecutarPrograma(char * nombrePrograma){
 	pcb * nuevoPcb = crearPCB(nombrePrograma);
 	list_add(listaProcesos, nuevoPcb);
-	list_add(listaProcesosListos, nuevoPcb);
+
+	queue_push(colaReady, nuevoPcb);
 
 	planificarProceso();
 }
 
 void planificarProceso(){
-	//Definir si trabajar con distintas colas de estados o una única cola y pcb+estado
-// continuar
-}
+		int i, asignado = 0;
+		for (i = 0; (i < list_size(listaCPU) && asignado==0); i++){
+			cpu * unCPU = (cpu *)list_get(listaCPU, i);
+			if (unCPU->disponibilidad==LIBRE){
+				if (list_size(colaReady->elements) > 0){
+					pcb * unPCB = (pcb *)queue_pop(colaReady);
+					unPCB->estado = EXEC;
+					unPCB->fdCPU = unCPU->fd_cpu;
+					unCPU->disponibilidad = OCUPADO;
+
+					aplicar_protocolo_enviar(unCPU->fd_cpu, ENVIAR_PCB, unPCB);
+
+					asignado = 1;
+				}
+			}
+		}
+	}
 
 pcb * buscarProcesoPorPid(int pid){
 	int i;
@@ -328,59 +308,11 @@ void actualizarDatosEnPCBProceso(cpu * unCPU, pcb * pcbNuevo){
 // --FUNCIONES AUXILIARES--
 int* convertirStringsEnNumeros(char ** variablesConfig){
 int i = 0;
-int * aux;
+int n = NELEMS(variablesConfig) - 1;
+int * numeros = (int*)calloc(n, sizeof(int));
 	while(variablesConfig[i] != NULL){
-		aux[i] = atoi(variablesConfig[i]);
+		numeros[i] = atoi(variablesConfig[i]);
 	 	 i++;
 	}
-	return aux;
-}
-
-/*int validar_cliente(char *id) {
-	if( !strcmp(id, "C") || !strcmp(id, "P") ) {
-		printf("Cliente aceptado\n");
-		return TRUE;
-	} else {
-		printf("Cliente rechazado\n");
-		return FALSE;
-	}
-}
-
-int validar_servidor(char *id) {
-	if(!strcmp(id, "U")) {
-		printf("Servidor aceptado\n");
-		return TRUE;
-	} else {
-		printf("Servidor rechazado\n");
-		return FALSE;
-	}
-}*/
-
-pcb* readyAExec(){
-
-	sem_wait(&mutex_ready);
-		pcb *unPcb = queue_pop(colaReady);
-	sem_post(&mutex_ready);
-
-	sem_wait(&mutex_exec);
-		queue_push(colaExec, unPcb);
-	sem_post(&mutex_exec);
-
-	return unPcb;
-}
-
-void execAReady(){
-	queue_push(colaExec, queue_pop(colaReady));
-}
-
-void execABLock(){
-	queue_push(colaExec, queue_pop(colaBlock));
-}
-
-void blockAReady(){
-	queue_push(colaBlock, queue_pop(colaReady));
-}
-
-void newAReady(){
-	queue_push(colaNew, queue_pop(colaReady));
+	return numeros;
 }

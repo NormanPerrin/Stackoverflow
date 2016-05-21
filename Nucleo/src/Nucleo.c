@@ -7,8 +7,7 @@ int main(void) {
 
 	abrirArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
 
-	inicializarListas();
-	inicializarColas();
+	inicializarListasYColas();
 
 	conectarConUMC();
 

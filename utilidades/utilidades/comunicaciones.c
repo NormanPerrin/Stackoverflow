@@ -48,6 +48,11 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 			break;
 		}
 
+		case FIN_QUANTUM:
+		{
+			// continuar
+			break;
+		}
 		default:
 		{
 			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
@@ -121,7 +126,7 @@ void* aplicar_protocolo_recibir(int fd, function protocolo) {
 		{
 			int pid;
 			pid = msg_length(fd);
-			// finalizar_programa(pid); // TODO
+			// finalizar_programa(pid); // TODO: lo hace el Núcleo
 			break;
 		}
 
@@ -155,6 +160,17 @@ void* aplicar_protocolo_recibir(int fd, function protocolo) {
 		case DEVOLVER_BYTES:
 
 		case DEVOLVER_PAGINA:
+
+		case ENVIAR_PCB:
+				{
+					// continuar
+				break;
+				}
+		case FIN_QUANTUM:
+				{
+					// continuar
+				break;
+				}
 
 		default:
 		{
