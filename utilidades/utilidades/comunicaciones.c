@@ -56,7 +56,10 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 			// continuar
 			break;
 		}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8fbbcb5821f4c0c75c9242d507dcf8d9bdd2296d
 		default:
 		{
 			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
