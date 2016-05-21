@@ -22,7 +22,8 @@
 		ESCRIBIR_PAGINA = 9, 	// UMC - Swap
 		DEVOLVER_BYTES = 11, 	// UMC - Núcleo / CPU
 		DEVOLVER_PAGINA = 12,	// Swap - UMC
-		ENVIAR_PCB = 13			// Núcleo - CPU
+		ENVIAR_PCB = 13,		// Núcleo - CPU / CPU - Núcleo
+		FIN_QUANTUM = 14		// CPU - Núcleo
 		// hay que agregar las que faltan
 	} function;
 
@@ -73,7 +74,9 @@
 		t_codigo indiceCodigo;
 		t_etiquetas indiceEtiquetas;
 		t_stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
+		int baseStack; // ver si va acá
 		int stackPointer;
+		int estadoProceso; // NEW READY EXEC BLOCK EXIT
 	} __attribute__((packed)) pcb;
 
 

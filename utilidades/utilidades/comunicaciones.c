@@ -53,7 +53,7 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 
 
 
-void *aplicar_protocolo_recibir(int fd, function protocolo) {
+void* aplicar_protocolo_recibir(int fd, function protocolo) {
 
 	int length;
 
