@@ -43,9 +43,9 @@ int validar_cliente(char *id) {return 0;}
 
 void enviar_script(char *ruta) {
 
-	// msg_t *msg_to_send;
-	// msg_to_send = aplicar_protocolo_enviar(ENVIAR_SCRIPT, ruta);
-	// enviarPorSocket(fd_nucleo, msg_to_send, sizeof(msg_to_send));
+	 msg_t *msg_to_send;
+	 msg_to_send = aplicar_protocolo_enviar(ENVIAR_SCRIPT, ruta);
+	 enviarPorSocket(fd_nucleo, msg_to_send, sizeof(msg_to_send));
 }
 
 

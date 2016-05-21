@@ -22,7 +22,8 @@
 		ESCRIBIR_PAGINA = 9, 	// UMC - Swap
 		DEVOLVER_BYTES = 11, 	// UMC - Núcleo / CPU
 		DEVOLVER_PAGINA = 12,	// Swap - UMC
-		ENVIAR_PCB = 13			// Núcleo - CPU
+		ENVIAR_PCB = 13,		// Núcleo - CPU / CPU - Núcleo
+		FIN_QUANTUM = 14		// CPU - Núcleo
 		// hay que agregar las que faltan
 	} function;
 
@@ -38,37 +39,50 @@
 	} __attribute__((packed)) iniciar_programa_t;
 
 
-// NÚCLEO - CPU //
+// -- NÚCLEO - CPU --
 	typedef struct {
-		t_list direccionesArgumentos;
-		t_list variables; // id + dirección
-		int direccionRetorno;
+		char id;
+		t_direccion direccion;
+	} t_variable;
+
+	typedef struct {
+		t_list direccionesArgumentos; // lista de t_direccion
+		t_list variables; // lista de t_variable
+		int proximoIndiceCodigo;
 		t_direccion direccionVarRetorno;
 	} registro_stack;
 
 	typedef struct {
 		int tamanio;
-		registro_stack * inStack;
-	} array_indiceStack;
+		t_list indice_stack; // lista de registro_stack
+	} t_stack;
 
 	typedef struct {
-		int tamanio;
-		int ** inCodigo;
-	} matriz_indiceCodigo;
+		int tamanio; // 8 bytes * cantidad de instrucciones
+		int** indice_codigo; // matriz de 2(columnas: bytes comienzo, bytes fin) x cant. de instrucciones(filas)
+	} t_codigo;
+
+	typedef struct {
+		int etiquetas_size;	// Tamaño del mapa serializado de etiquetas
+		char* etiquetas; // La serializacion de las etiquetas
+	} t_etiquetas;
 
 	typedef struct pcb{
 		int pid;
 		int pc;
 		int cantPaginas;
-		matriz_indiceCodigo indiceCodigo; // matriz de 2(columnas) x cantiddad de instrucciones(filas)
-		t_dictionary indiceEtiquetas;
-		array_indiceStack indiceStack;
+		t_codigo indiceCodigo;
+		t_etiquetas indiceEtiquetas;
+		t_stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
+		int baseStack; // ver si va acá
+		int stackPointer;
+		int estadoProceso; // NEW READY EXEC BLOCK EXIT
 	} __attribute__((packed)) pcb;
 
 
 	// Cabeceras
 	void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura);
-	void aplicar_protocolo_recibir(int fd, function protocolo);
+	void *aplicar_protocolo_recibir(int fd, function protocolo);
 	int msg_length(int fd); // devuelve el tamaño del mensaje
 	void *msg_content(int fd, int length); // devuelve un puntero al contenido del mensaje
 
@@ -77,5 +91,7 @@
 	int inciar_programa(int pid, int paginas);
 	void * serealizarPCB(void * estructura, int * size);
 	pcb * deserealizarPCB(void * buffer);
+	void *leer_bytes(int pid, int pagina, int offset, int tamanio);
+	void pedir_pagina(int fd, int pid, int pagina);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

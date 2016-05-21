@@ -15,5 +15,5 @@ int main(int argc, char **argv) {
 
 	liberarRecusos(); // Libera memoria asignada
 
-	return EXIT_SUCCESS;
+	return 0;
 }

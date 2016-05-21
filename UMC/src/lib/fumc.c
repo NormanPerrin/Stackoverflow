@@ -53,6 +53,7 @@ void servidor() {
 				continue;
 			} else {
 				ret_handshake = handshake_servidor(*sockCliente, "U");
+				enviarPorSocket(*sockCliente,(int*)config->marco_size,INT);
 			}
 
 		}
@@ -124,6 +125,7 @@ void liberarRecusos() {
 	free(memoria);
 	free(tabla_paginas);
 	free(tlb);
+	sem_destroy(&mutex);
 	liberarEstructura();
 }
 
@@ -151,11 +153,15 @@ int validar_servidor(char *id) {
 
 void iniciarEstructuras() {
 
+	sem_init(&mutex, 0, 1);
+
 	int length = config->marcos * config->marco_size;
 	memoria = reservarMemoria(length); // Google Chrome be like
+	memcpy(memoria, "", length);
 
 	length = config->marcos * sizeof(tp_t);
 	tabla_paginas = reservarMemoria(length);
+	iniciarTP();
 
 	length = config->entradas_tlb * sizeof(tlb_t);
 	tlb = reservarMemoria(length);
@@ -163,15 +169,58 @@ void iniciarEstructuras() {
 }
 
 
+void iniciarTP() {
+
+	int marco;
+	sem_wait(&mutex);
+	for(marco = 0; marco < entradas_tp; marco++) reset_entrada(marco);
+	sem_post(&mutex);
+
+	entradas_tp = config->marcos;
+}
+
+
+void reset_entrada(int pos) {
+	tabla_paginas[pos].pagina = -1;
+	tabla_paginas[pos].pid = -1;
+	tabla_paginas[pos].marco = -1;
+	tabla_paginas[pos].bit_uso = 0;
+	tabla_paginas[pos].bit_modificado = 0;
+	tabla_paginas[pos].bit_presencia = 0;
+}
+
+
 int inciar_programa(int pid, int paginas) {
 
-	int i;
+	agregar_tp(pid, paginas);
+
+	iniciar_programa_t *arg = reservarMemoria(sizeof(iniciar_programa_t));
+	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg);
+	int ret = *( (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO) );
+
+	free(arg);
+	return ret;
+}
+
+
+void agregar_tp(int pid, int paginas) {
+
+	sem_wait(&mutex);
+
+	int i, pos = 0;
 	for(i = 0; i < paginas; i++) {
 
-		int pos = 0;
-		while( tabla_paginas[pos].pid != 0 ){
-			// si se paso de los marcos disponibles hubo un fallo
-			if(pos > config->marcos) return FALSE;
+		while( tabla_paginas[pos].pid != -1 ) {
+
+			if( pos == entradas_tp ) {
+				entradas_tp += 20; // 20 para no hacer realloc tan seguido
+				realloc(tabla_paginas, entradas_tp * sizeof(tp_t));
+				int i;
+				for(i = pos; i < entradas_tp; i++) {
+					reset_entrada(i);
+				}
+			}
+
 			pos++;
 		}
 
@@ -180,11 +229,107 @@ int inciar_programa(int pid, int paginas) {
 
 	}
 
-	iniciar_programa_t *arg = reservarMemoria(sizeof(iniciar_programa_t));
-	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg);
+	sem_post(&mutex);
 
-	free(arg);
-	return TRUE;
 }
 
 
+void eliminar_pagina(int pid, int pagina) {
+
+	sem_wait(&mutex);
+
+	int pos = buscar_pagina(pid, pagina);
+	if(pos == ERROR) {
+		fprintf(stderr, "Error: referencia de pid: %d a página: %d no encontrada\n", pid, pagina);
+	} else {
+		reset_entrada(pos);
+	}
+
+	sem_post(&mutex);
+}
+
+
+int buscar_pagina(int pid, int pagina) {
+
+	sem_wait(&mutex);
+
+	int pos = 0;
+	while(pos < entradas_tp) {
+
+		if( (tabla_paginas[pos].pid == pid) && (tabla_paginas[pos].pagina == pagina) )
+			return pos;
+
+		pos++;
+	}
+
+	sem_post(&mutex);
+
+	return ERROR;
+
+}
+
+
+void *leer_bytes(int pid, int pagina, int offset, int tamanio) {
+
+	void *contenido = reservarMemoria(tamanio);
+
+	int pos = buscar_pagina(pid, pagina);
+	if(pos == ERROR) {
+		return NULL;
+	}
+
+	int dir_fisica;
+	dir_fisica = (pos * config->marco_size) + offset;
+	sem_wait(&mutex);
+	memcpy(contenido, (memoria + dir_fisica), tamanio);
+	sem_post(&mutex);
+
+	return contenido;
+
+}
+
+
+int escribir_bytes(int pid, int pagina, int offset, int tamanio, void *contenido) {
+
+	int pos = buscar_pagina(pid, pagina);
+	if(pos == ERROR) return ERROR;
+
+	int dir_fisica = (pos * config->marco_size) + offset;
+	sem_wait(&mutex);
+	memcpy(memoria + dir_fisica, contenido, tamanio);
+	sem_post(&mutex);
+
+	return TRUE;
+
+}
+
+
+void finalizar_programa(int pid) {
+
+	int pos;
+
+	sem_wait(&mutex);
+
+	for(pos = 0; pos < entradas_tp; pos++) {
+		if(tabla_paginas[pos].pid == pid) {
+			reset_entrada(pos);
+		}
+	}
+
+	sem_post(&mutex);
+}
+
+
+void pedir_pagina(int fd, int pid, int pagina) {
+
+	iniciar_programa_t *arg;
+	arg->pid = pid;
+	arg->paginas = pagina;
+	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, arg);
+
+	void *contenido;
+	contenido = aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO);
+	if(contenido == NULL) {
+		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, NULL);
+	}
+}

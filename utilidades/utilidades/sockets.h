@@ -3,22 +3,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>     // Incluye memset
+#include <string.h>     // memset
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <errno.h>      // Incluye perror
-#include <arpa/inet.h>  // Incluye INADDR_ANY
-#include <unistd.h>     // Incluye close, usleep
-#include <netdb.h> 		// Incluye gethostbyname
+#include <errno.h>      // perror
+#include <arpa/inet.h>  // INADDR_ANY
+#include <unistd.h>     // close, usleep
+#include <netdb.h> 		// gethostbyname
 #include <netinet/in.h>
-#include <fcntl.h> // Incluye fcntl
+#include <fcntl.h> // fcntl
 #include <commons/error.h>
 
 #define FALSE 0
 #define TRUE 1
-#define ERROR -1 // Las llamadas al sistema utilizadas retornan -1 en caso de error
-#define manejarError(mensajeError) {perror(mensajeError);} // Función para el tratamiento de errores, muestra mensaje a través de perror
+#define ERROR -1 // Las system-calls de sockets retornan -1 en caso de error
+#define manejarError(mensajeError) {perror(mensajeError);} // Tratamiento de errores
 
 
 // *******************************************************************
@@ -28,7 +28,7 @@
 // Funciones para el Servidor
 int  nuevoSocket();
 struct sockaddr_in asociarSocket(int fd_socket, int puerto);
-void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas); // El segundo int corresponde al backlog (conexiones permitidas en la cola de entrada)
+void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas);
 int  aceptarConexionSocket(int fd_socket);
 
 // Función para el Cliente
@@ -43,7 +43,7 @@ void cerrarSocket(int fd_socket);
 
 // Función para comprobar varios Sockets al mismo tiempo (Select)
 void seleccionarSocket(int mayorValorDeFD,
-					   fd_set * fdListosParaLectura, fd_set * fdListosParaEscritura, fd_set * fdListosParaEjecucion,
-					   int* segundos, int* milisegundos);
+				fd_set * fdListosParaLectura, fd_set * fdListosParaEscritura, fd_set * fdListosParaEjecucion,
+				int* segundos, int* milisegundos);
 
 #endif /* UTILIDADES_SOCKETS_H_ */

@@ -8,10 +8,14 @@ int main(void) {
 	abrirArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
 
 	inicializarListas();
+	inicializarColas();
 
 	conectarConUMC();
 
-	crear_hilos_conexion();
+	escucharAConsola();
+	escucharACPU();
+
+	//crearHilosEscucharConsolaYCpu();
 
 	return EXIT_SUCCESS;
 }
