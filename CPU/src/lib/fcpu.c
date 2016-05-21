@@ -39,6 +39,7 @@ int validar_servidor(char *id) {
 		return FALSE;
 	}
 }
+
 int validar_cliente(char *id) {return 0;}
 
 
@@ -57,7 +58,6 @@ void esperar_ejecucion() {
 }
 
 // Primitivas AnSISOP
-
 t_puntero definirVariable(t_nombre_variable identificador_variable){
 	t_puntero posicion;
 
