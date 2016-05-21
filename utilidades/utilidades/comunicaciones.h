@@ -23,7 +23,8 @@
 		DEVOLVER_BYTES = 11, 	// UMC - Núcleo / CPU
 		DEVOLVER_PAGINA = 12,	// Swap - UMC
 		ENVIAR_PCB = 13,		// Núcleo - CPU / CPU - Núcleo
-		FIN_QUANTUM = 14		// CPU - Núcleo
+		FIN_QUANTUM = 14,		// CPU - Núcleo
+
 		// hay que agregar las que faltan
 	} function;
 

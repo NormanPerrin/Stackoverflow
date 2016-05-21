@@ -6,13 +6,11 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 	int length;
 
 	switch(protocolo) {
-
 		case IMPRIMIR:
 			// trato imprimir
 
 		case IMPRIMIR_TEXTO:
 			// trato imprimir_texto
-
 		case INICIAR_PROGRAMA:
 		{
 			length = sizeof(iniciar_programa_t);
@@ -28,7 +26,12 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 		case FINALIZAR_PROGRAMA:
 
 		case ENVIAR_SCRIPT:
-
+							{
+							length = sizeof(estructura);
+							msg_to_send= reservarMemoria(sizeof estructura);
+							enviarPorSocket(fd, msg_to_send, length);
+							break;
+							}
 		case RESPUESTA_PEDIDO:
 
 		case LEER_PAGINA:
@@ -53,6 +56,7 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 			// continuar
 			break;
 		}
+
 		default:
 		{
 			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);

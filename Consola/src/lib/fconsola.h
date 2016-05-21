@@ -10,7 +10,7 @@
 #define RUTA_CONFIG_CONSOLA "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/configConsola.txt"
 
 //#define RUTA_CONFIG_CONSOLA "configConsola.txt"
-#define ENVIAR_SCRIPT 7
+//#define ENVIAR_SCRIPT 7
 
 
 // Variables globales
