@@ -13,10 +13,10 @@ void setearValores_config(t_config * archivoConfig){
 	ipNucleo = strdup(config_get_string_value(archivoConfig, "IP_NUCLEO"));
 }
 
-void leerScript(char * rutaScript){
-	nombreScript = (t_string*)malloc(sizeof(t_string));
-	(*nombreScript).tamanio = strlen(rutaScript) + 1;
-	(*nombreScript).texto = strdup(rutaScript);
+void leerScript(char * nombreScript){
+	rutaScript = (t_string*)malloc(sizeof(t_string));
+	rutaScript->tamanio = strlen(nombreScript) + 1;
+	rutaScript->texto = strdup(nombreScript);
 }
 
 void conectarConNucleo(){
@@ -25,7 +25,7 @@ void conectarConNucleo(){
 	validar_conexion(ret, 1); // Al ser cliente es terminante
 	handshake_cliente(fd_nucleo, "C");
 
-	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, nombreScript);
+	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, rutaScript);
 
 	cerrarSocket(fd_nucleo);
 }
@@ -49,16 +49,6 @@ int validar_servidor(char *id) {
 	}
 }
 int validar_cliente(char *id) {return 0;}
-
-
-void enviar_script(char *ruta) {
-
-	 //msg_t *msg_to_send;
-	 //msg_to_send
-	 aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, ruta);
-	 //enviarPorSocket(fd_nucleo, msg_to_send, sizeof(msg_to_send));
-}
-
 
 void esperar_mensajes() {
 

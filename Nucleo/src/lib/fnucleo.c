@@ -187,11 +187,13 @@ int newfd, escuchaNucleo, maxfd;
 				switch(*head){
 				case ENVIAR_SCRIPT:
 				{
-					t_string * scriptNuevo = (t_string*)mensaje; // Recibo el script de una Consola
-					unaConsolaActiva->nombrePrograma = strdup((*scriptNuevo).texto);
-					pcb * nuevoPCB = crearPCB(unaConsolaActiva->nombrePrograma );
+					t_string * scriptNuevo = (t_string*)mensaje; // Recibo la ruta del script de una Consola
+					unaConsolaActiva->nombrePrograma = strdup(scriptNuevo->texto);
+
+					pcb * nuevoPCB = crearPCB(unaConsolaActiva->nombrePrograma);
+
 					unaConsolaActiva->pid = nuevoPCB->pid;
-					list_add(listaProcesos, nuevoPCB); //TODO: le sigue almacenar código en UMC
+					list_add(listaProcesos, nuevoPCB);
 
 					break;
 				}
@@ -207,6 +209,28 @@ int newfd, escuchaNucleo, maxfd;
 	cerrarSocket(escuchaNucleo);
 }
 
+t_metadata_program* parseoInicialDePrograma(char* codigo){
+	t_metadata_program* informacionInicial = (t_metadata_program*)malloc(sizeof(t_metadata_program));
+	informacionInicial = metadata_desde_literal(codigo);
+
+	return informacionInicial;
+}
+
+char* obtenerScriptDesdeArchivo(char * rutaPrograma){
+FILE* archivoOriginal = fopen(rutaPrograma, "r+");
+long tamanioScript = fileSize(archivoOriginal); // Me da el numero de bytes, y como 1 char=1 byte:
+char* codigo = (char*)calloc(tamanioScript+1, sizeof(char));
+char c;
+
+while((c=getc(archivoOriginal))!=EOF){
+	*codigo++ = c;
+}
+*codigo='\0';
+fclose(archivoOriginal);
+
+return codigo;
+}
+
 void conectarConUMC(){
 	fd_clienteUMC = nuevoSocket();
 	int ret = conectarSocket(fd_clienteUMC, config->ipUMC, config->puertoUMC);
@@ -220,10 +244,6 @@ void conectarConUMC(){
 	cerrarSocket(fd_clienteUMC);
 }
 
-void enviarEstructurasAUMC(){
-
-}
-
 // --LOGGER--
 void crearLogger(){
 	char * archivoLogNucleo = strdup("NUCLEO_LOG.log");
@@ -232,19 +252,41 @@ void crearLogger(){
 	archivoLogNucleo = NULL;
 }
 
+long fileSize(FILE* f){
+	long actual=ftell(f);
+	fseek (f,0,SEEK_END);
+	long ultimo=ftell(f);
+	fseek(f,actual,SEEK_SET);
+
+return ultimo;
+}
+
 // PROCESOS - PCB
-pcb * crearPCB(char * unPrograma){
+pcb * crearPCB(char * rutaPrograma){
 	pcb * nuevoPcb = malloc(sizeof(pcb));
+
+	char* codigo = obtenerScriptDesdeArchivo(rutaPrograma);
+	long tamanioScript = sizeof(codigo);
+	int aux_cant = tamanioScript/tamanioPagina;
 
 	int nuevoPid = asignarPid();
 	nuevoPcb->pid = nuevoPid;
-	nuevoPcb->cantPaginas = 0;
-	nuevoPcb->pc = 0;
+	nuevoPcb->paginas_codigo = (aux_cant==0)?aux_cant:aux_cant+1;
 	nuevoPcb->estado = READY;
 	nuevoPcb->quantum = config->quantum; // TODO: provisorio, ver manejo CPU
-	/*nuevoPcb->baseStack = ;
-	nuevoPcb->stackPointer = ;*/
-	// TODO: El resto de los campos no los inicializa el Núcleo, sino CPU al correr el código
+
+	t_metadata_program* infoProg;
+	infoProg = parseoInicialDePrograma(codigo);
+
+	nuevoPcb->pc = infoProg->instruccion_inicio; // TODO: o se lo manda = 0
+
+	// Inicializo los tamaños de los índices:
+	nuevoPcb->indiceCodigo.tamanio = 2 * INT * infoProg->instrucciones_size;
+	nuevoPcb->indiceEtiquetas.tamanio = infoProg->etiquetas_size;
+	nuevoPcb->indiceStack.tamanio = config->cantidadPaginasStack * tamanioPagina;
+
+	/*aplicar_protocolo_enviar(); // envío el código, etc. a UMC -> 'iniciar_programa'*/
+	free(codigo);
 
 	return nuevoPcb;
 }

@@ -32,7 +32,7 @@
 			int pagina;
 			int offset;
 			int size;
-	} t_direccion; // posición de memoria
+	} direccion; // posición de memoria
 
 	typedef struct {
 			int tamanio;
@@ -42,36 +42,41 @@
 	typedef struct {
 		int pid;
 		int paginas;
-		t_string script;
+		// + código del programa
 	} __attribute__((packed)) iniciar_programa_t;
 
-// -- NÚCLEO - CPU --
+// -- Contenido del PCB --
 	typedef struct {
 		char id;
-		t_direccion direccion;
-	} t_variable;
+		direccion posicion;
+	} variable;
 
 	typedef struct {
-		t_list direccionesArgumentos; // lista de t_direccion
-		t_list variables; // lista de t_variable
-		int proximoIndiceCodigo;
-		t_direccion direccionVarRetorno;
-	} registro_stack;
+		direccion* argumentos;
+		variable* variablesLocales;
+		int proximaInstruccion;
+		direccion posicionDelResultado;
+	} registroStack;
 
 	typedef struct {
-		int tamanio;
-		t_list indice_stack; // lista de registro_stack
-	} t_stack;
+		int tamanio; // viene de config
+		registroStack* registros;
+	} stack;
 
 	typedef struct {
-		int tamanio; // 8 bytes * cantidad de instrucciones
-		int** indice_codigo; // matriz de 2(columnas: bytes comienzo, bytes fin) x cant. de instrucciones(filas)
-	} t_codigo;
+		int comienzo;
+		int longitud; // desplazamiento u offsset
+	} instruccion;
 
 	typedef struct {
-		int etiquetas_size;	// Tamaño del mapa serializado de etiquetas
-		char* etiquetas; // La serializacion de las etiquetas
-	} t_etiquetas;
+		int tamanio; // 2 * sizeof(int) * cant de instrucciones
+		instruccion* instrucciones;
+	} codigo;
+
+	typedef struct {
+		int tamanio;	// Tamaño del mapa serializado de etiquetas
+		char* etiquetas; // Serializacion de las etiquetas
+	} etiquetas;
 
 	typedef enum {
 		NEW, READY, EXEC, BLOCK, EXIT
@@ -80,12 +85,11 @@
 	typedef struct pcb{
 		int pid;
 		int pc;
-		int cantPaginas;
-		t_codigo indiceCodigo;
-		t_etiquetas indiceEtiquetas;
-		t_stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
-		// int baseStack; TODO: ver
-		// int * stackPointer; TODO: ver
+		int paginas_codigo;
+		codigo indiceCodigo;
+		etiquetas indiceEtiquetas;
+		stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
+		int* stackPointer; // SP del Stack
 		int estado;
 		int fdCPU;
 		int quantum;

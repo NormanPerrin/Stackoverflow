@@ -11,8 +11,6 @@ int main(int argc, char **argv) {
 
 	conectarConNucleo(); // Conexión con Núcleo
 
-	/*enviar_script(argv[1]); // Envia ruta de script a Núcleo*/
-
 	esperar_mensajes();
 
 	liberarRecusos(); // Libera memoria asignada

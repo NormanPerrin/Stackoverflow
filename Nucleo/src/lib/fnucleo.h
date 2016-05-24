@@ -11,6 +11,8 @@
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 #include <semaphore.h>
+#include <parser/parser.h>
+#include <parser/metadata_program.h>
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
@@ -83,9 +85,12 @@ void crearLogger();
 int asignarPid();
 int noSeRepitePid(int pid);
 pcb* buscarProcesoPorPid(int pid);
-pcb* crearPCB(char * unPrograma);
+pcb* crearPCB(char * rutaPrograma);
 void liberarPCB(pcb * pcb);
 void planificarProceso();
+long fileSize(FILE* archivo);
+char* obtenerScriptDesdeArchivo(char * rutaPrograma);
+t_metadata_program* parseoInicialDePrograma(char* codigo);
 
 pcb* readyAExec();
 void execAReady();
