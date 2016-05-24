@@ -21,8 +21,12 @@ void leerArchivoDeConfiguracion(char * ruta) {
 	}else{
 
 	archivoConfig = config_create(ruta);
-	setearValores_config(archivoConfig); // Redefinido en cada proceso
+
+	setearValores_config(archivoConfig); // Redefinido en cada proceso (Ejemplo en Núcleo)
+
+
 	config_destroy(archivoConfig); // Libero la estructura archivoConfig
+
 
 	printf("El archivo de configuración ha sido leído correctamente\n"); // TODO: ver de loggear en cada módulo
 	}

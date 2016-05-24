@@ -6,13 +6,11 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 	int length;
 
 	switch(protocolo) {
-
 		case IMPRIMIR:
 			// trato imprimir
 
 		case IMPRIMIR_TEXTO:
 			// trato imprimir_texto
-
 		case INICIAR_PROGRAMA:
 		{
 			length = sizeof(iniciar_programa_t);
@@ -36,8 +34,6 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 			break;
 		}
 
-		case RESPUESTA_PEDIDO:
-
 		case LEER_PAGINA:
 
 		case ESCRIBIR_PAGINA:
@@ -60,6 +56,7 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 			// continuar
 			break;
 		}
+
 		default:
 		{
 			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);

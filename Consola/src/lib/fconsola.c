@@ -14,7 +14,7 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void leerScript(char * rutaScript){
-	nombreScript = (t_string*)malloc(t_string);
+	nombreScript = (t_string*)malloc(sizeof(t_string));
 	(*nombreScript).tamanio = strlen(rutaScript) + 1;
 	(*nombreScript).texto = strdup(rutaScript);
 }
@@ -53,9 +53,10 @@ int validar_cliente(char *id) {return 0;}
 
 void enviar_script(char *ruta) {
 
-	// msg_t *msg_to_send;
-	// msg_to_send = aplicar_protocolo_enviar(ENVIAR_SCRIPT, ruta);
-	// enviarPorSocket(fd_nucleo, msg_to_send, sizeof(msg_to_send));
+	 //msg_t *msg_to_send;
+	 //msg_to_send
+	 aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, ruta);
+	 //enviarPorSocket(fd_nucleo, msg_to_send, sizeof(msg_to_send));
 }
 
 
