@@ -71,7 +71,7 @@ sem_t mutex_block;*/
 // -- Cabeceras de Funciones --
 void abrirArchivoDeConfiguracion(char * ruta);
 void setearValores_config(t_config * archivoConfig);
-void inicializarListas();
+void inicializarListasYColas();
 
 void conectarConUMC();
 void escucharACPU();
