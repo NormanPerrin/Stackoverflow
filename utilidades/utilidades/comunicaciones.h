@@ -42,7 +42,7 @@
 	typedef struct {
 		int pid;
 		int paginas;
-		// + código del programa
+		t_string codigo;
 	} __attribute__((packed)) iniciar_programa_t;
 
 // -- Contenido del PCB --

@@ -263,7 +263,7 @@ return ultimo;
 
 // PROCESOS - PCB
 pcb * crearPCB(char * rutaPrograma){
-	pcb * nuevoPcb = malloc(sizeof(pcb));
+	pcb * nuevoPcb = (pcb*)malloc(sizeof(pcb));
 
 	char* codigo = obtenerScriptDesdeArchivo(rutaPrograma);
 	long tamanioScript = sizeof(codigo);
@@ -285,8 +285,18 @@ pcb * crearPCB(char * rutaPrograma){
 	nuevoPcb->indiceEtiquetas.tamanio = infoProg->etiquetas_size;
 	nuevoPcb->indiceStack.tamanio = config->cantidadPaginasStack * tamanioPagina;
 
-	/*aplicar_protocolo_enviar(); // envío el código, etc. a UMC -> 'iniciar_programa'*/
+
+	iniciar_programa_t* nuevoPrograma = (iniciar_programa_t*)malloc(sizeof(iniciar_programa_t));
+	nuevoPrograma->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
+	nuevoPrograma->pid = nuevoPid;
+	nuevoPrograma->codigo.texto = strdup(codigo);
+	nuevoPrograma->codigo.tamanio = tamanioScript;
+
+	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma);
+
 	free(codigo);
+	free(infoProg);
+	free(nuevoPrograma);
 
 	return nuevoPcb;
 }
