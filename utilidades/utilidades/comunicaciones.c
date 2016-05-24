@@ -198,7 +198,10 @@ int msg_length(int fd) {
 	uint8_t *buff = reservarMemoria(INT);
 	recibirPorSocket(fd, buff, 1);
 
-	return buff;
+	int ret = *buff;
+	free(buff);
+
+	return ret;
 }
 
 

@@ -95,9 +95,10 @@ void crearHiloCliente(int *sockCliente) {
 void cliente(void* fdCliente) {
 
 	int sockCliente = *((int*)fdCliente);
+	free(fdCliente);
 	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
-	int ret = 1;
 
+	int ret = 1;
 	while(ret > 0 && !exitFlag) {
 
 		ret = recibirPorSocket(sockCliente, head, 1);
