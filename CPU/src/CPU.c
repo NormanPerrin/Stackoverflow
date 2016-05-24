@@ -11,7 +11,7 @@ int main(void) {
 
 	conectarConUMC(); // Conexión con UMC
 
-	esperar_ejecucion();
+	// esperar_ejecucion(); --> se hace dentro del 'conectarConNúcleo'
 
 	liberarEstructura(); // Libero memoria reservada para setear config
 

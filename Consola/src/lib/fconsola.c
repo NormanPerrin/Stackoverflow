@@ -13,11 +13,21 @@ void setearValores_config(t_config * archivoConfig){
 	ipNucleo = strdup(config_get_string_value(archivoConfig, "IP_NUCLEO"));
 }
 
+void leerScript(char * rutaScript){
+	nombreScript = (t_string*)malloc(t_string);
+	(*nombreScript).tamanio = strlen(rutaScript) + 1;
+	(*nombreScript).texto = strdup(rutaScript);
+}
+
 void conectarConNucleo(){
 	fd_nucleo = nuevoSocket();
 	int ret = conectarSocket(fd_nucleo, ipNucleo, puertoNucleo);
 	validar_conexion(ret, 1); // Al ser cliente es terminante
 	handshake_cliente(fd_nucleo, "C");
+
+	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, nombreScript);
+
+	cerrarSocket(fd_nucleo);
 }
 
 void testLecturaArchivoDeConfiguracion(){

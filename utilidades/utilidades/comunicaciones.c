@@ -28,6 +28,13 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 		case FINALIZAR_PROGRAMA:
 
 		case ENVIAR_SCRIPT:
+		{
+			length = sizeof(t_string);
+			int * plength = (int *)length;
+			msg_to_send = serealizarScript(estructura, plength);
+			enviarPorSocket(fd, msg_to_send, length);
+			break;
+		}
 
 		case RESPUESTA_PEDIDO:
 
@@ -131,6 +138,10 @@ void* aplicar_protocolo_recibir(int fd, function protocolo) {
 		}
 
 		case ENVIAR_SCRIPT:
+		{
+		// completar
+			break;
+		}
 
 		case RESPUESTA_PEDIDO:
 		{
@@ -163,7 +174,7 @@ void* aplicar_protocolo_recibir(int fd, function protocolo) {
 
 		case ENVIAR_PCB:
 				{
-					// continuar
+					// completar
 				break;
 				}
 		case FIN_QUANTUM:
@@ -203,15 +214,15 @@ void *msg_content(int fd, int length) {
 }
 
 // -- SERIALIZACIÓN/DESEAREALIZACIÓN DEL PCB --
-/*
+
 void * serealizarPCB(void * estructura, int * tamanio){
 	pcb * unPCB = (pcb *) estructura;
 
 	int desplazamiento = 0;
-	tamanio = sizeof(pcb) - y/o +
+	//tamanio = sizeof(pcb) - y/o +
 	void * buffer = malloc(*tamanio);
 
-	---- serializar pcb: memcpy del pcb al buffer ----
+	/*---- serializar pcb: memcpy del pcb al buffer ----*/
 
 	return buffer;
 }
@@ -220,8 +231,27 @@ pcb * deserealizarPCB(void * buffer){
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(sizeof(pcb));
 
-	---- deserializar pcb: memcpy del buffer al pcb ----
+	/*---- deserializar pcb: memcpy del buffer al pcb ----*/
 
 	return unPcb;
 }
-*/
+
+void * serealizarScript(void * codigo, int * size){
+	t_string * unPCB = (t_string*) codigo;
+
+		int desplazamiento = 0;
+		//tamanio = sizeof(pcb) - y/o +
+		void * buffer = malloc(*size);
+
+		/*---- serializar script: memcpy del script al buffer ----*/
+
+		return buffer;
+}
+t_string * deserealizarScript(void * buffer){
+	int desplazamiento = 0;
+		t_string * unScript = malloc(sizeof(t_string));
+
+		/*---- deserializar script: memcpy del buffer al script ----*/
+
+		return unScript;
+}

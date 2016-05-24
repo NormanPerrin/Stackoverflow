@@ -3,7 +3,9 @@
 
 int main(int argc, char **argv) {
 
-//	validar_argumentos(argc); // Se le debe ingresar la ruta del script. Aunque se ejecute por #!
+	//	validar_argumentos(argc); // Se le debe ingresar la ruta del script. Aunque se ejecute por #!
+
+	leerScript(argv[1]);
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CONSOLA); // Abro archivo configuración
 

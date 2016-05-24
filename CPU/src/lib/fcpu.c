@@ -11,17 +11,50 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void conectarConNucleo() {
-	fd_serverCPU = nuevoSocket();
-	int ret = conectarSocket(fd_serverCPU, config->ipNucleo, config->puertoNucleo);
+	fd_clienteNucleo = nuevoSocket();
+	int ret = conectarSocket(fd_clienteNucleo, config->ipNucleo, config->puertoNucleo);
 	validar_conexion(ret, 1); // Es terminante por ser cliente
-	handshake_cliente(fd_serverCPU, "P");
+	handshake_cliente(fd_clienteNucleo, "P");
+
+	int * head = (int*)malloc(INT);
+	pcb * pcbEnEjecucion;
+	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, *head);
+
+	while(mensaje!=NULL){
+		switch(*head){
+
+		case ENVIAR_PCB:
+			pcbEnEjecucion = recibirPCB(mensaje); // el cpu obtiene una pcb para ejecutar
+			// hacer algo con la pcb... (alguna función del cpu)
+			break;
+		}
+		free(mensaje);
+
+	mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, *head); // recibe otro mensaje del Núcleo
+	}
+	free(head);
+	cerrarSocket(fd_clienteNucleo);
+}
+
+pcb * recibirPCB(void * mensaje){
+pcb * nuevoPCB = (pcb*)malloc(sizeof(pcb));
+// deserealizaicón
+memcpy(nuevoPCB, mensaje, sizeof(pcb));
+
+return nuevoPCB;
 }
 
 void conectarConUMC(){
-	fd_serverCPU = nuevoSocket();
-	int ret = conectarSocket(fd_serverCPU, config->ipUMC, config->puertoUMC);
+	fd_clienteUMC = nuevoSocket();
+	int ret = conectarSocket(fd_clienteUMC, config->ipUMC, config->puertoUMC);
 	validar_conexion(ret, 1);
-	handshake_cliente(fd_serverCPU, "P");
+	handshake_cliente(fd_clienteUMC, "P");
+
+	int * tamPagina = (int*)malloc(INT);
+	recibirPorSocket(fd_clienteUMC, tamPagina, INT);
+	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC
+
+	cerrarSocket(fd_clienteUMC);
 }
 
 void liberarEstructura() {
@@ -43,19 +76,18 @@ int validar_servidor(char *id) {
 int validar_cliente(char *id) {return 0;}
 
 
-void esperar_ejecucion() {
+/*void esperar_ejecucion() {
 
 	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
 
 	while(TRUE) {
 		int ret;
-		ret = recibirPorSocket(fd_serverCPU, head, 1);
+		ret = recibirPorSocket(fd_clienteNucleo, head, INT);
 		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-		aplicar_protocolo_recibir(fd_serverCPU, *head);
+		aplicar_protocolo_recibir(fd_clienteNucleo, *head);
 	}
-
 	free(head);
-}
+}*/
 
 // Primitivas AnSISOP
 t_puntero definirVariable(t_nombre_variable identificador_variable){

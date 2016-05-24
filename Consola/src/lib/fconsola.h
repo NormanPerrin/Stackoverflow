@@ -3,6 +3,7 @@
 
 #include <utilidades/general.h>
 #include <utilidades/comunicaciones.h>
+#include <utilidades/sockets.h>
 #include <commons/config.h>
 #include <commons/log.h>
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
@@ -13,11 +14,14 @@
 int puertoNucleo; // Puerto donde se encuentra escuchando el proceso Núcleo
 char * ipNucleo; // IP del proceso Núcleo
 int fd_nucleo; // Socket consola - nucleo
+t_config config;
+t_string * nombreScript;
 
 // Estructuras
 
 // Cabeceras
 void validar_argumentos(int arg); // Valida argumentos de entrada
+void leerScript(char * rutaScript);
 void testLecturaArchivoDeConfiguracion();
 void setearValores_config(t_config * archivoConfig);
 void liberarRecusos(); // Libera memoria asignada

@@ -54,6 +54,7 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 	FD_SET(fdEscuchaNucleo, &master);
 
 	maxfd = fdEscuchaNucleo;
+	int * head = (int*)malloc(INT);
 
 	while(TRUE) {
 
@@ -90,9 +91,9 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 					planificarProceso();
 
 				} else { // si no es una nueva conexión entonces es un nuevo mensaje
-					int head;
+
 					cpu * unCPUActivo = (cpu *)list_get(listaCPU, i);
-					void * mensaje = aplicar_protocolo_recibir(unCPUActivo->fd_cpu, head);
+					void * mensaje = aplicar_protocolo_recibir(unCPUActivo->fd_cpu, *head);
 
 					 if (mensaje == NULL) { // desconexión o error
 						cerrarSocket(unCPUActivo->fd_cpu);
@@ -102,44 +103,47 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 						break;
 
 	} else { // se leyó correctamente el mensaje
-		switch(head){
-			case ENVIAR_PCB:{
+		switch(*head){
+			case ENVIAR_PCB:
+			{
 			pcb * pcbNuevo=(pcb *) mensaje; // Recibo la PCB actualizada del CPU
 			log_info(logger, "Fin de quantum de CPU #%d - Proceso #%d", unCPUActivo->fd_cpu, pcbNuevo->pid);
 			actualizarDatosEnPCBProceso(unCPUActivo, pcbNuevo);
 			planificarProceso();
 			break;
 			}
-			case FIN_QUANTUM:{
+			case FIN_QUANTUM:
+			{
 				// continuar
 			}
 									            	}
-			printf("CPU #%d: %d\n", unCPUActivo->fd_cpu, head);
+			printf("CPU #%d: %d\n", unCPUActivo->fd_cpu, *head);
 					}
 				} // - conexión nueva - else - mensaje nuevo -
 			} // - i está modificado -
 		} // - recorrido de fds -
 	} // - while(true) -
-
-	close(fdEscuchaNucleo); // no se cierra acá
+	free(head);
+	cerrarSocket(fdEscuchaNucleo);
 }
 
 void escucharAConsola(){
 int puerto = config->puertoPrograma;
 
-int newfd, listener, maxfd;
+int newfd, escuchaNucleo, maxfd;
 
-	listener = nuevoSocket();
-	asociarSocket(listener, puerto);
-	escucharSocket(listener, CONEXIONES_PERMITIDAS);
+	escuchaNucleo = nuevoSocket();
+	asociarSocket(escuchaNucleo, puerto);
+	escucharSocket(escuchaNucleo, CONEXIONES_PERMITIDAS);
 
 	fd_set readfd, master;
 
 	FD_ZERO(&readfd);
 	FD_ZERO(&master);
-	FD_SET(listener, &master);
+	FD_SET(escuchaNucleo, &master);
 
-	maxfd = listener;
+	maxfd = escuchaNucleo;
+	int * head = (int*)malloc(INT);
 
 	while(TRUE) {
 
@@ -152,12 +156,12 @@ int newfd, listener, maxfd;
 
 			if( FD_ISSET(i, &readfd) ) { // i está modificado. Si no está modificado no se le hace nada
 
-				if(i == listener) { // nueva conexión
+				if(i == escuchaNucleo) { // nueva conexión
 
 					int ret_handshake = 0;
 
 					while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
-						newfd = aceptarConexionSocket(listener);
+						newfd = aceptarConexionSocket(escuchaNucleo);
 						if (validar_conexion(newfd, 0) == FALSE) {
 							continue;
 						} else {
@@ -169,35 +173,56 @@ int newfd, listener, maxfd;
 					if(newfd > maxfd) maxfd = newfd;
 
 				} else { // si no es una nueva conexión entonces es un nuevo mensaje
-					int head;
-					void * mensaje = aplicar_protocolo_recibir(i, head);
+
+					consola * unaConsolaActiva = (consola *)list_get(listaConsolas, i);
+
+					void * mensaje = aplicar_protocolo_recibir(i, *head);
 
 					 if (mensaje == NULL){ // desconexión o error
 
-						close(i);
-						FD_CLR(i, &master);
+						cerrarSocket(unaConsolaActiva->fd_consola);
+						FD_CLR(unaConsolaActiva->fd_consola, &master);
 						break;
 			} else { // se leyó correctamente el mensaje
-				printf("CPU #%d: %d\n", i, head);
+				switch(*head){
+				case ENVIAR_SCRIPT:
+				{
+					t_string * scriptNuevo = (t_string*)mensaje; // Recibo el script de una Consola
+					unaConsolaActiva->nombrePrograma = strdup((*scriptNuevo).texto);
+					pcb * nuevoPCB = crearPCB(unaConsolaActiva->nombrePrograma );
+					unaConsolaActiva->pid = nuevoPCB->pid;
+					list_add(listaProcesos, nuevoPCB); //TODO: le sigue almacenar código en UMC
+
+					break;
+				}
+				}
+				printf("CPU #%d: %d\n", i, *head);
 					}
 
 				} // - conexión nueva - else - mensaje nuevo -
 			} // - i está modificado -
 		} // - recorrido de fds -
 	} // - while(true) -
-
-	close(listener);
-
+	free(head);
+	cerrarSocket(escuchaNucleo);
 }
 
-
-
 void conectarConUMC(){
-	fd_serverUMC = nuevoSocket();
-	int ret = conectarSocket(fd_serverUMC, config->ipUMC, config->puertoUMC);
+	fd_clienteUMC = nuevoSocket();
+	int ret = conectarSocket(fd_clienteUMC, config->ipUMC, config->puertoUMC);
 	validar_conexion(ret, 1); // al ser cliente es terminante
-	handshake_cliente(fd_serverUMC, "N");
-} // Soy cliente de la UMC, inicio la conexión
+	handshake_cliente(fd_clienteUMC, "N");
+
+	int * tamPagina = (int*)malloc(INT);
+	recibirPorSocket(fd_clienteUMC, tamPagina, INT);
+	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC
+
+	cerrarSocket(fd_clienteUMC);
+}
+
+void enviarEstructurasAUMC(){
+
+}
 
 // --LOGGER--
 void crearLogger(){

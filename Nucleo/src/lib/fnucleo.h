@@ -35,6 +35,7 @@ typedef struct {
 
 typedef struct {
 	int fd_consola;
+	int pid;
 	char* nombrePrograma;
 } consola;
 
@@ -49,13 +50,14 @@ typedef enum {
 
 // -- Variables Globales --
 t_configuracion * config;
-int fd_serverUMC; // cliente de UMC
+int fd_clienteUMC; // cliente de UMC
 t_log * logger;
 t_list * listaProcesos;
 t_list * listaCPU;
 t_list * listaConsolas;
 t_queue * colaReady;
 t_queue * colaBlock;
+int tamanioPagina;
 /*sem_t mutex_ready;
 sem_t mutex_block;*/
 

@@ -34,10 +34,15 @@
 	} t_direccion; // posición de memoria
 
 	typedef struct {
-		uint8_t pid;
-		uint8_t paginas;
-	} __attribute__((packed)) iniciar_programa_t;
+			int tamanio;
+			char * texto;
+		} t_string;
 
+	typedef struct {
+		int pid;
+		int paginas;
+		t_string script;
+	} __attribute__((packed)) iniciar_programa_t;
 
 // -- NÚCLEO - CPU --
 	typedef struct {
@@ -97,6 +102,8 @@
 	int inciar_programa(int pid, int paginas);
 	void * serealizarPCB(void * estructura, int * size);
 	pcb * deserealizarPCB(void * buffer);
+	void * serealizarScript(void * codigo, int * size);
+	t_string * deserealizarScript(void * buffer);
 	void *leer_bytes(int pid, int pagina, int offset, int tamanio);
 	void pedir_pagina(int fd, int pid, int pagina);
 

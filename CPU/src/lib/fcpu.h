@@ -21,12 +21,14 @@ typedef struct {
 
 // Globales
 t_configuracion *config;
-int fd_serverCPU, fd_serverCPU;
+int fd_clienteNucleo, fd_clienteUMC;
+int tamanioPagina;
 
 // Cabeceras
 void conectarConNucleo();
 void conectarConUMC();
-void esperar_ejecucion(); // Espera PCB para ejecutar de Núcleo idefinidamente
+pcb * recibirPCB(void * mensaje);
+/*void esperar_ejecucion(); // Espera PCB para ejecutar de Núcleo idefinidamente*/
 void setearValores_config(t_config * archivoConfig);
 void liberarEstructura(); // Libera la memoria reservada en setear config
 int validar_servidor(char *id); // Valida si la conexión es UMC o Nucleo
