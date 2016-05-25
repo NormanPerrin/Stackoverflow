@@ -67,8 +67,6 @@ void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
 
 }
 
-
-
 void* aplicar_protocolo_recibir(int fd, function protocolo) {
 
 	int length;
@@ -123,6 +121,9 @@ void* aplicar_protocolo_recibir(int fd, function protocolo) {
 			tamanio = msg_length(fd);
 			// ret = escribir_bytes(pid, pagina, offset, tamanio); // TODO
 			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret); // TODO verificar ret antes
+			/* TODO: UMC le tiene que mandar la posición del stack al Núcleo, así este se lo
+			 asigna al SP en el PCB */
+
 			break;
 		}
 

@@ -294,6 +294,10 @@ pcb * crearPCB(char * rutaPrograma){
 
 	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma);
 
+	int* sp = (int*)malloc(INT);
+	sp = aplicar_protocolo_recibir(fd_clienteUMC, INICIAR_PROGRAMA);
+	nuevoPcb->stackPointer = sp;
+
 	free(codigo);
 	free(infoProg);
 	free(nuevoPrograma);
