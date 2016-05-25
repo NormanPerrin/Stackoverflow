@@ -10,7 +10,6 @@ void abrirArchivoDeConfiguracion(char * ruta){
 
 void setearValores_config(t_config * archivoConfig){
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
-	char ** aux_vectorStrings;
 
 	config->puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
 	config->puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
@@ -21,13 +20,9 @@ void setearValores_config(t_config * archivoConfig){
 	config->semaforosID = config_get_array_value(archivoConfig, "SEM_IDS");
 	config->ioID = config_get_array_value(archivoConfig, "IO_IDS");
 	config->variablesCompartidas = config_get_array_value(archivoConfig, "SHARED_VARS");
-	aux_vectorStrings = config_get_array_value(archivoConfig, "SEM_INIT");
-	config->semaforosValInicial = convertirStringsEnNumeros(aux_vectorStrings);
-	aux_vectorStrings = config_get_array_value(archivoConfig, "IO_SLEEP");
-	config->retardosIO = convertirStringsEnNumeros(aux_vectorStrings);
+	config->semaforosValInicial = convertirStringsEnNumeros(config_get_array_value(archivoConfig, "SEM_INIT"));
+	config->retardosIO = convertirStringsEnNumeros(config_get_array_value(archivoConfig, "IO_SLEEP"));
 	config->cantidadPaginasStack = config_get_int_value(archivoConfig, "STACK_SIZE");
-
-	free(aux_vectorStrings);
 }
 
 void inicializarListasYColas(){
@@ -54,7 +49,6 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 	FD_SET(fdEscuchaNucleo, &master);
 
 	maxfd = fdEscuchaNucleo;
-	int * head = (int*)malloc(INT);
 
 	while(TRUE) {
 
@@ -91,9 +85,9 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 					planificarProceso();
 
 				} else { // si no es una nueva conexión entonces es un nuevo mensaje
-
+					 int head, tamanioMensaje;
 					cpu * unCPUActivo = (cpu *)list_get(listaCPU, i);
-					void * mensaje = aplicar_protocolo_recibir(unCPUActivo->fd_cpu, *head);
+					void * mensaje = aplicar_protocolo_recibir(unCPUActivo->fd_cpu, &head, &tamanioMensaje);
 
 					 if (mensaje == NULL) { // desconexión o error
 						cerrarSocket(unCPUActivo->fd_cpu);
@@ -103,7 +97,7 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 						break;
 
 	} else { // se leyó correctamente el mensaje
-		switch(*head){
+		switch(head){
 			case ENVIAR_PCB:
 			{
 			pcb * pcbNuevo=(pcb *) mensaje; // Recibo la PCB actualizada del CPU
@@ -117,13 +111,12 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 				// continuar
 			}
 									            	}
-			printf("CPU #%d: %d\n", unCPUActivo->fd_cpu, *head);
+			printf("CPU #%d: %d\n", unCPUActivo->fd_cpu, head);
 					}
 				} // - conexión nueva - else - mensaje nuevo -
 			} // - i está modificado -
 		} // - recorrido de fds -
 	} // - while(true) -
-	free(head);
 	cerrarSocket(fdEscuchaNucleo);
 }
 
@@ -143,7 +136,6 @@ int newfd, escuchaNucleo, maxfd;
 	FD_SET(escuchaNucleo, &master);
 
 	maxfd = escuchaNucleo;
-	int * head = (int*)malloc(INT);
 
 	while(TRUE) {
 
@@ -173,10 +165,10 @@ int newfd, escuchaNucleo, maxfd;
 					if(newfd > maxfd) maxfd = newfd;
 
 				} else { // si no es una nueva conexión entonces es un nuevo mensaje
-
+					int head, tamanioMensaje;
 					consola * unaConsolaActiva = (consola *)list_get(listaConsolas, i);
 
-					void * mensaje = aplicar_protocolo_recibir(i, *head);
+					void * mensaje = aplicar_protocolo_recibir(i, &head, &tamanioMensaje);
 
 					 if (mensaje == NULL){ // desconexión o error
 
@@ -184,7 +176,7 @@ int newfd, escuchaNucleo, maxfd;
 						FD_CLR(unaConsolaActiva->fd_consola, &master);
 						break;
 			} else { // se leyó correctamente el mensaje
-				switch(*head){
+				switch(head){
 				case ENVIAR_SCRIPT:
 				{
 					t_string * scriptNuevo = (t_string*)mensaje; // Recibo la ruta del script de una Consola
@@ -198,22 +190,14 @@ int newfd, escuchaNucleo, maxfd;
 					break;
 				}
 				}
-				printf("CPU #%d: %d\n", i, *head);
+				printf("CPU #%d: %d\n", i, head);
 					}
 
 				} // - conexión nueva - else - mensaje nuevo -
 			} // - i está modificado -
 		} // - recorrido de fds -
 	} // - while(true) -
-	free(head);
 	cerrarSocket(escuchaNucleo);
-}
-
-t_metadata_program* parseoInicialDePrograma(char* codigo){
-	t_metadata_program* informacionInicial = (t_metadata_program*)malloc(sizeof(t_metadata_program));
-	informacionInicial = metadata_desde_literal(codigo);
-
-	return informacionInicial;
 }
 
 char* obtenerScriptDesdeArchivo(char * rutaPrograma){
@@ -275,16 +259,13 @@ pcb * crearPCB(char * rutaPrograma){
 	nuevoPcb->estado = READY;
 	nuevoPcb->quantum = config->quantum; // TODO: provisorio, ver manejo CPU
 
-	t_metadata_program* infoProg;
-	infoProg = parseoInicialDePrograma(codigo);
+	t_metadata_program* infoProg = (t_metadata_program*)malloc(sizeof(t_metadata_program));
+	infoProg = metadata_desde_literal(codigo);
 
-	nuevoPcb->pc = infoProg->instruccion_inicio; // TODO: o se lo manda = 0
+	nuevoPcb->pc = infoProg->instruccion_inicio + 1; // la siguiente al begin
 
-	// Inicializo los tamaños de los índices:
-	nuevoPcb->indiceCodigo.tamanio = 2 * INT * infoProg->instrucciones_size;
-	nuevoPcb->indiceEtiquetas.tamanio = infoProg->etiquetas_size;
-	nuevoPcb->indiceStack.tamanio = config->cantidadPaginasStack * tamanioPagina;
-
+	// Inicializo los tres índices:
+	inicializarIndices(nuevoPcb, infoProg);
 
 	iniciar_programa_t* nuevoPrograma = (iniciar_programa_t*)malloc(sizeof(iniciar_programa_t));
 	nuevoPrograma->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
@@ -292,17 +273,30 @@ pcb * crearPCB(char * rutaPrograma){
 	nuevoPrograma->codigo.texto = strdup(codigo);
 	nuevoPrograma->codigo.tamanio = tamanioScript;
 
-	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma);
+	// Le pido a UMC que cree el heap del programa:
+	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma, SIZE_MSG);
 
-	int* sp = (int*)malloc(INT);
-	sp = aplicar_protocolo_recibir(fd_clienteUMC, INICIAR_PROGRAMA);
-	nuevoPcb->stackPointer = sp;
+	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)malloc(respuestaInicioPrograma);
+	// Recibo de UMC la dirección donde comienza el stack (SP):
+	respuestaInicio = aplicar_protocolo_recibir(fd_clienteUMC, INICIAR_PROGRAMA, SIZE_MSG);
+	nuevoPcb->stackPointer = respuestaInicio->stackPointer;
 
 	free(codigo);
 	free(infoProg);
 	free(nuevoPrograma);
+	free(respuestaInicio);
 
 	return nuevoPcb;
+}
+
+void inicializarIndices(pcb* pcb, t_metadata_program* metaData){
+	pcb->indiceCodigo.tamanio = 2 * INT * metaData->instrucciones_size;
+	pcb->indiceCodigo.instrucciones = metaData->instrucciones_serializado;
+
+	pcb->indiceEtiquetas.tamanio = metaData->etiquetas_size;
+	pcb->indiceEtiquetas.etiquetas = metaData->etiquetas;
+
+	pcb->indiceStack.tamanio = config->cantidadPaginasStack * tamanioPagina;
 }
 
 int asignarPid(){

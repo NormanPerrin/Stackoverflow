@@ -1,229 +1,230 @@
 #include "comunicaciones.h"
 
-void aplicar_protocolo_enviar(int fd, function protocolo, void *estructura) {
+void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int tamanioMensaje){
 
-	void * msg_to_send;
-	int length;
+	int desplazamiento = 0;
 
-	switch(protocolo) {
-		case IMPRIMIR:
-			// trato imprimir
+	void * mensajeSerealizado = serealizar(head, mensaje, &tamanioMensaje);
 
-		case IMPRIMIR_TEXTO:
-			// trato imprimir_texto
-		case INICIAR_PROGRAMA:
-		{
-			length = sizeof(iniciar_programa_t);
-			msg_to_send = reservarMemoria(sizeof(iniciar_programa_t));
-			enviarPorSocket(fd, msg_to_send, length);
-			break;
-		}
+	int tamanioTotal = sizeof(int) * 2 + tamanioMensaje;
 
-		case LEER_BYTES:
+	void * buffer = malloc(tamanioTotal);
+	memcpy(buffer + desplazamiento, &head, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &tamanioMensaje, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, mensajeSerealizado, tamanioMensaje);
 
-		case ESCRIBIR_BYTES:
+	// Se envía la totalidad del paquete (lo contenido el buffer)
+	enviarPorSocket(fdCliente, buffer, tamanioTotal);
 
-		case FINALIZAR_PROGRAMA:
+	free(buffer);
 
-		case ENVIAR_SCRIPT:
-		{
-			length = sizeof(t_string);
-			int * plength = (int *)length;
-			msg_to_send = serealizarScript(estructura, plength);
-			enviarPorSocket(fd, msg_to_send, length);
-			break;
-		}
+	free(mensajeSerealizado);
+}
 
-		case LEER_PAGINA:
+void * aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje){
+	// Recibo el head: devuelve NULL si el head no pertenece al protocolo, o si falla el recv
+	int recibido = recibirPorSocket(fdCliente, head, sizeof(int));
 
-		case ESCRIBIR_PAGINA:
-
-		case DEVOLVER_BYTES:
-
-		case DEVOLVER_PAGINA:
-
-		case ENVIAR_PCB:
-		{
-			length = sizeof(pcb);
-			int * plength = (int *)length;
-			msg_to_send = serealizarPCB(estructura, plength);
-			enviarPorSocket(fd, msg_to_send, length);
-			break;
-		}
-
-		case FIN_QUANTUM:
-		{
-			// continuar
-			break;
-		}
-
-		default:
-		{
-			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
-			break;
-		}
-
+	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){
+		return NULL;
 	}
+	// Recibo el tamaño del mensaje
+	recibirPorSocket(fdCliente, tamanioMensaje, sizeof(int));
 
-}
+	void * mensaje = malloc(*tamanioMensaje);
+	recibirPorSocket(fdCliente, mensaje, *tamanioMensaje);
+	void * buffer = deserealizar(*head, mensaje, *tamanioMensaje);
+	free(mensaje);
 
-void* aplicar_protocolo_recibir(int fd, function protocolo) {
+	return buffer;
 
-	int length;
+} // Se debe castear el mensaje al recibirse (indicar el tipo de dato que debe matchear con el void*)
 
-	switch(protocolo) {
+void * serealizar(int protocolo, void * elemento, int * tamanio){
+	void * buffer;
 
-		case IMPRIMIR:
-		{
-			length = msg_length(fd);
-			char* msg = (char*)msg_content(fd, length+1);
-			msg[length] = '\0';
-//			imprimir(msg); // TODO
-			free(msg);
+	switch(protocolo){
+		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO:{
+			buffer = serealizarTexto(elemento, tamanio);
+			break;
+		} // en ambos casos se envía un texto
+		case ENVIAR_PCB: {
+			buffer = serealizarPCB(elemento, tamanio);
 			break;
 		}
-
-		case IMPRIMIR_TEXTO:
-			// trato imprimir_texto
-
-		case INICIAR_PROGRAMA:
-		{
-			int pid, paginas, *ret;
-			pid = msg_length(fd);
-			paginas = msg_length(fd);
-//			ret = inciar_programa(pid, paginas); // TODO
-			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret);
+		case INICIAR_PROGRAMA: {
+			buffer = serealizartSolicitudInicioPrograma(elemento, tamanio);
 			break;
 		}
-
-		case LEER_BYTES:
-		{
-			int pid, paginas, offset, tamanio;
-			void *ret;
-			pid = msg_length(fd);
-			paginas = msg_length(fd);
-			offset = msg_length(fd);
-			tamanio = msg_length(fd);
-			// ret = leer_bytes(pid, pagina, offset, tamanio); // TODO
-			if(ret == NULL) {
-				pedir_pagina(fd, pid, paginas);
-			}
+		case RESPUESTA_INICIO_PROGRAMA: {
+			buffer = serealizarRespuestaInicioPrograma(elemento,tamanio);
 			break;
 		}
-
-		case ESCRIBIR_BYTES:
-		{
-			int pid, paginas, offset, tamanio;
-			void *ret;
-			pid = msg_length(fd);
-			paginas = msg_length(fd);
-			offset = msg_length(fd);
-			tamanio = msg_length(fd);
-			// ret = escribir_bytes(pid, pagina, offset, tamanio); // TODO
-			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret); // TODO verificar ret antes
-			/* TODO: UMC le tiene que mandar la posición del stack al Núcleo, así este se lo
-			 asigna al SP en el PCB */
-
+		case LEER_BYTES: {
+			buffer = serealizartSolicitudLectura(elemento,tamanio);
 			break;
 		}
-
-		case FINALIZAR_PROGRAMA:
-		{
-			int pid;
-			pid = msg_length(fd);
-			// finalizar_programa(pid); // TODO: lo hace el Núcleo
+		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
+			buffer = serealizarSolicitudEscritura(elemento, tamanio);
+			break;
+		} // se comportan de igual forma (mismo case)
+		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR:{
+			buffer = malloc(*tamanio);
+			memcpy(buffer, elemento, *tamanio);
+			break; // en todos los casos se envía un valor entero
+		}
+		case LEER_PAGINA:{
 			break;
 		}
-
-		case ENVIAR_SCRIPT:
-		{
-		// completar
+		case ESCRIBIR_PAGINA:{
 			break;
-		}
-
-		case RESPUESTA_PEDIDO:
-		{
-			int *length = reservarMemoria(INT);
-			void *respuesta;
-			*length = msg_length(fd);
-			respuesta = msg_content(fd ,length);
-			return respuesta;
-			break;
-		}
-
-		case LEER_PAGINA:
-
-		case ESCRIBIR_PAGINA:
-		{
-			int pid, pagina, length, ret;
-			void *contenido;
-			pid = msg_length(fd);
-			pagina = msg_length(fd);
-			length = msg_length(fd);
-			contenido = msg_content(fd, length);
-			// ret = escribir_pagina(pid, pagina, contenido); // TODO
-			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, ret); // TODO verificar ret antes
-			break;
-		}
-
-		case DEVOLVER_BYTES:
-
-		case DEVOLVER_PAGINA:
-
-		case ENVIAR_PCB:
-				{
-					// completar
-				break;
 				}
-		case FIN_QUANTUM:
-				{
-					// continuar
-				break;
-				}
-
-		default:
-		{
+		case DEVOLVER_BYTES:{
+			break;
+		}
+		case DEVOLVER_PAGINA:{
+			break;
+		}
+		case 0:{
+			printf("Se produjo una desconexión de sockets\n"); // es el caso del recv = 0
+			break;
+		}
+		default:{
 			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
+			//abort();
 			break;
 		}
-
 	}
-
-	return NULL;
-
+	return buffer;
 }
 
+void * deserealizar(int protocolo, void * mensaje, int tamanio){
+	void * buffer;
 
-int msg_length(int fd) {
+	switch(protocolo){
+		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO:{
+			buffer = desserealizarTexto(mensaje);
+				break;
+		} // en ambos casos se recibe un texto
+		case ENVIAR_PCB:{
+			buffer = deserealizarPCB(mensaje);
+			break;
+		}
+		case INICIAR_PROGRAMA:{
+			buffer = deserealizarSolicitudInicioPrograma(mensaje);
+			break;
+		}
+		case RESPUESTA_INICIO_PROGRAMA: {
+			buffer = deserealizarRespuestaInicio(mensaje);
+			break;
+		}
+		case LEER_BYTES:{
+			buffer = deserealizartSolicitudLectura(mensaje);
+			break;
+		}
+		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
+			buffer = deserealizarSolicitudEscritura(mensaje);
+			break;
+		} // se comportan de igual forma (mismo case)
+		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR:{
+			buffer = malloc(tamanio);
+			memcpy(buffer, mensaje, tamanio);
+			break;
+		} // en todos los casos se recibe un valor entero
+		case LEER_PAGINA:{
+			break;
+		}
+		case ESCRIBIR_PAGINA:{
+			break;
+		}
+		case DEVOLVER_BYTES:{
+			break;
+				}
+		case DEVOLVER_PAGINA:{
+			break;
+		}
+		case 0:{
+			printf("Se produjo una desconexión de sockets\n"); // es el caso del recv = 0
+			break;
+		}
+		default:{
+			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
+			//abort();
+			break;
+		}
+	}
+	return buffer;
+} // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
-	uint8_t *buff = reservarMemoria(INT);
-	recibirPorSocket(fd, buff, 1);
+void * serealizarTexto(void * estructura, int * tamanio){
+t_string * unTexto = (t_string *) estructura;
 
-	int ret = *buff;
-	free(buff);
+int desplazamiento = 0;
+	int tamanioTexto = (sizeof(char) * unTexto->tamanio);
+	*tamanio = sizeof(t_string) - sizeof(int) + tamanioTexto;
 
-	return ret;
+	void * buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento, &(unTexto->tamanio), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unTexto->texto), tamanioTexto);
+
+	return buffer;
 }
 
+t_string * deserealizarTexto(void * buffer){
+	int desplazamiento = 0;
+	t_string * unTexto = malloc(sizeof(t_string));
 
-void *msg_content(int fd, int length) {
+	memcpy(&unTexto->tamanio, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	unTexto->texto= malloc(unTexto->tamanio * sizeof(char));
+	memcpy(unTexto->texto, buffer + desplazamiento, unTexto->tamanio);
 
-	void *buff = reservarMemoria(length);
-	recibirPorSocket(fd, buff, length);
-
-	return buff;
+	return unTexto;
 }
-
-// -- SERIALIZACIÓN/DESEAREALIZACIÓN DEL PCB --
 
 void * serealizarPCB(void * estructura, int * tamanio){
 	pcb * unPCB = (pcb *) estructura;
 
 	int desplazamiento = 0;
-	//tamanio = sizeof(pcb) - y/o +
-	void * buffer = malloc(*tamanio);
+	int tamanioStack = (sizeof(int) * unPCB->stackPointer.tamanio);
+	int iCodigoSize = (sizeof(t_intructions) * unPCB->indiceCodigo.tamanio);
+	int iStackSize = (sizeof(registroStack) * unPCB->indiceStack.tamanio);
+	int iEtiquetasSize = (sizeof(char) * unPCB->indiceEtiquetas.tamanio);
+	*tamanio = sizeof(pcb) - sizeof(int) + tamanioStack + iCodigoSize + iStackSize + iEtiquetasSize;
 
-	/*---- serializar pcb: memcpy del pcb al buffer ----*/
+	void * buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento,&(unPCB->pid), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->fdCPU), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->pc), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->paginas_codigo), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->estado), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->quantum), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->estado), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(unPCB->stackPointer.tamanio), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, unPCB->stackPointer.sp, tamanioStack);
+	desplazamiento += tamanioStack;
+	memcpy(buffer + desplazamiento, &(unPCB->indiceCodigo.tamanio), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, unPCB->indiceCodigo.instrucciones, iCodigoSize);
+	desplazamiento += iCodigoSize;
+	memcpy(buffer + desplazamiento, &(unPCB->indiceEtiquetas.tamanio), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, unPCB->indiceEtiquetas.etiquetas, iEtiquetasSize);
+	desplazamiento += iEtiquetasSize;
+	memcpy(buffer + desplazamiento, &(unPCB->indiceStack.tamanio), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, unPCB->indiceStack.registros, iStackSize);
 
 	return buffer;
 }
@@ -232,27 +233,173 @@ pcb * deserealizarPCB(void * buffer){
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(sizeof(pcb));
 
-	/*---- deserializar pcb: memcpy del buffer al pcb ----*/
+	memcpy(&unPcb->pid, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->fdCPU, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->pc, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->estado, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&unPcb->quantum, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	memcpy(&unPcb->stackPointer.tamanio, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	unPcb->stackPointer.sp= malloc(unPcb->stackPointer.tamanio * sizeof(char));
+	memcpy(unPcb->stackPointer.sp, buffer + desplazamiento, unPcb->stackPointer.tamanio);
+	desplazamiento += unPcb->stackPointer.tamanio;
+
+	memcpy(&unPcb->indiceEtiquetas.tamanio, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	unPcb->indiceEtiquetas.etiquetas= malloc(unPcb->indiceEtiquetas.tamanio * sizeof(char));
+	memcpy(unPcb->indiceEtiquetas.etiquetas, buffer + desplazamiento, unPcb->indiceEtiquetas.tamanio);
+	desplazamiento += unPcb->indiceEtiquetas.tamanio;
+
+	memcpy(&unPcb->indiceCodigo.tamanio, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	unPcb->indiceCodigo.instrucciones= malloc(unPcb->indiceCodigo.tamanio * sizeof(t_intructions));
+	memcpy(unPcb->indiceCodigo.instrucciones, buffer + desplazamiento, unPcb->indiceCodigo.tamanio);
+	desplazamiento += unPcb->indiceCodigo.tamanio;
+
+	memcpy(&unPcb->indiceStack.tamanio, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	unPcb->indiceStack.registros= malloc(unPcb->indiceStack.tamanio * sizeof(registroStack));
+	memcpy(unPcb->indiceStack.registros, buffer + desplazamiento, unPcb->indiceStack.tamanio);
 
 	return unPcb;
 }
 
-void * serealizarScript(void * codigo, int * size){
-	t_string * unPCB = (t_string*) codigo;
+void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio){
+	iniciar_programa_t* solicitudInicio = (iniciar_programa_t*) elemento;
 
-		int desplazamiento = 0;
-		//tamanio = sizeof(pcb) - y/o +
-		void * buffer = malloc(*size);
-
-		/*---- serializar script: memcpy del script al buffer ----*/
-
-		return buffer;
-}
-t_string * deserealizarScript(void * buffer){
 	int desplazamiento = 0;
-		t_string * unScript = malloc(sizeof(t_string));
+	int tamanioCodigo = sizeof(char) * solicitudInicio->codigo.tamanio;
+	*tamanio = sizeof(solicitudInicio) - sizeof(int) + tamanioCodigo;
+	void* buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento,&solicitudInicio->pid,sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &solicitudInicio->paginas, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(solicitudInicio->codigo.tamanio), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, solicitudInicio->codigo.texto, tamanioCodigo);
 
-		/*---- deserializar script: memcpy del buffer al script ----*/
+	return buffer;
+}
 
-		return unScript;
+iniciar_programa_t*  deserealizarSolicitudInicioPrograma(void* buffer){
+	int desplazamiento = 0;
+	iniciar_programa_t* solicitudInicio = malloc(sizeof(iniciar_programa_t));
+
+	memcpy(&solicitudInicio->pid,buffer + desplazamiento,sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(&solicitudInicio->paginas, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(&solicitudInicio->codigo.tamanio, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+	solicitudInicio->codigo.texto= malloc(solicitudInicio->codigo.tamanio * sizeof(char));
+	memcpy(&solicitudInicio->codigo.texto, buffer + desplazamiento, solicitudInicio->codigo.tamanio);
+
+	return solicitudInicio;
+}
+
+void * serealizarRespuestaInicio(void * elemento, int * tamanio){
+	respuestaInicioPrograma * respuesta = (respuestaInicioPrograma*) elemento;
+	int desplazamiento = 0;
+	int tamanioStack = (sizeof(int) * respuesta->stackPointer->tamanio);
+	*tamanio = sizeof(respuestaInicioPrograma) - sizeof(int) + tamanioStack;
+
+	void* buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento,&respuesta->estadoDelHeap,sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &respuesta->pid, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(&respuesta->stackPointer->tamanio, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &respuesta->stackPointer, sizeof(respuesta->stackPointer));
+
+	return buffer;
+}
+
+respuestaInicioPrograma* deserealizarRespuestaInicio(void * buffer){
+	int desplazamiento = 0;
+	respuestaInicioPrograma* respuesta = malloc(sizeof(respuestaInicioPrograma));
+
+	memcpy(&respuesta->estadoDelHeap,buffer + desplazamiento,sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(&respuesta->pid, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	memcpy(&respuesta->stackPointer->tamanio, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+	respuesta->stackPointer->sp= malloc(respuesta->stackPointer->tamanio * sizeof(int));
+	memcpy(&respuesta->stackPointer->sp, buffer + desplazamiento, respuesta->stackPointer->tamanio);
+
+	return respuesta;
+}
+
+void* serealizarSolicitudLectura(void* elemento, int* tamanio){
+	solicitudLectura* solicitud = (solicitudLectura*) elemento;
+
+	int desplazamiento = 0;
+	*tamanio =sizeof(solicitudLectura);
+	void* buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento,&solicitud->pid,sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &solicitud->posicion, sizeof(int));
+
+	return buffer;
+}
+
+solicitudLectura* deserealizarSolicitudLectura(void* buffer){
+	int desplazamiento = 0;
+	solicitudLectura* solicitud = malloc(sizeof(solicitudLectura));
+
+	memcpy(&solicitud->pid,buffer + desplazamiento,sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(&solicitud->posicion, buffer + desplazamiento, sizeof(int));
+
+	return solicitud;
+}
+
+void * serealizarSolicitudEscritura(void * elemento, int * tamanio){
+	solicitudEscritura * solicitud = (solicitudEscritura * ) elemento;
+
+	int desplazamiento = 0;
+	int tamanioString = (sizeof(char) * solicitud->datos.tamanio);
+	*tamanio = sizeof(solicitudEscritura) - sizeof(int) + tamanioString;
+
+	void * buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento,&(solicitud->pid), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(solicitud->posicion), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(solicitud->exito), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &(solicitud->datos.tamanio), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, solicitud->datos.texto, tamanioString);
+
+	return buffer;
+}
+
+solicitudEscritura * deserealizarSolicitudEscritura(void * buffer){
+	int desplazamiento = 0;
+	solicitudEscritura * solicitud = malloc(sizeof(solicitudEscritura));
+
+	memcpy(&solicitud->pid, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&solicitud->posicion, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	memcpy(&solicitud->exito, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(&solicitud->datos.tamanio, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	solicitud->datos.texto = malloc(solicitud->datos.tamanio);
+	memcpy(solicitud->datos.texto, buffer + desplazamiento, solicitud->datos.tamanio);
+
+	return solicitud;
 }

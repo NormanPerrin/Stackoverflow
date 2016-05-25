@@ -79,6 +79,7 @@ void conectarConUMC();
 void escucharACPU();
 void escucharAConsola();
 void actualizarDatosEnPCBProceso(cpu * unCPU, pcb * pcbNuevo);
+void inicializarIndices(pcb* pcb, t_metadata_program* metaData);
 
 void crearLogger();
 
@@ -90,7 +91,6 @@ void liberarPCB(pcb * pcb);
 void planificarProceso();
 long fileSize(FILE* archivo);
 char* obtenerScriptDesdeArchivo(char * rutaPrograma);
-t_metadata_program* parseoInicialDePrograma(char* codigo);
 
 pcb* readyAExec();
 void execAReady();
