@@ -25,7 +25,7 @@ void conectarConNucleo(){
 	validar_conexion(ret, 1); // Al ser cliente es terminante
 	handshake_cliente(fd_nucleo, "C");
 
-	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, rutaScript);
+	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, rutaScript, SIZE_MSG);
 
 	cerrarSocket(fd_nucleo);
 }
@@ -52,16 +52,14 @@ int validar_cliente(char *id) {return 0;}
 
 void esperar_mensajes() {
 
-	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
+	int head;
 
 	while(TRUE) {
 		int ret;
-		ret = recibirPorSocket(fd_nucleo, head, 1);
+		ret = recibirPorSocket(fd_nucleo, &head, 1);
 		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-		aplicar_protocolo_recibir(fd_nucleo, *head);
+		aplicar_protocolo_recibir(fd_nucleo, &head, SIZE_MSG);
 	}
-
-	free(head);
 }
 
 

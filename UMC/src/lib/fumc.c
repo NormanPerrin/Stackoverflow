@@ -96,22 +96,20 @@ void cliente(void* fdCliente) {
 
 	int sockCliente = *((int*)fdCliente);
 	free(fdCliente);
-	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
-
+	int head;
 	int ret = 1;
+
 	while(ret > 0 && !exitFlag) {
 
-		ret = recibirPorSocket(sockCliente, head, 1);
+		ret = recibirPorSocket(sockCliente, &head, 1);
 
 		if( validar_recive(ret, 0) == FALSE) { // Si se desconecta una CPU o hay error en mensaje no pasa nada. Por eso no terminante
 			break;
 		} else {
-			aplicar_protocolo_recibir(sockCliente, *head);
+			aplicar_protocolo_recibir(sockCliente, &head, SIZE_MSG);
 		}
 
 	}
-
-	free(head);
 	close(sockCliente);
 }
 
@@ -196,8 +194,8 @@ int inciar_programa(int pid, int paginas) {
 	agregar_tp(pid, paginas);
 
 	iniciar_programa_t *arg = reservarMemoria(sizeof(iniciar_programa_t));
-	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg);
-	int ret = *( (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO) );
+	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg, SIZE_MSG);
+	int ret = *( (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO, SIZE_MSG));
 
 	free(arg);
 	return ret;
@@ -326,11 +324,11 @@ void pedir_pagina(int fd, int pid, int pagina) {
 	iniciar_programa_t *arg;
 	arg->pid = pid;
 	arg->paginas = pagina;
-	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, arg);
+	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, arg, SIZE_MSG);
 
 	void *contenido;
-	contenido = aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO);
+	contenido = aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO, SIZE_MSG);
 	if(contenido == NULL) {
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, NULL);
+		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, NULL, SIZE_MSG);
 	}
 }

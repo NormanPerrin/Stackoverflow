@@ -85,7 +85,7 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 					planificarProceso();
 
 				} else { // si no es una nueva conexión entonces es un nuevo mensaje
-					 int head, tamanioMensaje;
+					int head, tamanioMensaje;
 					cpu * unCPUActivo = (cpu *)list_get(listaCPU, i);
 					void * mensaje = aplicar_protocolo_recibir(unCPUActivo->fd_cpu, &head, &tamanioMensaje);
 
@@ -251,11 +251,12 @@ pcb * crearPCB(char * rutaPrograma){
 
 	char* codigo = obtenerScriptDesdeArchivo(rutaPrograma);
 	long tamanioScript = sizeof(codigo);
-	int aux_cant = tamanioScript/tamanioPagina;
+	float aux_cant = tamanioScript/tamanioPagina;
+	int resto = tamanioScript%tamanioPagina;
 
 	int nuevoPid = asignarPid();
 	nuevoPcb->pid = nuevoPid;
-	nuevoPcb->paginas_codigo = (aux_cant==0)?aux_cant:aux_cant+1;
+	nuevoPcb->paginas_codigo = (resto==0)?aux_cant:aux_cant+1;
 	nuevoPcb->estado = READY;
 	nuevoPcb->quantum = config->quantum; // TODO: provisorio, ver manejo CPU
 

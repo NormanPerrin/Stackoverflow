@@ -16,12 +16,12 @@ void conectarConNucleo() {
 	validar_conexion(ret, 1); // Es terminante por ser cliente
 	handshake_cliente(fd_clienteNucleo, "P");
 
-	int * head = (int*)malloc(INT);
+	int head;
 	pcb * pcbEnEjecucion;
-	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, *head);
+	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, &head, SIZE_MSG);
 
 	while(mensaje!=NULL){
-		switch(*head){
+		switch(head){
 
 		case ENVIAR_PCB:
 			pcbEnEjecucion = recibirPCB(mensaje); // el cpu obtiene una pcb para ejecutar
@@ -30,9 +30,8 @@ void conectarConNucleo() {
 		}
 		free(mensaje);
 
-	mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, *head); // recibe otro mensaje del Núcleo
+	mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, &head, SIZE_MSG); // recibe otro mensaje del Núcleo
 	}
-	free(head);
 	cerrarSocket(fd_clienteNucleo);
 }
 
