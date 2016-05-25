@@ -124,18 +124,13 @@ typedef struct pcb{
 		int quantum;
 	} __attribute__((packed)) pcb;
 
-// UMC - CPU y UMC - SWAP
-typedef struct solicitudLectura{
-	int pid;
-	int posicion;
-} __attribute__((packed)) solicitudLectura;
-
+// UMC - CPU
 typedef struct solicitudEscritura{
-	int pid;
-	int posicion;
-	int exito;
-	t_string datos;
+	direccion posicion;
+	t_string buffer;
 } __attribute__((packed)) solicitudEscritura;
+
+// UMC - SWAP
 
 // Prototipos
 // -- Funciones definitivas para enviar y recibir paquetes:
@@ -143,20 +138,20 @@ void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int taman
 void * aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje);
 
 // -- Serializaciones y deserializaciones particulares:
-void * serializarMensajeAImprimir(void* elemento, int* tamanio);
-t_string * desearilzarMensajeAImprimir(void * buffer);
-
 void * serealizarPCB(void * estructura, int * tamanio);
 pcb * deserealizarPCB(void * buffer);
 
+void * serealizarTexto(void * estructura, int * tamanio);
+t_string * deserealizarTexto(void * buffer);
+
 void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio);
-iniciar_programa_t* deserealizartSolicitudInicio(void* buffer);
+iniciar_programa_t* deserealizarSolicitudInicioPrograma(void* buffer);
 
 void * serealizarRespuestaInicioPrograma(void * elemento, int * tamanio);
 respuestaInicioPrograma * deserealizarRespuestaInicioPrograma(void * buffer);
 
-void* serealizarSolicitudLectura(void* elemento, int* tamanio);
-solicitudLectura* deserealizarSolicitudLectura(void* buffer);
+void* serealizarDireccionMemoria(void* elemento, int* tamanio);
+direccion* deserealizarDireccionMemoria(void* buffer);
 
 void * serealizarSolicitudEscritura(void * elemento, int * tamanio);
 solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);

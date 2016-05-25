@@ -55,7 +55,7 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 			break;
 		}
 		case INICIAR_PROGRAMA: {
-			buffer = serealizartSolicitudInicioPrograma(elemento, tamanio);
+			buffer = serealizarSolicitudInicioPrograma(elemento, tamanio);
 			break;
 		}
 		case RESPUESTA_INICIO_PROGRAMA: {
@@ -63,7 +63,7 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 			break;
 		}
 		case LEER_BYTES: {
-			buffer = serealizartSolicitudLectura(elemento,tamanio);
+			buffer = serealizarDireccionMemoria(elemento,tamanio);
 			break;
 		}
 		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
@@ -105,7 +105,7 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 
 	switch(protocolo){
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO:{
-			buffer = desserealizarTexto(mensaje);
+			buffer = deserealizarTexto(mensaje);
 				break;
 		} // en ambos casos se recibe un texto
 		case ENVIAR_PCB:{
@@ -117,11 +117,11 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 			break;
 		}
 		case RESPUESTA_INICIO_PROGRAMA: {
-			buffer = deserealizarRespuestaInicio(mensaje);
+			buffer = deserealizarRespuestaInicioPrograma(mensaje);
 			break;
 		}
 		case LEER_BYTES:{
-			buffer = deserealizartSolicitudLectura(mensaje);
+			buffer = deserealizarDireccionMemoria(mensaje);
 			break;
 		}
 		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
@@ -158,7 +158,7 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 	return buffer;
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
-void * serealizarTexto(void * estructura, int * tamanio){
+void* serealizarTexto(void * estructura, int * tamanio){
 t_string * unTexto = (t_string *) estructura;
 
 int desplazamiento = 0;
@@ -306,7 +306,7 @@ iniciar_programa_t*  deserealizarSolicitudInicioPrograma(void* buffer){
 	return solicitudInicio;
 }
 
-void * serealizarRespuestaInicio(void * elemento, int * tamanio){
+void * serealizarRespuestaInicioPrograma(void * elemento, int * tamanio){
 	respuestaInicioPrograma * respuesta = (respuestaInicioPrograma*) elemento;
 	int desplazamiento = 0;
 	int tamanioStack = (sizeof(int) * respuesta->stackPointer->tamanio);
@@ -324,7 +324,7 @@ void * serealizarRespuestaInicio(void * elemento, int * tamanio){
 	return buffer;
 }
 
-respuestaInicioPrograma* deserealizarRespuestaInicio(void * buffer){
+respuestaInicioPrograma* deserealizarRespuestaInicioPrograma(void * buffer){
 	int desplazamiento = 0;
 	respuestaInicioPrograma* respuesta = malloc(sizeof(respuestaInicioPrograma));
 
@@ -341,26 +341,30 @@ respuestaInicioPrograma* deserealizarRespuestaInicio(void * buffer){
 	return respuesta;
 }
 
-void* serealizarSolicitudLectura(void* elemento, int* tamanio){
-	solicitudLectura* solicitud = (solicitudLectura*) elemento;
+void* serealizarDireccionMemoria(void* elemento, int* tamanio){
+	direccion* solicitud = (direccion*) elemento;
 
 	int desplazamiento = 0;
-	*tamanio =sizeof(solicitudLectura);
+	*tamanio =sizeof(direccion);
 	void* buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento,&solicitud->pid,sizeof(int));
+	memcpy(buffer + desplazamiento,&solicitud->offset,sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &solicitud->posicion, sizeof(int));
+	memcpy(buffer + desplazamiento, &solicitud->pagina, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &solicitud->size, sizeof(int));
 
 	return buffer;
 }
 
-solicitudLectura* deserealizarSolicitudLectura(void* buffer){
+direccion* deserealizarDireccionMemoria(void* buffer){
 	int desplazamiento = 0;
-	solicitudLectura* solicitud = malloc(sizeof(solicitudLectura));
+	direccion* solicitud = malloc(sizeof(direccion));
 
-	memcpy(&solicitud->pid,buffer + desplazamiento,sizeof(int));
+	memcpy(&solicitud->offset,buffer + desplazamiento,sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(&solicitud->posicion, buffer + desplazamiento, sizeof(int));
+	memcpy(&solicitud->pagina, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(&solicitud->size, buffer + desplazamiento, sizeof(int));
 
 	return solicitud;
 }
@@ -369,19 +373,18 @@ void * serealizarSolicitudEscritura(void * elemento, int * tamanio){
 	solicitudEscritura * solicitud = (solicitudEscritura * ) elemento;
 
 	int desplazamiento = 0;
-	int tamanioString = (sizeof(char) * solicitud->datos.tamanio);
-	*tamanio = sizeof(solicitudEscritura) - sizeof(int) + tamanioString;
+	int tamanioDatos = (sizeof(char) * solicitud->buffer.tamanio);
+	*tamanio = sizeof(solicitudEscritura) - sizeof(int) + tamanioDatos;
 
 	void * buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento,&(solicitud->pid), sizeof(int));
+	memcpy(buffer + desplazamiento,&solicitud->posicion.offset,sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(solicitud->posicion), sizeof(int));
+	memcpy(buffer + desplazamiento, &solicitud->posicion.pagina, sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(solicitud->exito), sizeof(int));
+	memcpy(buffer + desplazamiento, &solicitud->posicion.size, sizeof(int));
+	memcpy(buffer + desplazamiento, &(solicitud->buffer.tamanio), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(solicitud->datos.tamanio), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, solicitud->datos.texto, tamanioString);
+	memcpy(buffer + desplazamiento, solicitud->buffer.texto, tamanioDatos);
 
 	return buffer;
 }
@@ -390,16 +393,15 @@ solicitudEscritura * deserealizarSolicitudEscritura(void * buffer){
 	int desplazamiento = 0;
 	solicitudEscritura * solicitud = malloc(sizeof(solicitudEscritura));
 
-	memcpy(&solicitud->pid, buffer + desplazamiento, sizeof(int) );
+	memcpy(&solicitud->posicion.offset,buffer + desplazamiento,sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(&solicitud->posicion, buffer + desplazamiento, sizeof(int) );
+	memcpy(&solicitud->posicion.pagina, buffer + desplazamiento, sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(&solicitud->exito, buffer + desplazamiento, sizeof(int));
+	memcpy(&solicitud->posicion.size, buffer + desplazamiento, sizeof(int));
+	memcpy(&solicitud->buffer.tamanio, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
-	memcpy(&solicitud->datos.tamanio, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	solicitud->datos.texto = malloc(solicitud->datos.tamanio);
-	memcpy(solicitud->datos.texto, buffer + desplazamiento, solicitud->datos.tamanio);
+	solicitud->buffer.texto = malloc(solicitud->buffer.tamanio);
+	memcpy(solicitud->buffer.texto, buffer + desplazamiento, solicitud->buffer.tamanio);
 
 	return solicitud;
 }

@@ -276,10 +276,10 @@ pcb * crearPCB(char * rutaPrograma){
 	// Le pido a UMC que cree el heap del programa:
 	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma, SIZE_MSG);
 
-	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)malloc(respuestaInicioPrograma);
+	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)malloc(sizeof(respuestaInicioPrograma));
 	// Recibo de UMC la dirección donde comienza el stack (SP):
 	respuestaInicio = aplicar_protocolo_recibir(fd_clienteUMC, INICIAR_PROGRAMA, SIZE_MSG);
-	nuevoPcb->stackPointer = respuestaInicio->stackPointer;
+	nuevoPcb->stackPointer.sp = respuestaInicio->stackPointer->sp;
 
 	free(codigo);
 	free(infoProg);
@@ -346,7 +346,7 @@ void planificarProceso(){
 					unPCB->fdCPU = unCPU->fd_cpu;
 					unCPU->disponibilidad = OCUPADO;
 
-					aplicar_protocolo_enviar(unCPU->fd_cpu, ENVIAR_PCB, unPCB);
+					aplicar_protocolo_enviar(unCPU->fd_cpu, ENVIAR_PCB, unPCB, SIZE_MSG);
 
 					asignado = 1;
 				}
