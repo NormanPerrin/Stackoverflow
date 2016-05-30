@@ -11,7 +11,6 @@
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 #include <semaphore.h>
-#include <parser/parser.h>
 #include <parser/metadata_program.h>
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 #define CONEXIONES_PERMITIDAS 10

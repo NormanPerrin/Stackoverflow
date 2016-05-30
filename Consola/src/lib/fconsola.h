@@ -6,6 +6,7 @@
 #include <utilidades/sockets.h>
 #include <commons/config.h>
 #include <commons/log.h>
+#include <sys/stat.h>
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 
 #define RUTA_CONFIG_CONSOLA "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/configConsola.txt"
@@ -15,8 +16,9 @@
 // Variables globales
 int puertoNucleo; // Puerto donde se encuentra escuchando el proceso Núcleo
 char * ipNucleo; // IP del proceso Núcleo
-int fd_nucleo; // Socket consola - nucleo
-t_string * rutaScript;
+int fd_nucleo; // Socket Consola - Núcleo
+char * rutaScript;
+t_string* programa;
 
 // Estructuras
 

@@ -13,11 +13,20 @@ void setearValores_config(t_config * archivoConfig){
 	ipNucleo = strdup(config_get_string_value(archivoConfig, "IP_NUCLEO"));
 }
 
-void leerScript(char * nombreScript){
-	rutaScript = (t_string*)malloc(sizeof(t_string));
-	rutaScript->tamanio = strlen(nombreScript) + 1;
-	rutaScript->texto = strdup(nombreScript);
-}
+void leerScript(char * rutaScript){
+	programa = (t_string*)malloc(sizeof(t_string));
+
+	int _tamanio, descriptorArchivo;
+	struct stat infoArchivo; // Ver función 'stat' en stat.h
+
+	descriptorArchivo = open(rutaScript, O_RDONLY); // Abre el archivo .asnsisop
+		fstat(descriptorArchivo, &infoArchivo); // Obtenemos su información
+		_tamanio = infoArchivo.st_size;
+		programa->tamanio = _tamanio;
+
+		read(descriptorArchivo, programa->texto, programa->tamanio); // Guardo el script en programa
+		close(descriptorArchivo);
+} // El programa ya está listo para ser enviado a Núcleo
 
 void conectarConNucleo(){
 	fd_nucleo = nuevoSocket();
@@ -25,7 +34,7 @@ void conectarConNucleo(){
 	validar_conexion(ret, 1); // Al ser cliente es terminante
 	handshake_cliente(fd_nucleo, "C");
 
-	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, rutaScript, SIZE_MSG);
+	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa, SIZE_MSG);
 
 	cerrarSocket(fd_nucleo);
 }

@@ -15,7 +15,7 @@ void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int taman
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, mensajeSerealizado, tamanioMensaje);
 
-	// Se envía la totalidad del paquete (lo contenido el buffer)
+	// Se envía la totalidad del paquete (lo contenido en el buffer)
 	enviarPorSocket(fdCliente, buffer, tamanioTotal);
 
 	free(buffer);
@@ -24,7 +24,7 @@ void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int taman
 }
 
 void * aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje){
-	// Recibo el head: devuelve NULL si el head no pertenece al protocolo, o si falla el recv
+	// Recibo el head: devuelve NULL si el head no pertenece al protocolo, o bien, si falla el recv
 	int recibido = recibirPorSocket(fdCliente, head, sizeof(int));
 
 	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){
@@ -49,7 +49,7 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO:{
 			buffer = serealizarTexto(elemento, tamanio);
 			break;
-		} // en ambos casos se envía un texto
+		} // en ambos casos se envía un texto (char*)
 		case ENVIAR_PCB: {
 			buffer = serealizarPCB(elemento, tamanio);
 			break;
@@ -73,7 +73,7 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR:{
 			buffer = malloc(*tamanio);
 			memcpy(buffer, elemento, *tamanio);
-			break; // en todos los casos se envía un valor entero
+			break; // en todos los casos se envía un valor entero (int)
 		}
 		case LEER_PAGINA:{
 			break;
@@ -107,7 +107,7 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO:{
 			buffer = deserealizarTexto(mensaje);
 				break;
-		} // en ambos casos se recibe un texto
+		} // en ambos casos se recibe un texto (char*)
 		case ENVIAR_PCB:{
 			buffer = deserealizarPCB(mensaje);
 			break;
@@ -132,7 +132,7 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
-		} // en todos los casos se recibe un valor entero
+		} // en todos los casos se recibe un valor entero (int)
 		case LEER_PAGINA:{
 			break;
 		}
