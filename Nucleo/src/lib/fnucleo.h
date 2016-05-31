@@ -29,21 +29,17 @@ typedef struct {
 		int quantum;
 		int retardoQuantum;
 		char ** semaforosID;
-		int * semaforosValInicial;
+		char** semaforosValInicial;
 		char ** ioID;
-		int * retardosIO;
+		char** retardosIO;
 		char ** variablesCompartidas;
 		int cantidadPaginasStack;
 	} t_configuracion;
 
-
-
-// Variables Globales
-
 typedef struct {
 	int fd_consola;
 	int pid;
-	char* nombrePrograma;
+	t_string programa;
 } consola;
 
 typedef struct {
@@ -56,7 +52,6 @@ typedef enum {
 } disponibilidadCPU;
 
 // -- Variables Globales --
-
 t_configuracion * config;
 int fd_clienteUMC; // cliente de UMC
 t_log * logger;
@@ -69,7 +64,7 @@ int tamanioPagina;
 /*sem_t mutex_ready;
 sem_t mutex_block;*/
 
-// -- Cabeceras de Funciones --
+// -- Prototipos de Funciones --
 void abrirArchivoDeConfiguracion(char * ruta);
 void setearValores_config(t_config * archivoConfig);
 void inicializarListasYColas();
@@ -85,11 +80,9 @@ void crearLogger();
 int asignarPid();
 int noSeRepitePid(int pid);
 pcb* buscarProcesoPorPid(int pid);
-pcb* crearPCB(char * rutaPrograma);
+pcb* crearPCB(t_string programa);
 void liberarPCB(pcb * pcb);
 void planificarProceso();
-long fileSize(FILE* archivo);
-char* obtenerScriptDesdeArchivo(char * rutaPrograma);
 
 pcb* readyAExec();
 void execAReady();
@@ -98,6 +91,5 @@ void blockAReady();
 void newAReady();
 
 // -- Funciones auxiliares --
-int* convertirStringsEnNumeros(char ** variablesConfig);
 
 #endif /* LIB_FNUCLEO_H_ */

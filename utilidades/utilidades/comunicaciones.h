@@ -9,11 +9,13 @@
 
 	#define SIZE_MSG 0
 
-/* Para ENVIAR un mensaje, usamos: 'aplicar_protocolo_enviar' (VER PROTOTIPO)
+/* Para ENVIAR un mensaje, usamos:
+ * void aplicar_protocolo_enviar(int fdCliente, int head, void* mensaje, int tamanioMensaje);
  * Pre-condiciones: asegurarse de que el mensaje contenga los valores que queremos antes de enviarlo
  * Post-condiciones: las acciones necesarias después del envío del msj se realizan en el respectivo módulo
  *
- * Para RECIBIR un mensaje, usamos: 'aplicar_protocolo_recibir' (VER PROTOTIPO)
+ * Para RECIBIR un mensaje, usamos:
+ * void * aplicar_protocolo_recibir(int fdCliente, int* head, int* tamanioMensaje);
  * Pre-condiciones: tener una variable creada dinámicamente con malloc para poder asignarle lo recibido
  * Post-condiciones: las acciones necesarias después de la recepción del msj se realizan en el respectivo módulo
  *
@@ -37,8 +39,8 @@ typedef enum {
 		DEVOLVER_PAGINA = 12,	// Swap - UMC
 		ENVIAR_PCB = 13,		// Núcleo - CPU / CPU - Núcleo
 		FIN_QUANTUM = 14,		// CPU - Núcleo
-		RESPUESTA_INICIO_PROGRAMA = 15,
-
+		RESPUESTA_INICIO_PROGRAMA = 15, // UMC - Núcleo
+		RECHAZAR_PROGRAMA = 16,
 		// hay que agregar las que falten...
 
 		FIN_DEL_PROTOCOLO
@@ -56,11 +58,6 @@ typedef struct {
 		int tamanio;
 		char * texto;
 	} t_string;
-
-typedef struct{
-		int tamanio;
-		int* sp;
-	}stackEnMemoria;
 
 typedef struct {
 		char id;
@@ -99,7 +96,6 @@ typedef struct {
 typedef struct {
 		int pid;
 		int estadoDelHeap; // si es NO_CREADO, Núcleo rechaza acceso al sistema informando a Consola
-		stackEnMemoria* stackPointer;
 	} __attribute__((packed)) respuestaInicioPrograma;
 
 typedef enum {
@@ -118,7 +114,6 @@ typedef struct pcb{
 		codigo indiceCodigo;
 		etiquetas indiceEtiquetas;
 		stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
-		stackEnMemoria stackPointer; // SP del Stack
 		int estado;
 		int fdCPU;
 		int quantum;

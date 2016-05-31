@@ -12,9 +12,8 @@ int main(void) {
 	conectarConUMC();
 
 	escucharAConsola();
-	escucharACPU();
 
-	//crearHilosEscucharConsolaYCpu();
+	escucharACPU();
 
 	return EXIT_SUCCESS;
 }

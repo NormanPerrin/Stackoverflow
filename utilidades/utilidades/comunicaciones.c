@@ -70,7 +70,7 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 			buffer = serealizarSolicitudEscritura(elemento, tamanio);
 			break;
 		} // se comportan de igual forma (mismo case)
-		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR:{
+		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
 			buffer = malloc(*tamanio);
 			memcpy(buffer, elemento, *tamanio);
 			break; // en todos los casos se envía un valor entero (int)
@@ -128,7 +128,7 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 			buffer = deserealizarSolicitudEscritura(mensaje);
 			break;
 		} // se comportan de igual forma (mismo case)
-		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR:{
+		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
@@ -189,11 +189,10 @@ void * serealizarPCB(void * estructura, int * tamanio){
 	pcb * unPCB = (pcb *) estructura;
 
 	int desplazamiento = 0;
-	int tamanioStack = (sizeof(int) * unPCB->stackPointer.tamanio);
 	int iCodigoSize = (sizeof(t_intructions) * unPCB->indiceCodigo.tamanio);
 	int iStackSize = (sizeof(registroStack) * unPCB->indiceStack.tamanio);
 	int iEtiquetasSize = (sizeof(char) * unPCB->indiceEtiquetas.tamanio);
-	*tamanio = sizeof(pcb) - sizeof(int) + tamanioStack + iCodigoSize + iStackSize + iEtiquetasSize;
+	*tamanio = sizeof(pcb) - sizeof(int) + iCodigoSize + iStackSize + iEtiquetasSize;
 
 	void * buffer = malloc(*tamanio);
 	memcpy(buffer + desplazamiento,&(unPCB->pid), sizeof(int));
@@ -210,10 +209,6 @@ void * serealizarPCB(void * estructura, int * tamanio){
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, &(unPCB->estado), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(unPCB->stackPointer.tamanio), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, unPCB->stackPointer.sp, tamanioStack);
-	desplazamiento += tamanioStack;
 	memcpy(buffer + desplazamiento, &(unPCB->indiceCodigo.tamanio), sizeof(int));
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, unPCB->indiceCodigo.instrucciones, iCodigoSize);
@@ -245,12 +240,6 @@ pcb * deserealizarPCB(void * buffer){
 	desplazamiento += sizeof(int);
 	memcpy(&unPcb->quantum, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
-
-	memcpy(&unPcb->stackPointer.tamanio, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	unPcb->stackPointer.sp= malloc(unPcb->stackPointer.tamanio * sizeof(char));
-	memcpy(unPcb->stackPointer.sp, buffer + desplazamiento, unPcb->stackPointer.tamanio);
-	desplazamiento += unPcb->stackPointer.tamanio;
 
 	memcpy(&unPcb->indiceEtiquetas.tamanio, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
@@ -309,17 +298,12 @@ iniciar_programa_t*  deserealizarSolicitudInicioPrograma(void* buffer){
 void * serealizarRespuestaInicioPrograma(void * elemento, int * tamanio){
 	respuestaInicioPrograma * respuesta = (respuestaInicioPrograma*) elemento;
 	int desplazamiento = 0;
-	int tamanioStack = (sizeof(int) * respuesta->stackPointer->tamanio);
-	*tamanio = sizeof(respuestaInicioPrograma) - sizeof(int) + tamanioStack;
+	*tamanio = sizeof(respuestaInicioPrograma) - sizeof(int);
 
 	void* buffer = malloc(*tamanio);
 	memcpy(buffer + desplazamiento,&respuesta->estadoDelHeap,sizeof(int));
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, &respuesta->pid, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&respuesta->stackPointer->tamanio, buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &respuesta->stackPointer, sizeof(respuesta->stackPointer));
 
 	return buffer;
 }
@@ -331,12 +315,6 @@ respuestaInicioPrograma* deserealizarRespuestaInicioPrograma(void * buffer){
 	memcpy(&respuesta->estadoDelHeap,buffer + desplazamiento,sizeof(int));
 	desplazamiento += sizeof(int);
 	memcpy(&respuesta->pid, buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-
-	memcpy(&respuesta->stackPointer->tamanio, buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-	respuesta->stackPointer->sp= malloc(respuesta->stackPointer->tamanio * sizeof(int));
-	memcpy(&respuesta->stackPointer->sp, buffer + desplazamiento, respuesta->stackPointer->tamanio);
 
 	return respuesta;
 }

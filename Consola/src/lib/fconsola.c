@@ -13,19 +13,21 @@ void setearValores_config(t_config * archivoConfig){
 	ipNucleo = strdup(config_get_string_value(archivoConfig, "IP_NUCLEO"));
 }
 
-void leerScript(char * rutaScript){
+void leerScript(char * rutaPrograma){
 	programa = (t_string*)malloc(sizeof(t_string));
 
 	int _tamanio, descriptorArchivo;
 	struct stat infoArchivo; // Ver función 'stat' en stat.h
 
-	descriptorArchivo = open(rutaScript, O_RDONLY); // Abre el archivo .asnsisop
+	descriptorArchivo = open(rutaPrograma, O_RDONLY); // Abre el archivo .asnsisop
 		fstat(descriptorArchivo, &infoArchivo); // Obtenemos su información
 		_tamanio = infoArchivo.st_size;
 		programa->tamanio = _tamanio;
 
 		read(descriptorArchivo, programa->texto, programa->tamanio); // Guardo el script en programa
 		close(descriptorArchivo);
+
+		rutaScript = strdup(rutaPrograma); // Extra: se guarda la ruta en una variable global
 } // El programa ya está listo para ser enviado a Núcleo
 
 void conectarConNucleo(){

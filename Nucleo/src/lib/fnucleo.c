@@ -20,8 +20,8 @@ void setearValores_config(t_config * archivoConfig){
 	config->semaforosID = config_get_array_value(archivoConfig, "SEM_IDS");
 	config->ioID = config_get_array_value(archivoConfig, "IO_IDS");
 	config->variablesCompartidas = config_get_array_value(archivoConfig, "SHARED_VARS");
-	config->semaforosValInicial = convertirStringsEnNumeros(config_get_array_value(archivoConfig, "SEM_INIT"));
-	config->retardosIO = convertirStringsEnNumeros(config_get_array_value(archivoConfig, "IO_SLEEP"));
+	config->semaforosValInicial = config_get_array_value(archivoConfig, "SEM_INIT");
+	config->retardosIO = config_get_array_value(archivoConfig, "IO_SLEEP");
 	config->cantidadPaginasStack = config_get_int_value(archivoConfig, "STACK_SIZE");
 }
 
@@ -174,19 +174,35 @@ int newfd, escuchaNucleo, maxfd;
 
 						cerrarSocket(unaConsolaActiva->fd_consola);
 						FD_CLR(unaConsolaActiva->fd_consola, &master);
+						// Fin de Consola -> Fin del programa
+						log_info(logger, "Se desconectó la Consola con fd #%d. Fin del programa con pid #%d.",
+								unaConsolaActiva->fd_consola, unaConsolaActiva->pid);
+						finalizarPrograma(unaConsolaActiva->pid);
+
 						break;
 			} else { // se leyó correctamente el mensaje
 				switch(head){
+
 				case ENVIAR_SCRIPT:
 				{
-					t_string * scriptNuevo = (t_string*)mensaje; // Recibo la ruta del script de una Consola
-					unaConsolaActiva->nombrePrograma = strdup(scriptNuevo->texto);
+					// Recibo un programa de una Consola
+					t_string * scriptNuevo = (t_string*)mensaje;
+					unaConsolaActiva->programa.tamanio = scriptNuevo->tamanio;
+					unaConsolaActiva->programa.texto = strdup(scriptNuevo->texto);
 
-					pcb * nuevoPCB = crearPCB(unaConsolaActiva->nombrePrograma);
+					pcb * nuevoPCB = crearPCB(*scriptNuevo);
+					if(nuevoPCB!=NULL){
+						unaConsolaActiva->pid = nuevoPCB->pid;
 
-					unaConsolaActiva->pid = nuevoPCB->pid;
-					list_add(listaProcesos, nuevoPCB);
-
+						list_add(listaProcesos, nuevoPCB);
+					}
+					else{
+						int * fruta = malloc(INT);
+						*fruta = 1;
+						aplicar_protocolo_enviar(unaConsolaActiva->fd_consola, RECHAZAR_PROGRAMA,
+								fruta, INT); // le mando cualquier cosa, ver después
+					}
+					free(scriptNuevo);
 					break;
 				}
 				}
@@ -198,21 +214,6 @@ int newfd, escuchaNucleo, maxfd;
 		} // - recorrido de fds -
 	} // - while(true) -
 	cerrarSocket(escuchaNucleo);
-}
-
-char* obtenerScriptDesdeArchivo(char * rutaPrograma){
-FILE* archivoOriginal = fopen(rutaPrograma, "r+");
-long tamanioScript = fileSize(archivoOriginal); // Me da el numero de bytes, y como 1 char=1 byte:
-char* codigo = (char*)calloc(tamanioScript+1, sizeof(char));
-char c;
-
-while((c=getc(archivoOriginal))!=EOF){
-	*codigo++ = c;
-}
-*codigo='\0';
-fclose(archivoOriginal);
-
-return codigo;
 }
 
 void conectarConUMC(){
@@ -236,31 +237,17 @@ void crearLogger(){
 	archivoLogNucleo = NULL;
 }
 
-long fileSize(FILE* f){
-	long actual=ftell(f);
-	fseek (f,0,SEEK_END);
-	long ultimo=ftell(f);
-	fseek(f,actual,SEEK_SET);
-
-return ultimo;
-}
-
 // PROCESOS - PCB
-pcb * crearPCB(char * rutaPrograma){
+pcb * crearPCB(t_string programa){
 	pcb * nuevoPcb = (pcb*)malloc(sizeof(pcb));
 
-	char* codigo = obtenerScriptDesdeArchivo(rutaPrograma);
-	long tamanioScript = sizeof(codigo);
-	float aux_cant = tamanioScript/tamanioPagina;
-	int resto = tamanioScript%tamanioPagina;
-
-	int nuevoPid = asignarPid();
-	nuevoPcb->pid = nuevoPid;
-	nuevoPcb->paginas_codigo = (resto==0)?aux_cant:aux_cant+1;
+	nuevoPcb->pid = asignarPid();
+	nuevoPcb->paginas_codigo = programa.tamanio/tamanioPagina; // acota la división a int
 	nuevoPcb->estado = READY;
 	nuevoPcb->quantum = config->quantum; // TODO: provisorio, ver manejo CPU
 
-	t_metadata_program* infoProg = (t_metadata_program*)malloc(sizeof(t_metadata_program));
+	t_metadata_program* infoProg;
+	const char* codigo = strdup(programa.texto);
 	infoProg = metadata_desde_literal(codigo);
 
 	nuevoPcb->pc = infoProg->instruccion_inicio + 1; // la siguiente al begin
@@ -270,24 +257,33 @@ pcb * crearPCB(char * rutaPrograma){
 
 	iniciar_programa_t* nuevoPrograma = (iniciar_programa_t*)malloc(sizeof(iniciar_programa_t));
 	nuevoPrograma->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
-	nuevoPrograma->pid = nuevoPid;
-	nuevoPrograma->codigo.texto = strdup(codigo);
-	nuevoPrograma->codigo.tamanio = tamanioScript;
+	nuevoPrograma->pid = nuevoPcb->pid;
+	nuevoPrograma->codigo.texto = strdup(programa.texto);
+	nuevoPrograma->codigo.tamanio = programa.tamanio;
 
-	// Le pido a UMC que cree el heap del programa:
+	// Le solicito a UMC espacio para el heap del programa y actúo en consecuencia:
+	log_info(logger,"Solicitando segmentos de Código y de Stack a UMC para el PID #%d",nuevoPcb->pid);
 	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma, SIZE_MSG);
 
 	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)malloc(sizeof(respuestaInicioPrograma));
-	// Recibo de UMC la dirección donde comienza el stack (SP):
 	respuestaInicio = aplicar_protocolo_recibir(fd_clienteUMC, INICIAR_PROGRAMA, SIZE_MSG);
-	nuevoPcb->stackPointer.sp = respuestaInicio->stackPointer->sp;
 
-	free(codigo);
-	free(infoProg);
-	free(nuevoPrograma);
-	free(respuestaInicio);
+	if(respuestaInicio->estadoDelHeap == CREADO){
+		log_info(logger,"Se pudo alocar todos los segmentos para el proceso #%d",nuevoPcb->pid);
 
-	return nuevoPcb;
+		free(infoProg);
+		free(nuevoPrograma);
+		return nuevoPcb;
+	}
+	else{
+		 log_info(logger,
+	"No se pudo alocar todos los segmentos para el proceso #%d. Rechazando ingreso al sistema.",
+							nuevoPcb->pid);
+
+		 free(infoProg);
+		 free(nuevoPrograma);
+		 return NULL;
+	}
 }
 
 void inicializarIndices(pcb* pcb, t_metadata_program* metaData){
@@ -327,8 +323,8 @@ void liberarPCB(pcb * pcb){
 }
 
 // -- PLANIFICACIÓN --
-void ejecutarPrograma(char * nombrePrograma){
-	pcb * nuevoPcb = crearPCB(nombrePrograma);
+void ejecutarPrograma(t_string programa){
+	pcb * nuevoPcb = crearPCB(programa);
 	list_add(listaProcesos, nuevoPcb);
 
 	queue_push(colaReady, nuevoPcb);
@@ -370,7 +366,14 @@ pcb * buscarProcesoPorPid(int pid){
 void finalizarPrograma(int pid){
 	pcb * procesoAFinalizar = buscarProcesoPorPid(pid);
 	if (procesoAFinalizar!=NULL){
-		// continuar
+
+		int pidATerminar = (int*)malloc(INT);
+		pidATerminar = procesoAFinalizar->pid;
+		log_info(logger,"Finalizando el proceso con PID #%d.",pidATerminar);
+
+		// Aviso a UMC que libere la memoria asignada al proceso:
+		aplicar_protocolo_enviar(fd_clienteUMC, FINALIZAR_PROGRAMA, pidATerminar, INT);
+		// remover programa
 	}
 }
 
@@ -382,13 +385,3 @@ void actualizarDatosEnPCBProceso(cpu * unCPU, pcb * pcbNuevo){
 
 
 // --FUNCIONES AUXILIARES--
-int* convertirStringsEnNumeros(char ** variablesConfig){
-int i = 0;
-int n = NELEMS(variablesConfig) - 1;
-int * numeros = (int*)calloc(n, sizeof(int));
-	while(variablesConfig[i] != NULL){
-		numeros[i] = atoi(variablesConfig[i]);
-	 	 i++;
-	}
-	return numeros;
-}
