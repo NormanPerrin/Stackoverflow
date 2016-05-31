@@ -38,6 +38,8 @@ void conectarConNucleo(){
 
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa, SIZE_MSG);
 
+	esperar_mensajes();
+
 	cerrarSocket(fd_nucleo);
 }
 
@@ -63,15 +65,49 @@ int validar_cliente(char *id) {return 0;}
 
 void esperar_mensajes() {
 
-	int head;
-
+	int head, tamanioMsj;
 	while(TRUE) {
 		int ret;
 		ret = recibirPorSocket(fd_nucleo, &head, 1);
 		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-		aplicar_protocolo_recibir(fd_nucleo, &head, SIZE_MSG);
+
+		void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head, &tamanioMsj);
+
+			if (mensaje == NULL) { // desconexión o error
+			cerrarSocket(fd_nucleo);
+			log_info(logger,"El Núcleo se ha desconectado");
+			break;
+			} else { // se leyó correctamente el mensaje
+
+	switch(head){
+		case RECHAZAR_PROGRAMA:{
+		log_info(logger, "El sistema ha rechazado al programa %s. Desconectando.", rutaScript);
+	break;
+			}
+	case IMPRIMIR:{
+		int* valorAImprimir = (int*)mensaje;
+		printf("IMPRIMIR: %d\n", *valorAImprimir);
+	break;
+			}
+	case IMPRIMIR_TEXTO:{
+		t_string* textoAImprimir = (t_string*)mensaje;
+		printf("IMPRIMIR: %s\n", textoAImprimir->texto);
+	break;
+			}
+	case FINALIZAR_PROGRAMA:{
+
+	break;
+			}
+		}
+	}
+		free(mensaje);
 	}
 }
 
-
-void imprimir(char *texto) { printf("IMPRIMIR: %s\n", texto); }
+// --LOGGER--
+void crearLogger(){
+	char * archivoLogConsola = strdup("CONSOLA_LOG.log");
+	logger = log_create("CONSOLA_LOG.log", archivoLogConsola, TRUE, LOG_LEVEL_INFO);
+	free(archivoLogConsola);
+	archivoLogConsola = NULL;
+}

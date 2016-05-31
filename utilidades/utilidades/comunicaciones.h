@@ -44,7 +44,7 @@ typedef enum {
 		// hay que agregar las que falten...
 
 		FIN_DEL_PROTOCOLO
-	} function;
+	} protocolo;
 
 // Uso general
 typedef struct {
@@ -57,7 +57,7 @@ typedef struct {
 typedef struct {
 		int tamanio;
 		char * texto;
-	} t_string;
+	} __attribute__((packed)) t_string;
 
 typedef struct {
 		char id;
@@ -115,8 +115,8 @@ typedef struct pcb{
 		etiquetas indiceEtiquetas;
 		stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
 		int estado;
+		int quantum; // lo borré, lo tengo que serializar
 		int fdCPU;
-		int quantum;
 	} __attribute__((packed)) pcb;
 
 // UMC - CPU

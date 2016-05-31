@@ -23,16 +23,17 @@ typedef struct {
 t_configuracion *config;
 int fd_clienteNucleo, fd_clienteUMC;
 int tamanioPagina;
+t_log * logger;
 
 // Cabeceras
 void conectarConNucleo();
 void conectarConUMC();
-pcb * recibirPCB(void * mensaje);
-/*void esperar_ejecucion(); // Espera PCB para ejecutar de Núcleo idefinidamente*/
+void ejecutarProceso(pcb* pcb);
 void setearValores_config(t_config * archivoConfig);
 void liberarEstructura(); // Libera la memoria reservada en setear config
 int validar_servidor(char *id); // Valida si la conexión es UMC o Nucleo
 int validar_cliente(char *id); // para que no joda con error
+void crearLogger();
 
 // Prototipos de Primitivas AnSISOP
 t_puntero definirVariable(t_nombre_variable identificador_variable);

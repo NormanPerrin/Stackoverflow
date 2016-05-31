@@ -15,5 +15,7 @@ int main(void) {
 
 	escucharACPU();
 
+	liberarTodaLaMemoria();
+
 	return EXIT_SUCCESS;
 }

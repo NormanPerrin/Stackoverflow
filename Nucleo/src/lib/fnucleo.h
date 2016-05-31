@@ -72,23 +72,28 @@ void inicializarListasYColas();
 void conectarConUMC();
 void escucharACPU();
 void escucharAConsola();
-void actualizarDatosEnPCBProceso(cpu * unCPU, pcb * pcbNuevo);
+void actualizarDatosDePCBEjecutada(cpu * unCPU, pcb * pcbNuevo);
 void inicializarIndices(pcb* pcb, t_metadata_program* metaData);
 
 void crearLogger();
 
-int asignarPid();
-int noSeRepitePid(int pid);
-pcb* buscarProcesoPorPid(int pid);
+int asignarPid(t_list procesos);
+pcb* buscarProcesoPorPid(int pid, int* index);
 pcb* crearPCB(t_string programa);
-void liberarPCB(pcb * pcb);
+void liberarPcb(pcb * pcb);
 void planificarProceso();
+void finalizarPrograma(int pid);
 
 pcb* readyAExec();
 void execAReady();
 void execABlock();
 void blockAReady();
 void newAReady();
+
+void liberarTodaLaMemoria();
+void limpiarListasYColas();
+void liberarConsola(consola * consola);
+void liberarCPU(cpu * cpu);
 
 // -- Funciones auxiliares --
 

@@ -10,37 +10,37 @@ void setearValores_config(t_config * archivoConfig){
 	config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
 }
 
+// --LOGGER--
+void crearLogger(){
+	char * archivoLogCPU = strdup("CPU_LOG.log");
+	logger = log_create("CPU_LOG.log", archivoLogCPU, TRUE, LOG_LEVEL_INFO);
+	free(archivoLogCPU);
+	archivoLogCPU = NULL;
+}
+
 void conectarConNucleo() {
 	fd_clienteNucleo = nuevoSocket();
 	int ret = conectarSocket(fd_clienteNucleo, config->ipNucleo, config->puertoNucleo);
 	validar_conexion(ret, 1); // Es terminante por ser cliente
 	handshake_cliente(fd_clienteNucleo, "P");
 
-	int head;
-	pcb * pcbEnEjecucion;
-	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, &head, SIZE_MSG);
+	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, ENVIAR_PCB, SIZE_MSG);
 
 	while(mensaje!=NULL){
-		switch(head){
 
-		case ENVIAR_PCB:
-			pcbEnEjecucion = recibirPCB(mensaje); // el cpu obtiene una pcb para ejecutar
-			// hacer algo con la pcb... (alguna función del cpu)
-			break;
-		}
-		free(mensaje);
+	// El CPU obtiene una PCB para ejecutar:
+	pcb * pcbEnEjecucion = malloc(sizeof(pcb));
+	memcpy(pcbEnEjecucion, mensaje, sizeof(pcb));
 
-	mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, &head, SIZE_MSG); // recibe otro mensaje del Núcleo
+	// Desarrollar alguna función que permita ejecutar la PCB
+		ejecutarProceso(pcbEnEjecucion);
 	}
+	free(mensaje);
 	cerrarSocket(fd_clienteNucleo);
 }
 
-pcb * recibirPCB(void * mensaje){
-pcb * nuevoPCB = (pcb*)malloc(sizeof(pcb));
-// deserealizaicón
-memcpy(nuevoPCB, mensaje, sizeof(pcb));
-
-return nuevoPCB;
+void ejecutarProceso(pcb* pcb){
+	// ya tiene la PCB, ahora a ejecutarla
 }
 
 void conectarConUMC(){

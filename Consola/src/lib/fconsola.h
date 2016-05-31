@@ -19,6 +19,7 @@ char * ipNucleo; // IP del proceso Núcleo
 int fd_nucleo; // Socket Consola - Núcleo
 char * rutaScript;
 t_string* programa;
+t_log * logger;
 
 // Estructuras
 
@@ -33,5 +34,6 @@ int validar_servidor(char *id); // Valida si la conexión es de Núcleo
 int validar_cliente(char *id); // Es para poner su definición y que no jodan errores
 void esperar_mensajes(); // Espera mensajes de Núcleo: Fin, Imprimir, Imprimir_texto
 void imprimir(); // Imprime por consola
+void crearLogger();
 
 #endif /* LIB_FCONSOLA_H_ */

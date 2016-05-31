@@ -69,11 +69,12 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
 			buffer = serealizarSolicitudEscritura(elemento, tamanio);
 			break;
-		} // se comportan de igual forma (mismo case)
+		} // ver si se comportan de igual forma (mismo case)
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
 			buffer = malloc(*tamanio);
 			memcpy(buffer, elemento, *tamanio);
-			break; // en todos los casos se envía un valor entero (int)
+			break; // en estos casos se envía un solo elemento (int, char o NULL) como msj
+			// 1: NULL, 2. PID, 3: variable_numérica, 4: NULL
 		}
 		case LEER_PAGINA:{
 			break;
@@ -127,12 +128,13 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
 			buffer = deserealizarSolicitudEscritura(mensaje);
 			break;
-		} // se comportan de igual forma (mismo case)
+		} // ver si se comportan de igual forma (mismo case)
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
-		} // en todos los casos se recibe un valor entero (int)
+		} // en estos casos se recibe un solo elemento (int, char o NULL) como msj
+		// 1: NULL, 2. PID, 3: variable_numérica, 4: NULL
 		case LEER_PAGINA:{
 			break;
 		}
@@ -205,8 +207,6 @@ void * serealizarPCB(void * estructura, int * tamanio){
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, &(unPCB->estado), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(unPCB->quantum), sizeof(int));
-	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, &(unPCB->estado), sizeof(int));
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, &(unPCB->indiceCodigo.tamanio), sizeof(int));
@@ -237,8 +237,6 @@ pcb * deserealizarPCB(void * buffer){
 	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 	memcpy(&unPcb->estado, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	memcpy(&unPcb->quantum, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
 	memcpy(&unPcb->indiceEtiquetas.tamanio, buffer + desplazamiento, sizeof(int) );

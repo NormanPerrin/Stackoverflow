@@ -102,13 +102,13 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 			{
 			pcb * pcbNuevo=(pcb *) mensaje; // Recibo la PCB actualizada del CPU
 			log_info(logger, "Fin de quantum de CPU #%d - Proceso #%d", unCPUActivo->fd_cpu, pcbNuevo->pid);
-			actualizarDatosEnPCBProceso(unCPUActivo, pcbNuevo);
+			actualizarDatosDePCBEjecutada(unCPUActivo, pcbNuevo);
 			planificarProceso();
 			break;
 			}
 			case FIN_QUANTUM:
 			{
-				// continuar
+				// completar
 			}
 									            	}
 			printf("CPU #%d: %d\n", unCPUActivo->fd_cpu, head);
@@ -164,51 +164,45 @@ int newfd, escuchaNucleo, maxfd;
 					FD_SET(newfd, &master);
 					if(newfd > maxfd) maxfd = newfd;
 
-				} else { // si no es una nueva conexión entonces es un nuevo mensaje
-					int head, tamanioMensaje;
-					consola * unaConsolaActiva = (consola *)list_get(listaConsolas, i);
+		} else { // si no es una nueva conexión entonces es un nuevo mensaje
+			int tamanioMensaje;
+			consola * unaConsolaActiva = (consola *)list_get(listaConsolas, i);
 
-					void * mensaje = aplicar_protocolo_recibir(i, &head, &tamanioMensaje);
+			void * scriptRecibido = aplicar_protocolo_recibir(i, ENVIAR_SCRIPT, &tamanioMensaje);
 
-					 if (mensaje == NULL){ // desconexión o error
+		 if (scriptRecibido == NULL){ // desconexión o error
+	// Fin de Consola -> Fin del programa
+		log_info(logger, "Se desconectó la Consola con fd #%d. Finalizando el programa con pid #%d.",
+					unaConsolaActiva->fd_consola, unaConsolaActiva->pid);
 
-						cerrarSocket(unaConsolaActiva->fd_consola);
-						FD_CLR(unaConsolaActiva->fd_consola, &master);
-						// Fin de Consola -> Fin del programa
-						log_info(logger, "Se desconectó la Consola con fd #%d. Fin del programa con pid #%d.",
-								unaConsolaActiva->fd_consola, unaConsolaActiva->pid);
-						finalizarPrograma(unaConsolaActiva->pid);
+				finalizarPrograma(unaConsolaActiva->pid);
+				cerrarSocket(unaConsolaActiva->fd_consola);
+				FD_CLR(unaConsolaActiva->fd_consola, &master);
+			break;
+	} else { // se leyó correctamente el mensaje
+		// Recibo el programa de la Consola
+			t_string * scriptNuevo = (t_string*)scriptRecibido;
+			unaConsolaActiva->programa.tamanio = scriptNuevo->tamanio;
+			unaConsolaActiva->programa.texto = strdup(scriptNuevo->texto);
 
-						break;
-			} else { // se leyó correctamente el mensaje
-				switch(head){
+			pcb * nuevoPCB = crearPCB(*scriptNuevo);
 
-				case ENVIAR_SCRIPT:
-				{
-					// Recibo un programa de una Consola
-					t_string * scriptNuevo = (t_string*)mensaje;
-					unaConsolaActiva->programa.tamanio = scriptNuevo->tamanio;
-					unaConsolaActiva->programa.texto = strdup(scriptNuevo->texto);
+			if(nuevoPCB!=NULL){
+			unaConsolaActiva->pid = nuevoPCB->pid;
 
-					pcb * nuevoPCB = crearPCB(*scriptNuevo);
-					if(nuevoPCB!=NULL){
-						unaConsolaActiva->pid = nuevoPCB->pid;
-
-						list_add(listaProcesos, nuevoPCB);
+			list_add(listaProcesos, nuevoPCB);
+			free(nuevoPCB);
 					}
-					else{
-						int * fruta = malloc(INT);
-						*fruta = 1;
-						aplicar_protocolo_enviar(unaConsolaActiva->fd_consola, RECHAZAR_PROGRAMA,
-								fruta, INT); // le mando cualquier cosa, ver después
-					}
-					free(scriptNuevo);
-					break;
-				}
-				}
-				printf("CPU #%d: %d\n", i, head);
-					}
-
+	else{
+		aplicar_protocolo_enviar(unaConsolaActiva->fd_consola, RECHAZAR_PROGRAMA, NULL, 0);
+	// La saco de mi lista de consolas activas:
+		cerrarSocket(unaConsolaActiva->fd_consola);
+		FD_CLR(unaConsolaActiva->fd_consola, &master);
+	}
+		free(scriptNuevo);
+		break;
+	}
+	 free(scriptRecibido);
 				} // - conexión nueva - else - mensaje nuevo -
 			} // - i está modificado -
 		} // - recorrido de fds -
@@ -239,10 +233,11 @@ void crearLogger(){
 
 // PROCESOS - PCB
 pcb * crearPCB(t_string programa){
-	pcb * nuevoPcb = (pcb*)malloc(sizeof(pcb));
+	pcb * nuevoPcb = malloc(sizeof(pcb));
 
-	nuevoPcb->pid = asignarPid();
-	nuevoPcb->paginas_codigo = programa.tamanio/tamanioPagina; // acota la división a int
+	nuevoPcb->pid = asignarPid(listaProcesos);
+	nuevoPcb->fdCPU = -1;
+	nuevoPcb->paginas_codigo = (programa.tamanio)/tamanioPagina; // acota la división a int
 	nuevoPcb->estado = READY;
 	nuevoPcb->quantum = config->quantum; // TODO: provisorio, ver manejo CPU
 
@@ -282,6 +277,7 @@ pcb * crearPCB(t_string programa){
 
 		 free(infoProg);
 		 free(nuevoPrograma);
+		 liberarPcb(nuevoPcb);
 		 return NULL;
 	}
 }
@@ -296,30 +292,56 @@ void inicializarIndices(pcb* pcb, t_metadata_program* metaData){
 	pcb->indiceStack.tamanio = config->cantidadPaginasStack * tamanioPagina;
 }
 
-int asignarPid(){
+int asignarPid(t_list procesos){
 	int randomPid = rand() % 1000; // número aleatorio entre 0 y 1000
-
-	while ( noSeRepitePid(randomPid) ){
+	int index;
+	while ( buscarProcesoPorPid(randomPid, &index) != NULL){
 		randomPid = rand() % 1000;
 	}
 	return randomPid;
 }
 
-int noSeRepitePid(int pid){
+pcb * buscarProcesoPorPid(int pid, int* index){
 	int i;
 	pcb * unPcb;
 	for (i = 0; i < list_size(listaProcesos); i++){
 		unPcb = (pcb *)list_get(listaProcesos, i);
 		if(unPcb->pid == pid){
-			return FALSE;
+			*index = i;
+			return unPcb; // la pcb del proceso es unPcb
 		}
 	}
-	return TRUE;
+	return NULL; // no se encontró el proceso
 }
 
 void liberarPCB(pcb * pcb){
+	// borrarle todos los campos
 	free(pcb);
 	pcb = NULL;
+}
+
+void limpiarListasYColas(){
+	list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPCB );
+	listaProcesos = NULL;
+
+	void liberarCPU(cpu * cpu){ free(cpu); cpu = NULL; }
+	list_destroy_and_destroy_elements(listaCPU,(void *) liberarCPU );
+	listaCPU = NULL;
+
+	void liberarConsola(consola * consola){ free(consola->programa.texto);
+	consola->programa.texto = NULL; free(consola); consola = NULL; }
+	list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola );
+	listaConsolas = NULL;
+
+	queue_destroy(colaReady);
+	queue_destroy(colaBlock);
+}
+
+void liberarTodaLaMemoria(){
+	limpiarListasYColas();
+
+	log_destroy(logger);
+	logger = NULL;
 }
 
 // -- PLANIFICACIÓN --
@@ -351,36 +373,44 @@ void planificarProceso(){
 		}
 	}
 
-pcb * buscarProcesoPorPid(int pid){
-	int i;
-	pcb * unPcb;
-	for (i = 0; i < list_size(listaProcesos); i++){
-		unPcb = (pcb *)list_get(listaProcesos, i);
-		if(unPcb->pid == pid){
-			return unPcb; // la pcb del proceso es unPcb
-		}
-	}
-	return NULL; // no se encontró el proceso
-}
-
 void finalizarPrograma(int pid){
-	pcb * procesoAFinalizar = buscarProcesoPorPid(pid);
+	int index;
+	pcb * procesoAFinalizar = buscarProcesoPorPid(pid, &index);
 	if (procesoAFinalizar!=NULL){
 
-		int pidATerminar = (int*)malloc(INT);
-		pidATerminar = procesoAFinalizar->pid;
-		log_info(logger,"Finalizando el proceso con PID #%d.",pidATerminar);
+	log_info(logger,"Finalizando el proceso con PID #%d.",pid);
 
-		// Aviso a UMC que libere la memoria asignada al proceso:
-		aplicar_protocolo_enviar(fd_clienteUMC, FINALIZAR_PROGRAMA, pidATerminar, INT);
+	int* _pid = (int*)malloc(INT);
+	*_pid = pid;
+// Aviso a UMC que libere la memoria asignada al proceso:
+	aplicar_protocolo_enviar(fd_clienteUMC, FINALIZAR_PROGRAMA, _pid, INT);
 		// remover programa
 	}
 }
 
-void actualizarDatosEnPCBProceso(cpu * unCPU, pcb * pcbNuevo){
-	/*unCPU->disponibilidad = LIBRE;
-	pcb * unPcb = buscarProcesoPorPid(pcbNuevo->pid);*/
-	// continuar
+void actualizarDatosDePCBEjecutada(cpu * unCPU, pcb * pcbNuevo){
+	unCPU->disponibilidad = LIBRE;
+	int index;
+	pcb * unPcb = buscarProcesoPorPid(pcbNuevo->pid, &index);
+
+	unPcb->estado = pcbNuevo->estado;
+	unPcb->fdCPU = -1;
+
+		switch (unPcb->estado) {
+			case EXEC:
+				unPcb->estado = READY;
+				 queue_push(colaReady, unPcb);
+				break;
+			case BLOCK:
+				 queue_push(colaBlock, unPcb);
+				break;
+			case EXIT:
+				log_info(logger, "El proceso con PID #%d ha finalizado", unPcb->pid);
+				liberarPcb(unPcb);
+				free(list_remove(listaProcesos, index));
+				break;
+		}
+		liberarPcb(unPcb);
 }
 
 

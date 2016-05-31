@@ -11,8 +11,6 @@ int main(int argc, char **argv) {
 
 	conectarConNucleo(); // Conexión con Núcleo
 
-	esperar_mensajes();
-
 	liberarRecusos(); // Libera memoria asignada
 
 	return 0;
