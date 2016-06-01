@@ -56,8 +56,13 @@ typedef struct {
 // TADS (para texto variable y contenido PCB)
 typedef struct {
 		int tamanio;
-		char * texto;
-	} __attribute__((packed)) t_string;
+		char * cadena;
+	} __attribute__((packed)) texto;
+
+typedef struct{
+	int tamanio;
+	char * cadena;
+} string;
 
 typedef struct {
 		char id;
@@ -90,8 +95,8 @@ typedef struct {
 typedef struct {
 		int pid;
 		int paginas;
-		t_string codigo;
-	} __attribute__((packed)) iniciar_programa_t;
+		string codigo;
+	} __attribute__((packed)) inicioPrograma;
 
 typedef struct {
 		int pid;
@@ -122,7 +127,7 @@ typedef struct pcb{
 // UMC - CPU
 typedef struct solicitudEscritura{
 	direccion posicion;
-	t_string buffer;
+	string buffer;
 } __attribute__((packed)) solicitudEscritura;
 
 // UMC - SWAP
@@ -130,25 +135,25 @@ typedef struct solicitudEscritura{
 // Prototipos
 // -- Funciones definitivas para enviar y recibir paquetes:
 void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int tamanioMensaje);
-void * aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje);
+void* aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje);
 
 // -- Serializaciones y deserializaciones particulares:
-void * serealizarPCB(void * estructura, int * tamanio);
-pcb * deserealizarPCB(void * buffer);
+void* serealizarPCB(void* estructura, int* tamanio);
+pcb* deserealizarPCB(void* buffer);
 
-void * serealizarTexto(void * estructura, int * tamanio);
-t_string * deserealizarTexto(void * buffer);
+void* serealizarTexto(void* estructura, int* tamanio);
+texto* deserealizarTexto(void* buffer);
 
 void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio);
-iniciar_programa_t* deserealizarSolicitudInicioPrograma(void* buffer);
+inicioPrograma* deserealizarSolicitudInicioPrograma(void* buffer);
 
-void * serealizarRespuestaInicioPrograma(void * elemento, int * tamanio);
+void* serealizarRespuestaInicioPrograma(void * elemento, int * tamanio);
 respuestaInicioPrograma * deserealizarRespuestaInicioPrograma(void * buffer);
 
 void* serealizarDireccionMemoria(void* elemento, int* tamanio);
 direccion* deserealizarDireccionMemoria(void* buffer);
 
-void * serealizarSolicitudEscritura(void * elemento, int * tamanio);
+void* serealizarSolicitudEscritura(void * elemento, int * tamanio);
 solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
 
 // -- Serialización y deserialización que implementa las particulares:

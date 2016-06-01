@@ -181,9 +181,9 @@ int newfd, escuchaNucleo, maxfd;
 			break;
 	} else { // se leyó correctamente el mensaje
 		// Recibo el programa de la Consola
-			t_string * scriptNuevo = (t_string*)scriptRecibido;
+			texto * scriptNuevo = (texto*)scriptRecibido;
 			unaConsolaActiva->programa.tamanio = scriptNuevo->tamanio;
-			unaConsolaActiva->programa.texto = strdup(scriptNuevo->texto);
+			unaConsolaActiva->programa.cadena = strdup(scriptNuevo->cadena);
 
 			pcb * nuevoPCB = crearPCB(*scriptNuevo);
 
@@ -232,7 +232,7 @@ void crearLogger(){
 }
 
 // PROCESOS - PCB
-pcb * crearPCB(t_string programa){
+pcb * crearPCB(texto programa){
 	pcb * nuevoPcb = malloc(sizeof(pcb));
 
 	nuevoPcb->pid = asignarPid(listaProcesos);
@@ -242,7 +242,7 @@ pcb * crearPCB(t_string programa){
 	nuevoPcb->quantum = config->quantum; // TODO: provisorio, ver manejo CPU
 
 	t_metadata_program* infoProg;
-	const char* codigo = strdup(programa.texto);
+	const char* codigo = strdup(programa.cadena);
 	infoProg = metadata_desde_literal(codigo);
 
 	nuevoPcb->pc = infoProg->instruccion_inicio + 1; // la siguiente al begin
@@ -250,10 +250,10 @@ pcb * crearPCB(t_string programa){
 	// Inicializo los tres índices:
 	inicializarIndices(nuevoPcb, infoProg);
 
-	iniciar_programa_t* nuevoPrograma = (iniciar_programa_t*)malloc(sizeof(iniciar_programa_t));
+	inicioPrograma* nuevoPrograma = (iniciar_programa_t*)malloc(sizeof(inicioPrograma));
 	nuevoPrograma->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
 	nuevoPrograma->pid = nuevoPcb->pid;
-	nuevoPrograma->codigo.texto = strdup(programa.texto);
+	nuevoPrograma->codigo.cadena = strdup(programa.cadena);
 	nuevoPrograma->codigo.tamanio = programa.tamanio;
 
 	// Le solicito a UMC espacio para el heap del programa y actúo en consecuencia:
@@ -328,8 +328,8 @@ void limpiarListasYColas(){
 	list_destroy_and_destroy_elements(listaCPU,(void *) liberarCPU );
 	listaCPU = NULL;
 
-	void liberarConsola(consola * consola){ free(consola->programa.texto);
-	consola->programa.texto = NULL; free(consola); consola = NULL; }
+	void liberarConsola(consola * consola){ free(consola->programa.cadena);
+	consola->programa.cadena = NULL; free(consola); consola = NULL; }
 	list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola );
 	listaConsolas = NULL;
 
@@ -345,7 +345,7 @@ void liberarTodaLaMemoria(){
 }
 
 // -- PLANIFICACIÓN --
-void ejecutarPrograma(t_string programa){
+void ejecutarPrograma(texto programa){
 	pcb * nuevoPcb = crearPCB(programa);
 	list_add(listaProcesos, nuevoPcb);
 

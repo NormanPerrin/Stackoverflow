@@ -18,7 +18,7 @@
 #define FALSE 0
 #define TRUE 1
 #define ERROR -1 // Las system-calls de sockets retornan -1 en caso de error
-#define manejarError(mensajeError) {perror(mensajeError);} // Tratamiento de errores
+#define manejarError(msjError) {perror(msjError);} // Tratamiento de errores
 
 
 // *******************************************************************
@@ -32,7 +32,7 @@ void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas);
 int  aceptarConexionSocket(int fd_socket);
 
 // Función para el Cliente
-int conectarSocket(int fd_socket, char * ipDestino, int puerto);
+int conectarSocket(int fd_socket, const char * ipDestino, int puerto);
 
 // Funciones para el Envío y la Recepción de datos
 int enviarPorSocket(int fdServidor, const void * mensaje, int tamanioBytes); // Retorna el número de bytes enviados, o bien, -1 si falla y 0 si se desconecta
@@ -43,7 +43,7 @@ void cerrarSocket(int fd_socket);
 
 // Función para comprobar varios Sockets al mismo tiempo (Select)
 void seleccionarSocket(int mayorValorDeFD,
-				fd_set * fdListosParaLectura, fd_set * fdListosParaEscritura, fd_set * fdListosParaEjecucion,
-				int* segundos, int* milisegundos);
+		fd_set * fdListosParaLectura, fd_set * fdListosParaEscritura, fd_set * fdListosParaEjecucion,
+			int* segundos, int* milisegundos);
 
 #endif /* UTILIDADES_SOCKETS_H_ */

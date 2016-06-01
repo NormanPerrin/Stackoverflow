@@ -1,15 +1,15 @@
 #include "comunicaciones.h"
 
-void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int tamanioMensaje){
+void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje, int tamanioMensaje){
 
 	int desplazamiento = 0;
 
-	void * mensajeSerealizado = serealizar(head, mensaje, &tamanioMensaje);
+	void * mensajeSerealizado = serealizar(protocolo, mensaje, &tamanioMensaje);
 
 	int tamanioTotal = sizeof(int) * 2 + tamanioMensaje;
 
 	void * buffer = malloc(tamanioTotal);
-	memcpy(buffer + desplazamiento, &head, sizeof(int));
+	memcpy(buffer + desplazamiento, &protocolo, sizeof(int));
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, &tamanioMensaje, sizeof(int));
 	desplazamiento += sizeof(int);
@@ -23,11 +23,11 @@ void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int taman
 	free(mensajeSerealizado);
 }
 
-void * aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje){
+void * aplicar_protocolo_recibir(int fdCliente, int * protocolo, int * tamanioMensaje){
 	// Recibo el head: devuelve NULL si el head no pertenece al protocolo, o bien, si falla el recv
-	int recibido = recibirPorSocket(fdCliente, head, sizeof(int));
+	int recibido = recibirPorSocket(fdCliente, protocolo, sizeof(int));
 
-	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){
+	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0){
 		return NULL;
 	}
 	// Recibo el tamaño del mensaje
@@ -35,7 +35,7 @@ void * aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje
 
 	void * mensaje = malloc(*tamanioMensaje);
 	recibirPorSocket(fdCliente, mensaje, *tamanioMensaje);
-	void * buffer = deserealizar(*head, mensaje, *tamanioMensaje);
+	void * buffer = deserealizar(*protocolo, mensaje, *tamanioMensaje);
 	free(mensaje);
 
 	return buffer;
@@ -161,28 +161,28 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
 void* serealizarTexto(void * estructura, int * tamanio){
-t_string * unTexto = (t_string *) estructura;
+texto * unTexto = (texto *) estructura;
 
 int desplazamiento = 0;
 	int tamanioTexto = (sizeof(char) * unTexto->tamanio);
-	*tamanio = sizeof(t_string) - sizeof(int) + tamanioTexto;
+	*tamanio = sizeof(texto) - sizeof(int) + tamanioTexto;
 
 	void * buffer = malloc(*tamanio);
 	memcpy(buffer + desplazamiento, &(unTexto->tamanio), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(unTexto->texto), tamanioTexto);
+	memcpy(buffer + desplazamiento, &(unTexto->cadena), tamanioTexto);
 
 	return buffer;
 }
 
-t_string * deserealizarTexto(void * buffer){
+texto * deserealizarTexto(void * buffer){
 	int desplazamiento = 0;
-	t_string * unTexto = malloc(sizeof(t_string));
+	texto * unTexto = malloc(sizeof(texto));
 
 	memcpy(&unTexto->tamanio, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
-	unTexto->texto= malloc(unTexto->tamanio * sizeof(char));
-	memcpy(unTexto->texto, buffer + desplazamiento, unTexto->tamanio);
+	unTexto->cadena= malloc(unTexto->tamanio * sizeof(char));
+	memcpy(unTexto->cadena, buffer + desplazamiento, unTexto->tamanio);
 
 	return unTexto;
 }
@@ -260,7 +260,7 @@ pcb * deserealizarPCB(void * buffer){
 }
 
 void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio){
-	iniciar_programa_t* solicitudInicio = (iniciar_programa_t*) elemento;
+	inicioPrograma* solicitudInicio = (inicioPrograma*) elemento;
 
 	int desplazamiento = 0;
 	int tamanioCodigo = sizeof(char) * solicitudInicio->codigo.tamanio;
@@ -272,14 +272,14 @@ void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio){
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, &(solicitudInicio->codigo.tamanio), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, solicitudInicio->codigo.texto, tamanioCodigo);
+	memcpy(buffer + desplazamiento, solicitudInicio->codigo.cadena, tamanioCodigo);
 
 	return buffer;
 }
 
-iniciar_programa_t*  deserealizarSolicitudInicioPrograma(void* buffer){
+inicioPrograma*  deserealizarSolicitudInicioPrograma(void* buffer){
 	int desplazamiento = 0;
-	iniciar_programa_t* solicitudInicio = malloc(sizeof(iniciar_programa_t));
+	inicioPrograma* solicitudInicio = malloc(sizeof(inicioPrograma));
 
 	memcpy(&solicitudInicio->pid,buffer + desplazamiento,sizeof(int));
 	desplazamiento += sizeof(int);
@@ -287,8 +287,8 @@ iniciar_programa_t*  deserealizarSolicitudInicioPrograma(void* buffer){
 	desplazamiento += sizeof(int);
 	memcpy(&solicitudInicio->codigo.tamanio, buffer + desplazamiento, sizeof(int));
 	desplazamiento += sizeof(int);
-	solicitudInicio->codigo.texto= malloc(solicitudInicio->codigo.tamanio * sizeof(char));
-	memcpy(&solicitudInicio->codigo.texto, buffer + desplazamiento, solicitudInicio->codigo.tamanio);
+	solicitudInicio->codigo.cadena= malloc(solicitudInicio->codigo.tamanio * sizeof(char));
+	memcpy(&solicitudInicio->codigo.cadena, buffer + desplazamiento, solicitudInicio->codigo.tamanio);
 
 	return solicitudInicio;
 }
@@ -360,7 +360,7 @@ void * serealizarSolicitudEscritura(void * elemento, int * tamanio){
 	memcpy(buffer + desplazamiento, &solicitud->posicion.size, sizeof(int));
 	memcpy(buffer + desplazamiento, &(solicitud->buffer.tamanio), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, solicitud->buffer.texto, tamanioDatos);
+	memcpy(buffer + desplazamiento, solicitud->buffer.cadena, tamanioDatos);
 
 	return buffer;
 }
@@ -376,8 +376,8 @@ solicitudEscritura * deserealizarSolicitudEscritura(void * buffer){
 	memcpy(&solicitud->posicion.size, buffer + desplazamiento, sizeof(int));
 	memcpy(&solicitud->buffer.tamanio, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
-	solicitud->buffer.texto = malloc(solicitud->buffer.tamanio);
-	memcpy(solicitud->buffer.texto, buffer + desplazamiento, solicitud->buffer.tamanio);
+	solicitud->buffer.cadena = malloc(solicitud->buffer.tamanio);
+	memcpy(solicitud->buffer.cadena, buffer + desplazamiento, solicitud->buffer.tamanio);
 
 	return solicitud;
 }
