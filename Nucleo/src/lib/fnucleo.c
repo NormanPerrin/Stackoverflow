@@ -314,14 +314,14 @@ pcb * buscarProcesoPorPid(int pid, int* index){
 	return NULL; // no se encontró el proceso
 }
 
-void liberarPCB(pcb * pcb){
+void liberarPcb(pcb * pcb){
 	// borrarle todos los campos
 	free(pcb);
 	pcb = NULL;
 }
 
 void limpiarListasYColas(){
-	list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPCB );
+	list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPcb );
 	listaProcesos = NULL;
 
 	void liberarCPU(cpu * cpu){ free(cpu); cpu = NULL; }
