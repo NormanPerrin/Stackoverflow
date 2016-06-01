@@ -6,8 +6,13 @@ void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje, int 
 
 	void * mensajeSerealizado = serealizar(protocolo, mensaje, &tamanioMensaje);
 
+	/* Lo que se envía es:
+	 * 1 int del protocolo + 1 int del tamaño del msj + el mensaje serializado.
+	 * Entonces, el tamaño total de lo enviado es: */
+
 	int tamanioTotal = sizeof(int) * 2 + tamanioMensaje;
 
+	// Meto en el paquete para enviar, esas tres cosas:
 	void * buffer = malloc(tamanioTotal);
 	memcpy(buffer + desplazamiento, &protocolo, sizeof(int));
 	desplazamiento += sizeof(int);
@@ -15,7 +20,7 @@ void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje, int 
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, mensajeSerealizado, tamanioMensaje);
 
-	// Se envía la totalidad del paquete (lo contenido en el buffer)
+	// Se envía la totalidad del paquete (lo contenido en el buffer):
 	enviarPorSocket(fdCliente, buffer, tamanioTotal);
 
 	free(buffer);
@@ -24,15 +29,17 @@ void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje, int 
 }
 
 void * aplicar_protocolo_recibir(int fdCliente, int * protocolo, int * tamanioMensaje){
-	// Recibo el head: devuelve NULL si el head no pertenece al protocolo, o bien, si falla el recv
+	/* Recibo primero el head y lo verifico:
+	Devuelvo NULL si el head no pertenece al protocolo, o bien, si falla el recv */
 	int recibido = recibirPorSocket(fdCliente, protocolo, sizeof(int));
 
 	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0){
 		return NULL;
 	}
-	// Recibo el tamaño del mensaje
+	// Recibo ahora el tamaño del mensaje:
 	recibirPorSocket(fdCliente, tamanioMensaje, sizeof(int));
 
+	// Recibo por último el mensaje serializado:
 	void * mensaje = malloc(*tamanioMensaje);
 	recibirPorSocket(fdCliente, mensaje, *tamanioMensaje);
 	void * buffer = deserealizar(*protocolo, mensaje, *tamanioMensaje);
@@ -69,7 +76,7 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
 			buffer = serealizarSolicitudEscritura(elemento, tamanio);
 			break;
-		} // ver si se comportan de igual forma (mismo case)
+		} // ver si se comportan de igual forma (mismo case), sino separar
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
 			buffer = malloc(*tamanio);
 			memcpy(buffer, elemento, *tamanio);

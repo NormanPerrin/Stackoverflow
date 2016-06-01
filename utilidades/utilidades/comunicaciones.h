@@ -48,9 +48,9 @@ typedef enum {
 
 // Uso general
 typedef struct {
-			int pagina;
-			int offset;
-			int size;
+		int pagina;
+		int offset;
+		int size;
 	} __attribute__((packed)) direccion; // posición de memoria
 
 // TADS (para texto variable y contenido PCB)
@@ -115,7 +115,7 @@ typedef struct pcb{
 		etiquetas indiceEtiquetas;
 		stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
 		int estado;
-		int quantum; // lo borré, lo tengo que serializar
+		int quantum; // TODO: lo borré, lo tengo que agregar a la serialización del PCB
 		int fdCPU;
 	} __attribute__((packed)) pcb;
 

@@ -17,32 +17,33 @@
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 
 #define RUTA_CONFIG_NUCLEO "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Nucleo/configNucleo.txt"
-//#define RUTA_CONFIG_NUCLEO "configNucleo.txt"
 #define logearError(msg){log_error(logger, msg); return FALSE;}
 
-// -- Estructuras --
+// Estructuras:
 typedef struct {
-		int puertoPrograma;
-		int puertoCPU;
-		int puertoUMC;
-		char * ipUMC;
-		int quantum;
-		int retardoQuantum;
-		char ** semaforosID;
-		char** semaforosValInicial;
-		char ** ioID;
-		char** retardosIO;
-		char ** variablesCompartidas;
-		int cantidadPaginasStack;
-	} t_configuracion;
+	int puertoPrograma;
+	int puertoCPU;
+	int puertoUMC;
+	char * ipUMC;
+	int quantum;
+	int retardoQuantum;
+	char ** semaforosID;
+	char** semaforosValInicial;
+	char ** ioID;
+	char** retardosIO;
+	char ** variablesCompartidas;
+	int cantidadPaginasStack;
+} t_configuracion;
 
 typedef struct {
+	int id;
 	int fd_consola;
 	int pid;
 	string programa;
 } consola;
 
 typedef struct {
+	int id;
 	int fd_cpu;
 	int disponibilidad;
 } cpu;
@@ -51,7 +52,7 @@ typedef enum {
 	LIBRE, OCUPADO
 } disponibilidadCPU;
 
-// -- Variables Globales --
+// Variables Globales:
 t_configuracion * config;
 int fd_clienteUMC; // cliente de UMC
 t_log * logger;
@@ -64,37 +65,29 @@ int tamanioPagina;
 /*sem_t mutex_ready;
 sem_t mutex_block;*/
 
-// -- Prototipos de Funciones --
-void abrirArchivoDeConfiguracion(char * ruta);
-void setearValores_config(t_config * archivoConfig);
-void inicializarListasYColas();
+// Prototipos de Funciones:
 
+/**** FUNCIONES PRINCIPALES ****/
+void abrirArchivoDeConfiguracion(char * ruta);
+void inicializarListasYColas();
 void conectarConUMC();
-void escucharACPU();
 void escucharAConsola();
+void escucharACPU();
+
+/**** FUNCIONES SECUNDARIAS ****/
+void setearValores_config(t_config * archivoConfig);
+void crearLogger();
 void actualizarDatosDePCBEjecutada(cpu * unCPU, pcb * pcbNuevo);
 void inicializarIndices(pcb* pcb, t_metadata_program* metaData);
-
-void crearLogger();
-
 int asignarPid(t_list procesos);
 pcb* buscarProcesoPorPid(int pid, int* index);
 pcb* crearPCB(string programa);
 void liberarPcb(pcb * pcb);
 void planificarProceso();
 void finalizarPrograma(int pid);
-
-pcb* readyAExec();
-void execAReady();
-void execABlock();
-void blockAReady();
-void newAReady();
-
 void liberarTodaLaMemoria();
 void limpiarListasYColas();
 void liberarConsola(consola * consola);
 void liberarCPU(cpu * cpu);
-
-// -- Funciones auxiliares --
 
 #endif /* LIB_FNUCLEO_H_ */
