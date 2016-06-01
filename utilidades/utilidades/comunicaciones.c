@@ -161,11 +161,11 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
 void* serealizarTexto(void * estructura, int * tamanio){
-texto * unTexto = (texto *) estructura;
+string * unTexto = (string *) estructura;
 
 int desplazamiento = 0;
 	int tamanioTexto = (sizeof(char) * unTexto->tamanio);
-	*tamanio = sizeof(texto) - sizeof(int) + tamanioTexto;
+	*tamanio = sizeof(string) - sizeof(int) + tamanioTexto;
 
 	void * buffer = malloc(*tamanio);
 	memcpy(buffer + desplazamiento, &(unTexto->tamanio), sizeof(int));
@@ -175,9 +175,9 @@ int desplazamiento = 0;
 	return buffer;
 }
 
-texto * deserealizarTexto(void * buffer){
+string * deserealizarTexto(void * buffer){
 	int desplazamiento = 0;
-	texto * unTexto = malloc(sizeof(texto));
+	string * unTexto = malloc(sizeof(string));
 
 	memcpy(&unTexto->tamanio, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);

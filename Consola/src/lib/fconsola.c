@@ -14,7 +14,7 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void leerScript(char * rutaPrograma){
-	programa = (texto*)malloc(sizeof(texto));
+	programa = (string*)malloc(sizeof(string));
 
 	int _tamanio, descriptorArchivo;
 	struct stat infoArchivo; // Ver función 'stat' en stat.h
@@ -90,7 +90,7 @@ void esperar_mensajes() {
 	break;
 			}
 	case IMPRIMIR_TEXTO:{
-		texto* textoAImprimir = (texto*)mensaje;
+		string* textoAImprimir = (string*)mensaje;
 		printf("IMPRIMIR: %s\n", textoAImprimir->cadena);
 	break;
 			}

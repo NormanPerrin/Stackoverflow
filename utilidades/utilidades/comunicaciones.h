@@ -51,18 +51,13 @@ typedef struct {
 			int pagina;
 			int offset;
 			int size;
-	} direccion; // posición de memoria
+	} __attribute__((packed)) direccion; // posición de memoria
 
 // TADS (para texto variable y contenido PCB)
 typedef struct {
 		int tamanio;
 		char * cadena;
-	} __attribute__((packed)) texto;
-
-typedef struct{
-	int tamanio;
-	char * cadena;
-} string;
+	} __attribute__((packed)) string;
 
 typedef struct {
 		char id;
@@ -142,7 +137,7 @@ void* serealizarPCB(void* estructura, int* tamanio);
 pcb* deserealizarPCB(void* buffer);
 
 void* serealizarTexto(void* estructura, int* tamanio);
-texto* deserealizarTexto(void* buffer);
+string* deserealizarTexto(void* buffer);
 
 void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio);
 inicioPrograma* deserealizarSolicitudInicioPrograma(void* buffer);

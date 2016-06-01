@@ -181,7 +181,7 @@ int newfd, escuchaNucleo, maxfd;
 			break;
 	} else { // se leyó correctamente el mensaje
 		// Recibo el programa de la Consola
-			texto * scriptNuevo = (texto*)scriptRecibido;
+			string * scriptNuevo = (string*)scriptRecibido;
 			unaConsolaActiva->programa.tamanio = scriptNuevo->tamanio;
 			unaConsolaActiva->programa.cadena = strdup(scriptNuevo->cadena);
 
@@ -232,7 +232,7 @@ void crearLogger(){
 }
 
 // PROCESOS - PCB
-pcb * crearPCB(texto programa){
+pcb * crearPCB(string programa){
 	pcb * nuevoPcb = malloc(sizeof(pcb));
 
 	nuevoPcb->pid = asignarPid(*listaProcesos);
@@ -345,7 +345,7 @@ void liberarTodaLaMemoria(){
 }
 
 // -- PLANIFICACIÓN --
-void ejecutarPrograma(texto programa){
+void ejecutarPrograma(string programa){
 	pcb * nuevoPcb = crearPCB(programa);
 	list_add(listaProcesos, nuevoPcb);
 

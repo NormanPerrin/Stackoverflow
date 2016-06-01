@@ -39,7 +39,7 @@ typedef struct {
 typedef struct {
 	int fd_consola;
 	int pid;
-	texto programa;
+	string programa;
 } consola;
 
 typedef struct {
@@ -79,7 +79,7 @@ void crearLogger();
 
 int asignarPid(t_list procesos);
 pcb* buscarProcesoPorPid(int pid, int* index);
-pcb* crearPCB(texto programa);
+pcb* crearPCB(string programa);
 void liberarPcb(pcb * pcb);
 void planificarProceso();
 void finalizarPrograma(int pid);
