@@ -235,7 +235,7 @@ void crearLogger(){
 pcb * crearPCB(texto programa){
 	pcb * nuevoPcb = malloc(sizeof(pcb));
 
-	nuevoPcb->pid = asignarPid(listaProcesos);
+	nuevoPcb->pid = asignarPid(*listaProcesos);
 	nuevoPcb->fdCPU = -1;
 	nuevoPcb->paginas_codigo = (programa.tamanio)/tamanioPagina; // acota la división a int
 	nuevoPcb->estado = READY;
@@ -250,7 +250,7 @@ pcb * crearPCB(texto programa){
 	// Inicializo los tres índices:
 	inicializarIndices(nuevoPcb, infoProg);
 
-	inicioPrograma* nuevoPrograma = (iniciar_programa_t*)malloc(sizeof(inicioPrograma));
+	inicioPrograma* nuevoPrograma = (inicioPrograma*)malloc(sizeof(inicioPrograma));
 	nuevoPrograma->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
 	nuevoPrograma->pid = nuevoPcb->pid;
 	nuevoPrograma->codigo.cadena = strdup(programa.cadena);

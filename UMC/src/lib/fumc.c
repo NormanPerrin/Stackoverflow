@@ -193,7 +193,7 @@ int inciar_programa(int pid, int paginas) {
 
 	agregar_tp(pid, paginas);
 
-	iniciar_programa_t *arg = reservarMemoria(sizeof(iniciar_programa_t));
+	inicioPrograma *arg = reservarMemoria(sizeof(inicioPrograma));
 	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg, SIZE_MSG);
 	int ret = *( (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO, SIZE_MSG));
 
@@ -321,7 +321,7 @@ void finalizar_programa(int pid) {
 
 void pedir_pagina(int fd, int pid, int pagina) {
 
-	iniciar_programa_t *arg;
+	inicioPrograma *arg;
 	arg->pid = pid;
 	arg->paginas = pagina;
 	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, arg, SIZE_MSG);

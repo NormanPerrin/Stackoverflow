@@ -43,15 +43,14 @@ void escucharUMC(){
 	}
 
 	int status = 1;		// Estructura que manjea el status de los recieve.
-	uint8_t *head = (uint8_t*)reservarMemoria(1); // 0 .. 255
+	int head;
 
 	while (status > 0){
-		status = recibirPorSocket(sockUMC, head, 1);
+		status = recibirPorSocket(sockUMC, &head, 1);
 		validar_recive(status, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-		aplicar_protocolo_recibir(sockUMC, *head);
+		aplicar_protocolo_recibir(sockUMC, &head, SIZE_MSG);
 	}
 
-	free(head);
 	close(sockUMC);
 	close(sockServidor);
 }

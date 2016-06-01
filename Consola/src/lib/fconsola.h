@@ -18,7 +18,7 @@ int puertoNucleo; // Puerto donde se encuentra escuchando el proceso Núcleo
 char * ipNucleo; // IP del proceso Núcleo
 int fd_nucleo; // Socket Consola - Núcleo
 char * rutaScript;
-t_string* programa;
+texto* programa;
 t_log * logger;
 
 // Estructuras

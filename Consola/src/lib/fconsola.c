@@ -14,7 +14,7 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void leerScript(char * rutaPrograma){
-	programa = (t_string*)malloc(sizeof(t_string));
+	programa = (texto*)malloc(sizeof(texto));
 
 	int _tamanio, descriptorArchivo;
 	struct stat infoArchivo; // Ver función 'stat' en stat.h
@@ -24,7 +24,7 @@ void leerScript(char * rutaPrograma){
 		_tamanio = infoArchivo.st_size;
 		programa->tamanio = _tamanio;
 
-		read(descriptorArchivo, programa->texto, programa->tamanio); // Guardo el script en programa
+		read(descriptorArchivo, programa->cadena, programa->tamanio); // Guardo el script en programa
 		close(descriptorArchivo);
 
 		rutaScript = strdup(rutaPrograma); // Extra: se guarda la ruta en una variable global
@@ -90,8 +90,8 @@ void esperar_mensajes() {
 	break;
 			}
 	case IMPRIMIR_TEXTO:{
-		t_string* textoAImprimir = (t_string*)mensaje;
-		printf("IMPRIMIR: %s\n", textoAImprimir->texto);
+		texto* textoAImprimir = (texto*)mensaje;
+		printf("IMPRIMIR: %s\n", textoAImprimir->cadena);
 	break;
 			}
 	case FINALIZAR_PROGRAMA:{
