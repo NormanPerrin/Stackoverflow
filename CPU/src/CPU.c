@@ -7,9 +7,9 @@ int main(void) {
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU); // Abro archivo configuración
 
-	conectarConNucleo(); // Conexión con Núcleo
-
 	conectarConUMC(); // Conexión con UMC
+
+	conectarConNucleo(); // Conexión con Núcleo
 
 	liberarEstructura(); // Libero memoria reservada para setear config
 
