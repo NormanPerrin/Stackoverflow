@@ -125,6 +125,16 @@ typedef struct solicitudEscritura{
 	string buffer;
 } __attribute__((packed)) solicitudEscritura;
 
+typedef struct {
+	int estado;
+	string mensaje;
+	t_intructions instruccion;
+}__attribute__((packed)) respuestaPedido;
+
+typedef enum{
+	PERMITIDO , NO_PERMITIDO
+} estadoPedido;
+
 // UMC - SWAP
 
 // Prototipos
@@ -150,6 +160,9 @@ direccion* deserealizarDireccionMemoria(void* buffer);
 
 void* serealizarSolicitudEscritura(void * elemento, int * tamanio);
 solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
+
+void * serializarRespuestaPedido(void * elemento, int * tamanio);
+respuestaPedido * deserializarRespuestaPedido(void * buffer);
 
 // -- Serialización y deserialización que implementa las particulares:
 void * serealizar(int head, void * elemento, int * tamanio);

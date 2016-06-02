@@ -73,10 +73,14 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 			buffer = serealizarDireccionMemoria(elemento,tamanio);
 			break;
 		}
-		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
+		case ESCRIBIR_BYTES: {
 			buffer = serealizarSolicitudEscritura(elemento, tamanio);
 			break;
 		} // ver si se comportan de igual forma (mismo case), sino separar
+		case RESPUESTA_PEDIDO:{
+			buffer = serializarRespuestaPedido(elemento, tamanio);
+			break;
+		}
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
 			buffer = malloc(*tamanio);
 			memcpy(buffer, elemento, *tamanio);
@@ -132,9 +136,13 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 			buffer = deserealizarDireccionMemoria(mensaje);
 			break;
 		}
-		case ESCRIBIR_BYTES: case RESPUESTA_PEDIDO:{
+		case ESCRIBIR_BYTES: {
 			buffer = deserealizarSolicitudEscritura(mensaje);
 			break;
+		case RESPUESTA_PEDIDO:{
+			buffer = deserializarRespuestaPedido(mensaje);
+			break;
+		}
 		} // ver si se comportan de igual forma (mismo case)
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
 			buffer = malloc(tamanio);
@@ -387,4 +395,37 @@ solicitudEscritura * deserealizarSolicitudEscritura(void * buffer){
 	memcpy(solicitud->buffer.cadena, buffer + desplazamiento, solicitud->buffer.tamanio);
 
 	return solicitud;
+}
+
+
+//ver Funcion!! ver *tamanio y corregir!! DUDA CON tamanioInstruccion
+
+void * serializarRespuestaPedido(void * elemento, int * tamanio){
+	respuestaPedido * respuesta = (respuestaPedido * ) elemento;
+
+	int desplazamiento = 0;
+	int tamanioInstruccion = + (sizeof(t_intructions) * respuesta->instruccion.offset);
+	*tamanio = sizeof(respuestaPedido) - sizeof(int) + tamanioInstruccion;
+
+	void * buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento,&respuesta->estado,sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, &respuesta->mensaje.cadena, sizeof(respuesta->mensaje.tamanio));
+	desplazamiento += sizeof(respuesta->mensaje.tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->instruccion, tamanioInstruccion);
+
+	return buffer;
+}
+
+respuestaPedido * deserializarRespuestaPedido(void * buffer){
+	int desplazamiento = 0;
+	respuestaPedido * respuesta = malloc(sizeof(respuestaPedido));
+
+	memcpy(&respuesta->estado, buffer + desplazamiento,sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(&respuesta->mensaje.cadena, buffer + desplazamiento, sizeof(respuesta->mensaje.tamanio));
+	desplazamiento += sizeof(respuesta->mensaje.tamanio);
+	memcpy(&respuesta->instruccion, buffer + desplazamiento, sizeof(t_intructions));
+
+	return respuesta;
 }
