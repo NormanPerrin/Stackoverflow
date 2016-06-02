@@ -1,5 +1,5 @@
-#ifndef LIB_FNUCLEO_H_
-#define LIB_FNUCLEO_H_
+#ifndef LIB_GLOBALES_H_
+#define LIB_GLOBALES_H_
 
 #include <utilidades/sockets.h>
 #include <utilidades/general.h>
@@ -12,10 +12,10 @@
 #include <commons/collections/queue.h>
 #include <semaphore.h>
 #include <parser/metadata_program.h>
+
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-
 #define RUTA_CONFIG_NUCLEO "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Nucleo/configNucleo.txt"
 #define logearError(msg){log_error(logger, msg); return FALSE;}
 
@@ -65,29 +65,4 @@ int tamanioPagina;
 /*sem_t mutex_ready;
 sem_t mutex_block;*/
 
-// Prototipos de Funciones:
-
-/**** FUNCIONES PRINCIPALES ****/
-void abrirArchivoDeConfiguracion(char * ruta);
-void inicializarListasYColas();
-void conectarConUMC();
-void escucharAConsola();
-void escucharACPU();
-
-/**** FUNCIONES SECUNDARIAS ****/
-void setearValores_config(t_config * archivoConfig);
-void crearLogger();
-void actualizarDatosDePCBEjecutada(cpu * unCPU, pcb * pcbNuevo);
-void inicializarIndices(pcb* pcb, t_metadata_program* metaData);
-int asignarPid(t_list procesos);
-pcb* buscarProcesoPorPid(int pid, int* index);
-pcb* crearPCB(string programa);
-void liberarPcb(pcb * pcb);
-void planificarProceso();
-void finalizarPrograma(int pid);
-void liberarTodaLaMemoria();
-void limpiarListasYColas();
-void liberarConsola(consola * consola);
-void liberarCPU(cpu * cpu);
-
-#endif /* LIB_FNUCLEO_H_ */
+#endif /* LIB_GLOBALES_H_ */
