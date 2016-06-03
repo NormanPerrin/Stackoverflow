@@ -2,7 +2,7 @@
 
 // TODO: Ver si usar uint16_t, sino sigamos siendo amigos del int.
 
-void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje){
+void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void * mensaje){
 
 	int desplazamiento = 0, tamanioTotal;
 	int* tamanioMensaje = autoinicializado();
@@ -33,7 +33,7 @@ void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje){
 	memcpy(buffer + desplazamiento, mensajeSerealizado, *tamanioMensaje);
 
 	// Se envía la totalidad del paquete (lo contenido en el buffer):
-	enviarPorSocket(fdCliente, buffer, tamanioTotal);
+	enviarPorSocket(fdReceptor, buffer, tamanioTotal);
 
 	free(buffer);
 	free(mensajeSerealizado);
@@ -41,7 +41,7 @@ void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje){
 	free(tamanioMensaje);
 }
 
-void * aplicar_protocolo_recibir(int fdCliente, int protocolo){
+void * aplicar_protocolo_recibir(int fdEmisor, int protocolo){
 	int* head = (int*)malloc(INT);
 	int* tamanioMensaje = (int*)malloc(INT);
 
@@ -51,7 +51,7 @@ void * aplicar_protocolo_recibir(int fdCliente, int protocolo){
 		}
 
 	// Recibo primero el head y lo verifico:
-	recibirPorSocket(fdCliente, head, INT);
+	recibirPorSocket(fdEmisor, head, INT);
 
 	if(*head != protocolo){
 		return NULL; // El protocolo indicado existe, pero no coincide con el recibido
@@ -59,10 +59,10 @@ void * aplicar_protocolo_recibir(int fdCliente, int protocolo){
 	}
 
 	// Recibo ahora el tamaño del mensaje:
-	recibirPorSocket(fdCliente, tamanioMensaje, INT);
+	recibirPorSocket(fdEmisor, tamanioMensaje, INT);
 	// Recibo por último el mensaje serializado:
 	void * mensaje = malloc(*tamanioMensaje);
-	recibirPorSocket(fdCliente, mensaje, *tamanioMensaje);
+	recibirPorSocket(fdEmisor, mensaje, *tamanioMensaje);
 
 	// Deserealizo:
 	void * buffer = deserealizar(*head, mensaje);

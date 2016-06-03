@@ -10,14 +10,14 @@
 /* *** IMPORTANTE - LEER ***
  *
  * PARA ENVIAR UN PAQUETE USAMOS:
- * void aplicar_protocolo_enviar(int fdCliente, int head, void* mensaje);
+ * void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void* mensaje);
  * PRE-CONDICIONES: asegurarse de que el mensaje contenga los valores que queremos antes de enviarlo,
  * esti implica completar TODOS los campos, incluyendo aquellos que indiquen el tamaño para
  * elementos dinámicos.
  * POST-CONDICIONES: las acciones necesarias después del envío del msj se realizan en el respectivo módulo
  *
  * PARA RECIBIR UN PAQUETE USAMOS:
- * void * aplicar_protocolo_recibir(int fdCliente, int* head);
+ * void * aplicar_protocolo_recibir(int fdEmisor, int protocolo);
  * PRE-CONDICIONES: tener alguna variable (creada dinámicamente con malloc, global, pasada por parámetro, etc.)
  * para poder asignarle lo recibido, casteándole el tipo de dato correspondiente (depende el caso, usar también memcpy)
  * POST-CONDICIONES: las acciones necesarias después de la recepción del msj se realizan en el respectivo módulo
@@ -131,8 +131,8 @@ typedef enum{
 
 /*** PROTOTIṔOS ***/
 // -- Funciones definitivas para enviar y recibir PAQUETES:
-void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje);
-void* aplicar_protocolo_recibir(int fdCliente, int protocolo);
+void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void * mensaje);
+void* aplicar_protocolo_recibir(int fdEmisor, int protocolo);
 
 // -- Serialización y deserialización GENERAL:
 void * serealizar(int head, void * elemento);
