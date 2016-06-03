@@ -37,7 +37,7 @@ void ejecutarInstruccion(pcb* pcb){
 	unaDireccion->offset = pcb->indiceCodigo.instrucciones->offset;
 	unaDireccion->size = pcb->indiceCodigo.tamanio;
 
-	aplicar_protocolo_enviar(fd_clienteUMC, LEER_BYTES, unaDireccion,sizeof(direccion));
+	aplicar_protocolo_enviar(fd_clienteUMC, PEDIDO_LECTURA, unaDireccion,sizeof(direccion));
 
 	respuestaPedido * respuesta = aplicar_protocolo_recibir(fd_clienteUMC, RESPUESTA_PEDIDO, sizeof(respuestaPedido));
 
@@ -61,7 +61,7 @@ void ejecutarProceso(pcb* pcb){
 	}
 	void * mensaje;
 	aplicar_protocolo_enviar(fd_clienteNucleo, FIN_QUANTUM, mensaje, INT);
-	aplicar_protocolo_enviar(fd_clienteNucleo, ENVIAR_PCB, pcb, SIZE_MSG);
+	aplicar_protocolo_enviar(fd_clienteNucleo, PCB, pcb, TAMANIO_BASE);
 
 }
 
@@ -72,7 +72,7 @@ void conectarConNucleo() {
 	validar_conexion(ret, 1); // Es terminante por ser cliente
 	handshake_cliente(fd_clienteNucleo, "P");
 
-	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, ENVIAR_PCB, SIZE_MSG);
+	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, PCB, TAMANIO_BASE);
 
 	while(mensaje!=NULL){
 		// El CPU obtiene una PCB para ejecutar:

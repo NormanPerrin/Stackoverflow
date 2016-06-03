@@ -57,7 +57,7 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 			buffer = serealizarTexto(elemento, tamanio);
 			break;
 		} // en ambos casos se envía un texto (char*)
-		case ENVIAR_PCB: {
+		case PCB: {
 			buffer = serealizarPCB(elemento, tamanio);
 			break;
 		}
@@ -65,27 +65,20 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 			buffer = serealizarSolicitudInicioPrograma(elemento, tamanio);
 			break;
 		}
-		case RESPUESTA_INICIO_PROGRAMA: {
-			buffer = serealizarRespuestaInicioPrograma(elemento,tamanio);
-			break;
-		}
-		case LEER_BYTES: {
-			buffer = serealizarDireccionMemoria(elemento,tamanio);
-			break;
-		}
-		case ESCRIBIR_BYTES: {
+		case PEDIDO_ESCRITURA: {
 			buffer = serealizarSolicitudEscritura(elemento, tamanio);
 			break;
-		} // ver si se comportan de igual forma (mismo case), sino separar
+		}
 		case RESPUESTA_PEDIDO:{
 			buffer = serializarRespuestaPedido(elemento, tamanio);
 			break;
 		}
-		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
+		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
+		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
+			// En estos casos se envían elementos estáticos, caluclarle tamaño antes y pasarlo
 			buffer = malloc(*tamanio);
 			memcpy(buffer, elemento, *tamanio);
-			break; // en estos casos se envía un solo elemento (int, char o NULL) como msj
-			// 1: NULL, 2. PID, 3: variable_numérica, 4: NULL
+			break;
 		}
 		case LEER_PAGINA:{
 			break;
@@ -93,9 +86,6 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 		case ESCRIBIR_PAGINA:{
 			break;
 				}
-		case DEVOLVER_BYTES:{
-			break;
-		}
 		case DEVOLVER_PAGINA:{
 			break;
 		}
@@ -120,7 +110,7 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 			buffer = deserealizarTexto(mensaje);
 				break;
 		} // en ambos casos se recibe un texto (char*)
-		case ENVIAR_PCB:{
+		case PCB:{
 			buffer = deserealizarPCB(mensaje);
 			break;
 		}
@@ -128,37 +118,27 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 			buffer = deserealizarSolicitudInicioPrograma(mensaje);
 			break;
 		}
-		case RESPUESTA_INICIO_PROGRAMA: {
-			buffer = deserealizarRespuestaInicioPrograma(mensaje);
-			break;
-		}
-		case LEER_BYTES:{
-			buffer = deserealizarDireccionMemoria(mensaje);
-			break;
-		}
-		case ESCRIBIR_BYTES: {
+		case PEDIDO_ESCRITURA: {
 			buffer = deserealizarSolicitudEscritura(mensaje);
 			break;
+		}
 		case RESPUESTA_PEDIDO:{
 			buffer = deserializarRespuestaPedido(mensaje);
 			break;
 		}
-		} // ver si se comportan de igual forma (mismo case)
-		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:{
+		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
+			case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
+			// En estos casos se reciben elementos estáticos, caluclarle tamaño antes y pasarlo
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
-		} // en estos casos se recibe un solo elemento (int, char o NULL) como msj
-		// 1: NULL, 2. PID, 3: variable_numérica, 4: NULL
+		}
 		case LEER_PAGINA:{
 			break;
 		}
 		case ESCRIBIR_PAGINA:{
 			break;
 		}
-		case DEVOLVER_BYTES:{
-			break;
-				}
 		case DEVOLVER_PAGINA:{
 			break;
 		}
@@ -175,31 +155,33 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 	return buffer;
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
-void* serealizarTexto(void * estructura, int * tamanio){
-string * unTexto = (string *) estructura;
+/**** SERIALIZACIONES PARTICULARES ****/
 
-int desplazamiento = 0;
-	int tamanioTexto = (sizeof(char) * unTexto->tamanio);
-	*tamanio = sizeof(string) - sizeof(int) + tamanioTexto;
+void* serealizarTexto(void * elemento, int * tamanio){
+	string * texto = (string * ) elemento;
 
-	void * buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento, &(unTexto->tamanio), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(unTexto->cadena), tamanioTexto);
+	int desplazamiento = 0;
+	int tamanioString = (sizeof(char) * texto->tamanio);
+	*tamanio = sizeof(string) - sizeof(int) + tamanioString;
+
+		void * buffer = malloc(*tamanio);
+		memcpy(buffer + desplazamiento, &(texto->tamanio), sizeof(int));
+			desplazamiento += sizeof(int);
+		memcpy(buffer + desplazamiento, texto->cadena, tamanioString);
 
 	return buffer;
 }
 
 string * deserealizarTexto(void * buffer){
 	int desplazamiento = 0;
-	string * unTexto = malloc(sizeof(string));
+	string * texto = malloc(sizeof(string));
 
-	memcpy(&unTexto->tamanio, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	unTexto->cadena= malloc(unTexto->tamanio * sizeof(char));
-	memcpy(unTexto->cadena, buffer + desplazamiento, unTexto->tamanio);
+		memcpy(&texto->tamanio, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+		texto->cadena = malloc(texto->tamanio);
+		memcpy(texto->cadena, buffer + desplazamiento, texto->tamanio);
 
-	return unTexto;
+	return texto;
 }
 
 void * serealizarPCB(void * estructura, int * tamanio){
@@ -274,158 +256,72 @@ pcb * deserealizarPCB(void * buffer){
 	return unPcb;
 }
 
-void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio){
-	inicioPrograma* solicitudInicio = (inicioPrograma*) elemento;
-
-	int desplazamiento = 0;
-	int tamanioCodigo = sizeof(char) * solicitudInicio->codigo.tamanio;
-	*tamanio = sizeof(solicitudInicio) - sizeof(int) + tamanioCodigo;
-	void* buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento,&solicitudInicio->pid,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &solicitudInicio->paginas, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &(solicitudInicio->codigo.tamanio), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, solicitudInicio->codigo.cadena, tamanioCodigo);
-
-	return buffer;
-}
-
-inicioPrograma*  deserealizarSolicitudInicioPrograma(void* buffer){
-	int desplazamiento = 0;
-	inicioPrograma* solicitudInicio = malloc(sizeof(inicioPrograma));
-
-	memcpy(&solicitudInicio->pid,buffer + desplazamiento,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&solicitudInicio->paginas, buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&solicitudInicio->codigo.tamanio, buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-	solicitudInicio->codigo.cadena= malloc(solicitudInicio->codigo.tamanio * sizeof(char));
-	memcpy(&solicitudInicio->codigo.cadena, buffer + desplazamiento, solicitudInicio->codigo.tamanio);
-
-	return solicitudInicio;
-}
-
-void * serealizarRespuestaInicioPrograma(void * elemento, int * tamanio){
-	respuestaInicioPrograma * respuesta = (respuestaInicioPrograma*) elemento;
-	int desplazamiento = 0;
-	*tamanio = sizeof(respuestaInicioPrograma) - sizeof(int);
-
-	void* buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento,&respuesta->estadoDelHeap,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &respuesta->pid, sizeof(int));
-
-	return buffer;
-}
-
-respuestaInicioPrograma* deserealizarRespuestaInicioPrograma(void * buffer){
-	int desplazamiento = 0;
-	respuestaInicioPrograma* respuesta = malloc(sizeof(respuestaInicioPrograma));
-
-	memcpy(&respuesta->estadoDelHeap,buffer + desplazamiento,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&respuesta->pid, buffer + desplazamiento, sizeof(int));
-
-	return respuesta;
-}
-
-void* serealizarDireccionMemoria(void* elemento, int* tamanio){
-	direccion* solicitud = (direccion*) elemento;
-
-	int desplazamiento = 0;
-	*tamanio =sizeof(direccion);
-	void* buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento,&solicitud->offset,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &solicitud->pagina, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &solicitud->size, sizeof(int));
-
-	return buffer;
-}
-
-direccion* deserealizarDireccionMemoria(void* buffer){
-	int desplazamiento = 0;
-	direccion* solicitud = malloc(sizeof(direccion));
-
-	memcpy(&solicitud->offset,buffer + desplazamiento,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&solicitud->pagina, buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&solicitud->size, buffer + desplazamiento, sizeof(int));
-
-	return solicitud;
-}
-
 void * serealizarSolicitudEscritura(void * elemento, int * tamanio){
-	solicitudEscritura * solicitud = (solicitudEscritura * ) elemento;
+	solicitudEscritura * unaSolicitud = (solicitudEscritura * ) elemento;
 
-	int desplazamiento = 0;
-	int tamanioDatos = (sizeof(char) * solicitud->buffer.tamanio);
-	*tamanio = sizeof(solicitudEscritura) - sizeof(int) + tamanioDatos;
+		int desplazamiento = 0;
+		int tamanioString = (sizeof(char) * unaSolicitud->buffer.tamanio);
+		*tamanio = sizeof(solicitudEscritura) - sizeof(int) + tamanioString;
 
-	void * buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento,&solicitud->posicion.offset,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &solicitud->posicion.pagina, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &solicitud->posicion.size, sizeof(int));
-	memcpy(buffer + desplazamiento, &(solicitud->buffer.tamanio), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, solicitud->buffer.cadena, tamanioDatos);
+		void * buffer = malloc(*tamanio);
+		memcpy(buffer + desplazamiento,&(unaSolicitud->posicion), 3*INT);
+		desplazamiento += 3*INT;
+		memcpy(buffer + desplazamiento, &(unaSolicitud->buffer.tamanio), sizeof(int));
+		desplazamiento += sizeof(int);
+		memcpy(buffer + desplazamiento, unaSolicitud->buffer.cadena, tamanioString);
 
 	return buffer;
 }
 
 solicitudEscritura * deserealizarSolicitudEscritura(void * buffer){
 	int desplazamiento = 0;
-	solicitudEscritura * solicitud = malloc(sizeof(solicitudEscritura));
+			solicitudEscritura * unaSolicitud = malloc(sizeof(solicitudEscritura));
 
-	memcpy(&solicitud->posicion.offset,buffer + desplazamiento,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&solicitud->posicion.pagina, buffer + desplazamiento, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&solicitud->posicion.size, buffer + desplazamiento, sizeof(int));
-	memcpy(&solicitud->buffer.tamanio, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-	solicitud->buffer.cadena = malloc(solicitud->buffer.tamanio);
-	memcpy(solicitud->buffer.cadena, buffer + desplazamiento, solicitud->buffer.tamanio);
+		memcpy(&unaSolicitud->posicion, buffer + desplazamiento, 3*INT );
+		desplazamiento += 3*INT;
+		memcpy(&unaSolicitud->buffer.tamanio, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+		unaSolicitud->buffer.cadena = malloc(unaSolicitud->buffer.tamanio);
+		memcpy(unaSolicitud->buffer.cadena, buffer + desplazamiento, unaSolicitud->buffer.tamanio);
 
-	return solicitud;
+	return unaSolicitud;
 }
 
-
-//ver Funcion!! ver *tamanio y corregir!! DUDA CON tamanioInstruccion
-
 void * serializarRespuestaPedido(void * elemento, int * tamanio){
-	respuestaPedido * respuesta = (respuestaPedido * ) elemento;
+	respuestaPedido* respuesta = (respuestaPedido*) elemento;
 
 	int desplazamiento = 0;
-	int tamanioInstruccion = + (sizeof(t_intructions) * respuesta->instruccion.offset);
-	*tamanio = sizeof(respuestaPedido) - sizeof(int) + tamanioInstruccion;
+	int tamanioExcepcion = (sizeof(char) * respuesta->mensaje.tamanio);
+	int tamanioDataPedida = (sizeof(char) * respuesta->dataPedida.tamanio);
+	*tamanio = sizeof(respuestaPedido) - 2*INT + tamanioExcepcion + tamanioDataPedida;
 
 	void * buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento,&respuesta->estado,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &respuesta->mensaje.cadena, sizeof(respuesta->mensaje.tamanio));
-	desplazamiento += sizeof(respuesta->mensaje.tamanio);
-	memcpy(buffer + desplazamiento, &respuesta->instruccion, tamanioInstruccion);
+		memcpy(buffer + desplazamiento,&(respuesta->estadoPedido), sizeof(int));
+		desplazamiento += sizeof(int);
+		memcpy(buffer + desplazamiento, respuesta->mensaje.cadena, tamanioExcepcion);
+		desplazamiento += tamanioExcepcion;
+		memcpy(buffer + desplazamiento, respuesta->dataPedida.cadena, tamanioDataPedida);
 
 	return buffer;
 }
 
 respuestaPedido * deserializarRespuestaPedido(void * buffer){
 	int desplazamiento = 0;
-	respuestaPedido * respuesta = malloc(sizeof(respuestaPedido));
+		respuestaPedido * respuesta = malloc(sizeof(respuestaPedido));
 
-	memcpy(&respuesta->estado, buffer + desplazamiento,sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(&respuesta->mensaje.cadena, buffer + desplazamiento, sizeof(respuesta->mensaje.tamanio));
-	desplazamiento += sizeof(respuesta->mensaje.tamanio);
-	memcpy(&respuesta->instruccion, buffer + desplazamiento, sizeof(t_intructions));
+		memcpy(&respuesta->estadoPedido, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&respuesta->mensaje.tamanio, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+		respuesta->mensaje.cadena = malloc(respuesta->mensaje.tamanio);
+		memcpy(respuesta->mensaje.cadena, buffer + desplazamiento, respuesta->mensaje.tamanio);
+		desplazamiento += respuesta->mensaje.tamanio;
+
+		memcpy(&respuesta->dataPedida.tamanio, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+		respuesta->dataPedida.cadena = malloc(respuesta->dataPedida.tamanio);
+		memcpy(respuesta->dataPedida.cadena, buffer + desplazamiento, respuesta->dataPedida.tamanio);
 
 	return respuesta;
 }

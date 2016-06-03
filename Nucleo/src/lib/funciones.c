@@ -179,7 +179,7 @@ void finalizarPrograma(int pid){
 	}
 }
 
-void actualizarDatosDePCBEjecutada(cpu * unCPU, pcb * pcbNuevo){
+void actualizarDatosDePcbEjecutada(cpu * unCPU, pcb * pcbNuevo){
 	unCPU->disponibilidad = LIBRE;
 	int index;
 	pcb * unPcb = buscarProcesoPorPid(pcbNuevo->pid, &index);

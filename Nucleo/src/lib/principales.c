@@ -184,7 +184,7 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 
 		pcb * pcbNuevo=(pcb *) mensaje; // Recibo la PCB actualizada del CPU
 		log_info(logger, "Fin de quantum de CPU #%d - Proceso #%d", unCPUActivo->fd_cpu, pcbNuevo->pid);
-		actualizarDatosDePCBEjecutada(unCPUActivo, pcbNuevo);
+		actualizarDatosDePcbEjecutada(unCPUActivo, pcbNuevo);
 		planificarProceso();
 		break;
 	}
