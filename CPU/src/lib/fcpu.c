@@ -39,10 +39,23 @@ void ejecutarInstruccion(pcb* pcb){
 
 	aplicar_protocolo_enviar(fd_clienteUMC, PEDIDO_LECTURA, unaDireccion,sizeof(direccion));
 
-	respuestaPedido * respuesta = aplicar_protocolo_recibir(fd_clienteUMC, RESPUESTA_PEDIDO, sizeof(respuestaPedido));
+	respuestaPedido * respuesta = aplicar_protocolo_recibir(fd_clienteUMC, RESPUESTA_PEDIDO, TAMANIO_BASE);
 
-	(pcb->pc)++; //incremento Program Counter del PCB
-	analizadorLinea((char * const) (respuesta->instruccion.start), &funcionesAnSISOP, &funcionesKernel);
+	if(respuesta->estadoPedido==PERMITIDO){
+		(pcb->pc)++; //incremento Program Counter del PCB
+		char* const instruccion = (char* const)malloc(respuesta->dataPedida.tamanio);
+		*instruccion = respuesta->dataPedida.cadena;
+
+		analizadorLinea(instruccion, &funcionesAnSISOP, &funcionesKernel);
+		//free(instruccion); o ver antes qué se hace con ella
+	}
+	else{
+		// UMC arrojó excepción:
+		char* msjExcepcion = (char*)malloc(respuesta->mensaje.tamanio);
+		*msjExcepcion = respuesta->mensaje;
+		// ver qué se hace con la excepción recibida
+		// free(msjExcepcion); al terminar
+	}
 
 	free(respuesta);
 }
