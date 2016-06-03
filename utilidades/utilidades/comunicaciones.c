@@ -1,83 +1,111 @@
 #include "comunicaciones.h"
 
-void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje, int tamanioMensaje){
+// TODO: Ver si usar uint16_t, sino sigamos siendo amigos del int.
 
-	int desplazamiento = 0;
+void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje){
 
-	void * mensajeSerealizado = serealizar(protocolo, mensaje, &tamanioMensaje);
+	int desplazamiento = 0, tamanioTotal;
+	int* tamanioMensaje = autoinicializado();
+	int* head = autoinicializado();
 
-	/* Lo que se envía es:
-	 * 1 int del protocolo + 1 int del tamaño del msj + el mensaje serializado.
-	 * Entonces, el tamaño total de lo enviado es: */
+	if (protocolo < 1 || protocolo > FIN_DEL_PROTOCOLO){
+		fprintf(stderr, "Error al enviar paquete. No existe protocolo definido para %d\n", protocolo);
+		abort(); // es abortivo
+		}
 
-	int tamanioTotal = sizeof(int) * 2 + tamanioMensaje;
+	// Serealizar un mensaje dado un protocolo, me devuelve el mensaje empaquetado:
+	void * mensajeSerealizado = serealizar(protocolo, mensaje);
+	*tamanioMensaje = sizeof(mensajeSerealizado);
+	*head = protocolo;
+
+	/* Lo que se envía es: el protocolo + tamaño del msj + el msj serializado
+	 * Entonces, el tamaño total de lo enviado es:
+	 * 	16 bytes de los dos int + el tamaño del msj empaquetado */
+
+	tamanioTotal = 2*INT + *tamanioMensaje;
 
 	// Meto en el paquete para enviar, esas tres cosas:
 	void * buffer = malloc(tamanioTotal);
-	memcpy(buffer + desplazamiento, &protocolo, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, &tamanioMensaje, sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, mensajeSerealizado, tamanioMensaje);
+	memcpy(buffer + desplazamiento, head, INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, tamanioMensaje, INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, mensajeSerealizado, *tamanioMensaje);
 
 	// Se envía la totalidad del paquete (lo contenido en el buffer):
 	enviarPorSocket(fdCliente, buffer, tamanioTotal);
 
 	free(buffer);
-
 	free(mensajeSerealizado);
+	free(head);
+	free(tamanioMensaje);
 }
 
-void * aplicar_protocolo_recibir(int fdCliente, int * protocolo, int * tamanioMensaje){
-	/* Recibo primero el head y lo verifico:
-	Devuelvo NULL si el head no pertenece al protocolo, o bien, si falla el recv */
-	int recibido = recibirPorSocket(fdCliente, protocolo, sizeof(int));
+void * aplicar_protocolo_recibir(int fdCliente, int protocolo){
+	int* head = (int*)malloc(INT);
+	int* tamanioMensaje = (int*)malloc(INT);
 
-	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0){
-		return NULL;
+	if (protocolo < 1 || protocolo > FIN_DEL_PROTOCOLO){
+		fprintf(stderr, "Error al recibir paquete. No existe protocolo definido para %d\n", protocolo);
+			abort(); // es abortivo
+		}
+
+	// Recibo primero el head y lo verifico:
+	recibirPorSocket(fdCliente, head, INT);
+
+	if(*head != protocolo){
+		return NULL; // El protocolo indicado existe, pero no coincide con el recibido
+		// Validar contra NULL al recibir en cada módulo (tirar un mensaje de error notificando)
 	}
-	// Recibo ahora el tamaño del mensaje:
-	recibirPorSocket(fdCliente, tamanioMensaje, sizeof(int));
 
+	// Recibo ahora el tamaño del mensaje:
+	recibirPorSocket(fdCliente, tamanioMensaje, INT);
 	// Recibo por último el mensaje serializado:
 	void * mensaje = malloc(*tamanioMensaje);
 	recibirPorSocket(fdCliente, mensaje, *tamanioMensaje);
-	void * buffer = deserealizar(*protocolo, mensaje, *tamanioMensaje);
+
+	// Deserealizo:
+	void * buffer = deserealizar(*head, mensaje);
+
 	free(mensaje);
+	free(head);
+	free(tamanioMensaje);
 
 	return buffer;
 
 } // Se debe castear el mensaje al recibirse (indicar el tipo de dato que debe matchear con el void*)
 
-void * serealizar(int protocolo, void * elemento, int * tamanio){
+void * serealizar(int protocolo, void * elemento){
 	void * buffer;
 
 	switch(protocolo){
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO:{
-			buffer = serealizarTexto(elemento, tamanio);
+			buffer = serealizarTexto(elemento);
 			break;
 		} // en ambos casos se envía un texto (char*)
 		case PCB: {
-			buffer = serealizarPCB(elemento, tamanio);
+			buffer = serealizarPCB(elemento);
 			break;
 		}
 		case INICIAR_PROGRAMA: {
-			buffer = serealizarSolicitudInicioPrograma(elemento, tamanio);
+			buffer = serealizarSolicitudInicioPrograma(elemento);
 			break;
 		}
 		case PEDIDO_ESCRITURA: {
-			buffer = serealizarSolicitudEscritura(elemento, tamanio);
+			buffer = serealizarSolicitudEscritura(elemento);
 			break;
 		}
 		case RESPUESTA_PEDIDO:{
-			buffer = serializarRespuestaPedido(elemento, tamanio);
+			buffer = serializarRespuestaPedido(elemento);
 			break;
 		}
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
 		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
 			// En estos casos se envían elementos estáticos, calcularle tamaño antes y pasarlo
-			buffer = malloc(*tamanio);
-			memcpy(buffer, elemento, *tamanio);
+			int tamanio = sizeof(elemento);
+
+			buffer = malloc(tamanio);
+			memcpy(buffer, elemento, tamanio);
 			break;
 		}
 		case LEER_PAGINA:{
@@ -90,19 +118,14 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 			break;
 		}
 		case 0:{
-			printf("Se produjo una desconexión de sockets\n"); // es el caso del recv = 0
-			break;
-		}
-		default:{
-			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
-			//abort();
+			printf("Se produjo una desconexión de sockets al serealizar\n"); // es el caso del recv = 0
 			break;
 		}
 	}
 	return buffer;
 }
 
-void * deserealizar(int protocolo, void * mensaje, int tamanio){
+void * deserealizar(int protocolo, void * mensaje){
 	void * buffer;
 
 	switch(protocolo){
@@ -129,6 +152,8 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
 			case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
 			// En estos casos se reciben elementos estáticos, calcularle tamaño antes y pasarlo
+			int tamanio = sizeof(mensaje);
+
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
@@ -143,12 +168,8 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 			break;
 		}
 		case 0:{
-			printf("Se produjo una desconexión de sockets\n"); // es el caso del recv = 0
-			break;
-		}
-		default:{
-			fprintf(stderr, "No existe protocolo definido para %d\n", protocolo);
-			//abort();
+			printf("Se produjo una desconexión de sockets al desearealizar\n");
+			// es el caso del recv = 0
 			break;
 		}
 	}
@@ -157,8 +178,15 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 
 /**** SERIALIZACIONES PARTICULARES ****/
 
-void* serealizarTexto(void * elemento, int * tamanio){
+int* autoinicializado(){
+	int* tamanio = (int*)malloc(INT);
+	*tamanio = 0;
+	return tamanio;
+}
+
+void* serealizarTexto(void * elemento){
 	string * texto = (string * ) elemento;
+	int* tamanio = autoinicializado();
 
 	int desplazamiento = 0;
 	int tamanioString = (sizeof(char) * texto->tamanio);
@@ -184,8 +212,9 @@ string * deserealizarTexto(void * buffer){
 	return texto;
 }
 
-void * serealizarPCB(void * estructura, int * tamanio){
+void * serealizarPCB(void * estructura){
 	pcb * unPCB = (pcb *) estructura;
+	int* tamanio = autoinicializado();
 
 	int desplazamiento = 0;
 	int iCodigoSize = (sizeof(t_intructions) * unPCB->indiceCodigo.tamanio);
@@ -256,8 +285,9 @@ pcb * deserealizarPCB(void * buffer){
 	return unPcb;
 }
 
-void * serealizarSolicitudEscritura(void * elemento, int * tamanio){
+void * serealizarSolicitudEscritura(void * elemento){
 	solicitudEscritura * unaSolicitud = (solicitudEscritura * ) elemento;
+	int* tamanio = autoinicializado();
 
 		int desplazamiento = 0;
 		int tamanioString = (sizeof(char) * unaSolicitud->buffer.tamanio);
@@ -287,8 +317,9 @@ solicitudEscritura * deserealizarSolicitudEscritura(void * buffer){
 	return unaSolicitud;
 }
 
-void * serializarRespuestaPedido(void * elemento, int * tamanio){
+void * serializarRespuestaPedido(void * elemento){
 	respuestaPedido* respuesta = (respuestaPedido*) elemento;
+	int* tamanio = autoinicializado();
 
 	int desplazamiento = 0;
 	int tamanioExcepcion = (sizeof(char) * respuesta->mensaje.tamanio);

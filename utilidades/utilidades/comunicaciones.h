@@ -7,23 +7,20 @@
 	#include <commons/collections/dictionary.h>
 	#include <parser/metadata_program.h>
 
-	#define TAMANIO_BASE 0
-
-/* Para ENVIAR un mensaje, usamos:
- * void aplicar_protocolo_enviar(int fdCliente, int head, void* mensaje, int tamanioMensaje);
- * Pre-condiciones: asegurarse de que el mensaje contenga los valores que queremos antes de enviarlo
- * Post-condiciones: las acciones necesarias después del envío del msj se realizan en el respectivo módulo
+/* *** IMPORTANTE - LEER ***
  *
- * Para RECIBIR un mensaje, usamos:
- * void * aplicar_protocolo_recibir(int fdCliente, int* head, int* tamanioMensaje);
- * Pre-condiciones: tener una variable creada dinámicamente con malloc para poder asignarle lo recibido
- * (depende el caso, usar también memcpy)
- * Post-condiciones: las acciones necesarias después de la recepción del msj se realizan en el respectivo módulo
+ * PARA ENVIAR UN PAQUETE USAMOS:
+ * void aplicar_protocolo_enviar(int fdCliente, int head, void* mensaje);
+ * PRE-CONDICIONES: asegurarse de que el mensaje contenga los valores que queremos antes de enviarlo,
+ * esti implica completar TODOS los campos, incluyendo aquellos que indiquen el tamaño para
+ * elementos dinámicos.
+ * POST-CONDICIONES: las acciones necesarias después del envío del msj se realizan en el respectivo módulo
  *
- *OBS.: Para enviar/recibir elementos que requieren serialización dinámica (punteros), como argumento en
- *		tamaño del mensaje pasamos TAMANIO_BASE.
- *		Para los casos de elementos estáticos (no punteros), calculamos antes su tamaño
- *		(con 'sizeof' u otro mecanismo) y sí lo pasamos como argumento.
+ * PARA RECIBIR UN PAQUETE USAMOS:
+ * void * aplicar_protocolo_recibir(int fdCliente, int* head);
+ * PRE-CONDICIONES: tener alguna variable (creada dinámicamente con malloc, global, pasada por parámetro, etc.)
+ * para poder asignarle lo recibido, casteándole el tipo de dato correspondiente (depende el caso, usar también memcpy)
+ * POST-CONDICIONES: las acciones necesarias después de la recepción del msj se realizan en el respectivo módulo
  */
 
 // PROTOCOLO (head/tipo de msj):
@@ -134,23 +131,25 @@ typedef enum{
 
 /*** PROTOTIṔOS ***/
 // -- Funciones definitivas para enviar y recibir PAQUETES:
-void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int tamanioMensaje);
-void* aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje);
+void aplicar_protocolo_enviar(int fdCliente, int protocolo, void * mensaje);
+void* aplicar_protocolo_recibir(int fdCliente, int protocolo);
 
 // -- Serialización y deserialización GENERAL:
-void * serealizar(int head, void * elemento, int * tamanio);
-void * deserealizar(int head, void * mensaje, int tamanio);
+void * serealizar(int head, void * elemento);
+void * deserealizar(int head, void * mensaje);
 
 // -- Serializaciones y deserializaciones DINÁMICAS:
-void* serealizarPCB(void* estructura, int* tamanio);
+void* serealizarPCB(void* estructura);
 pcb* deserealizarPCB(void* buffer);
-void* serealizarTexto(void* estructura, int* tamanio);
+void* serealizarTexto(void* estructura);
 string* deserealizarTexto(void* buffer);
-void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio);
+void* serealizarSolicitudInicioPrograma(void* elemento);
 inicioPrograma* deserealizarSolicitudInicioPrograma(void* buffer);
-void* serealizarSolicitudEscritura(void * elemento, int * tamanio);
+void* serealizarSolicitudEscritura(void * elemento);
 solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
-void * serializarRespuestaPedido(void * elemento, int * tamanio);
+void * serializarRespuestaPedido(void * elemento);
 respuestaPedido * deserializarRespuestaPedido(void * buffer);
+
+int* autoinicializado(); // retorna un puntero a una variable entera con valor 0
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

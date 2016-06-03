@@ -36,7 +36,7 @@ void conectarConNucleo(){
 	validar_conexion(ret, 1); // Al ser cliente es terminante
 	handshake_cliente(fd_nucleo, "C");
 
-	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa, SIZE_MSG);
+	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
 
 	esperar_mensajes();
 

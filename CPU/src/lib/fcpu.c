@@ -44,7 +44,7 @@ void ejecutarInstruccion(pcb* pcb){
 
 	entrada = aplicar_protocolo_recibir(fd_clienteUMC, &protocolo, &tamanioMensaje);
 
-	if (protocolo == RESPUESTA_LECTURA){
+	if (protocolo == RESPUESTA_PEDIDO){
 		respuesta = (respuestaPedido *) entrada;
 		if(respuesta->estadoPedido==PERMITIDO){
 				(pcb->pc)++; //incremento Program Counter del PCB

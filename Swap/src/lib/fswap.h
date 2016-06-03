@@ -30,10 +30,6 @@
 		int ocupada;
 	} t_bitMap;
 
-
-
-
-
 	// Cabeceras
 	void setearValores_config(t_config * archivoConfig);
 	void escucharUMC();
@@ -52,4 +48,5 @@
 	void avanzarPaginas(int cantidad);
 	int eleminar_programa(int pid);
 	int buscarAPartirDeEnTablaDePaginas(int pid);
+
 #endif /* FSWAP_H_ */
