@@ -17,6 +17,7 @@ void setearValores_config(t_config * archivoConfig) {
 	config->retardo = config_get_int_value(archivoConfig, "RETARDO");
 }
 
+// <CONEXIONES>
 
 void conectarConSwap(){
 	sockClienteDeSwap = nuevoSocket();
@@ -35,6 +36,28 @@ void crearHilos() {
 }
 
 
+void consola() {
+
+	printf("Hola! Ingresá \"salir\" para salir\n");
+	char *mensaje = reservarMemoria(CHAR * MAX_CONSOLA);
+
+	while(!exitFlag) {
+
+		scanf("%[^\n]%*c", mensaje);
+
+		if(!strcmp(mensaje, "salir")) {
+			printf("Saliendo de UMC\n");
+			exitFlag = TRUE;
+		} else {
+			printf("Consola: %s\n", mensaje);
+		}
+
+	}
+
+	free(mensaje);
+}
+
+
 void servidor() {
 
 	sockServidor = nuevoSocket();
@@ -50,40 +73,19 @@ void servidor() {
 
 			*sockCliente = aceptarConexionSocket(sockServidor);
 			if( validar_conexion(*sockCliente, 0) == FALSE ) {
-				continue;
+				continue; // vuelve al inicio del while
 			} else {
 				ret_handshake = handshake_servidor(*sockCliente, "U");
-				enviarPorSocket(*sockCliente,(int*)config->marco_size,INT);
+				enviarTamanioMarco(*sockCliente, config->marco_size);
 			}
 
-		}
+		} // cuando sale hay un cliente válido
 
 		crearHiloCliente(sockCliente);
-	}
+
+	} // cuando sale indicaron cierre del programa
 
 	close(sockServidor);
-}
-
-
-void consola() {
-
-	printf("Hola! Ingresá \"#\" para salir\n");
-	char *mensaje = reservarMemoria(CHAR*20);
-
-	while(!exitFlag) {
-
-		scanf("%[^\n]%*c", mensaje);
-
-		if(!strcmp(mensaje, "#")) {
-			printf("Saliendo de UMC\n");
-			exitFlag = TRUE;
-		} else {
-			printf("Consola: %s\n", mensaje);
-		}
-
-	}
-
-	free(mensaje);
 }
 
 
@@ -92,92 +94,155 @@ void crearHiloCliente(int *sockCliente) {
 	pthread_create(&hilo_cliente, NULL, (void*)cliente, sockCliente);
 }
 
+
 void cliente(void* fdCliente) {
 
 	int sockCliente = *((int*)fdCliente);
 	free(fdCliente);
-	int head;
+
+	int *head = (int*)reservarMemoria(INT);
 	int ret = 1;
 
 	while(ret > 0 && !exitFlag) {
 
-		ret = recibirPorSocket(sockCliente, &head, 1);
+		ret = recibirPorSocket(sockCliente, head, 2); // recibe 16 bits = 2 bytes (uint16_t)
 
 		if( validar_recive(ret, 0) == FALSE) { // Si se desconecta una CPU o hay error en mensaje no pasa nada. Por eso no terminante
 			break;
 		} else {
-			aplicar_protocolo_recibir(sockCliente, &head, SIZE_MSG);
+			void *mensaje = aplicar_protocolo_recibir(sockCliente, *head); // recibo mensaje
+//			void (*funcion)(int, void) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
+//			funcion(sockCliente, mensaje); // ejecuto función
+			free(mensaje); // aplicar_protocolo_recibir pide memoria, por lo tanto hay que liberarla
 		}
 
 	}
+
+	free(head);
 	close(sockCliente);
 }
 
+// </CONEXIONES>
 
-void liberarEstructura() {
-	free(config->ip_swap);
-	free(config);
+
+// <PRINCIPAL>
+
+void inciar_programa(int fd, void *msj) {
+
+	inciarPrograma_t *mensaje = (inciarPrograma_t*)msj; // casteo
+
+	// 1) Agrego a tabla de páginas
+	agregar_tp(mensaje->pid, mensaje->paginas);
+
+	// 2) Envío a Swap
+	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, msj);
+
+	// 3) Espero respuesta de Swap
+	int *respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO); // TODO ver como es respuesta
+
+	// 4) Respondo a Núcleo como salió la operación
+	responder(sockClienteDeSwap, *respuesta);
+
 }
 
-void liberarRecusos() {
-	// liberar otros recursos
-	free(memoria);
-	free(tabla_paginas);
-	free(tlb);
-	sem_destroy(&mutex);
-	liberarEstructura();
-}
+void leer_bytes(int fd, void *msj) {
 
+	leerBytes_t *mensaje = (leerBytes_t*)msj; // casteo
 
-int validar_cliente(char *id) {
-	if( !strcmp(id, "N") || !strcmp(id, "P") ) {
-		printf("Cliente aceptado\n");
-		return TRUE;
-	} else {
-		printf("Cliente rechazado\n");
-		return FALSE;
+	// 1) busco página
+	int pos_tp = buscar_pagina(pid_activo[fd], mensaje->pagina); // TODO ver como es pid activo proceso
+	if(pos_tp == ERROR) // no se inicializó el proceso
+		responder(fd, FALSE);
+
+	// 2) veo si está en MP y si no encuentra cargo desde Swap
+	if( tabla_paginas[pos_tp].bit_presencia == 0 ) { // page fault
+
+		// pido página a Swap
+		pedidoPagina_t pedido;
+		pedido.pid = pid_activo[fd];
+		pedido.pagina = mensaje->pagina;
+		aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, &pedido);
+
+		// espero respuesta de Swap
+		void *contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, LEER_PAGINA);
+		if(contenido_pagina == NULL) // no encontró la página o hubo un fallo
+			responder(fd, FALSE);
+		else {// tengo que cargar la página a MP
+			cargar_pagina(pid_activo[fd], contenido_pagina);
+		}
 	}
+
+	// 3) busco el código que me piden
+	void *contenido = reservarMemoria(mensaje->tamanio);
+	int pos_real = (tabla_paginas[pos_tp].marco) * (config->marco_size) + mensaje->offset;
+	memcpy(contenido, memoria + pos_real, mensaje->tamanio);
+
+	// 4) devolver el contenido solicitado
+	aplicar_protocolo_enviar(fd, LEER_BYTES, contenido);
+
+	free(contenido);
 }
 
-int validar_servidor(char *id) {
-	if(!strcmp(id, "S")) {
-		printf("Servidor aceptado\n");
-		return TRUE;
-	} else {
-		printf("Servidor rechazado\n");
-		return FALSE;
-	}
+void escribir_bytes(int fd, void *mensaje) {
+
+//	int pos = buscar_pagina(pid, pagina);
+//	if(pos == ERROR) return ERROR;
+//
+//	int dir_fisica = (pos * config->marco_size) + offset;
+//	sem_wait(&mutex);
+//	memcpy(memoria + dir_fisica, contenido, tamanio);
+//	sem_post(&mutex);
+//
+//	return TRUE;
+
 }
 
+void finalizar_programa(int fd, void *mensaje) {
+
+//	int pos;
+//
+//	sem_wait(&mutex);
+//
+//	for(pos = 0; pos < entradas_tp; pos++) {
+//		if(tabla_paginas[pos].pid == pid) {
+//			reset_entrada(pos);
+//		}
+//	}
+//
+//	sem_post(&mutex);
+}
+
+// </PRINCIPAL>
+
+
+// <TABLA_PAGINA>
 
 void iniciarEstructuras() {
 
 	sem_init(&mutex, 0, 1);
 
-	int length = config->marcos * config->marco_size;
-	memoria = reservarMemoria(length); // Google Chrome be like
-	memcpy(memoria, "", length);
+	int sizeof_memoria = config->marcos * config->marco_size;
+	memoria = reservarMemoria(sizeof_memoria); // Google Chrome be like
 
-	length = config->marcos * sizeof(tp_t);
-	tabla_paginas = reservarMemoria(length);
+	char *null = (char*)reservarMemoria(CHAR);
+	null = '\0';
+	int i;
+	for(i = 0; i < sizeof_memoria; i++) memcpy(memoria + i, null, CHAR); // TODO ver si hay una forma más linda de hacer esto
+
+	int sizeof_tp = config->marcos * sizeof(tp_t);
+	tabla_paginas = reservarMemoria(sizeof_tp);
 	iniciarTP();
 
-	length = config->entradas_tlb * sizeof(tlb_t);
-	tlb = reservarMemoria(length);
+	int sizeof_tlb = config->entradas_tlb * sizeof(tlb_t);
+	tlb = reservarMemoria(sizeof_tlb);
 
 }
-
 
 void iniciarTP() {
-
-	int marco;
-	sem_wait(&mutex);
-	for(marco = 0; marco < entradas_tp; marco++) reset_entrada(marco);
-	sem_post(&mutex);
-
 	entradas_tp = config->marcos;
+	int marco;
+	for(marco = 0; marco < entradas_tp; marco++) reset_entrada(marco);
 }
-
 
 void reset_entrada(int pos) {
 	tabla_paginas[pos].pagina = -1;
@@ -187,20 +252,6 @@ void reset_entrada(int pos) {
 	tabla_paginas[pos].bit_modificado = 0;
 	tabla_paginas[pos].bit_presencia = 0;
 }
-
-
-int inciar_programa(int pid, int paginas) {
-
-	agregar_tp(pid, paginas);
-
-	inicioPrograma *arg = reservarMemoria(sizeof(inicioPrograma));
-	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, (void*)arg, SIZE_MSG);
-	int ret = *( (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO, SIZE_MSG));
-
-	free(arg);
-	return ret;
-}
-
 
 void agregar_tp(int pid, int paginas) {
 
@@ -232,7 +283,6 @@ void agregar_tp(int pid, int paginas) {
 
 }
 
-
 void eliminar_pagina(int pid, int pagina) {
 
 	sem_wait(&mutex);
@@ -247,17 +297,17 @@ void eliminar_pagina(int pid, int pagina) {
 	sem_post(&mutex);
 }
 
-
-int buscar_pagina(int pid, int pagina) {
+int buscar_pagina(int pid, int pagina) { // TODO agregar búsqueda en TLB
 
 	sem_wait(&mutex);
 
 	int pos = 0;
 	while(pos < entradas_tp) {
 
-		if( (tabla_paginas[pos].pid == pid) && (tabla_paginas[pos].pagina == pagina) )
+		if( (tabla_paginas[pos].pid == pid) && (tabla_paginas[pos].pagina == pagina) ) {
+			sem_post(&mutex);
 			return pos;
-
+		}
 		pos++;
 	}
 
@@ -267,68 +317,101 @@ int buscar_pagina(int pid, int pagina) {
 
 }
 
-
-void *leer_bytes(int pid, int pagina, int offset, int tamanio) {
-
-	void *contenido = reservarMemoria(tamanio);
-
-	int pos = buscar_pagina(pid, pagina);
-	if(pos == ERROR) {
-		return NULL;
-	}
-
-	int dir_fisica;
-	dir_fisica = (pos * config->marco_size) + offset;
-	sem_wait(&mutex);
-	memcpy(contenido, (memoria + dir_fisica), tamanio);
-	sem_post(&mutex);
-
-	return contenido;
-
+int cargar_pagina(int pid, void *contenido) {
+	return 0;
 }
 
-
-int escribir_bytes(int pid, int pagina, int offset, int tamanio, void *contenido) {
-
-	int pos = buscar_pagina(pid, pagina);
-	if(pos == ERROR) return ERROR;
-
-	int dir_fisica = (pos * config->marco_size) + offset;
-	sem_wait(&mutex);
-	memcpy(memoria + dir_fisica, contenido, tamanio);
-	sem_post(&mutex);
-
-	return TRUE;
-
+void actualizar_marco_tp(int pos, int valor) {
+	tabla_paginas[pos].marco = valor;
 }
 
-
-void finalizar_programa(int pid) {
-
-	int pos;
-
-	sem_wait(&mutex);
-
-	for(pos = 0; pos < entradas_tp; pos++) {
-		if(tabla_paginas[pos].pid == pid) {
-			reset_entrada(pos);
-		}
-	}
-
-	sem_post(&mutex);
+void actualizar_presencia_tp(int pos, int valor) {
+	tabla_paginas[pos].bit_presencia = valor;
 }
 
+void actualizar_modificado_tp(int pos, int valor) {
+	tabla_paginas[pos].bit_modificado = valor;
+}
 
-void pedir_pagina(int fd, int pid, int pagina) {
+void actualizar_uso_tp(int pos, int valor) {
+	tabla_paginas[pos].bit_uso = valor;
+}
 
-	inicioPrograma *arg;
-	arg->pid = pid;
-	arg->paginas = pagina;
-	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, arg, SIZE_MSG);
+// </TABLA_PAGINA>
 
-	void *contenido;
-	contenido = aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO, SIZE_MSG);
-	if(contenido == NULL) {
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, NULL, SIZE_MSG);
+
+// <AUXILIARES>
+
+void liberarEstructura() {
+	free(config->ip_swap);
+	free(config);
+}
+
+void liberarRecusos() {
+	// liberar otros recursos
+	free(memoria);
+	free(tabla_paginas);
+	free(tlb);
+	sem_destroy(&mutex);
+	liberarEstructura();
+}
+
+int validar_cliente(char *id) {
+	if( !strcmp(id, "N") || !strcmp(id, "P") ) {
+		printf("Cliente aceptado\n");
+		return TRUE;
+	} else {
+		printf("Cliente rechazado\n");
+		return FALSE;
 	}
 }
+
+int validar_servidor(char *id) {
+	if(!strcmp(id, "S")) {
+		printf("Servidor aceptado\n");
+		return TRUE;
+	} else {
+		printf("Servidor rechazado\n");
+		return FALSE;
+	}
+}
+
+void enviarTamanioMarco(int fd, int tamanio) {
+	int *msj = (int*)reservarMemoria(INT);
+	*msj = tamanio;
+	enviarPorSocket(fd, msj, INT);
+	free(msj);
+}
+
+void *elegirFuncion(protocolo head) {
+
+	switch(head) {
+
+		case INICIAR_PROGRAMA:
+			return inciar_programa;
+
+		case LEER_BYTES:
+			return leer_bytes;
+
+		case ESCRIBIR_BYTES:
+			return escribir_bytes;
+
+		case FINALIZAR_PROGRAMA:
+			return finalizar_programa;
+
+		default:
+			fprintf(stderr, "No existe protocolo definido para %d\n", head);
+			break;
+
+	}
+
+	return NULL;
+}
+
+void responder(int fd, int respuesta) {
+	int *resp;
+	*resp = respuesta;
+	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, resp);
+}
+
+// </AUXILIARES>

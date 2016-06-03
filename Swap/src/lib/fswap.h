@@ -30,6 +30,10 @@
 		int ocupada;
 	} t_bitMap;
 
+	typedef struct {
+		int pid;
+		int pagina;
+	} pedidoPagina_t;
 
 
 

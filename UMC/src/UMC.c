@@ -4,7 +4,7 @@
 
 int main(void) {
 
-	leerArchivoDeConfiguracion(RUTA_CONFIG_UMC); // Abro archivo de configuración
+	leerArchivoDeConfiguracion(RUTA_CONFIG); // Abro archivo de configuración
 
 	iniciarEstructuras(); // Crea memoria y estructuras de administracións
 
