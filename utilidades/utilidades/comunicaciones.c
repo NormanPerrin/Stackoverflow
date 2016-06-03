@@ -75,7 +75,7 @@ void * serealizar(int protocolo, void * elemento, int * tamanio){
 		}
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
 		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
-			// En estos casos se envían elementos estáticos, caluclarle tamaño antes y pasarlo
+			// En estos casos se envían elementos estáticos, calcularle tamaño antes y pasarlo
 			buffer = malloc(*tamanio);
 			memcpy(buffer, elemento, *tamanio);
 			break;
@@ -128,7 +128,7 @@ void * deserealizar(int protocolo, void * mensaje, int tamanio){
 		}
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
 			case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
-			// En estos casos se reciben elementos estáticos, caluclarle tamaño antes y pasarlo
+			// En estos casos se reciben elementos estáticos, calcularle tamaño antes y pasarlo
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;

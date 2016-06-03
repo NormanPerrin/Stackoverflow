@@ -26,7 +26,7 @@
  *		(con 'sizeof' u otro mecanismo) y sí lo pasamos como argumento.
  */
 
-// PROTOCOLO (heads):
+// PROTOCOLO (head/tipo de msj):
 typedef enum {
 		IMPRIMIR = 1, 			// Núcleo - Consola
 		IMPRIMIR_TEXTO = 2, 	// Núcleo - Consola
@@ -49,12 +49,12 @@ typedef enum {
 		FIN_DEL_PROTOCOLO
 	} protocolo;
 
-// Uso general
+// TADS para uso general
 typedef struct {
 		int pagina, offset, size;
 } __attribute__((packed)) direccion; // posición de memoria, vale también para solicitud de Lectura
 
-// TADS (para texto variable y contenido PCB)
+// TADS para texto variable y contenido PCB
 typedef struct {
 		int tamanio;
 		char * cadena;
@@ -87,7 +87,7 @@ typedef struct {
 	char* etiquetas; // Serializacion de las etiquetas
 	} etiquetas;
 
-// UMC - Núcleo
+// TADS para UMC - Núcleo
 typedef struct {
 		int pid, paginas;
 		string codigo;
@@ -102,7 +102,7 @@ typedef enum {
 	CREADO, NO_CREADO
 }estadoDelHeap;
 
-// Núcleo - CPU
+// TADS para Núcleo - CPU
 typedef enum {
 	NEW, READY, EXEC, BLOCK, EXIT
 } estadoProceso;
@@ -114,7 +114,7 @@ typedef struct pcb{
 		stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
 } __attribute__((packed)) pcb;
 
-// UMC - CPU
+// TADS para UMC - CPU
 typedef struct solicitudEscritura{
 	direccion posicion;
 	string buffer; // lo que se manda a escribir
@@ -130,31 +130,27 @@ typedef enum{
 	PERMITIDO, NO_PERMITIDO // si es NO_PERMITIDO, UMC arroja escepción y se finaliza la ejecución
 } estadoPedido;
 
-// UMC - SWAP
+// TADS para UMC - SWAP
 
-// Prototipos
-// -- Funciones definitivas para enviar y recibir paquetes:
+/*** PROTOTIṔOS ***/
+// -- Funciones definitivas para enviar y recibir PAQUETES:
 void aplicar_protocolo_enviar(int fdCliente, int head, void * mensaje, int tamanioMensaje);
 void* aplicar_protocolo_recibir(int fdCliente, int * head, int * tamanioMensaje);
 
-// -- Serializaciones y deserializaciones particulares:
-void* serealizarPCB(void* estructura, int* tamanio);
-pcb* deserealizarPCB(void* buffer);
-
-void* serealizarTexto(void* estructura, int* tamanio);
-string* deserealizarTexto(void* buffer);
-
-void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio);
-inicioPrograma* deserealizarSolicitudInicioPrograma(void* buffer);
-
-void* serealizarSolicitudEscritura(void * elemento, int * tamanio);
-solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
-
-void * serializarRespuestaPedido(void * elemento, int * tamanio);
-respuestaPedido * deserializarRespuestaPedido(void * buffer);
-
-// -- Serialización y deserialización que implementa las particulares:
+// -- Serialización y deserialización GENERAL:
 void * serealizar(int head, void * elemento, int * tamanio);
 void * deserealizar(int head, void * mensaje, int tamanio);
+
+// -- Serializaciones y deserializaciones DINÁMICAS:
+void* serealizarPCB(void* estructura, int* tamanio);
+pcb* deserealizarPCB(void* buffer);
+void* serealizarTexto(void* estructura, int* tamanio);
+string* deserealizarTexto(void* buffer);
+void* serealizarSolicitudInicioPrograma(void* elemento, int* tamanio);
+inicioPrograma* deserealizarSolicitudInicioPrograma(void* buffer);
+void* serealizarSolicitudEscritura(void * elemento, int * tamanio);
+solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
+void * serializarRespuestaPedido(void * elemento, int * tamanio);
+respuestaPedido * deserializarRespuestaPedido(void * buffer);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */
