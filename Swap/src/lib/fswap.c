@@ -11,7 +11,7 @@ int fragmentacion;
 
 
 // Funciones
-void setearValores_config(t_config * archivoConfig){
+void setearValores_config(t_config * archivoConfig) {
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
 	config->nombreSwap = (char*)reservarMemoria(CHAR*30);
 	config->puerto = config_get_int_value(archivoConfig, "PUERTO_ESCUCHA");
@@ -22,7 +22,7 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 
-void escucharUMC(){
+void escucharUMC() {
 
 	int sockServidor;
 
@@ -44,13 +44,14 @@ void escucharUMC(){
 	}
 
 	int status = 1;		// Estructura que manjea el status de los recieve.
-	int *head;
+	uint16_t *head = (uint16_t*)reservarMemoria(2);
 
 	while (status > 0){
-		status = recibirPorSocket(sockUMC, &head, 2);
+		status = recibirPorSocket(sockUMC, head, 2); // recibe head (uint16_t)
 		validar_recive(status, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-
-
+		void *mensaje = aplicar_protocolo_recibir(sockUMC, *head);
+//		void (*funcion)(int, void) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
+//		funcion(mensaje); // ejecuto función
 
 	}
 
@@ -105,7 +106,7 @@ FILE * inicializarSwap (){
 void inicializarTablaDePaginas() {
 	tablaPaginas=(t_tablaDePaginas*)reservarMemoria(sizeof(t_tablaDePaginas) * config->cantidadPaginas);
 	int i;
-	for (i=0 ; i<config->cantidadPaginas;i++){
+	for (i=0 ; i<config->cantidadPaginas;i++) {
 		tablaPaginas[i].pid=-1;
 		tablaPaginas[i].pagina=-1;
 	}
@@ -119,13 +120,19 @@ void inicializarTablaBitMap(){
 		}
 }
 
-int inciar_programa(int pid,int paginas){
-    fragmentacion = calcularFragmentacion();
+int inciar_programa(void *msj) {
+
+	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
+	int pid = mensaje->pid;
+	int paginas = mensaje->pagina;
+
+	fragmentacion = calcularFragmentacion();
+
 	if(paginasLibresTotales > paginas){
 		int posLibre= buscarPosLibresEnBitMap(paginas);
 
-		if(posLibre != -1){
-			for(; posLibre<paginas ;posLibre++){
+		if(posLibre != -1) {
+			for(; posLibre<paginas ;posLibre++) {
 				tablaPaginas[posLibre].pid= pid;
 				tablaPaginas[posLibre].pagina = posLibre;
 				tablaDeBitMap[posLibre].ocupada=1;
@@ -147,7 +154,7 @@ int inciar_programa(int pid,int paginas){
 }}};
 
 
-int escribir_pagina(int pid ,int pagina , void * contenido){
+int escribir_pagina(int pid ,int pagina , void * contenido) {
 	 int pag =buscarPaginaEnTablaDePaginas(pid ,pagina);
 	  if(pag !=-1){
 		  avanzarPaginas(pag);
@@ -226,6 +233,7 @@ int buscarAPartirDeEnTablaDePaginas(int pid){
 		return i;
 }
 
+
 int calcularFragmentacion(){
 	int i=0;
 	int pagsLibres;
@@ -255,4 +263,30 @@ void actualizarBitMap(){
 	}
 
 }
+
+
+void *elegirFuncion(protocolo head) {
+
+	switch(head) {
+
+		case INICIAR_PROGRAMA:
+			// return funcion;
+			break;
+
+		case LEER_PAGINA:
+			// return funcion;
+			break;
+
+		case ESCRIBIR_PAGINA:
+			// return funcion;
+			break;
+
+		default:
+			fprintf(stderr, "No existe protocolo definido para %d\n", head);
+			break;
+
+	}
+
+	return NULL;
+
 }

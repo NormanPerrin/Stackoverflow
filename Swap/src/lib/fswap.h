@@ -7,7 +7,6 @@
 	#include <commons/log.h>
     #include <utilidades/comunicaciones.h>
 
-	#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 	#define RUTA_CONFIG_SWAP "configSwap.txt"
 
 	// Estructuras
@@ -29,7 +28,6 @@
 	} t_bitMap;
 
 
-
 	// Cabeceras
 	void setearValores_config(t_config * archivoConfig);
 	void escucharUMC();
@@ -38,10 +36,9 @@
 	int validar_cliente(char *id); // Verifica que sea cliente UMC
 	int validar_servidor(char *id); // Para que no joda con error
 	FILE * inicializarSwap (); //inicializa particion swap y listas
-	int inciar_programa(int pid, int paginas);
+	int inciar_programa(void *msj);
 	void inicializarTablaDePaginas();
 	void inicializarTablaBitMap();
-	int inciar_programa(int pid,int paginas);
 	int buscarPosLibresEnBitMap(int paginas);
 	int escribir_pagina(int pid , int pagina ,void* contenido);
 	int buscarPaginaEnTablaDePaginas(int pid ,int pagina);
