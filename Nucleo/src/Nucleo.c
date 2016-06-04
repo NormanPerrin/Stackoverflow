@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <utilidades/general.h>
-#include "lib/fnucleo.h"
+
+#include "lib/principales.h"
 
 int main(void) {
 

@@ -48,7 +48,7 @@ void escucharUMC(){
 	while (status > 0){
 		status = recibirPorSocket(sockUMC, &head, 1);
 		validar_recive(status, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-		aplicar_protocolo_recibir(sockUMC, &head, SIZE_MSG);
+		aplicar_protocolo_recibir(sockUMC, &head);
 	}
 
 	close(sockUMC);

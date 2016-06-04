@@ -18,31 +18,6 @@ void crearLogger(){
 	archivoLogCPU = NULL;
 }
 
-void conectarConNucleo() {
-	fd_clienteNucleo = nuevoSocket();
-	int ret = conectarSocket(fd_clienteNucleo, config->ipNucleo, config->puertoNucleo);
-	validar_conexion(ret, 1); // Es terminante por ser cliente
-	handshake_cliente(fd_clienteNucleo, "P");
-
-	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, ENVIAR_PCB, SIZE_MSG);
-
-	while(mensaje!=NULL){
-
-	// El CPU obtiene una PCB para ejecutar:
-	pcb * pcbEnEjecucion = malloc(sizeof(pcb));
-	memcpy(pcbEnEjecucion, mensaje, sizeof(pcb));
-
-	// Desarrollar alguna función que permita ejecutar la PCB
-		ejecutarProceso(pcbEnEjecucion);
-	}
-	free(mensaje);
-	cerrarSocket(fd_clienteNucleo);
-}
-
-void ejecutarProceso(pcb* pcb){
-	// ya tiene la PCB, ahora a ejecutarla
-}
-
 void conectarConUMC(){
 	fd_clienteUMC = nuevoSocket();
 	int ret = conectarSocket(fd_clienteUMC, config->ipUMC, config->puertoUMC);
@@ -53,7 +28,96 @@ void conectarConUMC(){
 	recibirPorSocket(fd_clienteUMC, tamPagina, INT);
 	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC
 
+}
+
+void ejecutarInstruccion(pcb* pcb){
+	direccion direccionInstruccion;
+	void * entrada = NULL;
+	int protocolo, tamanioMensaje;
+	respuestaPedido * respuesta = NULL;
+
+	direccionInstruccion.pagina = pcb->indiceCodigo.instrucciones[pcb->pc]; // falta obtener el numero de pagina!!
+	direccionInstruccion.offset = pcb->indiceCodigo.instrucciones->offset;
+	direccionInstruccion.size = pcb->indiceCodigo.tamanio;
+
+	aplicar_protocolo_enviar(fd_clienteUMC, PEDIDO_LECTURA, &direccionInstruccion, 3*INT);
+
+	entrada = aplicar_protocolo_recibir(fd_clienteUMC, &protocolo, &tamanioMensaje);
+
+	if (protocolo == RESPUESTA_PEDIDO){
+		respuesta = (respuestaPedido *) entrada;
+		if(respuesta->estadoPedido==PERMITIDO){
+				(pcb->pc)++; //incremento Program Counter del PCB
+				char* instruccion = (char*)malloc(respuesta->dataPedida.tamanio);
+				instruccion = strdup(respuesta->dataPedida.cadena);
+
+				analizadorLinea(instruccion, &funcionesAnSISOP, &funcionesKernel);
+				// ver qué se hace con la instrucción
+				/* Al terminar:
+				* free(respuesta->mensaje.cadena);
+				*  free(respuesta->dataPedida.cadena);
+				* free(respuesta);*/
+
+			}
+			else{
+				// UMC arrojó excepción:
+				char* msjExcepcion = NULL;
+				msjExcepcion = strdup(respuesta->mensaje.cadena);
+				// ver qué se hace con la excepción recibida
+				/* Al terminar:
+				 * free(respuesta->mensaje.cadena);
+				 * free(respuesta->dataPedida.cadena);
+				 * free(respuesta);*/
+			}
+		}else{
+			log_error(logger, "Se esperaba una respuesta de lectura y no se recibió.");
+			//abort();
+		}
+}
+
+void conectarConNucleo() {
+	fd_clienteNucleo = nuevoSocket();
+	int ret = conectarSocket(fd_clienteNucleo, config->ipNucleo, config->puertoNucleo);
+	validar_conexion(ret, 1); // Es terminante por ser cliente
+	handshake_cliente(fd_clienteNucleo, "P");
+	int protocolo, tamanioMensaje;
+
+	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, &protocolo,&tamanioMensaje);
+	if (protocolo == PCB){
+		while(mensaje!=NULL){
+				// El CPU obtiene una PCB para ejecutar:
+				pcb * pcbEnEjecucion = malloc(sizeof(pcb));
+				memcpy(pcbEnEjecucion, mensaje, sizeof(pcb));
+				free(mensaje);
+
+				ejecutarProceso(pcbEnEjecucion);
+			}
+	}else{
+			log_error(logger, "Se esperaba un PCB y no se recibió.");
+				//abort();
+			}
+
 	cerrarSocket(fd_clienteUMC);
+	cerrarSocket(fd_clienteNucleo);
+}
+
+void ejecutarProceso(pcb* pcb){
+
+	int quantum = pcb->quantum;
+	int estado = pcb->estado;
+
+	while(quantum > 0){
+		ejecutarInstruccion(pcb);
+		quantum--;
+	}
+	if(quantum == 0){
+		estado = READY;
+		pcb->estado = estado;
+	}
+
+	aplicar_protocolo_enviar(fd_clienteNucleo, FIN_QUANTUM, NULL, INT);
+	aplicar_protocolo_enviar(fd_clienteNucleo, PCB, pcb, TAMANIO_BASE);
+
 }
 
 void liberarEstructura() {
