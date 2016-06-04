@@ -22,18 +22,13 @@
 	typedef struct {
 		int pagina;
 		int pid;
-		int marco;
-
 	} t_tablaDePaginas;
 
 	typedef struct{
 		int ocupada;
 	} t_bitMap;
 
-	typedef struct {
-		int pid;
-		int pagina;
-	} pedidoPagina_t;
+
 
 	// Cabeceras
 	void setearValores_config(t_config * archivoConfig);
@@ -53,5 +48,8 @@
 	void avanzarPaginas(int cantidad);
 	int eleminar_programa(int pid);
 	int buscarAPartirDeEnTablaDePaginas(int pid);
+	int calcularFragmentacion();
+	void compactar();
+	void actualizarBitMap();
 
 #endif /* FSWAP_H_ */

@@ -7,6 +7,7 @@ t_tablaDePaginas * tablaPaginas;
 t_bitMap * tablaDeBitMap;
 FILE * archivoSwap;
 int paginasLibresTotales;
+int fragmentacion;
 
 
 // Funciones
@@ -43,12 +44,14 @@ void escucharUMC(){
 	}
 
 	int status = 1;		// Estructura que manjea el status de los recieve.
-	int head;
+	int *head;
 
 	while (status > 0){
-		status = recibirPorSocket(sockUMC, &head, 1);
+		status = recibirPorSocket(sockUMC, &head, 2);
 		validar_recive(status, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-		aplicar_protocolo_recibir(sockUMC, &head);
+
+
+
 	}
 
 	close(sockUMC);
@@ -84,6 +87,7 @@ FILE * inicializarSwap (){
       int tamPags = config->tamanioPagina;
       int tamanioSwap = cantPags*tamPags;
       int i;
+      fragmentacion= 0;
       paginasLibresTotales= config->cantidadPaginas;
       inicializarTablaDePaginas();
       inicializarTablaBitMap();
@@ -103,7 +107,6 @@ void inicializarTablaDePaginas() {
 	int i;
 	for (i=0 ; i<config->cantidadPaginas;i++){
 		tablaPaginas[i].pid=-1;
-		tablaPaginas[i].marco=-1;
 		tablaPaginas[i].pagina=-1;
 	}
 }
@@ -117,7 +120,7 @@ void inicializarTablaBitMap(){
 }
 
 int inciar_programa(int pid,int paginas){
-
+    fragmentacion = calcularFragmentacion();
 	if(paginasLibresTotales > paginas){
 		int posLibre= buscarPosLibresEnBitMap(paginas);
 
@@ -125,11 +128,23 @@ int inciar_programa(int pid,int paginas){
 			for(; posLibre<paginas ;posLibre++){
 				tablaPaginas[posLibre].pid= pid;
 				tablaPaginas[posLibre].pagina = posLibre;
+				tablaDeBitMap[posLibre].ocupada=1;
 			}
-		} else{ return -1;}
+		} else{  if(fragmentacion > paginas){
+			compactar();
+			actualizarBitMap();
+			int posLibre= buscarPosLibresEnBitMap(paginas);
+
+					if(posLibre != -1){
+						for(; posLibre<paginas ;posLibre++){
+							tablaPaginas[posLibre].pid= pid;
+							tablaPaginas[posLibre].pagina = posLibre;
+							tablaDeBitMap[posLibre].ocupada=1;
+
+		}}
 	}else { return -1;}
-return 1;
-};
+
+}}};
 
 
 int escribir_pagina(int pid ,int pagina , void * contenido){
@@ -209,4 +224,35 @@ int buscarAPartirDeEnTablaDePaginas(int pid){
 		   i++;
 			}
 		return i;
+}
+
+int calcularFragmentacion(){
+	int i=0;
+	int pagsLibres;
+	while (i< config->cantidadPaginas){
+		if(tablaDeBitMap[i].ocupada==0){
+			pagsLibres++;
+
+	 	}
+		i++;
+	}
+	return pagsLibres;
+}
+
+
+
+void compactar(){
+
+ }
+
+void actualizarBitMap(){
+	int i =0;
+	while(i< config->cantidadPaginas){
+		if(tablaPaginas[i].pagina==-1){
+			tablaDeBitMap[i].ocupada=0;
+		} else tablaDeBitMap[i].ocupada=1;
+		i++;
+	}
+
+}
 }
