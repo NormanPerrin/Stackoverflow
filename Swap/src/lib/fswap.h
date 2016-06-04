@@ -27,6 +27,12 @@
 		int ocupada;
 	} t_bitMap;
 
+	typedef struct{
+		char *contenido;
+		int pid;
+		int pagina;
+	}t_escribirPagina;
+
 	// Cabeceras
 	void setearValores_config(t_config * archivoConfig);
 	void escucharUMC();
@@ -35,15 +41,18 @@
 	int validar_cliente(char *id); // Verifica que sea cliente UMC
 	int validar_servidor(char *id); // Para que no joda con error
 	FILE * inicializarSwap (); //inicializa particion swap y listas
-	int inciar_programa(void *msj);
+	int iniciar_programa(void *msj);
 	void inicializarTablaDePaginas();
 	void inicializarTablaBitMap();
 	int buscarPosLibresEnBitMap(int paginas);
-	int escribir_pagina(int pid , int pagina ,void* contenido);
+	int escribir_pagina(void *msj);
 	int buscarPaginaEnTablaDePaginas(int pid ,int pagina);
 	void avanzarPaginas(int cantidad);
-	int eleminar_programa(int pid);
+	int eliminar_programa(void *msj);
 	void *elegirFuncion(protocolo head);
 	int buscarAPartirDeEnTablaDePaginas(int pid);
+	int calcularFragmentacion();
+	void compactar();
+	void actualizarBitMap();
 
 #endif /* FSWAP_H_ */

@@ -7,6 +7,7 @@ t_tablaDePaginas * tablaPaginas;
 t_bitMap * tablaDeBitMap;
 FILE * archivoSwap;
 int paginasLibresTotales;
+int fragmentacion;
 
 
 // Funciones
@@ -86,6 +87,7 @@ FILE * inicializarSwap (){
       int tamPags = config->tamanioPagina;
       int tamanioSwap = cantPags*tamPags;
       int i;
+      fragmentacion= 0;
       paginasLibresTotales= config->cantidadPaginas;
       inicializarTablaDePaginas();
       inicializarTablaBitMap();
@@ -117,11 +119,13 @@ void inicializarTablaBitMap(){
 		}
 }
 
-int inciar_programa(void *msj) {
+int iniciar_programa(void *msj) {
 
 	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
 	int pid = mensaje->pid;
 	int paginas = mensaje->pagina;
+
+	fragmentacion = calcularFragmentacion();
 
 	if(paginasLibresTotales > paginas){
 		int posLibre= buscarPosLibresEnBitMap(paginas);
@@ -130,14 +134,33 @@ int inciar_programa(void *msj) {
 			for(; posLibre<paginas ;posLibre++) {
 				tablaPaginas[posLibre].pid= pid;
 				tablaPaginas[posLibre].pagina = posLibre;
+				tablaDeBitMap[posLibre].ocupada=1;
 			}
-		} else{ return -1;}
+		} else{  if(fragmentacion > paginas){
+			compactar();
+			actualizarBitMap();
+			int posLibre= buscarPosLibresEnBitMap(paginas);
+
+					if(posLibre != -1){
+						for(; posLibre<paginas ;posLibre++){
+							tablaPaginas[posLibre].pid= pid;
+							tablaPaginas[posLibre].pagina = posLibre;
+							tablaDeBitMap[posLibre].ocupada=1;
+
+		}}
 	}else { return -1;}
-return 1;
-};
+
+		}
+	}
+	return 1;
+}
 
 
-int escribir_pagina(int pid ,int pagina , void * contenido) {
+int escribir_pagina(void *msj) {
+	t_escribirPagina *mensaje = (t_escribirPagina*)msj;
+	 int pid=mensaje->pid;
+	 int pagina = mensaje->pagina;
+	 void *contenido = mensaje->contenido;
 	 int pag =buscarPaginaEnTablaDePaginas(pid ,pagina);
 	  if(pag !=-1){
 		  avanzarPaginas(pag);
@@ -188,17 +211,41 @@ int buscarPosLibresEnBitMap(int paginas){
     return -1;
 }
 
-int eleminar_programa(int pid){  //falta en terminarla
+int eliminar_programa(void *msj) {
+	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
+	int pid= mensaje->pid;
+	int i;
 	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
-
-	while(tablaPaginas[aPartirDe].pid==pid){
-		tablaPaginas[aPartirDe].pid=-1;
-		tablaPaginas[aPartirDe].pagina=-1;
+	int aPartirDeAux = buscarAPartirDeEnTablaDePaginas(pid);
+    int totalPaginas;
+	while(tablaPaginas[aPartirDe].pid==pid) {
+		aPartirDe++;
 	}
-	return 1;//borrrar en archivoSwap
+	totalPaginas=aPartirDe;
+	char *contenido = reservarMemoria(CHAR);
+	contenido[0]='\0';
+	t_escribirPagina *arg;
+	for(i=0;i<totalPaginas;i++) {
+		arg->contenido = contenido;
+		arg->pagina = i;
+		arg->pid = pid;
+		escribir_pagina(arg);
+	}
+	free(contenido);
+	while(tablaPaginas[aPartirDeAux].pid==pid){
+		tablaPaginas[aPartirDeAux].pid=-1;
+		tablaPaginas[aPartirDeAux].pagina=-1;
+		aPartirDeAux++;
+	}
+
+
+	return 1;
 }
 
-int leer_pagina(int pid , int pagina){
+int leer_pagina(void *msj){
+	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
+	int pid= mensaje->pid;
+	int pagina= mensaje->pagina;
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
 	if(pagABuscar !=-1){
 			 avanzarPaginas(pagABuscar);
@@ -217,20 +264,55 @@ int buscarAPartirDeEnTablaDePaginas(int pid){
 }
 
 
+int calcularFragmentacion(){
+	int i=0;
+	int pagsLibres;
+	while (i< config->cantidadPaginas){
+		if(tablaDeBitMap[i].ocupada==0){
+			pagsLibres++;
+
+	 	}
+		i++;
+	}
+	return pagsLibres;
+}
+
+
+
+void compactar(){
+
+ }
+
+void actualizarBitMap(){
+	int i =0;
+	while(i< config->cantidadPaginas){
+		if(tablaPaginas[i].pagina==-1){
+			tablaDeBitMap[i].ocupada=0;
+		} else tablaDeBitMap[i].ocupada=1;
+		i++;
+	}
+
+}
+
+
 void *elegirFuncion(protocolo head) {
 
 	switch(head) {
 
 		case INICIAR_PROGRAMA:
-			// return funcion;
+			 return iniciar_programa;
 			break;
 
 		case LEER_PAGINA:
-			// return funcion;
+			 return leer_pagina;
 			break;
 
 		case ESCRIBIR_PAGINA:
-			// return funcion;
+			return escribir_pagina;
+			break;
+
+		case FINALIZAR_PROGRAMA:
+			return eliminar_programa;
 			break;
 
 		default:
@@ -240,4 +322,5 @@ void *elegirFuncion(protocolo head) {
 	}
 
 	return NULL;
+
 }
