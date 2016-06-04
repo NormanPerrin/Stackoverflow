@@ -178,7 +178,7 @@ void leer_bytes(int fd, void *msj) {
 	memcpy(contenido, memoria + pos_real, mensaje->tamanio);
 
 	// 4) devolver el contenido solicitado
-	aplicar_protocolo_enviar(fd, LEER_BYTES, contenido);
+	aplicar_protocolo_enviar(fd, LEER_PAGINA, contenido);
 
 	free(contenido);
 }
@@ -390,10 +390,10 @@ void *elegirFuncion(protocolo head) {
 		case INICIAR_PROGRAMA:
 			return inciar_programa;
 
-		case LEER_BYTES:
+		case LEER_PAGINA:
 			return leer_bytes;
 
-		case ESCRIBIR_BYTES:
+		case ESCRIBIR_PAGINA:
 			return escribir_bytes;
 
 		case FINALIZAR_PROGRAMA:

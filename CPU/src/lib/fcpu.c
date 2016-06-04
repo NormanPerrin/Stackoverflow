@@ -33,16 +33,16 @@ void conectarConUMC(){
 void ejecutarInstruccion(pcb* pcb){
 	direccion direccionInstruccion;
 	void * entrada = NULL;
-	int protocolo, tamanioMensaje;
+	int protocolo;
 	respuestaPedido * respuesta = NULL;
 
 	direccionInstruccion.pagina = pcb->indiceCodigo.instrucciones[pcb->pc]; // falta obtener el numero de pagina!!
 	direccionInstruccion.offset = pcb->indiceCodigo.instrucciones->offset;
 	direccionInstruccion.size = pcb->indiceCodigo.tamanio;
 
-	aplicar_protocolo_enviar(fd_clienteUMC, PEDIDO_LECTURA, &direccionInstruccion, 3*INT);
+	aplicar_protocolo_enviar(fd_clienteUMC, PEDIDO_LECTURA, &direccionInstruccion);
 
-	entrada = aplicar_protocolo_recibir(fd_clienteUMC, &protocolo, &tamanioMensaje);
+	entrada = aplicar_protocolo_recibir(fd_clienteUMC, protocolo);
 
 	if (protocolo == RESPUESTA_PEDIDO){
 		respuesta = (respuestaPedido *) entrada;
@@ -63,7 +63,9 @@ void ejecutarInstruccion(pcb* pcb){
 				// UMC arrojó excepción:
 				char* msjExcepcion = NULL;
 				msjExcepcion = strdup(respuesta->mensaje.cadena);
-				// ver qué se hace con la excepción recibida
+				printf("%s", msjExcepcion);
+
+				// es abortiva, ver qué se hace con la excepción recibida y con la ejecución
 				/* Al terminar:
 				 * free(respuesta->mensaje.cadena);
 				 * free(respuesta->dataPedida.cadena);
@@ -80,9 +82,9 @@ void conectarConNucleo() {
 	int ret = conectarSocket(fd_clienteNucleo, config->ipNucleo, config->puertoNucleo);
 	validar_conexion(ret, 1); // Es terminante por ser cliente
 	handshake_cliente(fd_clienteNucleo, "P");
-	int protocolo, tamanioMensaje;
+	int protocolo;
 
-	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, &protocolo,&tamanioMensaje);
+	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, protocolo);
 	if (protocolo == PCB){
 		while(mensaje!=NULL){
 				// El CPU obtiene una PCB para ejecutar:
@@ -115,8 +117,8 @@ void ejecutarProceso(pcb* pcb){
 		pcb->estado = estado;
 	}
 
-	aplicar_protocolo_enviar(fd_clienteNucleo, FIN_QUANTUM, NULL, INT);
-	aplicar_protocolo_enviar(fd_clienteNucleo, PCB, pcb, TAMANIO_BASE);
+	aplicar_protocolo_enviar(fd_clienteNucleo, FIN_QUANTUM, NULL);
+	aplicar_protocolo_enviar(fd_clienteNucleo, PCB, pcb);
 
 }
 

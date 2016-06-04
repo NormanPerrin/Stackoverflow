@@ -53,13 +53,10 @@ pcb * crearPCB(string programa){
 
 	// Le solicito a UMC espacio para el heap del programa y actúo en consecuencia:
 	log_info(logger,"Solicitando segmentos de Código y de Stack a UMC para el PID #%d",nuevoPcb->pid);
-	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma, SIZE_MSG);
+	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma);
 
-	int* head = (int*)malloc(INT);
-	*head = INICIAR_PROGRAMA;
 	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)malloc(sizeof(respuestaInicioPrograma));
-	respuestaInicio = aplicar_protocolo_recibir(fd_clienteUMC, head, SIZE_MSG);
-	free(head);
+	respuestaInicio = aplicar_protocolo_recibir(fd_clienteUMC, INICIAR_PROGRAMA);
 
 	if(respuestaInicio->estadoDelHeap == CREADO){
 		log_info(logger,"Se pudo alocar todos los segmentos para el proceso #%d",nuevoPcb->pid);
@@ -156,7 +153,7 @@ void planificarProceso(){
 					unPCB->fdCPU = unCPU->fd_cpu;
 					unCPU->disponibilidad = OCUPADO;
 
-					aplicar_protocolo_enviar(unCPU->fd_cpu, ENVIAR_PCB, unPCB, SIZE_MSG);
+					aplicar_protocolo_enviar(unCPU->fd_cpu, PCB, unPCB);
 
 					asignado = 1;
 				}
@@ -174,7 +171,8 @@ void finalizarPrograma(int pid){
 	int* _pid = (int*)malloc(INT);
 	*_pid = pid;
 // Aviso a UMC que libere la memoria asignada al proceso:
-	aplicar_protocolo_enviar(fd_clienteUMC, FINALIZAR_PROGRAMA, _pid, INT);
+	aplicar_protocolo_enviar(fd_clienteUMC, FINALIZAR_PROGRAMA, _pid);
+	free(_pid);
 		// remover programa
 	}
 }

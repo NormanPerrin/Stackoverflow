@@ -64,34 +64,36 @@ int validar_servidor(char *id) {
 int validar_cliente(char *id) {return 0;}
 
 void esperar_mensajes() {
-
-	int head, tamanioMsj;
+	int head;
 	while(TRUE) {
-		int ret;
-		ret = recibirPorSocket(fd_nucleo, &head, 1);
-		validar_recive(ret, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
+		// validar...
+		void * mensaje = aplicar_protocolo_recibir(fd_nucleo, head);
 
-		void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head, &tamanioMsj);
-
-			if (mensaje == NULL) { // desconexión o error
+		if (mensaje == NULL) { // desconexión o error
 			cerrarSocket(fd_nucleo);
-			log_info(logger,"El Núcleo se ha desconectado");
+			log_info(logger,"El Núcleo se ha desconectado.");
 			break;
-			} else { // se leyó correctamente el mensaje
+		} else { // se leyó correctamente el mensaje
 
 	switch(head){
+
 		case RECHAZAR_PROGRAMA:{
 		log_info(logger, "El sistema ha rechazado al programa %s. Desconectando.", rutaScript);
+
 	break;
 			}
-	case IMPRIMIR:{
-		int* valorAImprimir = (int*)mensaje;
+		case IMPRIMIR:{
+
+		int*valorAImprimir = (int*)mensaje;
 		printf("IMPRIMIR: %d\n", *valorAImprimir);
+
 	break;
 			}
 	case IMPRIMIR_TEXTO:{
+
 		string* textoAImprimir = (string*)mensaje;
 		printf("IMPRIMIR: %s\n", textoAImprimir->cadena);
+
 	break;
 			}
 	case FINALIZAR_PROGRAMA:{
