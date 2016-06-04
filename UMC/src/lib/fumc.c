@@ -100,7 +100,7 @@ void cliente(void* fdCliente) {
 	int sockCliente = *((int*)fdCliente);
 	free(fdCliente);
 
-	int *head = (int*)reservarMemoria(INT);
+	uint16_t *head = (uint16_t*)reservarMemoria(INT);
 	int ret = 1;
 
 	while(ret > 0 && !exitFlag) {
@@ -111,8 +111,8 @@ void cliente(void* fdCliente) {
 			break;
 		} else {
 			void *mensaje = aplicar_protocolo_recibir(sockCliente, *head); // recibo mensaje
-//			void (*funcion)(int, void) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
-//			funcion(sockCliente, mensaje); // ejecuto función
+			void (*funcion)(int, void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
+			funcion(sockCliente, mensaje); // ejecuto función
 			free(mensaje); // aplicar_protocolo_recibir pide memoria, por lo tanto hay que liberarla
 		}
 
@@ -148,9 +148,11 @@ void inciar_programa(int fd, void *msj) {
 void leer_bytes(int fd, void *msj) {
 
 	leerBytes_t *mensaje = (leerBytes_t*)msj; // casteo
+	int pos = buscarPosPid(fd);
+	int pid = pids[pos].pid;
 
 	// 1) busco página
-	int pos_tp = buscar_pagina(pid_activo[fd], mensaje->pagina); // TODO ver como es pid activo proceso
+	int pos_tp = buscar_pagina(pid, mensaje->pagina);
 	if(pos_tp == ERROR) // no se inicializó el proceso
 		responder(fd, FALSE);
 
@@ -159,7 +161,7 @@ void leer_bytes(int fd, void *msj) {
 
 		// pido página a Swap
 		pedidoPagina_t pedido;
-		pedido.pid = pid_activo[fd];
+		pedido.pid = pid;
 		pedido.pagina = mensaje->pagina;
 		aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, &pedido);
 
@@ -168,7 +170,7 @@ void leer_bytes(int fd, void *msj) {
 		if(contenido_pagina == NULL) // no encontró la página o hubo un fallo
 			responder(fd, FALSE);
 		else {// tengo que cargar la página a MP
-			cargar_pagina(pid_activo[fd], contenido_pagina);
+			cargar_pagina(pid, contenido_pagina);
 		}
 	}
 
@@ -210,6 +212,12 @@ void finalizar_programa(int fd, void *mensaje) {
 //	}
 //
 //	sem_post(&mutex);
+}
+
+// | int pid |
+void cambiarPid(int fd, void *mensaje) {
+	int *pid = (int*)mensaje;
+	actualizarPid(fd, *pid);
 }
 
 // </PRINCIPAL>
@@ -399,6 +407,9 @@ void *elegirFuncion(protocolo head) {
 		case FINALIZAR_PROGRAMA:
 			return finalizar_programa;
 
+		case INDICAR_PID:
+			return cambiarPid;
+
 		default:
 			fprintf(stderr, "No existe protocolo definido para %d\n", head);
 			break;
@@ -412,6 +423,22 @@ void responder(int fd, int respuesta) {
 	int *resp;
 	*resp = respuesta;
 	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, resp);
+}
+
+int buscarPosPid(int fd) {
+
+	int i = 0;
+	while(i < MAX_CONEXIONES) {
+		if(pids[i].fd == fd) return i;
+		i++;
+	}
+
+	return ERROR;
+}
+
+void actualizarPid(int fd, int pid) {
+	int pos = buscarPosPid(fd);
+	pids[pos].pid = pid;
 }
 
 // </AUXILIARES>

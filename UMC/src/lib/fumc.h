@@ -67,6 +67,11 @@
 		int pagina;
 	} pedidoPagina_t;
 
+	typedef struct {
+		int fd;
+		int pid;
+	} pid_activo;
+
 
 	// Globales
 	t_configuracion *config; // guarda valores del config
@@ -76,7 +81,7 @@
 	tp_t *tabla_paginas;
 	tlb_t *tlb;
 	sem_t mutex;
-	int pid_activo[MAX_CONEXIONES];
+	pid_activo pids[MAX_CONEXIONES];
 
 	// Cabeceras // TODO ordenar lio
 	void abrirArchivoConfig(char *ruta); // Setea todos los valores de configuración
@@ -105,5 +110,9 @@
 	void *elegirFuncion(protocolo head);
 	void responder(int fd, int respuesta);
 	int cargar_pagina(int pid, void *contenido);
+//	void cambiar_pid(int fd, int pid);
+	void actualizarPid(int fd, int pid);
+	int buscarPosPid(int fd);
+
 
 #endif /* LIB_FUMC_H_ */

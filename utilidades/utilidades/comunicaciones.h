@@ -25,22 +25,23 @@
 
 // PROTOCOLO (head/tipo de msj):
 typedef enum {
-		IMPRIMIR = 1, 			// Núcleo - Consola
-		IMPRIMIR_TEXTO = 2, 	// Núcleo - Consola
-		INICIAR_PROGRAMA = 3, 	// Núcleo - UMC / UMC - Swap
-		PEDIDO_LECTURA = 4, 		// CPU - UMC
-		PEDIDO_ESCRITURA = 5, 	// CPU - UMC
-		FINALIZAR_PROGRAMA = 6, // Núcleo - UMC
-		ENVIAR_SCRIPT = 7, 		// Consola - Núcleo
-		RESPUESTA_PEDIDO = 10, 	// UMC - CPU
-		LEER_PAGINA = 8, 		// UMC - Swap
-		ESCRIBIR_PAGINA = 9, 	// UMC - Swap
-		DEVOLVER_PAGINA = 11,	// Swap - UMC
-		PCB = 12,		// Núcleo - CPU / CPU - Núcleo
-		FIN_QUANTUM = 13,		// CPU - Núcleo
+		IMPRIMIR = 1, 					// Núcleo - Consola
+		IMPRIMIR_TEXTO = 2, 			// Núcleo - Consola
+		INICIAR_PROGRAMA = 3, 			// Núcleo - UMC / UMC - Swap
+		PEDIDO_LECTURA = 4, 			// CPU - UMC
+		PEDIDO_ESCRITURA = 5, 			// CPU - UMC
+		FINALIZAR_PROGRAMA = 6,			// Núcleo - UMC
+		ENVIAR_SCRIPT = 7, 				// Consola - Núcleo
+		RESPUESTA_PEDIDO = 10, 			// UMC - CPU
+		LEER_PAGINA = 8, 				// UMC - Swap
+		ESCRIBIR_PAGINA = 9, 			// UMC - Swap
+		DEVOLVER_PAGINA = 11,			// Swap - UMC
+		PCB = 12,						// Núcleo - CPU / CPU - Núcleo
+		FIN_QUANTUM = 13,				// CPU - Núcleo
 		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo
-		RECHAZAR_PROGRAMA = 15,
-		/*DEVOLVER_BYTES = 16, 	// UMC - Núcleo / CPU*/
+		RECHAZAR_PROGRAMA = 15,			// Todos
+		/*DEVOLVER_BYTES = 16, 			// UMC - Núcleo / CPU*/
+		INDICAR_PID = 17, 				// CPU - UMC
 
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
