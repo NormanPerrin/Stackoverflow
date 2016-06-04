@@ -120,7 +120,7 @@ void inicializarTablaBitMap(){
 		}
 }
 
-int inciar_programa(void *msj) {
+int iniciar_programa(void *msj) {
 
 	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
 	int pid = mensaje->pid;
@@ -151,10 +151,17 @@ int inciar_programa(void *msj) {
 		}}
 	}else { return -1;}
 
-}}};
+		}
+	}
+	return 1;
+}
 
 
-int escribir_pagina(int pid ,int pagina , void * contenido) {
+int escribir_pagina(void *msj) {
+	t_escribirPagina *mensaje = (t_escribirPagina*)msj;
+	 int pid=mensaje->pid;
+	 int pagina = mensaje->pagina;
+	 void *contenido = mensaje->contenido;
 	 int pag =buscarPaginaEnTablaDePaginas(pid ,pagina);
 	  if(pag !=-1){
 		  avanzarPaginas(pag);
@@ -205,17 +212,37 @@ int buscarPosLibresEnBitMap(int paginas){
     return -1;
 }
 
-int eleminar_programa(int pid){  //falta en terminarla
+int eliminar_programa(void *msj){
+	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
+	int pid= mensaje->pid
+	int i ;
 	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
-
+	int aPartirDeAux = buscarAPartirDeEnTablaDePaginas(pid);
+    int totalPaginas;
 	while(tablaPaginas[aPartirDe].pid==pid){
-		tablaPaginas[aPartirDe].pid=-1;
-		tablaPaginas[aPartirDe].pagina=-1;
+		aPartirDe++;
 	}
-	return 1;//borrrar en archivoSwap
+	totalPaginas=aPartirDe;
+	char *contenido = reservarMemoria(CHAR);
+	contenido[0]='\0';
+	for(i=0;i<totalPaginas;i++){
+		escribir_pagina(pid,i,contenido);
+	}
+	free(contenido);
+	while(tablaPaginas[aPartirDeAux].pid==pid){
+		tablaPaginas[aPartirDeAux].pid=-1;
+		tablaPaginas[aPartirDeAux].pagina=-1;
+		aPartirDeAux++;
+	}
+
+
+	return 1;
 }
 
-int leer_pagina(int pid , int pagina){
+int leer_pagina(void *msj){
+	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
+	int pid= mensaje->pid;
+	int pagina= mensaje->pagina;
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
 	if(pagABuscar !=-1){
 			 avanzarPaginas(pagABuscar);
@@ -270,15 +297,19 @@ void *elegirFuncion(protocolo head) {
 	switch(head) {
 
 		case INICIAR_PROGRAMA:
-			// return funcion;
+			 return iniciar_programa;
 			break;
 
 		case LEER_PAGINA:
-			// return funcion;
+			 return leer_pagina;
 			break;
 
 		case ESCRIBIR_PAGINA:
-			// return funcion;
+			return escribir_pagina;
+			break;
+
+		case FINALIZAR_PROGRAMA:
+			return eliminar_programa;
 			break;
 
 		default:
