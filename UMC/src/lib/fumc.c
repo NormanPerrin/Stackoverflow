@@ -225,27 +225,6 @@ void cambiarPid(int fd, void *mensaje) {
 
 // <TABLA_PAGINA>
 
-void iniciarEstructuras() {
-
-	sem_init(&mutex, 0, 1);
-
-	int sizeof_memoria = config->marcos * config->marco_size;
-	memoria = reservarMemoria(sizeof_memoria); // Google Chrome be like
-
-	char *null = (char*)reservarMemoria(CHAR);
-	null = '\0';
-	int i;
-	for(i = 0; i < sizeof_memoria; i++) memcpy(memoria + i, null, CHAR); // TODO ver si hay una forma más linda de hacer esto
-
-	int sizeof_tp = config->marcos * sizeof(tp_t);
-	tabla_paginas = reservarMemoria(sizeof_tp);
-	iniciarTP();
-
-	int sizeof_tlb = config->entradas_tlb * sizeof(tlb_t);
-	tlb = reservarMemoria(sizeof_tlb);
-
-}
-
 void iniciarTP() {
 	entradas_tp = config->marcos;
 	int marco;
@@ -349,6 +328,24 @@ void actualizar_uso_tp(int pos, int valor) {
 
 
 // <AUXILIARES>
+
+void iniciarEstructuras() {
+
+	sem_init(&mutex, 0, 1);
+
+	int sizeof_memoria = config->marcos * config->marco_size;
+	memoria = reservarMemoria(sizeof_memoria); // Google Chrome be like
+
+	memset(memoria, '\0', sizeof_memoria);
+
+	int sizeof_tp = config->marcos * sizeof(tp_t);
+	tabla_paginas = reservarMemoria(sizeof_tp);
+	iniciarTP();
+
+	int sizeof_tlb = config->entradas_tlb * sizeof(tlb_t);
+	tlb = reservarMemoria(sizeof_tlb);
+
+}
 
 void liberarEstructura() {
 	free(config->ip_swap);
