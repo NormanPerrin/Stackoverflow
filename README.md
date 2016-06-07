@@ -1,30 +1,3 @@
-# Elestac
-
-## Objetivos generales:
-- [x] ~~Agregar commons~~
-- [ ] Parser
-  - [ ] Implementar parser
-- [ ] Conectar módulos
-  - [x] ~~Función handshake~~
-  - [x] ~~Identificar módulo al conectar~~
-  - [x] ~~Permitir múltiples conexiones~~
-  - [ ] Implementar protocolos de comunicación y definir mensajes a enviar
-  - [x] Implementar espera activa de mensajes
-
-### Objetivos para el próximo checkpoint
-- Núcleo
-  - [ ] Crear y gestionar PCBs en función del algoritmo RR 
-- UMC
-  - [x] ~~Recibir múltiples conexiones~~
-  - [ ] Tabla de páginas sincronizada
-  - [ ] Interpretar solicitudes
-- CPU
-  - [ ] Invocar primitivas según parser (funcionalidad básica)
-- Swap
-  - [ ] Operar sobre archivo binario
-  - [ ] Generar estructuras de gestión
-  - [ ] Pedidos de creación, finalización y lectura funcionales
-
 ## Instalar ambiente de trabajo
 1. `git clone http://github.com/sisoputnfrba/tp-2016-1c-Cazadores-de-cucos.git`
 2. Abrir eclipse
