@@ -138,7 +138,7 @@ void inciar_programa(int fd, void *msj) {
 	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, msj);
 
 	// 3) Espero respuesta de Swap
-	int *respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO); // TODO ver como es respuesta
+	int *respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO);
 
 	// 4) Respondo a Núcleo como salió la operación
 	responder(sockClienteDeSwap, *respuesta);
@@ -148,70 +148,76 @@ void inciar_programa(int fd, void *msj) {
 void leer_bytes(int fd, void *msj) {
 
 	leerBytes_t *mensaje = (leerBytes_t*)msj; // casteo
+
+	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
 	int pid = pids[pos].pid;
 
-	// 1) busco página
-	int pos_tp = buscar_pagina(pid, mensaje->pagina);
-	if(pos_tp == ERROR) // no se inicializó el proceso
-		responder(fd, FALSE);
+	// busco el marco de la página en TLB TP y Swap
+	int marco = buscarPagina(fd, pid, mensaje->pagina);
 
-	// 2) veo si está en MP y si no encuentra cargo desde Swap
-	if( tabla_paginas[pos_tp].bit_presencia == 0 ) { // page fault
+	// actualizo TLB y TP
+	actualizar_tlb(pid, mensaje->pagina, marco);
+	actualizar_tp(pid, mensaje->pagina, -1, -1, 1);
 
-		// pido página a Swap
-		pedidoPagina_t pedido;
-		pedido.pid = pid;
-		pedido.pagina = mensaje->pagina;
-		aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, &pedido);
-
-		// espero respuesta de Swap
-		void *contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, LEER_PAGINA);
-		if(contenido_pagina == NULL) // no encontró la página o hubo un fallo
-			responder(fd, FALSE);
-		else {// tengo que cargar la página a MP
-			cargar_pagina(pid, contenido_pagina);
-		}
-	}
-
-	// 3) busco el código que me piden
+	// busco el código que me piden
 	void *contenido = reservarMemoria(mensaje->tamanio);
-	int pos_real = (tabla_paginas[pos_tp].marco) * (config->marco_size) + mensaje->offset;
+	int pos_real = marco * (config->marco_size) + mensaje->offset;
 	memcpy(contenido, memoria + pos_real, mensaje->tamanio);
 
-	// 4) devolver el contenido solicitado
+	// devuelvo el contenido solicitado
 	aplicar_protocolo_enviar(fd, LEER_PAGINA, contenido);
 
 	free(contenido);
 }
 
-void escribir_bytes(int fd, void *mensaje) {
+void escribir_bytes(int fd, void *msj) {
 
-//	int pos = buscar_pagina(pid, pagina);
-//	if(pos == ERROR) return ERROR;
-//
-//	int dir_fisica = (pos * config->marco_size) + offset;
-//	sem_wait(&mutex);
-//	memcpy(memoria + dir_fisica, contenido, tamanio);
-//	sem_post(&mutex);
-//
-//	return TRUE;
+	escribirBytes_t *mensaje = (escribirBytes_t*)msj; // casteo
 
+	// veo cual es el pid activo de esta CPU
+	int pos = buscarPosPid(fd);
+	int pid = pids[pos].pid;
+
+	// busco el marco de la página en TLB TP y Swap
+	int marco = buscarPagina(fd, pid, mensaje->pagina);
+
+	// actualizo TLB y TP
+	actualizar_tlb(pid, mensaje->pagina, marco);
+	actualizar_tp(pid, mensaje->pagina, -1, 1, 1);
+
+	// escribo contenido
+	int pos_real = marco * (config->marco_size) + mensaje->offset;
+	memcpy(memoria + pos_real, mensaje->contenido, mensaje->tamanio);
 }
 
-void finalizar_programa(int fd, void *mensaje) {
+void finalizar_programa(int fd, void *msj) {
 
-//	int pos;
-//
-//	sem_wait(&mutex);
-//
-//	for(pos = 0; pos < entradas_tp; pos++) {
-//		if(tabla_paginas[pos].pid == pid) {
-//			reset_entrada(pos);
-//		}
-//	}
-//
-//	sem_post(&mutex);
+	finalizarPrograma_t *mensaje = (finalizarPrograma_t*)msj;
+
+	// aviso a Swap
+	int *pid;
+	*pid = mensaje->pid;
+	aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, pid);
+
+	// recorro páginas de pid
+	int paginas = contar_paginas(*pid), i;
+	for(i = 0; i < paginas; i++) {
+
+		int pos = buscar_tp(*pid, i);
+		if(tabla_paginas[pos].bit_presencia == 1) { // elimino página de MP
+			int pos_real = (tabla_paginas[pos].marco) * (config->marco_size);
+			memset(memoria + pos_real, '\0', config->marco_size);
+		}
+
+		// elimino página de TP
+		eliminar_pagina(*pid, i);
+
+		// elimino página de TLB si está
+		borrar_tlb(*pid, i);
+
+	}
+
 }
 
 // | int pid |
@@ -232,12 +238,14 @@ void iniciarTP() {
 }
 
 void reset_entrada(int pos) {
+	sem_wait(&mutex);
 	tabla_paginas[pos].pagina = -1;
 	tabla_paginas[pos].pid = -1;
 	tabla_paginas[pos].marco = -1;
 	tabla_paginas[pos].bit_uso = 0;
 	tabla_paginas[pos].bit_modificado = 0;
 	tabla_paginas[pos].bit_presencia = 0;
+	sem_post(&mutex);
 }
 
 void agregar_tp(int pid, int paginas) {
@@ -270,21 +278,33 @@ void agregar_tp(int pid, int paginas) {
 
 }
 
+int contar_paginas(int pid) {
+
+	int cont = 0;
+	int i = 0;
+	while(i < entradas_tp) {
+		if(tabla_paginas[i].pid == pid)
+			cont++;
+		i++;
+	}
+
+	return cont;
+}
+
 void eliminar_pagina(int pid, int pagina) {
 
 	sem_wait(&mutex);
 
 	int pos = buscar_pagina(pid, pagina);
-	if(pos == ERROR) {
+	if(pos == ERROR)
 		fprintf(stderr, "Error: referencia de pid: %d a página: %d no encontrada\n", pid, pagina);
-	} else {
+	else
 		reset_entrada(pos);
-	}
 
 	sem_post(&mutex);
 }
 
-int buscar_pagina(int pid, int pagina) { // TODO agregar búsqueda en TLB
+int buscar_tp(int pid, int pagina) {
 
 	sem_wait(&mutex);
 
@@ -304,7 +324,32 @@ int buscar_pagina(int pid, int pagina) { // TODO agregar búsqueda en TLB
 
 }
 
-int cargar_pagina(int pid, void *contenido) {
+int buscarPagina(int fd, int pid, int pagina) {
+
+	int marco;
+
+	// 1) busco en TLB
+	marco = buscar_tlb(pid, pagina);
+	if( marco != ERROR ) { // TLB Hit
+
+	} else { // TLB fault
+
+		// 2) busco en TP
+		int pos_tp = buscar_tp(pid, pagina);
+		if(pos_tp == ERROR) // no se inicializó el proceso
+			responder(fd, FALSE);
+
+		// veo si está en MP y si no encuentro cargo desde Swap
+		if( tabla_paginas[pos_tp].bit_presencia == 0 ) // page fault
+				marco = pedir_pagina_swap(fd, pid, pagina);
+		else // tp hit
+			marco = tabla_paginas[pos_tp].marco;
+	}
+
+	return marco;
+}
+
+int cargar_pagina(int pid, int pagina, void *contenido) {
 	return 0;
 }
 
@@ -436,6 +481,27 @@ int buscarPosPid(int fd) {
 void actualizarPid(int fd, int pid) {
 	int pos = buscarPosPid(fd);
 	pids[pos].pid = pid;
+}
+
+int pedir_pagina_swap(int fd, int pid, int pagina) {
+
+	int marco = ERROR;
+
+	// pido página a Swap
+	pedidoPagina_t pedido;
+	pedido.pid = pid;
+	pedido.pagina = pagina;
+	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, &pedido);
+
+	// espero respuesta de Swap
+	void *contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, LEER_PAGINA);
+	if(contenido_pagina == NULL) // no encontró la página o hubo un fallo
+		responder(fd, FALSE);
+	else {// tengo que cargar la página a MP
+		marco = cargar_pagina(pid, pagina, contenido_pagina);
+	}
+
+	return marco;
 }
 
 // </AUXILIARES>

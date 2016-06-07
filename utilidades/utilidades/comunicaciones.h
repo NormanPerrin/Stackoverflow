@@ -30,7 +30,7 @@ typedef enum {
 		INICIAR_PROGRAMA = 3, 			// Núcleo - UMC / UMC - Swap
 		PEDIDO_LECTURA = 4, 			// CPU - UMC
 		PEDIDO_ESCRITURA = 5, 			// CPU - UMC
-		FINALIZAR_PROGRAMA = 6,			// Núcleo - UMC
+		FINALIZAR_PROGRAMA = 6,			// Núcleo - UMC / UMC - SWAP
 		ENVIAR_SCRIPT = 7, 				// Consola - Núcleo
 		RESPUESTA_PEDIDO = 10, 			// UMC - CPU
 		LEER_PAGINA = 8, 				// UMC - Swap

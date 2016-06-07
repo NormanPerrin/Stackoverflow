@@ -55,11 +55,14 @@
 	}__attribute__((packed)) leerBytes_t;
 
 	typedef struct {
-
+		int pagina;
+		int offset;
+		int tamanio;
+		char *contenido;
 	}__attribute__((packed)) escribirBytes_t;
 
 	typedef struct {
-
+		int pid;
 	}__attribute__((packed)) finalizarPrograma_t;
 
 	typedef struct {
@@ -98,7 +101,7 @@
 	int validar_servidor(char *id); // Valida que el servidor sea Swap
 	void inciar_programa(int fd, void *msj); // Llama a agregar_tp y le avisa a Swap
 	void agregar_tp(int pid, int paginas); // Agrega un proceso a la tabla de páginas
-	int buscar_pagina(int pid, int pagina);
+	int buscar_tp(int pid, int pagina);
 	void eliminar_pagina(int pid, int pagina);
 	void reset_entrada(int pos);
 	void iniciarTP();
@@ -109,7 +112,7 @@
 	void enviarTamanioMarco(int fd, int tamanio);
 	void *elegirFuncion(protocolo head);
 	void responder(int fd, int respuesta);
-	int cargar_pagina(int pid, void *contenido);
+	int cargar_pagina(int pid, int pagina, void *contenido);
 //	void cambiar_pid(int fd, int pid);
 	void actualizarPid(int fd, int pid);
 	int buscarPosPid(int fd);
