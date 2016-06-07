@@ -17,7 +17,7 @@ void setearValores_config(t_config * archivoConfig) {
 	config->retardo = config_get_int_value(archivoConfig, "RETARDO");
 }
 
-// <CONEXIONES>
+// <CONEXIONES_FUNCS>
 
 void conectarConSwap(){
 	sockClienteDeSwap = nuevoSocket();
@@ -122,7 +122,7 @@ void cliente(void* fdCliente) {
 	close(sockCliente);
 }
 
-// </CONEXIONES>
+// </CONEXIONES_FUNCS>
 
 
 // <PRINCIPAL>
@@ -157,8 +157,8 @@ void leer_bytes(int fd, void *msj) {
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
 
 	// actualizo TLB y TP
-	actualizar_tlb(pid, mensaje->pagina, marco);
-	actualizar_tp(pid, mensaje->pagina, -1, -1, 1);
+	actualizar_tlb(pid, mensaje->pagina);
+	actualizar_tp(pid, mensaje->pagina, -1, -1, -1, 1);
 
 	// busco el código que me piden
 	void *contenido = reservarMemoria(mensaje->tamanio);
@@ -183,8 +183,8 @@ void escribir_bytes(int fd, void *msj) {
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
 
 	// actualizo TLB y TP
-	actualizar_tlb(pid, mensaje->pagina, marco);
-	actualizar_tp(pid, mensaje->pagina, -1, 1, 1);
+	actualizar_tlb(pid, mensaje->pagina);
+	actualizar_tp(pid, mensaje->pagina, -1, -1, 1, 1);
 
 	// escribo contenido
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
@@ -196,7 +196,7 @@ void finalizar_programa(int fd, void *msj) {
 	finalizarPrograma_t *mensaje = (finalizarPrograma_t*)msj;
 
 	// aviso a Swap
-	int *pid;
+	int *pid = NULL;
 	*pid = mensaje->pid;
 	aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, pid);
 
@@ -258,12 +258,14 @@ void agregar_tp(int pid, int paginas) {
 		while( tabla_paginas[pos].pid != -1 ) {
 
 			if( pos == entradas_tp ) {
+
 				entradas_tp += 20; // 20 para no hacer realloc tan seguido
 				realloc(tabla_paginas, entradas_tp * sizeof(tp_t));
+
 				int i;
-				for(i = pos; i < entradas_tp; i++) {
+				for(i = pos; i < entradas_tp; i++)
 					reset_entrada(i);
-				}
+
 			}
 
 			pos++;
@@ -275,6 +277,11 @@ void agregar_tp(int pid, int paginas) {
 	}
 
 	sem_post(&mutex);
+
+}
+
+void agregar_pagina(int pid, int pagina) { // TODO
+
 
 }
 
@@ -291,13 +298,32 @@ int contar_paginas(int pid) {
 	return cont;
 }
 
+
+int contar_paginas_asignadas(int pid) {
+
+	int paginas = contar_paginas(pid);
+	int paginas_asignadas = 0;
+
+	int i;
+	for(i = 0; i < paginas; i++) {
+
+		int pos = buscar_tp(pid, i);
+
+		if(tabla_paginas[pos].bit_presencia == 1)
+			paginas_asignadas++;
+
+	}
+
+	return paginas_asignadas;
+}
+
 void eliminar_pagina(int pid, int pagina) {
 
 	sem_wait(&mutex);
 
-	int pos = buscar_pagina(pid, pagina);
+	int pos = buscar_tp(pid, pagina);
 	if(pos == ERROR)
-		fprintf(stderr, "Error: referencia de pid: %d a página: %d no encontrada\n", pid, pagina);
+		fprintf(stderr, "Error: <eliminar_pagina> referencia de pid: %d a página: %d no encontrada\n", pid, pagina);
 	else
 		reset_entrada(pos);
 
@@ -349,46 +375,91 @@ int buscarPagina(int fd, int pid, int pagina) {
 	return marco;
 }
 
-int cargar_pagina(int pid, int pagina, void *contenido) {
-	return 0;
+int cargar_pagina(int pid, int pagina, void *contenido) { // TODO ver que tipo de reemplazo y asignación es
+
+	int marco = ERROR;
+	int paginas_asignadas = contar_paginas_asignadas(pid);
+
+	if(paginas_asignadas < config->marco_x_proceso) { // no hay necesidad de reemplazo
+		// marco = buscarMarcoLibre(pid);
+	} else { // hay que elegir una víctima para reemplazar
+		// marco = buscarVictimaReemplazo(pid);
+	}
+
+	//int pos_real = marco * config->tamanio_marco;
+	// memcpy(memoria + pos_real, contenido, config->tamanio_marco);
+	// actualizar_tp();
+
+	return marco;
 }
 
-void actualizar_marco_tp(int pos, int valor) {
-	tabla_paginas[pos].marco = valor;
-}
+void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modificacion, int b_uso) {
 
-void actualizar_presencia_tp(int pos, int valor) {
-	tabla_paginas[pos].bit_presencia = valor;
-}
+	int pos = buscar_tp(pid, pagina);
 
-void actualizar_modificado_tp(int pos, int valor) {
-	tabla_paginas[pos].bit_modificado = valor;
-}
+	if(tabla_paginas[pos].marco != -1) {
+		tabla_paginas[pos].marco = marco;
+	}
 
-void actualizar_uso_tp(int pos, int valor) {
-	tabla_paginas[pos].bit_uso = valor;
+	if(tabla_paginas[pos].bit_presencia != -1) {
+		tabla_paginas[pos].bit_presencia = b_presencia;
+	}
+
+	if(tabla_paginas[pos].bit_modificado != -1) {
+		tabla_paginas[pos].bit_modificado = b_modificacion;
+	}
+
+	if(tabla_paginas[pos].bit_uso != -1) {
+		tabla_paginas[pos].bit_uso = b_uso;
+	}
 }
 
 // </TABLA_PAGINA>
+
+
+// <TLB_FUNCS> // todo Aplicar colas
+
+int buscar_tlb(int pid, int pagina) {
+	return 0;
+}
+
+void borrar_tlb(int pid, int pagina) {
+}
+
+void actualizar_tlb(int pid, int pagina) {
+}
+
+// </TLB_FUNCS>
 
 
 // <AUXILIARES>
 
 void iniciarEstructuras() {
 
+	// semáforos
 	sem_init(&mutex, 0, 1);
+	sem_init(&mutex_pid, 0, 1);
 
+	// memoria
 	int sizeof_memoria = config->marcos * config->marco_size;
 	memoria = reservarMemoria(sizeof_memoria); // Google Chrome be like
-
 	memset(memoria, '\0', sizeof_memoria);
 
+	// tabla de página
 	int sizeof_tp = config->marcos * sizeof(tp_t);
 	tabla_paginas = reservarMemoria(sizeof_tp);
 	iniciarTP();
 
+	// tlb
 	int sizeof_tlb = config->entradas_tlb * sizeof(tlb_t);
 	tlb = reservarMemoria(sizeof_tlb);
+
+	// pids (array de pid activo por CPU)
+	int i;
+	for(i = 0; i < MAX_CONEXIONES; i++) {
+		pids[i].fd = -1;
+		pids[i].pid = -1;
+	}
 
 }
 
@@ -403,6 +474,7 @@ void liberarRecusos() {
 	free(tabla_paginas);
 	free(tlb);
 	sem_destroy(&mutex);
+	sem_destroy(&mutex_pid);
 	liberarEstructura();
 }
 
@@ -462,25 +534,9 @@ void *elegirFuncion(protocolo head) {
 }
 
 void responder(int fd, int respuesta) {
-	int *resp;
+	int *resp = NULL;
 	*resp = respuesta;
 	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, resp);
-}
-
-int buscarPosPid(int fd) {
-
-	int i = 0;
-	while(i < MAX_CONEXIONES) {
-		if(pids[i].fd == fd) return i;
-		i++;
-	}
-
-	return ERROR;
-}
-
-void actualizarPid(int fd, int pid) {
-	int pos = buscarPosPid(fd);
-	pids[pos].pid = pid;
 }
 
 int pedir_pagina_swap(int fd, int pid, int pagina) {
@@ -505,3 +561,63 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 }
 
 // </AUXILIARES>
+
+
+// <PID_FUNCS>
+
+int buscarPosPid(int fd) {
+
+	int i = 0;
+	while(i < MAX_CONEXIONES) {
+		if(pids[i].fd == fd) return i;
+		i++;
+	}
+
+	return ERROR;
+}
+
+void actualizarPid(int fd, int pid) {
+	int pos = buscarPosPid(fd);
+
+	if(pos == ERROR) { // no encontró fd
+		fprintf(stderr, "<actualizarPid> #%d no tiene un PID asignado\n", fd);
+		return;
+	}
+
+	pids[pos].pid = pid;
+}
+
+void agregarPid(int fd, int pid) {
+
+	int pos = buscarEspacioPid();
+	if(pos == ERROR) {
+		perror("<agregarPid> Se sobrepasó el máximo de conexiones");
+	}
+	pids[pos].fd = fd;
+	pids[pos].pid = pid;
+}
+
+int buscarEspacioPid() {
+
+	int i = 0;
+	while(i < MAX_CONEXIONES) {
+		if(pids[i].fd == -1) // encontró espacio libre
+			return i;
+		i++;
+	}
+
+	return ERROR;
+}
+
+void borrarPid(int fd) {
+	int pos = 0;
+	while(pos < MAX_CONEXIONES) {
+		if(pids[pos].fd == fd) {
+			pids[pos].fd = -1;
+			pids[pos].pid = -1;
+		}
+		pos++;
+	}
+}
+
+// </PID_FUNCS>
