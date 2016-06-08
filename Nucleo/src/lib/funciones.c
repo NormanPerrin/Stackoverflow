@@ -78,13 +78,13 @@ pcb * crearPCB(string programa){
 }
 
 void inicializarIndices(pcb* pcb, t_metadata_program* metaData){
-	pcb->indiceCodigo.tamanio = 2 * INT * metaData->instrucciones_size;
-	pcb->indiceCodigo.instrucciones = metaData->instrucciones_serializado;
+	pcb->tamanioIndiceCodigo = 2 * INT * metaData->instrucciones_size;
+	pcb->indiceCodigo = metaData->instrucciones_serializado;
 
-	pcb->indiceEtiquetas.tamanio = metaData->etiquetas_size;
-	pcb->indiceEtiquetas.etiquetas = metaData->etiquetas;
+	pcb->tamanioIndiceEtiquetas = metaData->etiquetas_size;
+	pcb->indiceEtiquetas = metaData->etiquetas;
 
-	pcb->indiceStack.tamanio = config->cantidadPaginasStack * tamanioPagina;
+	pcb->tamanioIndiceStack = config->cantidadPaginasStack * tamanioPagina;
 }
 
 int asignarPid(t_list procesos){

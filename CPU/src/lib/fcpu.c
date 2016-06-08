@@ -36,9 +36,9 @@ void ejecutarInstruccion(pcb* pcb){
 	int protocolo;
 	respuestaPedido * respuesta = NULL;
 
-	direccionInstruccion.pagina = pcb->indiceCodigo.instrucciones[pcb->pc]; // falta obtener el numero de pagina!!
-	direccionInstruccion.offset = pcb->indiceCodigo.instrucciones->offset;
-	direccionInstruccion.size = pcb->indiceCodigo.tamanio;
+	direccionInstruccion.pagina = pcb->indiceCodigo[pcb->pc]; // falta obtener el numero de pagina!!
+	direccionInstruccion.offset = pcb->indiceCodigo->offset;
+	direccionInstruccion.size = pcb->tamanioIndiceCodigo;
 
 	aplicar_protocolo_enviar(fd_clienteUMC, PEDIDO_LECTURA, &direccionInstruccion);
 

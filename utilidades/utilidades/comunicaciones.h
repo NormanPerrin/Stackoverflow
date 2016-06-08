@@ -41,8 +41,7 @@ typedef enum {
 		FIN_QUANTUM = 13,				// CPU - Núcleo
 		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo
 		RECHAZAR_PROGRAMA = 15,			// Todos
-		/*DEVOLVER_BYTES = 16, 			// UMC - Núcleo / CPU*/
-		INDICAR_PID = 20, 				// CPU - UMC
+		INDICAR_PID = 16, 				// CPU - UMC
 
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
@@ -65,21 +64,13 @@ typedef struct {
 } variable;
 
 typedef struct {
-		listaDirecciones argumentos;
-		listaVariables variablesLocales;
+		int tamanioListaArgumentos;
+		direccion* listaPosicionesArgumentos;
+		int tamanioListaVariables;
+		variable* listaVariablesLocales;
 		int proximaInstruccion;
 		direccion posicionDelResultado;
 	} registroStack;
-
-typedef struct {
-	int tamanio;
-	direccion* direcciones;
-} listaDirecciones;
-
-typedef struct {
-	int tamanio;
-	variable* variables;
-} listaVariables;
 
 // TADS para UMC - Núcleo
 typedef struct {

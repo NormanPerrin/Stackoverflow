@@ -73,13 +73,10 @@ int newfd, escuchaNucleo, maxfd;
 		if(newfd > maxfd) maxfd = newfd;
 
 	} else { // si no es una nueva conexión entonces es un nuevo mensaje
-		int tamanioMensaje;
+
 		consola * unaConsolaActiva = (consola *)list_get(listaConsolas, i);
 
-	int* head = (int*)malloc(INT);
-	*head = ENVIAR_SCRIPT;
-	void * scriptRecibido = aplicar_protocolo_recibir(i, head, &tamanioMensaje);
-	free(head);
+	void * scriptRecibido = aplicar_protocolo_recibir(i, ENVIAR_SCRIPT);
 
 	if (scriptRecibido == NULL){ // desconexión o error
 	// Fin de Consola -> Fin del programa
@@ -105,7 +102,7 @@ int newfd, escuchaNucleo, maxfd;
 		free(nuevoPCB);
 	}
 	else{
-		aplicar_protocolo_enviar(unaConsolaActiva->fd_consola, RECHAZAR_PROGRAMA, NULL, 0);
+		aplicar_protocolo_enviar(unaConsolaActiva->fd_consola, RECHAZAR_PROGRAMA, NULL);
 	// La saco de mi lista de consolas activas:
 		cerrarSocket(unaConsolaActiva->fd_consola);
 		FD_CLR(unaConsolaActiva->fd_consola, &master);
@@ -167,9 +164,9 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 		planificarProceso();
 
 	} else { // si no es una nueva conexión entonces es un nuevo mensaje
-		int head, tamanioMensaje;
+		int head;
 		cpu * unCPUActivo = (cpu *)list_get(listaCPU, i);
-		void * mensaje = aplicar_protocolo_recibir(unCPUActivo->fd_cpu, &head, &tamanioMensaje);
+		void * mensaje = aplicar_protocolo_recibir(unCPUActivo->fd_cpu, head);
 
 	 if (mensaje == NULL) { // desconexión o error
 		cerrarSocket(unCPUActivo->fd_cpu);
@@ -180,7 +177,7 @@ int newfdCPU, fdEscuchaNucleo, maxfd;
 
 } else { // se leyó correctamente el mensaje
 	switch(head){
-		case ENVIAR_PCB:{
+		case PCB:{
 
 		pcb * pcbNuevo=(pcb *) mensaje; // Recibo la PCB actualizada del CPU
 		log_info(logger, "Fin de quantum de CPU #%d - Proceso #%d", unCPUActivo->fd_cpu, pcbNuevo->pid);

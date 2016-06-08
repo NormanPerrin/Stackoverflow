@@ -106,7 +106,7 @@ void * serealizar(int protocolo, void * elemento){
 			break;
 		}
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
-		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
+		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA:{
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
 			buffer = malloc(tamanio);
@@ -214,9 +214,9 @@ void * serealizarPCB(void * estructura){
 
 	int codigoSize = (sizeof(t_intructions) * unPCB->tamanioIndiceCodigo);
 
-	int tamListaDirecciones = sizeof(direccion)*(unPCB->indiceStack->argumentos->tamanio);
-	int tamListaVariables = sizeof(variable)*(unPCB->indiceStack->variablesLocales->tamanio);
-	int tamRegistroStack = 6*INT + tamListaDirecciones + tamListaVariables;
+	int tamListaArgumentos = sizeof(direccion) * unPCB->indiceStack->tamanioListaArgumentos;
+	int tamListaVariables = sizeof(variable) * unPCB->indiceStack->tamanioListaVariables;
+	int tamRegistroStack = 6*INT + tamListaArgumentos + tamListaVariables;
 	int stackSize = tamRegistroStack * unPCB->tamanioIndiceStack;
 
 	int etiquetasSize = (CHAR * unPCB->tamanioIndiceEtiquetas);
@@ -259,13 +259,13 @@ void * serealizarPCB(void * estructura){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->posicionDelResultado), sizeof(direccion));
 		desplazamiento += sizeof(direccion);
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->argumentos->tamanio), INT);
+	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioListaArgumentos), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceStack->argumentos.direcciones, tamListaDirecciones);
-		desplazamiento += tamListaDirecciones;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->variablesLocales->tamanio), INT);
+	memcpy(buffer + desplazamiento, unPCB->indiceStack->listaPosicionesArgumentos, tamListaArgumentos);
+		desplazamiento += tamListaArgumentos;
+	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioListaVariables), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceStack->variablesLocales.variables, tamListaVariables);
+	memcpy(buffer + desplazamiento, unPCB->indiceStack->listaVariablesLocales, tamListaVariables);
 
 	return buffer;
 }
@@ -308,15 +308,15 @@ pcb * deserealizarPCB(void * buffer){
 		desplazamiento += INT;
 	memcpy(&unPcb->indiceStack->posicionDelResultado, buffer + desplazamiento, sizeof(direccion));
 		desplazamiento += sizeof(direccion);
-	memcpy(&unPcb->indiceStack->argumentos->tamanio, buffer + desplazamiento, INT);
+	memcpy(&unPcb->indiceStack->tamanioListaArgumentos, buffer + desplazamiento, INT);
 			desplazamiento += INT;
-	unPcb->indiceStack->argumentos.direcciones = malloc(unPcb->indiceStack->argumentos->tamanio);
-	memcpy(unPcb->indiceStack->argumentos.direcciones, buffer + desplazamiento, unPcb->indiceStack->argumentos->tamanio);
-		desplazamiento += unPcb->indiceStack->argumentos->tamanio;
-	memcpy(&unPcb->indiceStack->variablesLocales->tamanio, buffer + desplazamiento, INT);
+	unPcb->indiceStack->listaPosicionesArgumentos = malloc(unPcb->indiceStack->tamanioListaArgumentos);
+	memcpy(unPcb->indiceStack->listaPosicionesArgumentos, buffer + desplazamiento, unPcb->indiceStack->tamanioListaArgumentos);
+		desplazamiento += unPcb->indiceStack->tamanioListaArgumentos;
+	memcpy(&unPcb->indiceStack->tamanioListaVariables, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceStack->variablesLocales.variables = malloc(unPcb->indiceStack->variablesLocales->tamanio);
-	memcpy(unPcb->indiceStack->variablesLocales.variables, buffer + desplazamiento, unPcb->indiceStack->variablesLocales->tamanio);
+	unPcb->indiceStack->listaVariablesLocales = malloc(unPcb->indiceStack->tamanioListaVariables);
+	memcpy(unPcb->indiceStack->listaVariablesLocales, buffer + desplazamiento, unPcb->indiceStack->tamanioListaVariables);
 
 	return unPcb;
 }
