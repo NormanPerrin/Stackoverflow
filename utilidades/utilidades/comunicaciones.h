@@ -141,6 +141,5 @@ solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
 void * serializarRespuestaPedido(void * elemento);
 respuestaPedido * deserializarRespuestaPedido(void * buffer);
 
-int* autoinicializado();
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

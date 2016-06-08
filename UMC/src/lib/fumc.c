@@ -85,6 +85,7 @@ void servidor() {
 
 	} // cuando sale indicaron cierre del programa
 
+	close(sockClienteDeSwap);
 	close(sockServidor);
 }
 
@@ -503,7 +504,7 @@ void iniciarEstructuras() {
 
 }
 
-void liberarEstructura() {
+void liberarConfig() {
 	free(config->ip_swap);
 	free(config);
 }
@@ -514,7 +515,7 @@ void liberarRecusos() {
 	free(tlb);
 	sem_destroy(&mutex);
 	sem_destroy(&mutex_pid);
-	liberarEstructura();
+	liberarConfig();
 }
 
 void *elegirFuncion(protocolo head) {

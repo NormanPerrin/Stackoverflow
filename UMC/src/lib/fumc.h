@@ -115,7 +115,7 @@
 
 	// <AUXILIARES>
 	void iniciarEstructuras();
-	void liberarEstructura();
+	void liberarConfig();
 	void liberarRecusos();
 	void *elegirFuncion(protocolo head);
 	// </AUXILIARES>
