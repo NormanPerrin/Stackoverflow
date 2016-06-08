@@ -91,7 +91,7 @@ int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes) {
 		totalBytes += bytes_enviados;
 		tamanioBytes -= bytes_enviados;
 	}
-	if (bytes_enviados == ERROR) manejarError ("Error: No se pudo enviar correctamente los datos entre los sockets");
+	if (bytes_enviados == ERROR) manejarError ("Error: No se pudo enviar correctamente los datos.");
 
 	return bytes_enviados; // En caso de éxito, se retorna la cantidad de bytes realmente enviada
 }
@@ -104,9 +104,10 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 	while (total < tamanioBytes){
 
 	bytes_recibidos = recv(fdServidor, buffer+total, tamanioBytes, MSG_WAITALL);
+	// MSG_WAITALL: el recv queda completamente bloqueado hasta que todo el paquete sea recibido
 
 	if (bytes_recibidos == ERROR) { // Error al recibir mensaje
-		perror("Error: No se pudo recibir correctamente los datos");
+		perror("Error: No se pudo recibir correctamente los datos.");
 		break;
 			}
 
@@ -127,7 +128,7 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 // Cierre de la conexión del file descriptor del socket
 void cerrarSocket(int fd_socket) {
 	int retornoClose = close(fd_socket);
-		if (retornoClose == ERROR) manejarError("Error: No se pudo cerrar la conexión del file descriptor del socket");
+		if (retornoClose == ERROR) manejarError("Error: No se pudo cerrar el socket");
 }
 
 // ******************************************

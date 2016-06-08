@@ -6,6 +6,7 @@
 	#include <commons/collections/list.h>
 	#include <commons/collections/dictionary.h>
 	#include <parser/metadata_program.h>
+	#define STRING (sizeof(string))
 
 /* *** IMPORTANTE - LEER ***
  *
@@ -64,26 +65,21 @@ typedef struct {
 } variable;
 
 typedef struct {
-		direccion* argumentos;
-		variable* variablesLocales;
+		listaDirecciones argumentos;
+		listaVariables variablesLocales;
 		int proximaInstruccion;
 		direccion posicionDelResultado;
 	} registroStack;
 
 typedef struct {
-		int tamanio; // viene de config
-		registroStack* registros;
-	} stack;
+	int tamanio;
+	direccion* direcciones;
+} listaDirecciones;
 
 typedef struct {
-		int tamanio; // 2 * sizeof(int) * cant de instrucciones
-		t_intructions* instrucciones;
-	} codigo;
-
-typedef struct {
-	int tamanio;	// Tamaño del mapa serializado de etiquetas
-	char* etiquetas; // Serializacion de las etiquetas
-	} etiquetas;
+	int tamanio;
+	variable* variables;
+} listaVariables;
 
 // TADS para UMC - Núcleo
 typedef struct {
@@ -98,7 +94,7 @@ typedef struct {
 
 typedef enum {
 	CREADO, NO_CREADO
-}estadoDelHeap;
+} estadoDelHeap;
 
 // TADS para Núcleo - CPU
 typedef enum {
@@ -106,10 +102,13 @@ typedef enum {
 } estadoProceso;
 
 typedef struct pcb{
-		int pid, pc, paginas_codigo, estado, quantum, fdCPU;
-		codigo indiceCodigo;
-		etiquetas indiceEtiquetas;
-		stack indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
+	int pid, pc, paginas_codigo, estado, quantum, fdCPU;
+	int tamanioIndiceCodigo;
+	t_intructions* indiceCodigo;
+	int tamanioIndiceEtiquetas; // Tamaño del mapa serializado de etiquetas
+	char* indiceEtiquetas; // Serializacion de las etiquetas
+	int tamanioIndiceStack; // Viene de config
+	registroStack* indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
 } __attribute__((packed)) pcb;
 
 // TADS para UMC - CPU
@@ -151,6 +150,6 @@ solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
 void * serializarRespuestaPedido(void * elemento);
 respuestaPedido * deserializarRespuestaPedido(void * buffer);
 
-int* autoinicializado(); // retorna un puntero a una variable entera con valor 0
+int* autoinicializado();
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */
