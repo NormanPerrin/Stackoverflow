@@ -50,7 +50,7 @@ int handshake_servidor(int sockCliente, char *mensaje) {
 
 		buff[HANDSHAKE_SIZE-1] = '\0';
 		if (validar_cliente(buff)) {
-			printf("Handshake: %s\n", buff);
+			printf("Hice el handshake y me respondieron: %s\n", buff);
 			free(buff);
 			return TRUE;
 		} else {
@@ -62,9 +62,7 @@ int handshake_servidor(int sockCliente, char *mensaje) {
 
 		free(buff);
 		return FALSE;
-
 	}
-
 	return FALSE; // No debería llegar acá pero lo pongo por el warning
 }
 
@@ -79,7 +77,7 @@ void handshake_cliente(int sockClienteDe, char *mensaje) {
 		free(buff);
 		exit(ERROR);
 	} else {
-		printf("Handshake: %s\n", buff);
+		printf("Handshake recibido: %s\n", buff);
 		free(buff);
 		enviarPorSocket(sockClienteDe, mensaje, HANDSHAKE_SIZE);
 	}

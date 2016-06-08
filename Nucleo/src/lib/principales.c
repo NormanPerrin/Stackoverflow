@@ -61,19 +61,12 @@ int fdNucleo, fdNuevaConsola, i, fd, max_fd;
 	    if (FD_ISSET(fdNucleo, &readfds)) {
 	    	fdNuevaConsola = aceptarConexionSocket(fdNucleo);
 
-	    	void * login = malloc(sizeof(char) * 4);
-	    	recibirPorSocket(fdNuevaConsola, login, 4);
-	    	int coincide = strcmp((char *) login, "CPU");
-	    	free(login);
-
-	    	if(coincide != 0){
+	    int ret_handshake = handshake_servidor(fdNuevaConsola, "N");
+	    	if(ret_handshake == FALSE){
 	    		perror("[ERROR] Se espera conexión del proceso Consola\n");
-	    		int respuesta = 0;
-	    		enviarPorSocket(fdNuevaConsola,&respuesta,sizeof(int));
 	    		cerrarSocket(fdNuevaConsola);
-	    	}else{
-	    		int respuesta = 1;
-	    		enviarPorSocket(fdNuevaConsola,&respuesta,sizeof(int));
+	    	}
+	    	else{
 	    	// UNA NUEVA CONSOLA SE HA CONECTADO:
 	    		consola * nuevaConsola = malloc(sizeof(consola));
 
@@ -167,20 +160,13 @@ void escucharCPUs_y_Planificar(){
 	if (FD_ISSET(fdNucleo, &readfds)) {
 		  fdNuevoCPU = aceptarConexionSocket(fdNucleo);
 
-		    	void * login = malloc(sizeof(char) * 4);
-		    	recibirPorSocket(fdNuevoCPU, login, 4);
-		    	int coincide = strcmp((char *) login, "CPU");
-		    	free(login);
-
-		    	if(coincide != 0){
-		    		perror("[ERROR] Se espera conexión del proceso CPU\n");
-		    		int respuesta = 0;
-		    		enviarPorSocket(fdNuevoCPU,&respuesta,sizeof(int));
-		    		cerrarSocket(fdNuevoCPU);
-		    	}else{
-		    		int respuesta = 1;
-		    		enviarPorSocket(fdNuevoCPU,&respuesta,sizeof(int));
-
+		  int ret_handshake = handshake_servidor(fdNuevoCPU, "N");
+		  	    if(ret_handshake == FALSE){
+		  	    		perror("[ERROR] Se espera conexión del proceso CPU\n");
+		  	    		cerrarSocket(fdNuevoCPU);
+		  	    	}
+		  	    	else{
+		    	// Nueva conexión de CPU:
 		    cpu * nuevoCPU = malloc(sizeof(cpu));
 
 		    		nuevoCPU->id = fdNuevoCPU - fdNucleo;

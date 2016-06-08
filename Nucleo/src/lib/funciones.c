@@ -223,3 +223,21 @@ void actualizarDatosDePcbEjecutada(cpu * unCPU, pcb * pcbNuevo){
 		liberarPcb(pcbNuevo);
 }
 
+int validar_cliente(char *id) {
+	if( !strcmp(id, "C") || !strcmp(id, "P") ) {
+		printf("Cliente aceptado.\n");
+		return TRUE;
+	} else {
+		printf("Cliente rechazado.\n");
+		return FALSE;
+	}
+}
+
+int validar_servidor(char *id) {
+	if(!strcmp(id, "U")) {
+		printf("UMC me ha aceptado.\n");
+		return TRUE;
+	} else {
+		printf("UMC me ha rechazado.\n");
+		return FALSE;
+	}

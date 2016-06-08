@@ -19,5 +19,7 @@ void limpiarListasYColas();
 void liberarConsola(consola * consola);
 void liberarCPU(cpu * cpu);
 void liberarMetadataDelPrograma(t_metadata_program * metadata);
+int validar_servidor(char *id);
+int validar_cliente(char *id);
 
 #endif /* LIB_FUNCIONES_H_ */
