@@ -12,9 +12,7 @@ int main(void) {
 
 	conectarConUMC();
 
-	escucharAConsola();
-
-	escucharACPU();
+	esperar_y_PlanificarProgramas();
 
 	liberarTodaLaMemoria();
 

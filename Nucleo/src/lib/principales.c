@@ -13,9 +13,9 @@ void abrirArchivoDeConfiguracion(char * ruta){
 void inicializarListasYColas(){
 	listaCPU = list_create();
 	listaConsolas = list_create();
-	listaProcesos = list_create();
-	colaReady = queue_create();
-	colaBlock = queue_create();
+	listaProcesos = list_create(); // listaNuevos
+	colaListos = queue_create();
+	colaBloqueados = queue_create();
 }
 
 void conectarConUMC(){
