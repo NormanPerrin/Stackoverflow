@@ -93,7 +93,7 @@ typedef enum {
 } estadoProceso;
 
 typedef struct pcb{
-	int pid, pc, paginas_codigo, estado, quantum, fdCPU;
+	int pid, pc, paginas_codigo, estado, quantum, id_cpu;
 	int tamanioIndiceCodigo;
 	t_intructions* indiceCodigo;
 	int tamanioIndiceEtiquetas; // Tamaño del mapa serializado de etiquetas

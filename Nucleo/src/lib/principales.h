@@ -8,8 +8,8 @@
 void abrirArchivoDeConfiguracion(char * ruta);
 void inicializarListasYColas();
 void conectarConUMC();
-void escucharAConsola();
-void escucharACPU();
+void esperar_y_PlanificarProgramas();
+void escucharCPUs_y_Planificar();
 void liberarTodaLaMemoria();
 
 #endif /* LIB_PRINCIPALES_H_ */

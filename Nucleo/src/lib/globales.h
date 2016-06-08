@@ -42,27 +42,26 @@ typedef struct {
 	string programa;
 } consola;
 
-typedef struct {
-	int id;
-	int fd_cpu;
-	int disponibilidad;
-} cpu;
-
 typedef enum {
 	LIBRE, OCUPADO
 } disponibilidadCPU;
 
-// Variables Globales:
+typedef struct {
+	int id;
+	int fd_cpu;
+	int disponibilidad;
+	int pid;
+} cpu;
+
+// VARIABLES GLOBALES:
 t_configuracion * config;
-int fd_clienteUMC; // cliente de UMC
+int fd_UMC;
 t_log * logger;
-t_list * listaProcesos;
+t_list * listaProcesos; // listaNuevos
+t_queue * colaListos;
+t_queue * colaBloqueados;
 t_list * listaCPU;
 t_list * listaConsolas;
-t_queue * colaReady;
-t_queue * colaBlock;
 int tamanioPagina;
-/*sem_t mutex_ready;
-sem_t mutex_block;*/
 
 #endif /* LIB_GLOBALES_H_ */

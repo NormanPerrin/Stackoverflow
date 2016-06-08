@@ -227,7 +227,7 @@ void * serealizarPCB(void * estructura){
 	void * buffer = malloc(tamanioTotal);
 	memcpy(buffer + desplazamiento,&(unPCB->pid), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->fdCPU), INT);
+	memcpy(buffer + desplazamiento, &(unPCB->id_cpu), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->pc), INT);
 		desplazamiento += INT;
@@ -276,7 +276,7 @@ pcb * deserealizarPCB(void * buffer){
 
 	memcpy(&unPcb->pid, buffer + desplazamiento, INT );
 		desplazamiento += INT;
-	memcpy(&unPcb->fdCPU, buffer + desplazamiento, INT );
+	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT );
 		desplazamiento += INT;
 	memcpy(&unPcb->pc, buffer + desplazamiento, INT );
 		desplazamiento += INT;

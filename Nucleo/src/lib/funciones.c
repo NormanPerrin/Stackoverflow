@@ -27,52 +27,58 @@ void crearLogger(){
 	archivoLogNucleo = NULL;
 }
 
-pcb * crearPCB(string programa){
+pcb * crearPcb(string programa){
 	pcb * nuevoPcb = malloc(sizeof(pcb));
 
-	nuevoPcb->pid = asignarPid(*listaProcesos);
-	nuevoPcb->fdCPU = -1;
-	nuevoPcb->paginas_codigo = (programa.tamanio)/tamanioPagina; // acota la división a int
-	nuevoPcb->estado = READY;
-	nuevoPcb->quantum = config->quantum; // TODO: provisorio, ver manejo CPU
+	nuevoPcb->pid = asignarPid(listaProcesos);
+	nuevoPcb->id_cpu = -1;
 
-	t_metadata_program* infoProg;
+	int aux_div = programa->tamanio / tamanioPagina;
+	int resto_div = programa->tamanio % tamanioPagina;
+	nuevoPcb->paginas_codigo = (resto_div==0)?aux_div:aux_div+1;
+
+	nuevoPcb->estado = READY;
+	nuevoPcb->quantum = config->quantum;
+
+	// Ahora, analizo con el parser el código del programa para obtener su metadata:
 	const char* codigo = strdup(programa.cadena);
-	infoProg = metadata_desde_literal(codigo);
+	t_metadata_program* infoProg = metadata_desde_literal(codigo);
+	// free(codigo);
 
 	nuevoPcb->pc = infoProg->instruccion_inicio + 1; // la siguiente al begin
 
 	// Inicializo los tres índices:
 	inicializarIndices(nuevoPcb, infoProg);
-
-	inicioPrograma* nuevoPrograma = (inicioPrograma*)malloc(sizeof(inicioPrograma));
-	nuevoPrograma->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
-	nuevoPrograma->pid = nuevoPcb->pid;
-	nuevoPrograma->codigo.cadena = strdup(programa.cadena);
-	nuevoPrograma->codigo.tamanio = programa.tamanio;
+	liberarMetadataDelPrograma(infoProg);
 
 	// Le solicito a UMC espacio para el heap del programa y actúo en consecuencia:
-	log_info(logger,"Solicitando segmentos de Código y de Stack a UMC para el PID #%d",nuevoPcb->pid);
-	aplicar_protocolo_enviar(fd_clienteUMC, INICIAR_PROGRAMA, nuevoPrograma);
+	inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(sizeof(inicioPrograma));
+	solicitudDeInicio->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
+	solicitudDeInicio->pid = nuevoPcb->pid;
+	solicitudDeInicio->codigo.cadena = strdup(programa.cadena);
+	solicitudDeInicio->codigo->tamanio = programa->tamanio;
 
-	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)malloc(sizeof(respuestaInicioPrograma));
-	respuestaInicio = aplicar_protocolo_recibir(fd_clienteUMC, INICIAR_PROGRAMA);
+	printf("Solicitando segmentos de código y de stack a UMC para el Proceso #%d", nuevoPcb->pid);
+	aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
+
+	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)aplicar_protocolo_recibir(fd_UMC, INICIAR_PROGRAMA);
+
+	free(solicitudDeInicio->codigo.cadena);
+	free(solicitudDeInicio);
 
 	if(respuestaInicio->estadoDelHeap == CREADO){
-		log_info(logger,"Se pudo alocar todos los segmentos para el proceso #%d",nuevoPcb->pid);
+		log_info(logger,"Se pudo alocar todos los segmentos para el Proceso #%d", nuevoPcb->pid);
 
-		free(infoProg);
-		free(nuevoPrograma);
+		free(respuestaInicio);
+
 		return nuevoPcb;
 	}
 	else{
 		 log_info(logger,
-	"No se pudo alocar todos los segmentos para el proceso #%d. Rechazando ingreso al sistema.",
-							nuevoPcb->pid);
+	"UMC no pudo alocar segmentos para el Proceso #%d. Rechazando ingreso al sistema.", nuevoPcb->pid);
 
-		 free(infoProg);
-		 free(nuevoPrograma);
-		 liberarPcb(nuevoPcb);
+		 free(respuestaInicio);
+
 		 return NULL;
 	}
 }
@@ -85,9 +91,14 @@ void inicializarIndices(pcb* pcb, t_metadata_program* metaData){
 	pcb->indiceEtiquetas = metaData->etiquetas;
 
 	pcb->tamanioIndiceStack = config->cantidadPaginasStack * tamanioPagina;
+	pcb->indiceStack = NULL;
 }
 
-int asignarPid(t_list procesos){
+void liberarMetadataDelPrograma(t_metadata_program * metadata){
+	// completar
+}
+
+int asignarPid(t_list * procesos){
 	int randomPid = rand() % 1000; // número aleatorio entre 0 y 1000
 	int index;
 	while ( buscarProcesoPorPid(randomPid, &index) != NULL){
@@ -107,6 +118,22 @@ pcb * buscarProcesoPorPid(int pid, int* index){
 		}
 	}
 	return NULL; // no se encontró el proceso
+}
+
+void salvarProcesoEnCPU(int CPU){
+	bool cpuActualDelPcb(pcb * pcb){ return pcb->id_cpu == CPU; }
+
+	pcb * unPcb = (pcb *) list_find(listaProcesos, (void *) cpuActualDelPcb);
+
+	if(unPcb != NULL){
+		unPcb->id_cpu = -1;
+		unPcb->estado = READY;
+
+		queue_push(colaListos, unPcb);
+
+		planificarProceso();
+	}
+	// TODO: ver qué hacer si no está en la cola
 }
 
 void liberarPcb(pcb * pcb){
@@ -129,33 +156,26 @@ void limpiarListasYColas(){
 	list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola );
 	listaConsolas = NULL;
 
-	queue_destroy(colaReady);
-	queue_destroy(colaBlock);
-}
-
-void ejecutarPrograma(string programa){
-	pcb * nuevoPcb = crearPCB(programa);
-	list_add(listaProcesos, nuevoPcb);
-
-	queue_push(colaReady, nuevoPcb);
-
-	planificarProceso();
+	queue_destroy(colaListos);
+	queue_destroy(colaBloqueados);
 }
 
 void planificarProceso(){
-		int i, asignado = 0;
+	int i, asignado = 0;
 		for (i = 0; (i < list_size(listaCPU) && asignado==0); i++){
 			cpu * unCPU = (cpu *)list_get(listaCPU, i);
-			if (unCPU->disponibilidad==LIBRE){
-				if (list_size(colaReady->elements) > 0){
-					pcb * unPCB = (pcb *)queue_pop(colaReady);
+			if (unCPU->disponibilidad == LIBRE){
+				if (queue_size(colaListos) > 0){
+					pcb * unPCB = (pcb *)queue_pop(colaListos);
 					unPCB->estado = EXEC;
-					unPCB->fdCPU = unCPU->fd_cpu;
+					unPCB->id_cpu = unCPU->id;
 					unCPU->disponibilidad = OCUPADO;
 
-					aplicar_protocolo_enviar(unCPU->fd_cpu, PCB, unPCB);
+		aplicar_protocolo_enviar(unCPU->fd_cpu, PCB, unPCB);
 
-					asignado = 1;
+		log_info(logger, "El proceso %i ingresa a ejecución en CPU %i.", unPCB->pid, unCPU->id);
+
+		asignado = 1;
 				}
 			}
 		}
@@ -166,39 +186,40 @@ void finalizarPrograma(int pid){
 	pcb * procesoAFinalizar = buscarProcesoPorPid(pid, &index);
 	if (procesoAFinalizar!=NULL){
 
-	log_info(logger,"Finalizando el proceso con PID #%d.",pid);
+	log_info(logger,"Finalizando el Proceso #%d.", pid);
 
-	int* _pid = (int*)malloc(INT);
-	*_pid = pid;
-// Aviso a UMC que libere la memoria asignada al proceso:
-	aplicar_protocolo_enviar(fd_clienteUMC, FINALIZAR_PROGRAMA, _pid);
-	free(_pid);
+	// Aviso a UMC que libere la memoria asignada al proceso:
+	int* pidAFinalizar = (int*)malloc(INT);
+	*pidAFinalizar = pid;
+
+	aplicar_protocolo_enviar(fd_UMC, FINALIZAR_PROGRAMA, pidAFinalizar);
+	free(pidAFinalizar);
 		// remover programa
 	}
 }
 
 void actualizarDatosDePcbEjecutada(cpu * unCPU, pcb * pcbNuevo){
 	unCPU->disponibilidad = LIBRE;
-	int index;
-	pcb * unPcb = buscarProcesoPorPid(pcbNuevo->pid, &index);
 
-	unPcb->estado = pcbNuevo->estado;
-	unPcb->fdCPU = -1;
+		int index;
+		pcb * unPcb = buscarProcesoPorPid(pcbNuevo->pid, &index);
+
+		unPcb->estado = pcbNuevo->estado;
+		unPcb->id_cpu = -1;
 
 		switch (unPcb->estado) {
 			case EXEC:
 				unPcb->estado = READY;
-				 queue_push(colaReady, unPcb);
+				queue_push(colaListos, unPcb);
 				break;
 			case BLOCK:
-				 queue_push(colaBlock, unPcb);
+				queue_push(colaBloqueados, unPcb);
 				break;
 			case EXIT:
-				log_info(logger, "El proceso con PID #%d ha finalizado", unPcb->pid);
-				liberarPcb(unPcb);
-				free(list_remove(listaProcesos, index));
+				log_info(logger, "El Programa %i ha finalizado.", unPcb->pid);
+				liberarPcb(list_remove(listaProcesos, index));
 				break;
 		}
-		liberarPcb(unPcb);
+		liberarPcb(pcbNuevo);
 }
 

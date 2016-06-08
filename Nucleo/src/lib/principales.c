@@ -19,184 +19,224 @@ void inicializarListasYColas(){
 }
 
 void conectarConUMC(){
-	fd_clienteUMC = nuevoSocket();
-	int ret = conectarSocket(fd_clienteUMC, config->ipUMC, config->puertoUMC);
+	fd_UMC = nuevoSocket();
+	int ret = conectarSocket(fd_UMC, config->ipUMC, config->puertoUMC);
 	validar_conexion(ret, 1); // al ser cliente es terminante
-	handshake_cliente(fd_clienteUMC, "N");
+	handshake_cliente(fd_UMC, "N");
 
-	int * tamPagina = (int*)malloc(INT);
-	recibirPorSocket(fd_clienteUMC, tamPagina, INT);
-	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC
+	int * buffer_tamPagina = (int*)malloc(INT);
+	recibirPorSocket(fd_UMC, buffer_tamPagina, INT);
+	tamanioPagina = *buffer_tamPagina; // setea el tamaño de pág. que recibe de UMC
+	free(buffer_tamPagina);
 
-	cerrarSocket(fd_clienteUMC);
+	// cerrarSocket(fd_UMC);
 }
 
-void escucharAConsola(){
-int puerto = config->puertoPrograma;
+void esperar_y_PlanificarProgramas(){
+int fdNucleo, fdNuevaConsola, i, fd, max_fd;
 
-int newfd, escuchaNucleo, maxfd;
+	fd_set readfds;
+	fdNucleo = newSocket();
+	asociarSocket(fdNucleo, config->puertoPrograma);
+	escucharSocket(fdNucleo, CONEXIONES_PERMITIDAS);
 
-	escuchaNucleo = nuevoSocket();
-	asociarSocket(escuchaNucleo, puerto);
-	escucharSocket(escuchaNucleo, CONEXIONES_PERMITIDAS);
-	fd_set readfd, master;
-	FD_ZERO(&readfd);
-	FD_ZERO(&master);
-	FD_SET(escuchaNucleo, &master);
-	maxfd = escuchaNucleo;
+	while(TRUE){
 
-	while(TRUE) {
+	    FD_ZERO(&readfds);
+	    FD_SET(fdNucleo, &readfds);
+	    max_fd = fdNucleo;
 
-	readfd = master;
+	    for ( i = 0 ; i < list_size(listaConsolas) ; i++){
 
-	seleccionarSocket(maxfd, &readfd, NULL, NULL, NULL, NULL);
+	    	consola * unaConsola = (consola *)list_get(listaConsolas, i);
+	        fd = unaConsola->fd_consola;
+	        if(fd > 0)
+	            FD_SET( fd , &readfds);
+	        if(fd > max_fd)
+	            max_fd = fd;
+	    }
 
-	int i;
-	for(i = 0; i <= maxfd; i++) { // recorro los fds buscando si alguno se modificó
+	    seleccionarSocket(max_fd, &readfds , NULL , NULL , NULL, NULL);
 
-	if( FD_ISSET(i, &readfd) ) { // i está modificado. Si no está modificado no se le hace nada
+	    if (FD_ISSET(fdNucleo, &readfds)) {
+	    	fdNuevaConsola = aceptarConexionSocket(fdNucleo);
 
-	if(i == escuchaNucleo) { // nueva conexión
-		int ret_handshake = 0;
+	    	void * login = malloc(sizeof(char) * 4);
+	    	recibirPorSocket(fdNuevaConsola, login, 4);
+	    	int coincide = strcmp((char *) login, "CPU");
+	    	free(login);
 
-		while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
-			newfd = aceptarConexionSocket(escuchaNucleo);
+	    	if(coincide != 0){
+	    		perror("[ERROR] Se espera conexión del proceso Consola\n");
+	    		int respuesta = 0;
+	    		enviarPorSocket(fdNuevaConsola,&respuesta,sizeof(int));
+	    		cerrarSocket(fdNuevaConsola);
+	    	}else{
+	    		int respuesta = 1;
+	    		enviarPorSocket(fdNuevaConsola,&respuesta,sizeof(int));
+	    	// UNA NUEVA CONSOLA SE HA CONECTADO:
+	    		consola * nuevaConsola = malloc(sizeof(consola));
 
-	if (validar_conexion(newfd, 0) == FALSE) {
-		continue;
-	} else {
-		ret_handshake = handshake_servidor(newfd, "N");
+	    		nuevaConsola->id = fdNuevaConsola - fdNucleo;
+	    		nuevaConsola ->fd_consola = fdNuevaConsola;
+
+	    	// Recibo un nuevo programa desde la Consola:
+	    string * nuevoPrograma = (string *)aplicar_protocolo_recibir(nuevaConsola ->fd_consola, ENVIAR_SCRIPT);
+	    nuevaConsola->programa.cadena = strdup(nuevoPrograma->cadena);
+	    nuevaConsola->programa->tamanio = nuevoPrograma->tamanio;
+	    	free(nuevoPrograma->cadena);
+	    	free(nuevoPrograma);
+
+	    	// Creo la PCB asociada a ese programa:
+	    pcb * nuevoPcb = crearPcb(nuevaConsola->programa);
+	    if(nuevoPcb == NULL){
+	    	// la rechazo...
+	    	liberarPcb(nuevoPcb);
+	    	// ver qué más hacer
+	    }
+
+	    nuevaConsola->pid = nuevoPcb->pid;
+
+	    list_add(listaConsolas, nuevaConsola );
+	    log_info(logger,"La Consola %i se ha conectado", nuevaConsola->id);
+
+	    	// Empiezo a correr el nuevo programa:
+	    list_add(listaProcesos, nuevoPcb);
+	   	queue_push(colaListos, nuevoPcb);
+
+	   // planificarProceso();
+	    escucharCPUs_y_Planificar();
+
+	    	}
+	    }
+	  for ( i = 0 ; i < list_size(listaConsolas) ; i++){
+
+	    	consola * unaConsola = (consola *)list_get(listaConsolas, i);
+	    	fd = unaConsola->fd_consola;
+	   // UNA CONSOLA YA CONECTADA ME MANDA UN MENSAJE:
+	    if (FD_ISSET(fd , &readfds)) {
+
+	            int protocolo;
+	            void * mensaje = aplicar_protocolo_recibir(fd, &protocolo);
+	       if (mensaje == NULL){
+	            	cerrarSocket(fd);
+	            	log_info(logger,"La Consola %i se ha desconectado", unaConsola->id);
+	            	free(list_remove(listaConsolas, i));
+	      }else{
+
+	         switch(protocolo){
+	         // Ver qué cade de msjs tengo para recibir de Consola
+	            		default:
+	            			printf("Recibí el protocolo %i de Consola\n", protocolo);
+	            			break;
+	            	}
+	            	free(mensaje);
+	            }
+	        }
+	    }
 	}
-		} // - conexión válida de handshake -
 
-		FD_SET(newfd, &master);
-		if(newfd > maxfd) maxfd = newfd;
-
-	} else { // si no es una nueva conexión entonces es un nuevo mensaje
-
-		consola * unaConsolaActiva = (consola *)list_get(listaConsolas, i);
-
-	void * scriptRecibido = aplicar_protocolo_recibir(i, ENVIAR_SCRIPT);
-
-	if (scriptRecibido == NULL){ // desconexión o error
-	// Fin de Consola -> Fin del programa
-		log_info(logger, "Se desconectó la Consola con fd #%d. Finalizando el programa con pid #%d.",
-				unaConsolaActiva->fd_consola, unaConsolaActiva->pid);
-
-		finalizarPrograma(unaConsolaActiva->pid);
-		cerrarSocket(unaConsolaActiva->fd_consola);
-		FD_CLR(unaConsolaActiva->fd_consola, &master);
-		break;
-
-	} else { // se leyó correctamente el mensaje
-		// Recibo el programa de la Consola
-	string * scriptNuevo = (string*)scriptRecibido;
-	unaConsolaActiva->programa.tamanio = scriptNuevo->tamanio;
-	unaConsolaActiva->programa.cadena = strdup(scriptNuevo->cadena);
-
-	pcb * nuevoPCB = crearPCB(*scriptNuevo);
-
-	if(nuevoPCB!=NULL){
-		unaConsolaActiva->pid = nuevoPCB->pid;
-		list_add(listaProcesos, nuevoPCB);
-		free(nuevoPCB);
-	}
-	else{
-		aplicar_protocolo_enviar(unaConsolaActiva->fd_consola, RECHAZAR_PROGRAMA, NULL);
-	// La saco de mi lista de consolas activas:
-		cerrarSocket(unaConsolaActiva->fd_consola);
-		FD_CLR(unaConsolaActiva->fd_consola, &master);
-	}
-		free(scriptNuevo);
-		break;
-	}
-	 free(scriptRecibido);
-				} // - conexión nueva - else - mensaje nuevo -
-			} // - i está modificado -
-		} // - recorrido de fds -
-	} // - while(true) -
-	cerrarSocket(escuchaNucleo);
 }
 
-void escucharACPU(){
+void escucharCPUs_y_Planificar(){
+	int fdNucleo, fdNuevoCPU, i, fd, max_fd;
 
-int puerto = config->puertoCPU;
-int newfdCPU, fdEscuchaNucleo, maxfd;
-	fdEscuchaNucleo = nuevoSocket();
-	asociarSocket(fdEscuchaNucleo, puerto);
-	escucharSocket(fdEscuchaNucleo, CONEXIONES_PERMITIDAS);
-	fd_set readfds, master;
-	FD_ZERO(&readfds);
-	FD_ZERO(&master);
-	FD_SET(fdEscuchaNucleo, &master);
-	maxfd = fdEscuchaNucleo;
+		fd_set readfds;
+		fdNucleo = newSocket();
+		asociarSocket(fdNucleo, config->puertoCPU);
+		escucharSocket(fdNucleo, CONEXIONES_PERMITIDAS);
 
-	while(TRUE) {
+	while(TRUE){
 
-	readfds = master;
-	seleccionarSocket(maxfd, &readfds, NULL, NULL, NULL, NULL);
-	int i;
-	for(i = 0; i <= maxfd; i++) { // recorro los fds buscando si alguno se modificó
+	  FD_ZERO(&readfds);
+	  FD_SET(fdNucleo, &readfds);
+	  max_fd = fdNucleo;
 
-		if( FD_ISSET(i, &readfds) ) { // i está modificado. Si no está modificado no se le hace nada
+	  for ( i = 0 ; i < list_size(listaCPU) ; i++){
 
-			if(i == fdEscuchaNucleo) { // nueva conexión
+		  cpu * unCPU = (cpu *)list_get(listaCPU, i);
+		  fd = unCPU->fd_cpu;
+		  if(fd > 0)
+			  FD_SET( fd , &readfds);
+		  if(fd > max_fd)
+		      max_fd = fd;
+		    }
 
-			int ret_handshake = 0;
+	  seleccionarSocket(max_fd, &readfds , NULL , NULL , NULL, NULL);
 
-	while(ret_handshake == 0) { // Mientras que no acepte la conexión, por error o inválida
-	newfdCPU = aceptarConexionSocket(fdEscuchaNucleo);
-		if (validar_conexion(newfdCPU, 0) == FALSE) {
-			continue;
-		} else {
-				ret_handshake = handshake_servidor(newfdCPU, "N");
+	if (FD_ISSET(fdNucleo, &readfds)) {
+		  fdNuevoCPU = aceptarConexionSocket(fdNucleo);
+
+		    	void * login = malloc(sizeof(char) * 4);
+		    	recibirPorSocket(fdNuevoCPU, login, 4);
+		    	int coincide = strcmp((char *) login, "CPU");
+		    	free(login);
+
+		    	if(coincide != 0){
+		    		perror("[ERROR] Se espera conexión del proceso CPU\n");
+		    		int respuesta = 0;
+		    		enviarPorSocket(fdNuevoCPU,&respuesta,sizeof(int));
+		    		cerrarSocket(fdNuevoCPU);
+		    	}else{
+		    		int respuesta = 1;
+		    		enviarPorSocket(fdNuevoCPU,&respuesta,sizeof(int));
+
+		    cpu * nuevoCPU = malloc(sizeof(cpu));
+
+		    		nuevoCPU->id = fdNuevoCPU - fdNucleo;
+		    		nuevoCPU->fd_cpu = fdNuevoCPU;
+		    		nuevoCPU->disponibilidad = LIBRE;
+
+		    		list_add(listaCPU, nuevoCPU);
+		    		log_info(logger,"La CPU %i se ha conectado", nuevoCPU->id);
+
+		    		planificarProceso();
+
+		    	}
+		    }
+		for ( i = 0 ; i < list_size(listaCPU) ; i++){
+
+		  cpu * unCPU = (cpu *)list_get(listaCPU, i);
+		  fd = unCPU->fd_cpu;
+
+		if (FD_ISSET(fd , &readfds)) {
+		     int protocolo;
+		     void * mensaje = aplicar_protocolo_recibir(fd, &protocolo);
+
+		      if (mensaje == NULL){
+
+		    	  salvarProcesoEnCPU(unCPU->id);
+
+		          cerrarSocket(fd);
+		          log_info(logger,"La CPU %i se ha desconectado", unCPU->id);
+		          free(list_remove(listaCPU, i));
+
+	}else{
+		switch(protocolo){
+		   case PCB:{
+		          pcb * pcbDeRafaga =(pcb *) mensaje;
+		          log_info(logger, "CPU %i - Programa AnSISOP %i - Fin de ráfaga", unCPU->id, pcbDeRafaga->pid);
+
+		          actualizarDatosDePcbEjecutada(unCPU, pcbDeRafaga);
+
+		          planificarProceso();
+
+		          break;
+		           }
+		  case FIN_QUANTUM:{
+		           // COMPLETAR
+		      	  break;
+
+		           default:
+		            printf("Recibí el protocolo %i de CPU\n", protocolo);
+		            break;
+		            	}
+		free(mensaje);
+
+		            }
+		        }
+		    }
 		}
-			} // - conexión válida de handshake -
-
-	FD_SET(newfdCPU, &master);
-		if(newfdCPU> maxfd) maxfd = newfdCPU;
-
-		cpu * nuevoCPU = malloc(sizeof(cpu));
-		nuevoCPU->fd_cpu = newfdCPU;
-		nuevoCPU->disponibilidad = LIBRE;
-		list_add(listaCPU, nuevoCPU);
-		log_info(logger,"Se ha conectado el CPU con fd: %d", nuevoCPU->fd_cpu);
-		planificarProceso();
-
-	} else { // si no es una nueva conexión entonces es un nuevo mensaje
-		int head;
-		cpu * unCPUActivo = (cpu *)list_get(listaCPU, i);
-		void * mensaje = aplicar_protocolo_recibir(unCPUActivo->fd_cpu, head);
-
-	 if (mensaje == NULL) { // desconexión o error
-		cerrarSocket(unCPUActivo->fd_cpu);
-		log_info(logger,"La CPU con fd %d se ha desconectado", unCPUActivo->fd_cpu);
-		free(list_remove(listaCPU, unCPUActivo->fd_cpu));
-		FD_CLR(unCPUActivo->fd_cpu, &master);
-		break;
-
-} else { // se leyó correctamente el mensaje
-	switch(head){
-		case PCB:{
-
-		pcb * pcbNuevo=(pcb *) mensaje; // Recibo la PCB actualizada del CPU
-		log_info(logger, "Fin de quantum de CPU #%d - Proceso #%d", unCPUActivo->fd_cpu, pcbNuevo->pid);
-		actualizarDatosDePcbEjecutada(unCPUActivo, pcbNuevo);
-		planificarProceso();
-		break;
-	}
-		case FIN_QUANTUM:{
-				// completar
-		break;
-	}
-									            	}
-	printf("CPU #%d: %d\n", unCPUActivo->fd_cpu, head);
-					}
-				} // - conexión nueva - else - mensaje nuevo -
-			} // - i está modificado -
-		} // - recorrido de fds -
-	} // - while(true) -
-	cerrarSocket(fdEscuchaNucleo);
 }
 
 void liberarTodaLaMemoria(){
