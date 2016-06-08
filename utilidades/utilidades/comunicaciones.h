@@ -42,7 +42,7 @@ typedef enum {
 		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo
 		RECHAZAR_PROGRAMA = 15,			// Todos
 		/*DEVOLVER_BYTES = 16, 			// UMC - Núcleo / CPU*/
-		INDICAR_PID = 17, 				// CPU - UMC
+		INDICAR_PID = 20, 				// CPU - UMC
 
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
