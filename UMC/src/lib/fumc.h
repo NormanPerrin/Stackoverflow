@@ -10,6 +10,8 @@
 	#include <semaphore.h>
 
 	#define MAX_CONSOLA 50
+	#define MAX_PROCESOS 100
+	#define MAX_PAGINAS 30
 	#define MAX_CONEXIONES 30
 	#define RUTA_CONFIG "configUMC.txt"
 
@@ -28,11 +30,17 @@
 
 	typedef struct {
 		int pagina;
-		int pid;
 		int marco;
 		int bit_presencia;
 		int bit_uso;
 		int bit_modificado;
+	} subtp_t;
+
+	typedef struct {
+		int pid;
+		int puntero;
+		int paginas;
+		subtp_t tabla[MAX_PAGINAS];
 	} tp_t;
 
 	typedef struct {
@@ -80,9 +88,8 @@
 	// Globales
 	t_configuracion *config; // guarda valores del config
 	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
-	int entradas_tp;
 	void *memoria; // tha memory
-	tp_t *tabla_paginas;
+	tp_t *tabla_paginas[MAX_PROCESOS];
 	tlb_t *tlb;
 	sem_t mutex;
 	sem_t mutex_pid;
@@ -90,61 +97,63 @@
 
 	// Cabeceras
 
+	void setearValores_config(t_config * archivoConfig);
+
 	// <CONEXIONES_FUNCS>
-	void conectarConSwap(); // Se crea al principio. Luego se llama a necesidad
-	void crearHilos(); // Crea hilos servidor y consola
-	void servidor(); // Las conexiones de CPU y Núcleo se van a realizar por acá
-	void consola(); // Entrada por stdin
-	void crearHiloCliente(int *sockCliente); // Crea un hilo cliente al aceptar conexión
-	void cliente(void* sockCliente); // Maneja pedidos del cliente
+	void conectarConSwap();
+	void crearHilos();
+	void consola();
+	void servidor();
+	void crearHiloCliente(int *sockCliente);
+	void cliente(void* fdCliente);
+	void responder(int fd, int respuesta);
+	int pedir_pagina_swap(int fd, int pid, int pagina);
+	void enviarTamanioMarco(int fd, int tamanio);
+	int validar_cliente(char *id);
+	int validar_servidor(char *id);
 	// </CONEXIONES_FUNCS>
 
 	// <AUXILIARES>
-	void abrirArchivoConfig(char *ruta); // Setea todos los valores de configuración
-	void iniciarEstructuras(); // Crea memoria y estructuras de administracións
-	void liberarEstructura();
+	void iniciarEstructuras();
+	void liberarConfig();
 	void liberarRecusos();
-	int validar_cliente(char *id); // Valida que el cliente sea CPU o Nucleo
-	int validar_servidor(char *id); // Valida que el servidor sea Swap
-	void pedir_pagina(int fd, int pid, int pagina);
-	void enviarTamanioMarco(int fd, int tamanio);
 	void *elegirFuncion(protocolo head);
-	void responder(int fd, int respuesta);
-	int pedir_pagina_swap(int fd, int pid, int pagina);
 	// </AUXILIARES>
 
 	// <PRINCIPAL>
-	void inciar_programa(int fd, void *msj); // Llama a agregar_tp y le avisa a Swap
+	void inciar_programa(int fd, void *msj);
 	void leer_bytes(int fd, void *msj);
+	void escribir_bytes(int fd, void *msj);
 	void finalizar_programa(int fd, void *msj);
-	void escribir_bytes(int fd, void *mensaje);
+	void cambiarPid(int fd, void *mensaje);
 	// </PRINCIPAL>
 
 	// <TABLA_PAGINA>
-	void agregar_tp(int pid, int paginas); // Agrega un proceso a la tabla de páginas
-	int buscar_tp(int pid, int pagina);
-	void eliminar_pagina(int pid, int pagina);
-	void reset_entrada(int pos);
 	void iniciarTP();
-	int cargar_pagina(int pid, int pagina, void *contenido);
-	int buscarPagina(int fd, int pid, int pagina);
-	void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modificacion, int b_uso);
-	int contar_paginas(int pid);
+	void reset_entrada(int pos);
+	void setear_entrada(int pos, int subpos, subtp_t set);
+	int pos_pid(int pid);
+	void agregar_paginas_nuevas(int pid, int paginas);
+	void agregar_pagina_nueva(int pid, int pagina);
 	int contar_paginas_asignadas(int pid);
+	void eliminar_pagina(int pid, int pagina);
+	int buscarPagina(int fd, int pid, int pagina);
+	int cargar_pagina(int pid, int pagina, void *contenido);
+	void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modificacion, int b_uso);
 	// </TABLA_PAGINA>
 
 	// <PID_FUNCS>
-	void actualizarPid(int fd, int pid);
 	int buscarPosPid(int fd);
+	void actualizarPid(int fd, int pid);
+	void agregarPid(int fd, int pid);
 	int buscarEspacioPid();
 	void borrarPid(int fd);
-	void agregarPid(int fd, int pid);
 	// </PID_FUNCS>
 
 	// <TLB_FUNCS>
-	void actualizar_tlb(int pid, int pagina);
-	void borrar_tlb(int pid, int pagina);
 	int buscar_tlb(int pid, int pagina);
+	void borrar_tlb(int pid, int pagina);
+	void actualizar_tlb(int pid, int pagina);
 	// </TLB_FUNCS>
 
 #endif /* LIB_FUMC_H_ */

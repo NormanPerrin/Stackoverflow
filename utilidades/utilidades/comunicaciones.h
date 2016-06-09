@@ -123,7 +123,7 @@ typedef enum{
 /*** PROTOTIṔOS ***/
 // -- Funciones definitivas para enviar y recibir PAQUETES:
 void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void * mensaje);
-void* aplicar_protocolo_recibir(int fdEmisor, int protocolo);
+void* aplicar_protocolo_recibir(int fdEmisor, int * protocolo);
 
 // -- Serialización y deserialización GENERAL:
 void * serealizar(int head, void * elemento);
@@ -141,6 +141,5 @@ solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
 void * serializarRespuestaPedido(void * elemento);
 respuestaPedido * deserializarRespuestaPedido(void * buffer);
 
-int* autoinicializado();
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

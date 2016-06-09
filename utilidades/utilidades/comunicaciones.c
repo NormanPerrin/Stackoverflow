@@ -1,12 +1,9 @@
 #include "comunicaciones.h"
 
-// TODO: Ver si usar uint16_t, sino sigamos siendo amigos del int.
 
-void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void * mensaje){
+void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void *mensaje){
 
-	int desplazamiento = 0, tamanioTotal;
-	int* tamanioMensaje = autoinicializado();
-	int* head = autoinicializado();
+	int desplazamiento = 0, tamanioMensaje, tamanioTotal;
 
 	if (protocolo < 1 || protocolo > FIN_DEL_PROTOCOLO){
 		fprintf(stderr, "Error al enviar paquete. No existe protocolo definido para %d\n", protocolo);
@@ -14,72 +11,61 @@ void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void * mensaje){
 		}
 
 	// Serealizar un mensaje dado un protocolo, me devuelve el mensaje empaquetado:
-	void * mensajeSerealizado = serealizar(protocolo, mensaje);
-	*tamanioMensaje = sizeof(mensajeSerealizado);
-	*head = protocolo;
-
+	void *mensajeSerealizado = serealizar(protocolo, mensaje);
+	tamanioMensaje = sizeof(mensajeSerealizado);
 	/* Lo que se envía es: el protocolo + tamaño del msj + el msj serializado
 	 * Entonces, el tamaño total de lo enviado es:
 	 * 	16 bytes de los dos int + el tamaño del msj empaquetado */
 
-	tamanioTotal = 2*INT + *tamanioMensaje;
+	tamanioTotal = 2*INT + tamanioMensaje;
 
 	// Meto en el paquete para enviar, esas tres cosas:
-	void * buffer = malloc(tamanioTotal);
-	memcpy(buffer + desplazamiento, head, INT);
+	void *buffer = reservarMemoria(tamanioTotal);
+	memcpy(buffer + desplazamiento, &protocolo, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, tamanioMensaje, INT);
+	memcpy(buffer + desplazamiento, &tamanioMensaje, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, mensajeSerealizado, *tamanioMensaje);
+	memcpy(buffer + desplazamiento, mensajeSerealizado, tamanioMensaje);
 
 	// Se envía la totalidad del paquete (lo contenido en el buffer):
 	enviarPorSocket(fdReceptor, buffer, tamanioTotal);
 
 	free(buffer);
 	free(mensajeSerealizado);
-	free(head);
-	free(tamanioMensaje);
 }
 
-void * aplicar_protocolo_recibir(int fdEmisor, int protocolo){
-	int* head = (int*)malloc(INT);
-	int* tamanioMensaje = (int*)malloc(INT);
 
-	if (protocolo < 1 || protocolo > FIN_DEL_PROTOCOLO){
-		fprintf(stderr, "Error al recibir paquete. No existe protocolo definido para %d\n", protocolo);
+void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo){
+
+	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO){
+		fprintf(stderr, "Error al recibir paquete. No existe protocolo definido para %d\n", *protocolo);
 			abort(); // es abortivo
 		}
 
-	// Recibo primero el head y lo verifico:
-	recibirPorSocket(fdEmisor, head, INT);
+	// Recibo primero el head y lo verifico: // TODO: revisar validación
+	int recibido = recibirPorSocket(fdEmisor, protocolo, INT);
 
-	if(*head != protocolo){
-		return NULL; // El protocolo indicado existe, pero no coincide con el recibido
-		// Validar contra NULL al recibir en cada módulo (tirar un mensaje de error notificando)
+	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0){
+		return NULL; // Validar contra NULL al recibir en cada módulo (tirar un mensaje de error notificando)
 	}
 
 	// Recibo ahora el tamaño del mensaje:
+	int* tamanioMensaje = (int*)reservarMemoria(INT);
 	recibirPorSocket(fdEmisor, tamanioMensaje, INT);
+
 	// Recibo por último el mensaje serializado:
-	void * mensaje = malloc(*tamanioMensaje);
+	void * mensaje = reservarMemoria(*tamanioMensaje);
 	recibirPorSocket(fdEmisor, mensaje, *tamanioMensaje);
 
 	// Deserealizo:
-	void * buffer = deserealizar(*head, mensaje);
-
+	void *buffer = deserealizar(*protocolo, mensaje);
 	free(mensaje);
-	free(head);
 	free(tamanioMensaje);
 
 	return buffer;
 
 } // Se debe castear el mensaje al recibirse (indicar el tipo de dato que debe matchear con el void*)
 
-int* autoinicializado(){
-	int* valorInicial = (int*)malloc(INT);
-	*valorInicial = 0;
-	return valorInicial;
-}
 
 void * serealizar(int protocolo, void * elemento){
 	void * buffer;
@@ -109,7 +95,7 @@ void * serealizar(int protocolo, void * elemento){
 		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA:{
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
-			buffer = malloc(tamanio);
+			buffer = reservarMemoria(tamanio);
 			memcpy(buffer, elemento, tamanio);
 			break;
 		}
@@ -158,7 +144,7 @@ void * deserealizar(int protocolo, void * mensaje){
 			case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(mensaje);
-			buffer = malloc(tamanio);
+			buffer = reservarMemoria(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
 		}
@@ -182,28 +168,31 @@ void * deserealizar(int protocolo, void * mensaje){
 
 /**** SERIALIZACIONES PARTICULARES ****/
 
-void* serealizarTexto(void * elemento){
-	string * texto = (string *) elemento;
-	int tamanioTotal, desplazamiento = 0;
-	int tamanioString = CHAR * texto->tamanio;
-	tamanioTotal = INT + tamanioString;
+void *serealizarTexto(void *elemento) { // TODO: así hay que calcular length antes de aplicar_protocolo_enviar
 
-		void * buffer = malloc(tamanioTotal);
-		memcpy(buffer + desplazamiento, &(texto->tamanio), INT);
-			desplazamiento += INT;
-		memcpy(buffer + desplazamiento, texto->cadena, tamanioString);
+	string *texto = (string*)elemento;
+
+	int desplazamiento = 0;
+	int tamanioString = CHAR * texto->tamanio;
+	int tamanioTotal = INT + tamanioString;
+
+	void * buffer = reservarMemoria(tamanioTotal);
+	memcpy(buffer + desplazamiento, &(texto->tamanio), INT);
+	desplazamiento += INT;
+	memcpy(buffer + desplazamiento, texto->cadena, tamanioString);
 
 	return buffer;
 }
 
-string * deserealizarTexto(void * buffer){
-	int desplazamiento = 0;
-	string * texto = malloc(STRING);
+string *deserealizarTexto(void *buffer) { // TODO: mismo que anterior
 
-		memcpy(&texto->tamanio, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-		texto->cadena = malloc(texto->tamanio);
-		memcpy(texto->cadena, buffer + desplazamiento, texto->tamanio);
+	int desplazamiento = 0;
+	string * texto = (string*)reservarMemoria(STRING);
+
+	memcpy(&texto->tamanio, buffer + desplazamiento, INT);
+	desplazamiento += INT;
+	texto->cadena = reservarMemoria(texto->tamanio * CHAR);
+	memcpy(texto->cadena, buffer + desplazamiento, texto->tamanio);
 
 	return texto;
 }
@@ -224,7 +213,7 @@ void * serealizarPCB(void * estructura){
 	tamanioTotal = 10*INT + codigoSize + stackSize + etiquetasSize;
 	// package->total_size = sizeof(package->username_long) + package->username_long + sizeof(package->message_long) + package->message_long;
 
-	void * buffer = malloc(tamanioTotal);
+	void * buffer = reservarMemoria(tamanioTotal);
 	memcpy(buffer + desplazamiento,&(unPCB->pid), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->id_cpu), INT);
@@ -272,7 +261,7 @@ void * serealizarPCB(void * estructura){
 
 pcb * deserealizarPCB(void * buffer){
 	int desplazamiento = 0;
-	pcb * unPcb = malloc(sizeof(pcb));
+	pcb * unPcb = reservarMemoria(sizeof(pcb));
 
 	memcpy(&unPcb->pid, buffer + desplazamiento, INT );
 		desplazamiento += INT;
@@ -290,14 +279,14 @@ pcb * deserealizarPCB(void * buffer){
 	// Deserealizo el índice de código:
 	memcpy(&unPcb->tamanioIndiceCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceCodigo = malloc(unPcb->tamanioIndiceCodigo);
+	unPcb->indiceCodigo = reservarMemoria(unPcb->tamanioIndiceCodigo);
 	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
 		desplazamiento += unPcb->tamanioIndiceCodigo;
 
 		// Deserealizo el índice de etiquetas:
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
+	unPcb->indiceEtiquetas = reservarMemoria(unPcb->tamanioIndiceEtiquetas);
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
@@ -310,12 +299,12 @@ pcb * deserealizarPCB(void * buffer){
 		desplazamiento += sizeof(direccion);
 	memcpy(&unPcb->indiceStack->tamanioListaArgumentos, buffer + desplazamiento, INT);
 			desplazamiento += INT;
-	unPcb->indiceStack->listaPosicionesArgumentos = malloc(unPcb->indiceStack->tamanioListaArgumentos);
+	unPcb->indiceStack->listaPosicionesArgumentos = reservarMemoria(unPcb->indiceStack->tamanioListaArgumentos);
 	memcpy(unPcb->indiceStack->listaPosicionesArgumentos, buffer + desplazamiento, unPcb->indiceStack->tamanioListaArgumentos);
 		desplazamiento += unPcb->indiceStack->tamanioListaArgumentos;
 	memcpy(&unPcb->indiceStack->tamanioListaVariables, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceStack->listaVariablesLocales = malloc(unPcb->indiceStack->tamanioListaVariables);
+	unPcb->indiceStack->listaVariablesLocales = reservarMemoria(unPcb->indiceStack->tamanioListaVariables);
 	memcpy(unPcb->indiceStack->listaVariablesLocales, buffer + desplazamiento, unPcb->indiceStack->tamanioListaVariables);
 
 	return unPcb;
@@ -328,7 +317,7 @@ void * serealizarSolicitudEscritura(void * elemento){
 	int tamanioString = CHAR * unaSolicitud->buffer.tamanio;
 	tamanioTotal = 4*INT + tamanioString;
 
-		void * buffer = malloc(tamanioTotal);
+		void * buffer = reservarMemoria(tamanioTotal);
 		memcpy(buffer + desplazamiento, &(unaSolicitud->posicion), sizeof(direccion));
 			desplazamiento += sizeof(direccion);
 		memcpy(buffer + desplazamiento, &(unaSolicitud->buffer.tamanio), INT);
@@ -340,13 +329,13 @@ void * serealizarSolicitudEscritura(void * elemento){
 
 solicitudEscritura * deserealizarSolicitudEscritura(void * buffer){
 	int desplazamiento = 0;
-	solicitudEscritura * unaSolicitud = malloc(sizeof(solicitudEscritura));
+	solicitudEscritura * unaSolicitud = reservarMemoria(sizeof(solicitudEscritura));
 
 		memcpy(&unaSolicitud->posicion, buffer + desplazamiento, sizeof(direccion));
 			desplazamiento += sizeof(direccion);
 		memcpy(&unaSolicitud->buffer.tamanio, buffer + desplazamiento, INT);
 			desplazamiento += INT;
-		unaSolicitud->buffer.cadena = malloc(unaSolicitud->buffer.tamanio);
+		unaSolicitud->buffer.cadena = reservarMemoria(unaSolicitud->buffer.tamanio);
 		memcpy(unaSolicitud->buffer.cadena, buffer + desplazamiento, unaSolicitud->buffer.tamanio);
 
 	return unaSolicitud;
@@ -360,7 +349,7 @@ void * serializarRespuestaPedido(void * elemento){
 	int tamanioDataPedida = CHAR * respuesta->dataPedida.tamanio;
 	tamanioTotal = 3*INT + tamanioExcepcion + tamanioDataPedida;
 
-	void * buffer = malloc(tamanioTotal);
+	void * buffer = reservarMemoria(tamanioTotal);
 		memcpy(buffer + desplazamiento, &(respuesta->estadoPedido), INT);
 			desplazamiento += INT;
 		memcpy(buffer + desplazamiento, &(respuesta->mensaje.tamanio), INT);
@@ -376,20 +365,20 @@ void * serializarRespuestaPedido(void * elemento){
 
 respuestaPedido * deserializarRespuestaPedido(void * buffer){
 	int desplazamiento = 0;
-		respuestaPedido * respuesta = malloc(sizeof(respuestaPedido));
+		respuestaPedido * respuesta = reservarMemoria(sizeof(respuestaPedido));
 
 		memcpy(&respuesta->estadoPedido, buffer + desplazamiento, INT);
 			desplazamiento += INT;
 
 		memcpy(&respuesta->mensaje.tamanio, buffer + desplazamiento, INT);
 			desplazamiento += INT;
-		respuesta->mensaje.cadena = malloc(respuesta->mensaje.tamanio);
+		respuesta->mensaje.cadena = reservarMemoria(respuesta->mensaje.tamanio);
 		memcpy(respuesta->mensaje.cadena, buffer + desplazamiento, respuesta->mensaje.tamanio);
 			desplazamiento += respuesta->mensaje.tamanio;
 
 		memcpy(&respuesta->dataPedida.tamanio, buffer + desplazamiento, INT);
 			desplazamiento += INT;
-		respuesta->dataPedida.cadena = malloc(respuesta->dataPedida.tamanio);
+		respuesta->dataPedida.cadena = reservarMemoria(respuesta->dataPedida.tamanio);
 		memcpy(respuesta->dataPedida.cadena, buffer + desplazamiento, respuesta->dataPedida.tamanio);
 
 	return respuesta;

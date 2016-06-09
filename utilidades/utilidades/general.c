@@ -4,9 +4,9 @@
 
 // -- OPERACIONES CON MEMORIA --
 void* reservarMemoria(int size) {
-	void* puntero = malloc(size);
+	void *puntero = malloc(size);
 	if(puntero == NULL) {
-		fprintf(stderr, "Lo imposible sucedió. Error al reservar memoria\n");
+		fprintf(stderr, "Lo imposible sucedió. Error al reservar %d bytes de memoria\n", size);
 		exit(ERROR);
 	}
 	return puntero;
