@@ -52,11 +52,12 @@ void ejecutarInstruccion(pcb* pcb){
 				instruccion = strdup(respuesta->dataPedida.cadena);
 
 				analizadorLinea(instruccion, &funcionesAnSISOP, &funcionesKernel);
-				// ver qué se hace con la instrucción
-				/* Al terminar:
-				* free(respuesta->mensaje.cadena);
-				*  free(respuesta->dataPedida.cadena);
-				* free(respuesta);*/
+
+				free(instruccion);
+				free(respuesta->mensaje.cadena);
+				free(respuesta->dataPedida.cadena);
+				free(respuesta);
+//				unsleep(pcb->retardoQuantum); //ya deberia estar en milisegundos
 
 			}
 			else{
@@ -75,6 +76,25 @@ void ejecutarInstruccion(pcb* pcb){
 			log_error(logger, "Se esperaba una respuesta de lectura y no se recibió.");
 			//abort();
 		}
+}
+
+void ejecutarProceso(pcb* pcb){
+
+	int quantum = pcb->quantum;
+	int estado = pcb->estado;
+
+	while(quantum > 0){
+		ejecutarInstruccion(pcb);
+		quantum--;
+	}
+	if(quantum == 0){
+		estado = READY;
+		pcb->estado = estado;
+	}
+
+	aplicar_protocolo_enviar(fd_clienteNucleo, FIN_QUANTUM, NULL);
+	aplicar_protocolo_enviar(fd_clienteNucleo, PCB, pcb);
+
 }
 
 void conectarConNucleo() {
@@ -101,25 +121,6 @@ void conectarConNucleo() {
 
 	cerrarSocket(fd_clienteUMC);
 	cerrarSocket(fd_clienteNucleo);
-}
-
-void ejecutarProceso(pcb* pcb){
-
-	int quantum = pcb->quantum;
-	int estado = pcb->estado;
-
-	while(quantum > 0){
-		ejecutarInstruccion(pcb);
-		quantum--;
-	}
-	if(quantum == 0){
-		estado = READY;
-		pcb->estado = estado;
-	}
-
-	aplicar_protocolo_enviar(fd_clienteNucleo, FIN_QUANTUM, NULL);
-	aplicar_protocolo_enviar(fd_clienteNucleo, PCB, pcb);
-
 }
 
 void liberarEstructura() {
