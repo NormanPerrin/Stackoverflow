@@ -42,7 +42,7 @@ void ejecutarInstruccion(pcb* pcb){
 
 	aplicar_protocolo_enviar(fd_clienteUMC, PEDIDO_LECTURA, &direccionInstruccion);
 
-	entrada = aplicar_protocolo_recibir(fd_clienteUMC, protocolo);
+	entrada = aplicar_protocolo_recibir(fd_clienteUMC, &protocolo);
 
 	if (protocolo == RESPUESTA_PEDIDO){
 		respuesta = (respuestaPedido *) entrada;
@@ -84,7 +84,7 @@ void conectarConNucleo() {
 	handshake_cliente(fd_clienteNucleo, "P");
 	int protocolo;
 
-	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, protocolo);
+	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, &protocolo);
 	if (protocolo == PCB){
 		while(mensaje!=NULL){
 				// El CPU obtiene una PCB para ejecutar:

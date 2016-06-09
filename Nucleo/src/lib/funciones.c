@@ -61,26 +61,33 @@ pcb * crearPcb(string programa){
 	printf("Solicitando segmentos de código y de stack a UMC para el Proceso #%d", nuevoPcb->pid);
 	aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
 
-	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)aplicar_protocolo_recibir(fd_UMC, INICIAR_PROGRAMA);
+	int protocolo;
+	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)aplicar_protocolo_recibir(fd_UMC, &protocolo);
 
-	free(solicitudDeInicio->codigo.cadena);
-	free(solicitudDeInicio);
+	if(protocolo == INICIAR_PROGRAMA){
+		free(solicitudDeInicio->codigo.cadena);
+			free(solicitudDeInicio);
 
-	if(respuestaInicio->estadoDelHeap == CREADO){
-		log_info(logger,"Se pudo alocar todos los segmentos para el Proceso #%d", nuevoPcb->pid);
+			if(respuestaInicio->estadoDelHeap == CREADO){
+				log_info(logger,"Se pudo alocar todos los segmentos para el Proceso #%d", nuevoPcb->pid);
 
-		free(respuestaInicio);
+				free(respuestaInicio);
 
-		return nuevoPcb;
+				return nuevoPcb;
+			}
+			else{
+				 log_info(logger,
+			"UMC no pudo alocar segmentos para el Proceso #%d. Rechazando ingreso al sistema.", nuevoPcb->pid);
+
+				 free(respuestaInicio);
+
+				 return NULL;
+			}
 	}
 	else{
-		 log_info(logger,
-	"UMC no pudo alocar segmentos para el Proceso #%d. Rechazando ingreso al sistema.", nuevoPcb->pid);
-
-		 free(respuestaInicio);
-
-		 return NULL;
+		printf("Error al iniciar programa. No se reconoce el protocolo %d.", protocolo);
 	}
+
 }
 
 void inicializarIndices(pcb* pcb, t_metadata_program* metaData){
@@ -223,21 +230,3 @@ void actualizarDatosDePcbEjecutada(cpu * unCPU, pcb * pcbNuevo){
 		liberarPcb(pcbNuevo);
 }
 
-int validar_cliente(char *id) {
-	if( !strcmp(id, "C") || !strcmp(id, "P") ) {
-		printf("Cliente aceptado.\n");
-		return TRUE;
-	} else {
-		printf("Cliente rechazado.\n");
-		return FALSE;
-	}
-}
-
-int validar_servidor(char *id) {
-	if(!strcmp(id, "U")) {
-		printf("UMC me ha aceptado.\n");
-		return TRUE;
-	} else {
-		printf("UMC me ha rechazado.\n");
-		return FALSE;
-	}
