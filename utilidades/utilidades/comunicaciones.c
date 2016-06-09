@@ -37,9 +37,6 @@ void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void *mensaje){
 
 void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo){
 
-	int* head = (int*)reservarMemoria(INT);
-	int* tamanioMensaje = (int*)reservarMemoria(INT);
-
 	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO){
 		fprintf(stderr, "Error al recibir paquete. No existe protocolo definido para %d\n", *protocolo);
 			abort(); // es abortivo
@@ -53,6 +50,7 @@ void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo){
 	}
 
 	// Recibo ahora el tamaño del mensaje:
+	int* tamanioMensaje = (int*)reservarMemoria(INT);
 	recibirPorSocket(fdEmisor, tamanioMensaje, INT);
 
 	// Recibo por último el mensaje serializado:
@@ -62,6 +60,7 @@ void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo){
 	// Deserealizo:
 	void *buffer = deserealizar(*protocolo, mensaje);
 	free(mensaje);
+	free(tamanioMensaje);
 
 	return buffer;
 
@@ -169,44 +168,33 @@ void * deserealizar(int protocolo, void * mensaje){
 
 /**** SERIALIZACIONES PARTICULARES ****/
 
-// | string texto |
 void *serealizarTexto(void *elemento) { // TODO: así hay que calcular length antes de aplicar_protocolo_enviar
-
-	int tamanioTotal, desplazamiento = 0;
 
 	string *texto = (string*)elemento;
 
-	int *tamanioString = (int*)reservarMemoria(INT);
-	*tamanioString = CHAR * texto->tamanio;
+	int desplazamiento = 0;
+	int tamanioString = CHAR * texto->tamanio;
+	int tamanioTotal = INT + tamanioString;
 
-	char *mensaje = (char*)reservarMemoria(*tamanioString);
-	*mensaje = *(texto->cadena);
-
-	tamanioTotal = INT + *tamanioString;
 	void * buffer = reservarMemoria(tamanioTotal);
-
-	memcpy(buffer + desplazamiento, tamanioString, INT);
+	memcpy(buffer + desplazamiento, &(texto->tamanio), INT);
 	desplazamiento += INT;
-	memcpy(buffer + desplazamiento, mensaje, tamanioString);
-
-	free(tamanioString);
-	free(mensaje);
+	memcpy(buffer + desplazamiento, texto->cadena, tamanioString);
 
 	return buffer;
 }
 
-// | string texto |
 string *deserealizarTexto(void *buffer) { // TODO: mismo que anterior
 
 	int desplazamiento = 0;
-	string * texto = (string*)reservarMemoria(STRING); // todo: falta liberar memoria
+	string * texto = (string*)reservarMemoria(STRING);
 
 	memcpy(&texto->tamanio, buffer + desplazamiento, INT);
 	desplazamiento += INT;
-	texto->cadena = reservarMemoria(texto->tamanio);
+	texto->cadena = reservarMemoria(texto->tamanio * CHAR);
 	memcpy(texto->cadena, buffer + desplazamiento, texto->tamanio);
 
-	return texto; // todo: supuestamente estás retornando lo mismo que te ingresa
+	return texto;
 }
 
 void * serealizarPCB(void * estructura){
