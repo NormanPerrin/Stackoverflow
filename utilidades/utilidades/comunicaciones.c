@@ -3,9 +3,7 @@
 
 void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void *mensaje){
 
-	int desplazamiento = 0, tamanioTotal;
-	int *tamanioMensaje = (int*)reservarMemoria(INT);
-	int *head = (int*)reservarMemoria(INT);
+	int desplazamiento = 0, tamanioMensaje, tamanioTotal;
 
 	if (protocolo < 1 || protocolo > FIN_DEL_PROTOCOLO){
 		fprintf(stderr, "Error al enviar paquete. No existe protocolo definido para %d\n", protocolo);
@@ -14,63 +12,56 @@ void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void *mensaje){
 
 	// Serealizar un mensaje dado un protocolo, me devuelve el mensaje empaquetado:
 	void *mensajeSerealizado = serealizar(protocolo, mensaje);
-	*tamanioMensaje = sizeof(mensajeSerealizado);
-	*head = protocolo;
-
+	tamanioMensaje = sizeof(mensajeSerealizado);
 	/* Lo que se envía es: el protocolo + tamaño del msj + el msj serializado
 	 * Entonces, el tamaño total de lo enviado es:
 	 * 	16 bytes de los dos int + el tamaño del msj empaquetado */
 
-	tamanioTotal = 2*INT + *tamanioMensaje;
+	tamanioTotal = 2*INT + tamanioMensaje;
 
 	// Meto en el paquete para enviar, esas tres cosas:
 	void *buffer = reservarMemoria(tamanioTotal);
-	memcpy(buffer + desplazamiento, head, INT);
+	memcpy(buffer + desplazamiento, &protocolo, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, tamanioMensaje, INT);
+	memcpy(buffer + desplazamiento, &tamanioMensaje, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, mensajeSerealizado, *tamanioMensaje);
+	memcpy(buffer + desplazamiento, mensajeSerealizado, tamanioMensaje);
 
 	// Se envía la totalidad del paquete (lo contenido en el buffer):
 	enviarPorSocket(fdReceptor, buffer, tamanioTotal);
 
 	free(buffer);
 	free(mensajeSerealizado);
-	free(head);
-	free(tamanioMensaje);
 }
 
 
-void * aplicar_protocolo_recibir(int fdEmisor, int protocolo){
+void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo){
 
 	int* head = (int*)reservarMemoria(INT);
 	int* tamanioMensaje = (int*)reservarMemoria(INT);
 
-	if (protocolo < 1 || protocolo > FIN_DEL_PROTOCOLO){
-		fprintf(stderr, "Error al recibir paquete. No existe protocolo definido para %d\n", protocolo);
+	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO){
+		fprintf(stderr, "Error al recibir paquete. No existe protocolo definido para %d\n", *protocolo);
 			abort(); // es abortivo
 		}
 
 	// Recibo primero el head y lo verifico: // TODO: revisar validación
-	recibirPorSocket(fdEmisor, head, INT);
+	int recibido = recibirPorSocket(fdEmisor, protocolo, INT);
 
-	if(*head != protocolo){
-		return NULL; // El protocolo indicado existe, pero no coincide con el recibido
-		// Validar contra NULL al recibir en cada módulo (tirar un mensaje de error notificando)
+	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0){
+		return NULL; // Validar contra NULL al recibir en cada módulo (tirar un mensaje de error notificando)
 	}
 
 	// Recibo ahora el tamaño del mensaje:
 	recibirPorSocket(fdEmisor, tamanioMensaje, INT);
+
 	// Recibo por último el mensaje serializado:
 	void * mensaje = reservarMemoria(*tamanioMensaje);
 	recibirPorSocket(fdEmisor, mensaje, *tamanioMensaje);
 
 	// Deserealizo:
-	void *buffer = deserealizar(*head, mensaje);
-
+	void *buffer = deserealizar(*protocolo, mensaje);
 	free(mensaje);
-	free(head);
-	free(tamanioMensaje);
 
 	return buffer;
 
