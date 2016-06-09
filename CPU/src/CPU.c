@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <parser/parser.h>
 #include <utilidades/general.h>
-#include "lib/fcpu.h"
+
+#include "lib/principalesCPU.h"
 
 int main(void) {
 

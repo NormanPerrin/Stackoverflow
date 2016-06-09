@@ -1,41 +1,9 @@
-#ifndef LIB_FCPU_H_
-#define LIB_FCPU_H_
+#ifndef LIB_PRIMITIVASANSISOP_H_
+#define LIB_PRIMITIVASANSISOP_H_
 
-#include <utilidades/general.h>
-#include <utilidades/comunicaciones.h>
-#include <commons/config.h>
-#include <commons/log.h>
-#include <parser/parser.h>
-#include <parser/metadata_program.h>
+#include "globalesCPU.h"
 
-#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-#define RUTA_CONFIG_CPU "configCPU.txt"
-
-// Estructuras
-typedef struct {
-	int puertoNucleo; // Puerto donde se encuentra escuchando el proceso Núcleo
-	char *ipNucleo; // IP del proceso Núcleo
-	int puertoUMC;
-	char *ipUMC;
-} t_configuracion;
-
-// Globales
-t_configuracion *config;
-int fd_clienteNucleo, fd_clienteUMC;
-int tamanioPagina;
-t_log * logger;
-
-// Cabeceras
-void conectarConNucleo();
-void conectarConUMC();
-void ejecutarProceso(pcb* pcb);
-void setearValores_config(t_config * archivoConfig);
-void liberarEstructura(); // Libera la memoria reservada en setear config
-int validar_servidor(char *id); // Valida si la conexión es UMC o Nucleo
-int validar_cliente(char *id); // para que no joda con error
-void crearLogger();
-
-// Prototipos de Primitivas AnSISOP
+/** PROTOTIPO PRIMITIVAS ANSISOP **/
 t_puntero definirVariable(t_nombre_variable identificador_variable);
 t_puntero obtenerPosicionVariable(t_nombre_variable identificador_variable);
 t_valor_variable dereferenciar(t_puntero direccion_variable);
@@ -71,4 +39,4 @@ AnSISOP_kernel funcionesKernel = {
 };
 
 
-#endif /* LIB_FCPU_H_ */
+#endif /* LIB_PRIMITIVASANSISOP_H_ */
