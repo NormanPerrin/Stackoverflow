@@ -1,12 +1,12 @@
 #ifndef LIB_PRINCIPALESCPU_H_
 #define LIB_PRINCIPALESCPU_H_
 
-#include "fcpu.h"
+#include "secundariasCPU.h"
 
 /** PROTOTIPO FUNCIONES PRINCIPALES **/
-leerArchivoDeConfiguracion(char * ruta);
-conectarConUMC();
-conectarConNucleo();
+void leerArchivoDeConfiguracion(char * ruta);
+void conectarConUMC();
+void conectarConNucleo();
 void liberarEstructura(); // Libera la memoria reservada en setear config
 
 #endif
