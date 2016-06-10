@@ -157,6 +157,11 @@ void aceptarConexionEntranteDeCPU(){
 		    		nuevoCPU->fd_cpu = fdNuevoCPU;
 		    		nuevoCPU->disponibilidad = LIBRE;
 
+		    		int* quantum = (int*)malloc(INT);
+		    		*quantum = config->quantum;
+		    		aplicar_protocolo_enviar(nuevoCPU->fd_cpu, quantum, QUANTUM_MODIFICADO);
+		    		free(quantum);
+
 		    		list_add(listaCPU, nuevoCPU);
 		    		log_info(logger,"La CPU %i se ha conectado", nuevoCPU->id);
 
@@ -198,9 +203,9 @@ void aceptarConexionEntranteDeCPU(){
 			   	variableImprimible->cadena = string_itoa(*((int*) mensaje));
 			   	variableImprimible->tamanio = string_length(variableImprimible->cadena + 1);
 
-			   bool consolaTieneElPid(void* unaConsola){
-			   	return (((consola*) unaConsola)->pid) == unCPU->pid;}
-			   consola * consolaAsociada = list_find(listaConsolas, consolaTieneElPid);
+			   	bool consolaTieneElPid(void* unaConsola){
+			   return (((consola*) unaConsola)->pid) == unCPU->pid;}
+			   consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
 
 			  // Le mando el msj a la Consola asociada:
 			 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variableImprimible);
@@ -211,7 +216,7 @@ void aceptarConexionEntranteDeCPU(){
 		   case IMPRIMIR_TEXTO:{
 			   bool consolaTieneElPid(void* unaConsola){
 			 return (((consola*) unaConsola)->pid) == unCPU->pid;}
-			 consola * consolaAsociada = list_find(listaConsolas, consolaTieneElPid);
+			 consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
 
 			 // Le mando el msj a la Consola asociada:
 			 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);

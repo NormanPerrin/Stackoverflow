@@ -19,6 +19,7 @@ typedef struct {
 	char *ipUMC;
 } t_configuracion;
 
+info_quantum * infoQuantum;
 // Variables Globales:
 t_configuracion *config;
 int fd_clienteNucleo, fd_clienteUMC;
