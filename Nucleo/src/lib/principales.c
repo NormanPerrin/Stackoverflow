@@ -25,12 +25,10 @@ void conectarConUMC(){
 	validar_conexion(ret, 1); // al ser cliente es terminante
 	handshake_cliente(fd_UMC, "N");
 
-	int * buffer_tamPagina = (int*)malloc(INT);
-	recibirPorSocket(fd_UMC, buffer_tamPagina, INT);
-	tamanioPagina = *buffer_tamPagina; // setea el tamaño de pág. que recibe de UMC
-	free(buffer_tamPagina);
-
-	// cerrarSocket(fd_UMC);
+	int * tamPagina = (int*)malloc(INT);
+	recibirPorSocket(fd_UMC, tamPagina, INT);
+	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC
+	free(tamPagina);
 }
 
 void esperar_y_PlanificarProgramas(){
@@ -76,18 +74,18 @@ void esperar_y_PlanificarProgramas(){
 
 	    if (FD_ISSET(fdEscuchaConsola, &readfds)) {
 
-	    	atenderNuevaConsola();
+	    	aceptarConexionEntranteDeConsola();
 
 	} // fin if nuevaConsola
 	    else{
 
-	    	atenderNuevoCPU();
+	    	aceptarConexionEntranteDeCPU();
 
 	    } // fin else nuevoCPU
 	} // fin while
 } // fin función escuchar
 
-void atenderNuevaConsola(){
+void aceptarConexionEntranteDeConsola(){
 	int fdNuevaConsola, i, fd;
 
 	 fdNuevaConsola = aceptarConexionSocket(fdEscuchaConsola);
@@ -105,7 +103,11 @@ void atenderNuevaConsola(){
 		    		nuevaConsola ->fd_consola = fdNuevaConsola;
 
 		    	// Recibo un nuevo programa desde la Consola:
-		    string * nuevoPrograma = (string *)aplicar_protocolo_recibir(nuevaConsola ->fd_consola, ENVIAR_SCRIPT);
+		    int protocolo;
+		    void * entrada = aplicar_protocolo_recibir(nuevaConsola->fd_consola, &protocolo);
+		  if(protocolo == ENVIAR_SCRIPT){
+			  string * nuevoPrograma = (string*) entrada;
+			  free(entrada);
 		    nuevaConsola->programa.cadena = strdup(nuevoPrograma->cadena);
 		    nuevaConsola->programa->tamanio = nuevoPrograma->tamanio;
 		    	free(nuevoPrograma->cadena);
@@ -115,7 +117,7 @@ void atenderNuevaConsola(){
 		    pcb * nuevoPcb = crearPcb(nuevaConsola->programa);
 		    if(nuevoPcb == NULL){
 		    	//  UMC no pudo alocar los segmentos del programa, lo rachazo:
-		    	aplicar_protocolo_enviar(nuevaConsola ->fd_consola, RECHAZAR_PROGRAMA, NULL);
+		    	aplicar_protocolo_enviar(nuevaConsola->fd_consola, RECHAZAR_PROGRAMA, NULL);
 		    	liberarPcb(nuevoPcb);
 		    }
 
@@ -130,37 +132,14 @@ void atenderNuevaConsola(){
 
 		   // planificarProceso();
 		    escucharCPUs_y_Planificar();
-
+		  }
+		  else{
+			  printf("Se espera un script de la Consola #%d.", nuevaConsola->id);
+		  }
 		    	}
-
-		  for ( i = 0 ; i < list_size(listaConsolas) ; i++){
-
-		    	consola * unaConsola = (consola *)list_get(listaConsolas, i);
-		    	fd = unaConsola->fd_consola;
-		   // UNA CONSOLA YA CONECTADA ME MANDA UN MENSAJE:
-		    if (FD_ISSET(fd , &readfds)) {
-
-		            int protocolo;
-		            void * mensaje = aplicar_protocolo_recibir(fd, &protocolo);
-		       if (mensaje == NULL){
-		            	cerrarSocket(fd);
-		            	log_info(logger,"La Consola %i se ha desconectado", unaConsola->id);
-		            	free(list_remove(listaConsolas, i));
-		      }else{
-
-		         switch(protocolo){
-		         // Ver qué cade de msjs tengo para recibir de Consola
-		            		default:
-		            			printf("Recibí el protocolo %i de Consola\n", protocolo);
-		            			break;
-		            	}
-		            	free(mensaje);
-		            }
-		        }
-		    }
 	}
 
-void aceptarConexionDeCPU(){
+void aceptarConexionEntranteDeCPU(){
 	int fdNuevoCPU, i, fd;
 
 		  fdNuevoCPU = aceptarConexionSocket(fdEscuchaCPU);
@@ -204,10 +183,10 @@ void aceptarConexionDeCPU(){
 	}else{
 		switch(protocolo){
 		   case PCB:{
-		          pcb * pcbDeRafaga =(pcb *) mensaje;
-		          log_info(logger, "CPU %i - Programa AnSISOP %i - Fin de ráfaga", unCPU->id, pcbDeRafaga->pid);
+		          pcb * pcbEjecutada =(pcb *) mensaje;
+		          log_info(logger, "CPU %i - Programa AnSISOP %i - Fin de ráfaga", unCPU->id, pcbEjecutada->pid);
 
-		          actualizarDatosDePcbEjecutada(unCPU, pcbDeRafaga);
+		          actualizarDatosDePcbEjecutada(unCPU, pcbEjecutada);
 
 		          planificarProceso();
 
@@ -231,7 +210,7 @@ void aceptarConexionDeCPU(){
 
 void liberarTodaLaMemoria(){
 	limpiarListasYColas();
-
+	limpiarArchivoConfig();
 	log_destroy(logger);
 	logger = NULL;
 }

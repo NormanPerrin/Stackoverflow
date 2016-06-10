@@ -9,7 +9,9 @@ void abrirArchivoDeConfiguracion(char * ruta);
 void inicializarListasYColas();
 void conectarConUMC();
 void esperar_y_PlanificarProgramas();
-void escucharCPUs_y_Planificar();
 void liberarTodaLaMemoria();
+// INCLUIDAS:
+void aceptarConexionEntranteDeConsola();
+void aceptarConexionEntranteDeCPU();
 
 #endif /* LIB_PRINCIPALES_H_ */

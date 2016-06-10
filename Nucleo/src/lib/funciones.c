@@ -141,7 +141,11 @@ void salvarProcesoEnCPU(int CPU){
 }
 
 void liberarPcb(pcb * pcb){
-	// borrarle los campos necesarios
+	free(pcb->indiceCodigo);
+	free(pcb->indiceEtiquetas);
+	free(pcb->indiceStack->listaPosicionesArgumentos);
+	free(pcb->indiceStack->listaVariablesLocales);
+	free(pcb->indiceStack);
 
 	free(pcb);
 	pcb = NULL;
@@ -162,6 +166,19 @@ void limpiarListasYColas(){
 
 	queue_destroy(colaListos);
 	queue_destroy(colaBloqueados);
+	colaListos = NULL;
+	colaBloqueados = NULL;
+}
+
+void limpiarArchivoConfig(){
+	free(config->ioID);
+	free(config->ipUMC);
+	free(config->retardosIO);
+	free(config->semaforosID);
+	free(config->semaforosValInicial);
+	free(config->variablesCompartidas);
+	free(config);
+	config = NULL;
 }
 
 void planificarProceso(){
