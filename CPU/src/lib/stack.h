@@ -7,5 +7,5 @@
 registroStack* inicializarStack();
 void push();
 void pop();
-
+t_puntero ultimaPosicionDeVariable();
 #endif /* LIB_STACK_H_ */

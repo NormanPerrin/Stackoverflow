@@ -1,5 +1,5 @@
 #include "principalesCPU.h"
-
+#define PCBEJECUTANDO pcb
 
 void conectarConUMC(){
 	fd_clienteUMC = nuevoSocket();
@@ -25,6 +25,7 @@ void conectarConNucleo() {
 		while(mensaje!=NULL){
 				// El CPU obtiene una PCB para ejecutar:
 				pcb * pcbEnEjecucion = malloc(sizeof(pcb));
+				PCBEJECUTANDO=pcbEnEjecucion;
 				memcpy(pcbEnEjecucion, mensaje, sizeof(pcb));
 				free(mensaje);
 
