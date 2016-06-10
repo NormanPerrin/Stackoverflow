@@ -1,5 +1,4 @@
 #include "secundariasCPU.h"
-#include "principalesCPU.h"
 
 // Funciones
 void setearValores_config(t_config * archivoConfig){
