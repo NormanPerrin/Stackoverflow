@@ -92,7 +92,7 @@ void * serealizar(int protocolo, void * elemento){
 			break;
 		}
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
-		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA:{
+		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID_ACTUAL: {
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
 			buffer = reservarMemoria(tamanio);
@@ -141,7 +141,7 @@ void * deserealizar(int protocolo, void * mensaje){
 			break;
 		}
 		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
-			case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: {
+			case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID_ACTUAL: {
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(mensaje);
 			buffer = reservarMemoria(tamanio);

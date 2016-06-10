@@ -41,7 +41,7 @@ typedef enum {
 		FIN_QUANTUM = 13,				// CPU - Núcleo
 		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo
 		RECHAZAR_PROGRAMA = 15,			// Todos
-		INDICAR_PID = 16, 				// CPU - UMC
+		INDICAR_PID_ACTUAL = 16, 				// CPU - UMC
 
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
