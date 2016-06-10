@@ -26,8 +26,8 @@
 
 // PROTOCOLO (head/tipo de msj):
 typedef enum {
-		IMPRIMIR = 1, 					// Núcleo - Consola
-		IMPRIMIR_TEXTO = 2, 			// Núcleo - Consola
+		IMPRIMIR = 1, 					// CPU - Núcleo
+		IMPRIMIR_TEXTO = 2, 			// CPU - Núcleo / Núcleo - Consola
 		INICIAR_PROGRAMA = 3, 			// Núcleo - UMC / UMC - Swap
 		PEDIDO_LECTURA = 4, 			// CPU - UMC
 		PEDIDO_ESCRITURA = 5, 			// CPU - UMC
@@ -42,7 +42,8 @@ typedef enum {
 		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo / Swap - UMC
 		RECHAZAR_PROGRAMA = 15,			// Todos
 		INDICAR_PID = 16, 				// CPU - UMC
-		DEVOLVER_CONTENIDO = 17,		// UMC - CPU
+		QUANTUM_MODIFICADO = 17,		// Núcleo - CPU
+		DEVOLVER_CONTENIDO = 18,		// UMC - CPU
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
 	} protocolo;
@@ -57,6 +58,11 @@ typedef struct {
 		int tamanio;
 		char * cadena;
 } __attribute__((packed)) string;
+
+typedef struct{
+	int quantum;
+	int retardoQuantum;
+}__attribute__((packed)) info_quantum;
 
 typedef struct {
 		char id;
@@ -94,7 +100,7 @@ typedef enum {
 } estadoProceso;
 
 typedef struct pcb{
-	int pid, pc, paginas_codigo, estado, quantum, retardoQuantum, id_cpu;
+	int pid, pc, paginas_codigo, estado, id_cpu;
 	int tamanioIndiceCodigo;
 	t_intructions* indiceCodigo;
 	int tamanioIndiceEtiquetas; // Tamaño del mapa serializado de etiquetas

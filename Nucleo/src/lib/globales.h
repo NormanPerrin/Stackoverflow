@@ -12,7 +12,9 @@
 #include <commons/collections/queue.h>
 #include <semaphore.h>
 #include <parser/metadata_program.h>
+#include <sys/inotify.h>
 
+#define EVENT_SIZE ( sizeof (struct inotify_event) + strlen(RUTA_CONFIG_NUCLEO) + 1 )
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
@@ -67,5 +69,6 @@ int tamanioPagina;
 fd_set readfds;
 int fdEscuchaConsola;
 int fdEscuchaCPU;
+int fd_inotify;
 
 #endif /* LIB_GLOBALES_H_ */

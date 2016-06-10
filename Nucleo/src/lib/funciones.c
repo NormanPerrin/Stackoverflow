@@ -38,7 +38,6 @@ pcb * crearPcb(string programa){
 	nuevoPcb->paginas_codigo = (resto_div==0)?aux_div:aux_div+1;
 
 	nuevoPcb->estado = READY;
-	nuevoPcb->quantum = config->quantum;
 
 	// Ahora, analizo con el parser el código del programa para obtener su metadata:
 	char* codigo = malloc(programa.tamanio);
@@ -56,8 +55,7 @@ pcb * crearPcb(string programa){
 	inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(sizeof(inicioPrograma));
 	solicitudDeInicio->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
 	solicitudDeInicio->pid = nuevoPcb->pid;
-	solicitudDeInicio->codigo.cadena = strdup(programa.cadena);
-	solicitudDeInicio->codigo.tamanio = programa.tamanio;
+	solicitudDeInicio->contenido = strdup(programa.cadena);
 
 	printf("Solicitando segmentos de código y de stack a UMC para el Proceso #%d", nuevoPcb->pid);
 	aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
@@ -67,7 +65,7 @@ pcb * crearPcb(string programa){
 
 	if(protocolo == INICIAR_PROGRAMA)
 
-		free(solicitudDeInicio->codigo.cadena);
+		free(solicitudDeInicio->contenido);
 			free(solicitudDeInicio);
 
 			if(respuestaInicio->estadoDelHeap == CREADO){
@@ -270,3 +268,57 @@ void manejarES(){
 		}
 	}*/
 }
+
+void notificarCambioDelQuantumACPU(){
+
+	info_quantum * infoQuantum = (int*) malloc(info_quantum);
+		infoQuantum->quantum = config->quantum;
+		infoQuantum->retardoQuantum = config->retardoQuantum;
+
+	void enviarNuevoQuantum(cpu * unCpu){aplicar_protocolo_enviar(unCpu->fd_cpu, QUANTUM_MODIFICADO, infoQuantum);}
+	list_iterate(listaCPU, (void *)enviarNuevoQuantum);
+
+	free(infoQuantum);
+}
+
+void detectarCambiosEnArchivoConfig(){
+	char buffer[EVENT_SIZE];
+
+		fd_inotify = inotify_init();
+		if (fd_inotify < 0) {
+			manejarError("inotify_init");
+		}
+
+		int watch_descriptor = inotify_add_watch(fd_inotify, RUTA_CONFIG_NUCLEO, IN_MODIFY);
+
+		int length = read(fd_inotify, buffer, EVENT_SIZE);
+		if (length < 0) {
+			manejarError("read");
+		}
+
+		int offset = 0;
+
+		while (offset < length) {
+
+			struct inotify_event *event = (struct inotify_event *) &buffer[offset];
+
+			if (event->len) {
+
+				if (event->mask & IN_MODIFY) {
+					if (event->mask & IN_ISDIR) {
+						printf("El directorio %s fue modificado.\n", event->name);
+					} else {
+						printf("EL archivo %s fue modificado.\n", event->name);
+
+						notificarCambioDelQuantumACPU();
+					}
+				}
+			}
+			offset += sizeof (struct inotify_event) + event->len;
+		}
+
+		inotify_rm_watch(fd_inotify, watch_descriptor);
+		close(fd_inotify);
+}
+
+// TODO: METER EN EL SELECT EL FD INOTIFY

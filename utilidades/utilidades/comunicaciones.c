@@ -85,8 +85,8 @@ void * serealizar(int protocolo, void * elemento){
 			buffer = serializarRespuestaPedido(elemento);
 			break;
 		}
-		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
-		case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: case LEER_PAGINA: case INDICAR_PID:{
+		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA:
+			case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:case LEER_PAGINA: case INDICAR_PID:{
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
 			buffer = reservarMemoria(tamanio);
@@ -133,8 +133,8 @@ void * deserealizar(int protocolo, void * mensaje){
 			buffer = deserializarRespuestaPedido(mensaje);
 			break;
 		}
-		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA:
-			case PEDIDO_LECTURA: case RESPUESTA_INICIO_PROGRAMA: case LEER_PAGINA: case INDICAR_PID: {
+		case FIN_QUANTUM: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA:
+			case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO: case LEER_PAGINA: case INDICAR_PID: {
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(mensaje);
 			buffer = reservarMemoria(tamanio);
@@ -221,8 +221,6 @@ void * serealizarPCB(void * estructura){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->estado), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->quantum), INT);
-		desplazamiento += INT;
 
 	// Serealizo el índice de código:
 	memcpy(buffer + desplazamiento, &(unPCB->tamanioIndiceCodigo), INT);
@@ -267,8 +265,6 @@ pcb * deserealizarPCB(void * buffer){
 	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, INT );
 		desplazamiento += INT;
 	memcpy(&unPcb->estado, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->quantum, buffer + desplazamiento, INT );
 		desplazamiento += INT;
 
 	// Deserealizo el índice de código:

@@ -20,5 +20,8 @@ void liberarConsola(consola * consola);
 void liberarCPU(cpu * cpu);
 void limpiarArchivoConfig();
 void manejarES();
+void notificarCambioDelQuantumACPU();
+void detectarCambiosEnArchivoConfig();
+void enviarNuevoQuantum(cpu * unCpu);
 
 #endif /* LIB_FUNCIONES_H_ */

@@ -83,9 +83,9 @@ void esperar_mensajes() {
 
 		switch(head){
 
-			case IMPRIMIR: case IMPRIMIR_TEXTO:{
-				/* Núcleo ya le manda la variable "convertida a texto", asi que ambos casos le llegan
-				 * como string */
+			case IMPRIMIR_TEXTO:{
+				/* Incluye 'imprimir', ya que Núcleo le manda la variable "convertida a texto",
+				 * asi que ambos casos le llegan como string */
 				string* dataAImprimir = (string*)mensaje;
 				puts(dataAImprimir->cadena);
 				free(mensaje);
