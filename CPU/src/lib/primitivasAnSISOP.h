@@ -2,6 +2,7 @@
 #define LIB_PRIMITIVASANSISOP_H_
 
 #include "globalesCPU.h"
+#include "stack.h"
 
 /** PROTOTIPO PRIMITIVAS ANSISOP **/
 t_puntero definirVariable(t_nombre_variable identificador_variable);

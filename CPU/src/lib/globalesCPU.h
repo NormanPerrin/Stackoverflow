@@ -24,6 +24,7 @@ t_configuracion *config;
 int fd_clienteNucleo, fd_clienteUMC;
 int tamanioPagina;
 t_log * logger;
+pcb * pcbActual;
 
 
 

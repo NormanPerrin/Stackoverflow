@@ -45,7 +45,7 @@ void ejecutarInstruccion(pcb* pcb){
 				free(respuesta->mensaje.cadena);
 				free(respuesta->dataPedida.cadena);
 				free(respuesta);
-//				unsleep(pcb->retardoQuantum); //ya deberia estar en milisegundos
+				usleep(pcb->retardoQuantum);
 
 			}
 			else{
