@@ -37,17 +37,11 @@ void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void *mensaje){
 
 void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo){
 
-	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO){
-		fprintf(stderr, "Error al recibir paquete. No existe protocolo definido para %d\n", *protocolo);
-			abort(); // es abortivo
-		}
-
-	// Recibo primero el head y lo verifico: // TODO: revisar validación
+	// Recibo primero el head y lo verifico:
 	int recibido = recibirPorSocket(fdEmisor, protocolo, INT);
 
-	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0){
+	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0)
 		return NULL; // Validar contra NULL al recibir en cada módulo (tirar un mensaje de error notificando)
-	}
 
 	// Recibo ahora el tamaño del mensaje:
 	int* tamanioMensaje = (int*)reservarMemoria(INT);
@@ -168,33 +162,36 @@ void * deserealizar(int protocolo, void * mensaje){
 
 /**** SERIALIZACIONES PARTICULARES ****/
 
-void *serealizarTexto(void *elemento) { // TODO: así hay que calcular length antes de aplicar_protocolo_enviar
+// entra:	char *mensaje
+// sale: 	int tamanio | char *mensaje
+void *serealizarTexto(void *elemento) {
 
-	string *texto = (string*)elemento;
+	char *mensaje = (char*)elemento;
 
 	int desplazamiento = 0;
-	int tamanioString = CHAR * texto->tamanio;
+	int tamanioString = CHAR * strlen(mensaje);
 	int tamanioTotal = INT + tamanioString;
 
-	void * buffer = reservarMemoria(tamanioTotal);
-	memcpy(buffer + desplazamiento, &(texto->tamanio), INT);
+	void *buffer = reservarMemoria(tamanioTotal);
+	memcpy(buffer + desplazamiento, &tamanioString, INT);
 	desplazamiento += INT;
-	memcpy(buffer + desplazamiento, texto->cadena, tamanioString);
+	memcpy(buffer + desplazamiento, mensaje, tamanioString);
 
 	return buffer;
 }
 
-string *deserealizarTexto(void *buffer) { // TODO: mismo que anterior
+// entra:	int tamanio | char *mensaje
+// sale:	char *mensaje
+void *deserealizarTexto(void *buffer) {
 
-	int desplazamiento = 0;
-	string * texto = (string*)reservarMemoria(STRING);
+	int desplazamiento = 0, *tamanioString;
 
-	memcpy(&texto->tamanio, buffer + desplazamiento, INT);
+	memcpy(tamanioString, buffer + desplazamiento, INT);
 	desplazamiento += INT;
-	texto->cadena = reservarMemoria(texto->tamanio * CHAR);
-	memcpy(texto->cadena, buffer + desplazamiento, texto->tamanio);
+	char *mensaje = (char*)reservarMemoria(*tamanioString);
+	memcpy(mensaje, buffer + desplazamiento, *tamanioString);
 
-	return texto;
+	return mensaje;
 }
 
 void * serealizarPCB(void * estructura){
@@ -310,14 +307,17 @@ pcb * deserealizarPCB(void * buffer){
 	return unPcb;
 }
 
-void * serealizarSolicitudEscritura(void * elemento){
-	solicitudEscritura * unaSolicitud = (solicitudEscritura * ) elemento;
+
+// ingresa:	solicitudEscritura *mensaje
+void *serealizarSolicitudEscritura(void *elemento) {
+
+	solicitudEscritura *mensaje = (solicitudEscritura*)elemento;
 	int tamanioTotal, desplazamiento = 0;
 
-	int tamanioString = CHAR * unaSolicitud->buffer.tamanio;
+	int tamanioString = CHAR * strlen(mensaje->contenido);
 	tamanioTotal = 4*INT + tamanioString;
 
-		void * buffer = reservarMemoria(tamanioTotal);
+		void *buffer = reservarMemoria(tamanioTotal);
 		memcpy(buffer + desplazamiento, &(unaSolicitud->posicion), sizeof(direccion));
 			desplazamiento += sizeof(direccion);
 		memcpy(buffer + desplazamiento, &(unaSolicitud->buffer.tamanio), INT);
@@ -327,7 +327,8 @@ void * serealizarSolicitudEscritura(void * elemento){
 	return buffer;
 }
 
-solicitudEscritura * deserealizarSolicitudEscritura(void * buffer){
+// sale:	int tamanio |
+void * deserealizarSolicitudEscritura(void * buffer){
 	int desplazamiento = 0;
 	solicitudEscritura * unaSolicitud = reservarMemoria(sizeof(solicitudEscritura));
 

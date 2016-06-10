@@ -103,9 +103,15 @@ typedef struct pcb{
 } __attribute__((packed)) pcb;
 
 // TADS para UMC - CPU
+//typedef struct solicitudEscritura{
+//	direccion posicion;
+//	string buffer; // lo que se manda a escribir
+//} __attribute__((packed)) solicitudEscritura;
+
 typedef struct solicitudEscritura{
-	direccion posicion;
-	string buffer; // lo que se manda a escribir
+	int pagina;
+	int offset;
+	char *contenido;
 } __attribute__((packed)) solicitudEscritura;
 
 typedef struct {
