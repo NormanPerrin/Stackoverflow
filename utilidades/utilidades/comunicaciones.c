@@ -113,7 +113,7 @@ void * deserealizar(int protocolo, void * mensaje){
 	void * buffer;
 
 	switch(protocolo){
-		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO:{
+		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_CONTENIDO: {
 			buffer = deserealizarTexto(mensaje);
 				break;
 		} // en ambos casos se recibe un texto (char*)
