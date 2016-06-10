@@ -10,9 +10,11 @@ int main(void) {
 
 	inicializarListasYColas();
 
+	// semáforos y diccionaries
+
 	conectarConUMC();
 
-	esperar_y_PlanificarProgramas();
+	esperar_y_PlanificarProgramas(); // Select de Consolas y CPUs
 
 	liberarTodaLaMemoria();
 

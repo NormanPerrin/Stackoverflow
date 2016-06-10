@@ -11,29 +11,23 @@
 
 #define RUTA_CONFIG_CONSOLA "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/configConsola.txt"
 
-//#define RUTA_CONFIG_CONSOLA "configConsola.txt"
-
 // Variables globales
-int puertoNucleo; // Puerto donde se encuentra escuchando el proceso Núcleo
-char * ipNucleo; // IP del proceso Núcleo
+int puertoNucleo;
+char * ipNucleo;
 int fd_nucleo; // Socket Consola - Núcleo
 char * rutaScript;
 string* programa;
 t_log * logger;
 
-// Estructuras
-
 // Cabeceras
 void validar_argumentos(int arg); // Valida argumentos de entrada
 void leerScript(char * rutaScript);
-void testLecturaArchivoDeConfiguracion();
 void setearValores_config(t_config * archivoConfig);
 void liberarRecusos(); // Libera memoria asignada
 void conectarConNucleo();
 int validar_servidor(char *id); // Valida si la conexión es de Núcleo
 int validar_cliente(char *id); // Es para poner su definición y que no jodan errores
 void esperar_mensajes(); // Espera mensajes de Núcleo: Fin, Imprimir, Imprimir_texto
-void imprimir(); // Imprime por consola
 void crearLogger();
 
 #endif /* LIB_FCONSOLA_H_ */

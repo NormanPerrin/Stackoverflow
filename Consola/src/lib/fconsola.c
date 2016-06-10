@@ -37,19 +37,18 @@ void conectarConNucleo(){
 	handshake_cliente(fd_nucleo, "C");
 
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
+	free(programa->cadena);
+	free(programa);
 
 	esperar_mensajes();
 
-	cerrarSocket(fd_nucleo);
-}
-
-void testLecturaArchivoDeConfiguracion(){
-	printf("Puerto Núcleo: %d\n", puertoNucleo);
-	printf("IP Núcleo: %s\n", ipNucleo);
 }
 
 void liberarRecusos() {
 	free(ipNucleo);
+	free(rutaScript);
+	log_destroy(logger);
+	logger = NULL;
 }
 
 int validar_servidor(char *id) {
@@ -65,44 +64,40 @@ int validar_cliente(char *id) {return 0;}
 
 void esperar_mensajes() {
 	int head;
-	while(TRUE) {
-		// validar...
-		void * mensaje = aplicar_protocolo_recibir(fd_nucleo, head);
-
-		if (mensaje == NULL) { // desconexión o error
+	void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
+	if (mensaje == NULL) { // desconexión o error
 			cerrarSocket(fd_nucleo);
 			log_info(logger,"El Núcleo se ha desconectado.");
-			break;
-		} else { // se leyó correctamente el mensaje
-
-	switch(head){
-
-		case RECHAZAR_PROGRAMA:{
-		log_info(logger, "El sistema ha rechazado al programa %s. Desconectando.", rutaScript);
-
-	break;
-			}
-		case IMPRIMIR:{
-
-		int*valorAImprimir = (int*)mensaje;
-		printf("IMPRIMIR: %d\n", *valorAImprimir);
-
-	break;
-			}
-	case IMPRIMIR_TEXTO:{
-
-		string* textoAImprimir = (string*)mensaje;
-		printf("IMPRIMIR: %s\n", textoAImprimir->cadena);
-
-	break;
-			}
-	case FINALIZAR_PROGRAMA:{
-
-	break;
-			}
-		}
+			free(mensaje);
 	}
-		free(mensaje);
+	else{
+		if(head == RECHAZAR_PROGRAMA){
+			puts("La UMV no pudo alocar los segmentos pedidos. El programa ha sido rechazado.");
+			cerrarSocket(fd_nucleo);
+			// log_info(logger, "El sistema ha rechazado al programa %s. Desconectando.", rutaScript);
+			free(mensaje);
+						}
+		else { // se leyó correctamente el mensaje
+
+	while(TRUE) {
+
+		switch(head){
+
+			case IMPRIMIR: case IMPRIMIR_TEXTO:{
+				string* dataAImprimir = (string*)mensaje;
+				puts(dataAImprimir->cadena);
+				free(mensaje);
+			break;
+					}
+			case FINALIZAR_PROGRAMA:{
+				puts("Finalizando el programa.");
+					cerrarSocket(fd_nucleo);
+					free(mensaje);
+			break;
+					}
+				} // fin del switch-case
+			} // fin del while
+		}
 	}
 }
 

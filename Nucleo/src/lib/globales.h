@@ -64,4 +64,8 @@ t_list * listaCPU;
 t_list * listaConsolas;
 int tamanioPagina;
 
+fd_set readfds;
+int fdEscuchaConsola;
+int fdEscuchaCPU;
+
 #endif /* LIB_GLOBALES_H_ */

@@ -64,7 +64,8 @@ pcb * crearPcb(string programa){
 	int protocolo;
 	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)aplicar_protocolo_recibir(fd_UMC, &protocolo);
 
-	if(protocolo == INICIAR_PROGRAMA){
+	if(protocolo == INICIAR_PROGRAMA)
+
 		free(solicitudDeInicio->codigo.cadena);
 			free(solicitudDeInicio);
 
@@ -83,10 +84,6 @@ pcb * crearPcb(string programa){
 
 				 return NULL;
 			}
-	}
-	else{
-		printf("Error al iniciar programa. No se reconoce el protocolo %d.", protocolo);
-	}
 
 }
 
