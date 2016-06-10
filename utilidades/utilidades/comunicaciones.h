@@ -33,16 +33,16 @@ typedef enum {
 		PEDIDO_ESCRITURA = 5, 			// CPU - UMC
 		FINALIZAR_PROGRAMA = 6,			// Núcleo - UMC / UMC - SWAP
 		ENVIAR_SCRIPT = 7, 				// Consola - Núcleo
-		RESPUESTA_PEDIDO = 10, 			// UMC - CPU
+		RESPUESTA_PEDIDO = 10, 			// UMC - CPU / Swap - UMC
 		LEER_PAGINA = 8, 				// UMC - Swap
 		ESCRIBIR_PAGINA = 9, 			// UMC - Swap
 		DEVOLVER_PAGINA = 11,			// Swap - UMC
 		PCB = 12,						// Núcleo - CPU / CPU - Núcleo
 		FIN_QUANTUM = 13,				// CPU - Núcleo
-		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo
+		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo / Swap - UMC
 		RECHAZAR_PROGRAMA = 15,			// Todos
-		INDICAR_PID_ACTUAL = 16, 				// CPU - UMC
-
+		INDICAR_PID = 16, 				// CPU - UMC
+		DEVOLVER_CONTENIDO = 17,		// UMC - CPU
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
 	} protocolo;
@@ -74,9 +74,10 @@ typedef struct {
 
 // TADS para UMC - Núcleo
 typedef struct {
-		int pid, paginas;
-		string codigo;
-	} __attribute__((packed)) inicioPrograma;
+	int pid;
+	int paginas;
+	char *contenido;
+} __attribute__((packed)) inicioPrograma;
 
 typedef struct {
 		int pid, estadoDelHeap;
@@ -103,10 +104,39 @@ typedef struct pcb{
 } __attribute__((packed)) pcb;
 
 // TADS para UMC - CPU
-typedef struct solicitudEscritura{
-	direccion posicion;
-	string buffer; // lo que se manda a escribir
+//typedef struct solicitudEscritura{
+//	direccion posicion;
+//	string buffer; // lo que se manda a escribir
+//} __attribute__((packed)) solicitudEscritura;
+
+typedef struct {
+	int pagina;
+	int offset;
+	int tamanio;
+	char *contenido;
 } __attribute__((packed)) solicitudEscritura;
+
+typedef struct {
+	int pagina;
+	int offset;
+	int tamanio;
+} __attribute__((packed)) solicitudLectura;
+
+typedef struct {
+	int pid;
+	int pagina;
+} __attribute__((packed))solicitudLeerPagina;
+
+typedef struct {
+	int pid;
+	int pagina;
+	char *contenido;
+} __attribute__((packed))solicitudEscribirPagina;
+
+typedef struct {
+	int pagina;
+	char *contenido;
+} __attribute__((packed))devolverPagina;
 
 typedef struct {
 	int estadoPedido;
@@ -133,13 +163,17 @@ void * deserealizar(int head, void * mensaje);
 void* serealizarPCB(void* estructura);
 pcb* deserealizarPCB(void* buffer);
 void* serealizarTexto(void* estructura);
-string* deserealizarTexto(void* buffer);
+void* deserealizarTexto(void* buffer);
 void* serealizarSolicitudInicioPrograma(void* elemento);
-inicioPrograma* deserealizarSolicitudInicioPrograma(void* buffer);
+void* deserealizarSolicitudInicioPrograma(void* buffer);
 void* serealizarSolicitudEscritura(void * elemento);
-solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
+void * deserealizarSolicitudEscritura(void * buffer);
 void * serializarRespuestaPedido(void * elemento);
 respuestaPedido * deserializarRespuestaPedido(void * buffer);
+void *deserializarDevolverPagina(void *buffer);
+void *serealizarDevolverPagina(void *elemento);
+void *deserializarEscribirPagina(void * buffer);
+void *serealizarEscribirPagina(void *elemento);
 
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

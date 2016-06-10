@@ -1,5 +1,4 @@
 #include "principalesCPU.h"
-#define PCBEJECUTANDO pcb
 
 void conectarConUMC(){
 	fd_clienteUMC = nuevoSocket();
@@ -24,12 +23,10 @@ void conectarConNucleo() {
 	if (protocolo == PCB){
 		while(mensaje!=NULL){
 				// El CPU obtiene una PCB para ejecutar:
-				pcb * pcbEnEjecucion = malloc(sizeof(pcb));
-				PCBEJECUTANDO=pcbEnEjecucion;
-				memcpy(pcbEnEjecucion, mensaje, sizeof(pcb));
+				pcbActual = (pcb *) mensaje;
 				free(mensaje);
 
-				ejecutarProceso(pcbEnEjecucion);
+				ejecutarProceso(pcbActual);
 			}
 	}else{
 			log_error(logger, "Se esperaba un PCB y no se recibió.");
