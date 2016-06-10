@@ -18,7 +18,7 @@ void finalizarPrograma(int pid);
 void limpiarListasYColas();
 void liberarConsola(consola * consola);
 void liberarCPU(cpu * cpu);
-void liberarMetadataDelPrograma(t_metadata_program * metadata);
 void limpiarArchivoConfig();
+void manejarES();
 
 #endif /* LIB_FUNCIONES_H_ */

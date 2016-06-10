@@ -27,17 +27,17 @@ void conectarConUMC(){
 
 	int * tamPagina = (int*)malloc(INT);
 	recibirPorSocket(fd_UMC, tamPagina, INT);
-	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC
+	tamanioPagina = *tamPagina; // Seteo el tamaño de pág. que recibo de UMC
 	free(tamPagina);
 }
 
 void esperar_y_PlanificarProgramas(){
 	int i, fd, max_fd;
 
-	fdEscuchaConsola = newSocket();
+	fdEscuchaConsola = nuevoSocket();
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
-	fdEscuchaCPU = newSocket();
+	fdEscuchaCPU = nuevoSocket();
 	asociarSocket(fdEscuchaCPU, config->puertoCPU);
 	escucharSocket(fdEscuchaCPU, CONEXIONES_PERMITIDAS);
 
@@ -86,7 +86,7 @@ void esperar_y_PlanificarProgramas(){
 } // fin función escuchar
 
 void aceptarConexionEntranteDeConsola(){
-	int fdNuevaConsola, i, fd;
+	int fdNuevaConsola;
 
 	 fdNuevaConsola = aceptarConexionSocket(fdEscuchaConsola);
 
@@ -109,7 +109,7 @@ void aceptarConexionEntranteDeConsola(){
 			  string * nuevoPrograma = (string*) entrada;
 			  free(entrada);
 		    nuevaConsola->programa.cadena = strdup(nuevoPrograma->cadena);
-		    nuevaConsola->programa->tamanio = nuevoPrograma->tamanio;
+		    nuevaConsola->programa.tamanio = nuevoPrograma->tamanio;
 		    	free(nuevoPrograma->cadena);
 		    	free(nuevoPrograma);
 
@@ -130,8 +130,8 @@ void aceptarConexionEntranteDeConsola(){
 		    list_add(listaProcesos, nuevoPcb);
 		   	queue_push(colaListos, nuevoPcb);
 
-		   // planificarProceso();
-		    escucharCPUs_y_Planificar();
+		   planificarProceso();
+
 		  }
 		  else{
 			  printf("Se espera un script de la Consola #%d.", nuevaConsola->id);
@@ -160,6 +160,7 @@ void aceptarConexionEntranteDeCPU(){
 		    		list_add(listaCPU, nuevoCPU);
 		    		log_info(logger,"La CPU %i se ha conectado", nuevoCPU->id);
 
+		    	// Pongo al nuevo CPU a ejecutar un proceso:
 		    		planificarProceso();
 		    	}
 
@@ -183,8 +184,8 @@ void aceptarConexionEntranteDeCPU(){
 	}else{
 		switch(protocolo){
 		   case PCB:{
-		          pcb * pcbEjecutada =(pcb *) mensaje;
-		          log_info(logger, "CPU %i - Programa AnSISOP %i - Fin de ráfaga", unCPU->id, pcbEjecutada->pid);
+		          pcb * pcbEjecutada = (pcb *) mensaje;
+		          log_info(logger, "Programa AnSISOP %i salió de CPU %i.", pcbEjecutada->pid, unCPU->id);
 
 		          actualizarDatosDePcbEjecutada(unCPU, pcbEjecutada);
 
@@ -192,6 +193,30 @@ void aceptarConexionEntranteDeCPU(){
 
 		          break;
 		           }
+		   case IMPRIMIR:{
+			   	string* variableImprimible = (string*)reservarMemoria(sizeof(string));
+			   	variableImprimible->cadena = string_itoa(*((int*) mensaje));
+			   	variableImprimible->tamanio = string_length(variableImprimible->cadena + 1);
+
+			   bool consolaTieneElPid(void* unaConsola){
+			   	return (((consola*) unaConsola)->pid) == unCPU->pid;}
+			   consola * consolaAsociada = list_find(listaConsolas, consolaTieneElPid);
+
+			  // Le mando el msj a la Consola asociada:
+			 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variableImprimible);
+			 free(variableImprimible->cadena);
+			 free(variableImprimible);
+		   		break;
+		   	 }
+		   case IMPRIMIR_TEXTO:{
+			   bool consolaTieneElPid(void* unaConsola){
+			 return (((consola*) unaConsola)->pid) == unCPU->pid;}
+			 consola * consolaAsociada = list_find(listaConsolas, consolaTieneElPid);
+
+			 // Le mando el msj a la Consola asociada:
+			 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
+		   		break;
+		   		   	 }
 		  case FIN_QUANTUM:{
 		           // COMPLETAR
 		      	  break;
