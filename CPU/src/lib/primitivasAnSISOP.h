@@ -13,7 +13,7 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 void irAlLabel(t_nombre_etiqueta t_nombre_etiqueta);
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar);
 void retornar(t_valor_variable retorno);
-void imprimirAnSISOP(t_valor_variable valor_mostrar);
+void imprimir(t_valor_variable valor_mostrar);
 void imprimirTexto(char* texto);
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 void wait(t_nombre_semaforo identificador_semaforo);
@@ -25,17 +25,19 @@ AnSISOP_funciones funcionesAnSISOP = {
 		.AnSISOP_obtenerPosicionVariable	= obtenerPosicionVariable,
 		.AnSISOP_dereferenciar				= dereferenciar,
 		.AnSISOP_asignar					= asignar,
-		.AnSISOP_obtenerValorCompartida		= obtenerValorCompartida,
-		.AnSISOP_asignarValorCompartida		= asignarValorCompartida,
+//		.AnSISOP_obtenerValorCompartida		= obtenerValorCompartida,
+//		.AnSISOP_asignarValorCompartida		= asignarValorCompartida,
 		.AnSISOP_irAlLabel					= irAlLabel,
 		.AnSISOP_llamarConRetorno			= llamarConRetorno,
 		.AnSISOP_retornar					= retornar,
-		.AnSISOP_imprimir					= imprimirAnSISOP,
+		.AnSISOP_imprimir					= imprimir,
 		.AnSISOP_imprimirTexto				= imprimirTexto,
+//		.AnSISOP_entradaSalida				= entradaSalida,
 };
+
 AnSISOP_kernel funcionesKernel = {
-		.AnSISOP_wait		= wait,
-		.AnSISOP_signal 	= signal,
+//		.AnSISOP_wait		= wait,
+//		.AnSISOP_signal 	= signal,
 };
 
 
