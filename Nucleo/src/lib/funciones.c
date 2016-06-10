@@ -55,8 +55,7 @@ pcb * crearPcb(string programa){
 	inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(sizeof(inicioPrograma));
 	solicitudDeInicio->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
 	solicitudDeInicio->pid = nuevoPcb->pid;
-	solicitudDeInicio->codigo.cadena = strdup(programa.cadena);
-	solicitudDeInicio->codigo.tamanio = programa.tamanio;
+	solicitudDeInicio->contenido = strdup(programa.cadena);
 
 	printf("Solicitando segmentos de código y de stack a UMC para el Proceso #%d", nuevoPcb->pid);
 	aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
@@ -66,7 +65,7 @@ pcb * crearPcb(string programa){
 
 	if(protocolo == INICIAR_PROGRAMA)
 
-		free(solicitudDeInicio->codigo.cadena);
+		free(solicitudDeInicio->contenido);
 			free(solicitudDeInicio);
 
 			if(respuestaInicio->estadoDelHeap == CREADO){

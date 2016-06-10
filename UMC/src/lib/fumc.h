@@ -91,9 +91,12 @@
 	void *memoria; // tha memory
 	tp_t *tabla_paginas[MAX_PROCESOS];
 	tlb_t *tlb;
-	sem_t mutex;
+	sem_t mutex_tp;
 	sem_t mutex_pid;
+	sem_t mutex_tlb;
+	sem_t mutex_mp;
 	pid_activo pids[MAX_CONEXIONES];
+	int *bitmap;
 
 	// Cabeceras
 
@@ -106,7 +109,6 @@
 	void servidor();
 	void crearHiloCliente(int *sockCliente);
 	void cliente(void* fdCliente);
-	void responder(int fd, int respuesta);
 	int pedir_pagina_swap(int fd, int pid, int pagina);
 	void enviarTamanioMarco(int fd, int tamanio);
 	int validar_cliente(char *id);
@@ -118,6 +120,7 @@
 	void liberarConfig();
 	void liberarRecusos();
 	void *elegirFuncion(protocolo head);
+	void compararProtocolos(int protocolo1, int protocolo2);
 	// </AUXILIARES>
 
 	// <PRINCIPAL>
@@ -155,5 +158,10 @@
 	void borrar_tlb(int pid, int pagina);
 	void actualizar_tlb(int pid, int pagina);
 	// </TLB_FUNCS>
+
+	// <MEMORIA_FUNCS>
+	void borrarMarco(int marco);
+	int buscarMarcoLibre();
+	// </MEMORIA_FUNCS>
 
 #endif /* LIB_FUMC_H_ */
