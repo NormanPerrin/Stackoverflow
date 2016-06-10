@@ -74,9 +74,10 @@ typedef struct {
 
 // TADS para UMC - Núcleo
 typedef struct {
-		int pid, paginas;
-		string codigo;
-	} __attribute__((packed)) inicioPrograma;
+	int pid;
+	int paginas;
+	char *contenido;
+} __attribute__((packed)) inicioPrograma;
 
 typedef struct {
 		int pid, estadoDelHeap;
@@ -108,11 +109,34 @@ typedef struct pcb{
 //	string buffer; // lo que se manda a escribir
 //} __attribute__((packed)) solicitudEscritura;
 
-typedef struct solicitudEscritura{
+typedef struct {
 	int pagina;
 	int offset;
+	int tamanio;
 	char *contenido;
 } __attribute__((packed)) solicitudEscritura;
+
+typedef struct {
+	int pagina;
+	int offset;
+	int tamanio;
+} __attribute__((packed)) solicitudLectura;
+
+typedef struct {
+	int pid;
+	int pagina;
+} __attribute__((packed))solicitudLeerPagina;
+
+typedef struct {
+	int pid;
+	int pagina;
+	char *contenido;
+} __attribute__((packed))solicitudEscribirPagina;
+
+typedef struct {
+	int pagina;
+	char *contenido;
+} __attribute__((packed))devolverPagina;
 
 typedef struct {
 	int estadoPedido;
@@ -139,13 +163,17 @@ void * deserealizar(int head, void * mensaje);
 void* serealizarPCB(void* estructura);
 pcb* deserealizarPCB(void* buffer);
 void* serealizarTexto(void* estructura);
-string* deserealizarTexto(void* buffer);
+void* deserealizarTexto(void* buffer);
 void* serealizarSolicitudInicioPrograma(void* elemento);
-inicioPrograma* deserealizarSolicitudInicioPrograma(void* buffer);
+void* deserealizarSolicitudInicioPrograma(void* buffer);
 void* serealizarSolicitudEscritura(void * elemento);
-solicitudEscritura * deserealizarSolicitudEscritura(void * buffer);
+void * deserealizarSolicitudEscritura(void * buffer);
 void * serializarRespuestaPedido(void * elemento);
 respuestaPedido * deserializarRespuestaPedido(void * buffer);
+void *deserializarDevolverPagina(void *buffer);
+void *serealizarDevolverPagina(void *elemento);
+void *deserializarEscribirPagina(void * buffer);
+void *serealizarEscribirPagina(void *elemento);
 
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */
