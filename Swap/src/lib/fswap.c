@@ -35,21 +35,18 @@ void escucharUMC() {
 
 		sockUMC = aceptarConexionSocket(sockServidor);
 
-		if ( validar_conexion(sockUMC, 0) == FALSE ) {
+		if ( validar_conexion(sockUMC, 0) == FALSE )
 			continue;
-		} else {
+		else
 			ret_handshake = handshake_servidor(sockUMC, "S");
-		}
 
 	}
 
 	int status = 1;		// Estructura que manjea el status de los recieve.
-	int *head = (int*)reservarMemoria(2);
+	int *head = (int*)reservarMemoria(INT);
 
-	while (status > 0){
-		status = recibirPorSocket(sockUMC, head, 2); // recibe head (uint16_t)
-		validar_recive(status, 1); // es terminante ya que si hay un error en el recive o desconexión debe terminar
-		void *mensaje = aplicar_protocolo_recibir(sockUMC, *head);
+	while(status > 0) {
+		void *mensaje = aplicar_protocolo_recibir(sockUMC, head);
 		void (*funcion)(void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
 		funcion(mensaje); // ejecuto función
 	}
