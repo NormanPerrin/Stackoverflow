@@ -1,16 +1,14 @@
 #include "primitivasAnSISOP.h"
 #include "principalesCPU.h"
+
 //HACER
 t_puntero definirVariable(t_nombre_variable nombre){
 
 	char* identificador = malloc(sizeof(char));
 	identificador = charToString((char)nombre);
-	push(pcbActual,&nombre,sizeof(nombre));
-	t_puntero* posicion =malloc(sizeof(posicion));
-	posicion=ultimaPosicionDeVariable(&(pcbActual->indiceStack));
-	//hacer una funcion para agregar el identificador y la posicion al registroStack//
-	agregarVariableAlIndiceDeStack(identificador,posicion);
-
+	t_puntero * pos = malloc(sizeof(t_puntero));
+	* pos = ultimaPosicionDeVariable(&(pcbActual->indiceStack));
+	dictionary_put(pcbActual->indiceStack,identificador,pos);
 	free (identificador);
 
 	return posicion+1;

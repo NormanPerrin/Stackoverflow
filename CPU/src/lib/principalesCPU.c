@@ -23,7 +23,12 @@ void conectarConNucleo() {
 	if (protocolo == PCB){
 		while(mensaje!=NULL){
 				// El CPU obtiene una PCB para ejecutar:
+<<<<<<< HEAD
+				pcb * pcbEnEjecucion = malloc(sizeof(pcb));
+				memcpy(pcbEnEjecucion, mensaje, sizeof(pcb));
+=======
 				pcbActual = (pcb *) mensaje;
+>>>>>>> b1f29b073d452af862c4a2f921ed406fbc06b365
 				free(mensaje);
 
 				ejecutarProceso(pcbActual);
