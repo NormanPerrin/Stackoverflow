@@ -5,7 +5,9 @@ void conectarConUMC(){
 	int ret = conectarSocket(fdUMC, config->ipUMC, config->puertoUMC);
 	validar_conexion(ret, 1);
 	handshake_cliente(fdUMC, "P");
+}
 
+void obtenerTamanioDePagina(){
 	int * tamPagina = (int*)malloc(INT);
 	recibirPorSocket(fdUMC, tamPagina, INT);
 	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC

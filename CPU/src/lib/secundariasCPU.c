@@ -107,3 +107,11 @@ int validar_servidor(char *id) {
 }
 
 int validar_cliente(char *id) {return 0;}
+
+char* charToString(char element) {
+	char* new = conitos_malloc(2);
+	*new = element;
+	*(new + 1) = '\0';
+	return new;
+}
+

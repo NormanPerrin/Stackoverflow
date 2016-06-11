@@ -11,6 +11,8 @@ int main(void) {
 
 	conectarConUMC(); // Conexión con UMC
 
+	obtenerTamanioDePagina(); //obtengo tamaño de pagina de UMC
+
 	conectarConNucleo(); // Conexión con Núcleo
 
 	ejecutarProcesos();
