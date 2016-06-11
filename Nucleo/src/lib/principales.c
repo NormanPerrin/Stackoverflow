@@ -57,7 +57,7 @@ void esperar_y_PlanificarProgramas(){
 	            FD_SET( fd , &readfds);
 	        if(fd > max_fd)
 	            max_fd = fd;
-	    }
+	    } // fin for consola
 
 	    // Reviso si el fd de algún CPU supera al max_fd actual:
 	    for ( i = 0 ; i < list_size(listaCPU) ; i++){
@@ -68,27 +68,23 @@ void esperar_y_PlanificarProgramas(){
 	    	FD_SET( fd , &readfds);
 	    	if(fd > max_fd)
 	    	max_fd = fd;
-	     }
+	     } // fin for cpu
 
 	    seleccionarSocket(max_fd, &readfds , NULL , NULL , NULL, NULL);
 
-	    if (FD_ISSET(fdEscuchaConsola, &readfds)) {
-
-	    	aceptarConexionEntranteDeConsola();
-
-	} // fin if nuevaConsola
-	    else{
-
-	    	aceptarConexionEntranteDeCPU();
-
-	    } // fin else nuevoCPU
-	} // fin while
-} // fin función escuchar
+	if (FD_ISSET(fdEscuchaConsola, &readfds) || FD_ISSET(fdEscuchaCPU, &readfds)) {
+		if (FD_ISSET(fdEscuchaCPU, &readfds)) aceptarConexionEntranteDeCPU();
+		if (FD_ISSET(fdEscuchaConsola, &readfds)) aceptarConexionEntranteDeConsola();
+	}
+	else{
+	    		atenderNuevoMensajeDeCPU();
+	    }
+	 } // fin while
+} // fin select
 
 void aceptarConexionEntranteDeConsola(){
-	int fdNuevaConsola;
 
-	 fdNuevaConsola = aceptarConexionSocket(fdEscuchaConsola);
+	 int fdNuevaConsola = aceptarConexionSocket(fdEscuchaConsola);
 
 		    int ret_handshake = handshake_servidor(fdNuevaConsola, "N");
 		    	if(ret_handshake == FALSE){
@@ -136,13 +132,79 @@ void aceptarConexionEntranteDeConsola(){
 		  else{
 			  printf("Se espera un script de la Consola #%d.", nuevaConsola->id);
 		  }
-		    	}
+		}
 	}
 
-void aceptarConexionEntranteDeCPU(){
-	int fdNuevoCPU, i, fd;
+void atenderNuevoMensajeDeCPU(){
+	int i, fd;
 
-		  fdNuevoCPU = aceptarConexionSocket(fdEscuchaCPU);
+	for ( i = 0 ; i < list_size(listaCPU) ; i++){
+
+			  cpu * unCPU = (cpu *)list_get(listaCPU, i);
+			  fd = unCPU->fd_cpu;
+
+			if (FD_ISSET(fd , &readfds)) {
+			     int protocolo;
+			     void * mensaje = aplicar_protocolo_recibir(fd, &protocolo);
+
+			      if (mensaje == NULL){
+
+			    	  salvarProcesoEnCPU(unCPU->id);
+
+			          cerrarSocket(fd);
+			          log_info(logger,"La CPU %i se ha desconectado", unCPU->id);
+			          free(list_remove(listaCPU, i));
+
+		}else{
+			switch(protocolo){
+			   case PCB:{
+			          pcb * pcbEjecutada = (pcb *) mensaje;
+			          log_info(logger, "Programa AnSISOP %i salió de CPU %i.", pcbEjecutada->pid, unCPU->id);
+
+			          actualizarDatosDePcbEjecutada(unCPU, pcbEjecutada);
+
+			          planificarProceso();
+
+			          break;
+			           }
+			   case IMPRIMIR:{
+				   	string* variableImprimible = (string*)reservarMemoria(sizeof(string));
+				   	variableImprimible->cadena = string_itoa(*((int*) mensaje));
+				   	variableImprimible->tamanio = string_length(variableImprimible->cadena + 1);
+
+				   	bool consolaTieneElPid(void* unaConsola){
+				   return (((consola*) unaConsola)->pid) == unCPU->pid;}
+				   consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
+
+				  // Le mando el msj a la Consola asociada:
+				 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variableImprimible);
+				 free(variableImprimible->cadena);
+				 free(variableImprimible);
+			   		break;
+			   	 }
+			   case IMPRIMIR_TEXTO:{
+				   bool consolaTieneElPid(void* unaConsola){
+				 return (((consola*) unaConsola)->pid) == unCPU->pid;}
+				 consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
+
+				 // Le mando el msj a la Consola asociada:
+				 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
+			   		break;
+			   		   	 }
+
+			           default:
+			            printf("Recibí el protocolo %i de CPU\n", protocolo);
+			            break;
+			            	}
+			free(mensaje);
+			            }
+			        }
+			    }
+}
+
+void aceptarConexionEntranteDeCPU(){
+
+	int fdNuevoCPU = aceptarConexionSocket(fdEscuchaCPU);
 
 		  int ret_handshake = handshake_servidor(fdNuevoCPU, "N");
 		  	    if(ret_handshake == FALSE){
@@ -168,74 +230,6 @@ void aceptarConexionEntranteDeCPU(){
 		    	// Pongo al nuevo CPU a ejecutar un proceso:
 		    		planificarProceso();
 		    	}
-
-		for ( i = 0 ; i < list_size(listaCPU) ; i++){
-
-		  cpu * unCPU = (cpu *)list_get(listaCPU, i);
-		  fd = unCPU->fd_cpu;
-
-		if (FD_ISSET(fd , &readfds)) {
-		     int protocolo;
-		     void * mensaje = aplicar_protocolo_recibir(fd, &protocolo);
-
-		      if (mensaje == NULL){
-
-		    	  salvarProcesoEnCPU(unCPU->id);
-
-		          cerrarSocket(fd);
-		          log_info(logger,"La CPU %i se ha desconectado", unCPU->id);
-		          free(list_remove(listaCPU, i));
-
-	}else{
-		switch(protocolo){
-		   case PCB:{
-		          pcb * pcbEjecutada = (pcb *) mensaje;
-		          log_info(logger, "Programa AnSISOP %i salió de CPU %i.", pcbEjecutada->pid, unCPU->id);
-
-		          actualizarDatosDePcbEjecutada(unCPU, pcbEjecutada);
-
-		          planificarProceso();
-
-		          break;
-		           }
-		   case IMPRIMIR:{
-			   	string* variableImprimible = (string*)reservarMemoria(sizeof(string));
-			   	variableImprimible->cadena = string_itoa(*((int*) mensaje));
-			   	variableImprimible->tamanio = string_length(variableImprimible->cadena + 1);
-
-			   	bool consolaTieneElPid(void* unaConsola){
-			   return (((consola*) unaConsola)->pid) == unCPU->pid;}
-			   consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
-
-			  // Le mando el msj a la Consola asociada:
-			 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variableImprimible);
-			 free(variableImprimible->cadena);
-			 free(variableImprimible);
-		   		break;
-		   	 }
-		   case IMPRIMIR_TEXTO:{
-			   bool consolaTieneElPid(void* unaConsola){
-			 return (((consola*) unaConsola)->pid) == unCPU->pid;}
-			 consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
-
-			 // Le mando el msj a la Consola asociada:
-			 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
-		   		break;
-		   		   	 }
-		  case FIN_QUANTUM:{
-		           // COMPLETAR
-		      	  break;
-
-		           default:
-		            printf("Recibí el protocolo %i de CPU\n", protocolo);
-		            break;
-		            	}
-		free(mensaje);
-
-		            }
-		        }
-		    }
-		}
 }
 
 void liberarTodaLaMemoria(){

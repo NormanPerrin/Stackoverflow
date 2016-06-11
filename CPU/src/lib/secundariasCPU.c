@@ -25,6 +25,7 @@ void ejecutarProcesoActivo(){
 
 		while(quantumActual > 0){
 			ejecutarInstruccion();
+			usleep(infoQuantum->retardoQuantum * 0,001); // milisegundos*0,001 = microsegundos
 			quantumActual--;
 		}
 		if(quantumActual == 0){
@@ -73,7 +74,6 @@ void ejecutarInstruccion(pcb* pcb){
 				free(respuesta->mensaje.cadena);
 				free(respuesta->dataPedida.cadena);
 				free(respuesta);
-				usleep(pcb->retardoQuantum);
 
 			}
 			else{
