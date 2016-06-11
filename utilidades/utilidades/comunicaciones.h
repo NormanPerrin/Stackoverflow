@@ -44,7 +44,6 @@ typedef enum {
 		INDICAR_PID = 16, 				// CPU - UMC
 		QUANTUM_MODIFICADO = 17,		// Núcleo - CPU
 		DEVOLVER_CONTENIDO = 18,		// UMC - CPU
-
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
 	} protocolo;

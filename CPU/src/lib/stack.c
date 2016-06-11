@@ -7,7 +7,7 @@ registroStack* inicializarStack(){
 		return nuevoStack;
 }
 
-void push(pcb* pcbEnEjecucion/*,void* datos,t_size data_size*/) {
+void push(pcb* pcbEnEjecucion,void* datos,t_size data_size) {
 /*pcbEnEjecucion->indiceStack->listaVariablesLocales=*/
 }
 void pop(registroStack* stack){
@@ -15,6 +15,6 @@ void pop(registroStack* stack){
 }
 
 t_puntero ultimaPosicionDeVariable(registroStack* stack) {
-	return stack->stack_pointer + stack_offsetFromContext(stack)- tamanio_registro_variable;
+	return (stack->stack_pointer + stack_offsetFromContext(stack)- tamanio_registro_variable);
 }
 

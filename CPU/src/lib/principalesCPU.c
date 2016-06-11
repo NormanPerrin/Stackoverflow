@@ -1,5 +1,4 @@
 #include "principalesCPU.h"
-#define PCBEJECUTANDO pcb
 
 void conectarConUMC(){
 	fdUMC = nuevoSocket();
