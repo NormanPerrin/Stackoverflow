@@ -8,11 +8,11 @@ t_puntero definirVariable(t_nombre_variable nombre){
 	identificador = charToString((char)nombre);
 	t_puntero * pos = malloc(sizeof(t_puntero));
 	* pos = ultimaPosicionDeVariable(&(pcbActual->indiceStack));
-	dictionary_put(pcbActual->indiceStack,identificador,pos);
+	dictionary_put(pcbActual->indiceStack->listaVariablesLocales,identificador,pos);
 	free (identificador);
 
-	return posicion+1;
-
+	//return pos+1;//
+	return (*pos +1);
 }
 
 //HACER
