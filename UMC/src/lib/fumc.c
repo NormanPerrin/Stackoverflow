@@ -207,7 +207,7 @@ void leer_bytes(int fd, void *msj) {
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
 
 	// actualizo TLB y TP
-	actualizar_tlb(pid, mensaje->pagina);
+	buscar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
 	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
 
 	// busco el código que me piden
@@ -236,7 +236,7 @@ void escribir_bytes(int fd, void *msj) {
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
 
 	// actualizo TLB y TP
-	actualizar_tlb(pid, mensaje->pagina);
+	buscar_tlb(pid, mensaje->pagina); // la fución buscar actualiza referencia también
 	actualizar_tp(pid, mensaje->pagina, marco, 1, 1, 1);
 
 	// escribo contenido
@@ -481,16 +481,87 @@ void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modifi
 // </TABLA_PAGINA>
 
 
-// <TLB_FUNCS> // todo Aplicar colas
+// <TLB_FUNCS>
 
 int buscar_tlb(int pid, int pagina) {
-	return 0;
+
+	sem_wait(&mutex_tlb);
+
+	int pos = 0;
+	while(pos < config->entradas_tlb) { // recorro tlb
+
+		if( (tlb[pos].pagina == pid) && (tlb[pos].pagina == pagina) ) { // tlb hit
+
+			// actualizar referencia
+			tlb_t aux = tlb[pos];
+			int i = pos;
+			for(; i > 0; i--) tlb[i] = tlb[i-1]; // corro 1 posición la tlb para abajo
+			tlb[0] = aux; // pongo al principio la página referenciada
+
+			// retorno marco
+			sem_post(&mutex_tlb);
+			return tlb[pos].marco;
+
+		}
+
+		pos++;
+	}
+
+	sem_post(&mutex_tlb);
+	return FALSE;
+}
+
+void agregar_tlb(int pid, int pagina, int marco) {
+
+	sem_wait(&mutex_tlb);
+
+	int pos = 0, encontro = FALSE;
+	while(pos < config->entradas_tlb) {
+
+		if(tlb[pos].pid == -1) { // encontró espacio vacío
+			encontro = TRUE;
+			int i = pos;
+			for(; i > 0; i--) tlb[i] = tlb[i-1]; // corro 1 posición la tlb para abajo
+			// seteo tlb en pos
+			tlb[0].pid = pid;
+			tlb[0].pagina = pagina;
+			tlb[0].marco = marco;
+		}
+
+		pos++;
+	}
+
+	if(!encontro) { // si en el while no encontró
+		int i = config->entradas_tlb-1;
+		for(; i > 0; i--) tlb[i] = tlb[i-1]; // corro 1 posición la tlb para abajo
+		// seteo tlb en primer pos
+		tlb[0].pid = pid;
+		tlb[0].pagina = pagina;
+		tlb[0].marco = marco;
+	}
+
+	sem_post(&mutex_tlb);
 }
 
 void borrar_tlb(int pid, int pagina) {
-}
 
-void actualizar_tlb(int pid, int pagina) {
+	sem_wait(&mutex_tlb);
+
+	int pos = 0;
+	while(pos < config->entradas_tlb) {
+
+		if( (tlb[pos].pagina == pid) && (tlb[pos].pagina == pagina) ) { // encontró
+			int i = pos;
+			for(; i < config->entradas_tlb-1; i++) tlb[i] = tlb[i+1]; // corro 1 posición la tlb para abajo
+			tlb[config->entradas_tlb-1].pid = -1;
+
+		pos++;
+
+		}
+	}
+
+	sem_post(&mutex_tlb);
+
 }
 
 // </TLB_FUNCS>
@@ -523,6 +594,9 @@ void iniciarEstructuras() {
 	// tlb
 	int sizeof_tlb = config->entradas_tlb * sizeof(tlb_t);
 	tlb = reservarMemoria(sizeof_tlb);
+	int k = 0;
+	for(; k < config->entradas_tlb; k++)
+		tlb[k].pid = -1;
 
 	// pids (array de pid activo por CPU)
 	int j = 0;

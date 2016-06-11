@@ -70,12 +70,12 @@ typedef struct{
 
 typedef struct {
 		int tamanioListaArgumentos;
-		direccion* listaPosicionesArgumentos;
-		int tamanioListaVariables;
-		t_dictionary* listaVariablesLocales; // key: id -> data: dirección
-		int proximaInstruccion;
-		direccion posicionDelResultado;
-	} registroStack;
+		direccion* args;
+		int tamanioVars;
+		t_dictionary* vars; // key: id -> data: dirección
+		int retPos;
+		direccion retVar;
+		} registroStack;
 
 // TADS para UMC - Núcleo
 typedef struct {

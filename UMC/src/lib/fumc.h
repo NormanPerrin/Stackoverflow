@@ -155,8 +155,8 @@
 
 	// <TLB_FUNCS>
 	int buscar_tlb(int pid, int pagina);
+	void agregar_tlb(int pid, int pagina, int marco);
 	void borrar_tlb(int pid, int pagina);
-	void actualizar_tlb(int pid, int pagina);
 	// </TLB_FUNCS>
 
 	// <MEMORIA_FUNCS>

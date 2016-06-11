@@ -11,17 +11,17 @@ t_puntero definirVariable(t_nombre_variable nombre){
 	dictionary_put(pcbActual->indiceStack->listaVariablesLocales,identificador,pos);
 
 	free (identificador);
-
-	return (*pos +1);
+	//return pos+1;//
+	return (*(pos +1));
 }
 
 t_puntero obtenerPosicionVariable(t_nombre_variable nombre){
 	char * identificador = malloc(sizeof(char));
 	identificador = charToString((char)nombre);
-	t_puntero posicion = dictionary_get(pcbActual->indiceStack->listaVariablesLocales, identificador);
+	t_puntero posicion = dictionary_get(pcbActual->indiceStack->vars, identificador);
 	free(identificador);
 	if(posicion != NULL){
-		return (*posicion +1);
+		return (*(posicion +1));
 	}
 	else{
 		return -1;
