@@ -4,10 +4,11 @@
 //HACER
 t_puntero definirVariable(t_nombre_variable nombre){
 
+
 	char* identificador =nombre;
-	push(pcbEnEjecucion,&nombre,sizeof(nombre));
+	push(pcbActual,&nombre,sizeof(nombre));
 	t_puntero* posicion =malloc(sizeof(posicion));
-	posicion=ultimaPosicionDeVariable(&(pcbEnEjecucion->indiceStack));
+	posicion=ultimaPosicionDeVariable(&(pcbActual->indiceStack));
 	//hacer una funcion para agregar el identificador y la posicion al registroStack//
 	agregarVariableAlIndiceDeStack(pcbEnEjecucion,identificador,posicion);
 
