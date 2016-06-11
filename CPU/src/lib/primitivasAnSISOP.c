@@ -12,7 +12,7 @@ t_puntero definirVariable(t_nombre_variable nombre){
 	free (identificador);
 
 	//return pos+1;//
-	return (*pos +1);
+	return (*(pos +1));
 }
 
 //HACER
