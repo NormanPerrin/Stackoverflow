@@ -19,13 +19,14 @@ void crearLogger(){
 
 void ejecutarProcesoActivo(){
 
+	aplicar_protocolo_enviar(fdUMC,INDICAR_PID,pcbActual->pid);
 	printf("El Proceso #%d entró en ejecución.\n", pcbActual->pid);
 
 	int quantumActual = infoQuantum->quantum;
 
 		while(quantumActual > 0){
 			ejecutarInstruccion();
-			usleep(infoQuantum->retardoQuantum * 0,001); // milisegundos*0,001 = microsegundos
+			usleep((infoQuantum->retardoQuantum * 0,001)); // milisegundos*0,001 = microsegundos
 			quantumActual--;
 		}
 		if(quantumActual == 0){
