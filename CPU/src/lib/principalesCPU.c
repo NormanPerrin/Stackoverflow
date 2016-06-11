@@ -35,7 +35,10 @@ void ejecutarProcesos(){
 				break;
 			}
 				case QUANTUM_MODIFICADO:{
-					infoQuantum = (info_quantum*) entrada;
+					info_quantum* nuevoQuantum = (info_quantum*) entrada;
+					infoQuantum->quantum = nuevoQuantum->quantum;
+					infoQuantum->retardoQuantum = nuevoQuantum->retardoQuantum;
+					free(nuevoQuantum);
 				break;
 			}
 				default:
