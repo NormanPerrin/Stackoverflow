@@ -107,7 +107,9 @@ void cliente(void* fdCliente) {
 	while(ret > 0 && !exitFlag) {
 		void *mensaje = aplicar_protocolo_recibir(sockCliente, head); // recibo mensaje
 		void (*funcion)(int, void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
+		sem_wait(&mutex);
 		funcion(sockCliente, mensaje); // ejecuto función
+		sem_post(&mutex);
 		free(mensaje); // aplicar_protocolo_recibir pide memoria, por lo tanto hay que liberarla
 	}
 
@@ -195,8 +197,6 @@ void inciar_programa(int fd, void *msj) {
 
 void leer_bytes(int fd, void *msj) {
 
-	sem_wait(&mutex_mp);
-
 	leerBytes_t *mensaje = (leerBytes_t*)msj; // casteo
 
 	// veo cual es el pid activo de esta CPU
@@ -218,13 +218,12 @@ void leer_bytes(int fd, void *msj) {
 	// devuelvo el contenido solicitado
 	aplicar_protocolo_enviar(fd, DEVOLVER_CONTENIDO, contenido);
 
-	sem_post(&mutex_mp);
 	free(contenido);
+
 }
 
 void escribir_bytes(int fd, void *msj) {
 
-	sem_wait(&mutex_mp);
 
 	escribirBytes_t *mensaje = (escribirBytes_t*)msj; // casteo
 
@@ -243,7 +242,6 @@ void escribir_bytes(int fd, void *msj) {
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
 	memcpy(memoria + pos_real, mensaje->contenido, mensaje->tamanio);
 
-	sem_post(&mutex_mp);
 }
 
 void finalizar_programa(int fd, void *msj) {
@@ -259,7 +257,6 @@ void finalizar_programa(int fd, void *msj) {
 	int pos = pos_pid(*pid);
 	int i;
 
-	sem_wait(&mutex_tp);
 	for(i = 0; i < tabla_paginas[pos]->paginas; i++) {
 
 		if(tabla_paginas[pos]->tabla[i].bit_presencia == 1) // elimino página de MP
@@ -272,7 +269,6 @@ void finalizar_programa(int fd, void *msj) {
 		borrar_tlb(*pid, i);
 
 	}
-	sem_post(&mutex_tp);
 
 }
 
@@ -303,35 +299,28 @@ void reset_entrada(int pos) {
 	set.bit_modificado = 0;
 
 	int subpos = 0;
-	sem_wait(&mutex_tp);
 	while(subpos < tabla_paginas[pos]->paginas) {
 		setear_entrada(pos, subpos, set);
 		subpos++;
 	}
-	sem_post(&mutex_tp);
 }
 
 void setear_entrada(int pos, int subpos, subtp_t set) {
-	sem_wait(&mutex_tp);
 	tabla_paginas[pos]->tabla[subpos].pagina = set.pagina;
 	tabla_paginas[pos]->tabla[subpos].marco = set.marco;
 	tabla_paginas[pos]->tabla[subpos].bit_presencia = set.bit_presencia;
 	tabla_paginas[pos]->tabla[subpos].bit_uso = set.bit_uso;
 	tabla_paginas[pos]->tabla[subpos].bit_modificado = set.bit_modificado;
-	sem_post(&mutex_tp);
 }
 
 int pos_pid(int pid) {
 
 	int pos = 0;
-
-	sem_wait(&mutex_tp);
 	while(pos < MAX_PROCESOS) {
 		if(tabla_paginas[pos]->pid == pid)
 			return pos;
 		pos++;
 	}
-	sem_post(&mutex_tp);
 
 	return ERROR;
 }
@@ -362,20 +351,16 @@ int contar_paginas_asignadas(int pid) {
 	int pos = pos_pid(pid);
 
 	int i = 0;
-	sem_wait(&mutex_tp);
 	while(i < tabla_paginas[pos]->paginas) {
 		if(tabla_paginas[pos]->tabla[i].bit_presencia == 1)
 			paginas_asignadas++;
 		i++;
 	}
-	sem_post(&mutex_tp);
 
 	return paginas_asignadas;
 }
 
 void eliminar_pagina(int pid, int pagina) {
-
-	sem_wait(&mutex_tp);
 
 	int pos = pos_pid(pid);
 	if(pos == ERROR)
@@ -389,8 +374,6 @@ void eliminar_pagina(int pid, int pagina) {
 		set.bit_modificado = 0;
 		setear_entrada(pos, pagina-1, set);
 	}
-
-	sem_post(&mutex_tp);
 }
 
 int buscarPagina(int fd, int pid, int pagina) {
@@ -412,12 +395,10 @@ int buscarPagina(int fd, int pid, int pagina) {
 		}
 
 		// veo si está en MP y si no encuentro cargo desde Swap
-		sem_wait(&mutex_tp);
 		if( tabla_paginas[pos_tp]->tabla[pagina-1].bit_presencia == 0 ) // page fault
 			marco = pedir_pagina_swap(fd, pid, pagina);
 		else // tp hit
 			marco = tabla_paginas[pos_tp]->tabla[pagina-1].marco;
-		sem_post(&mutex_tp);
 	}
 
 	return marco;
@@ -453,29 +434,18 @@ void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modifi
 
 	int p = pos_pid(pid);
 
-	if(marco != -1) {
-		sem_wait(&mutex_tp);
+	if(marco != -1)
 		tabla_paginas[p]->tabla[pagina-1].marco = marco;
-		sem_post(&mutex_tp);
-	}
 
-	if(marco != -1) {
-		sem_wait(&mutex_tp);
+	if(marco != -1)
 		tabla_paginas[p]->tabla[pagina-1].bit_presencia = b_presencia;
-		sem_post(&mutex_tp);
-	}
 
-	if(marco != -1) {
-		sem_wait(&mutex_tp);
+	if(marco != -1)
 		tabla_paginas[p]->tabla[pagina-1].bit_modificado = b_modificacion;
-		sem_post(&mutex_tp);
-	}
 
-	if(marco != -1) {
-		sem_wait(&mutex_tp);
+	if(marco != -1)
 		tabla_paginas[p]->tabla[pagina-1].bit_uso = b_uso;
-		sem_post(&mutex_tp);
-	}
+
 }
 
 // </TABLA_PAGINA>
@@ -485,83 +455,52 @@ void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modifi
 
 int buscar_tlb(int pid, int pagina) {
 
-	sem_wait(&mutex_tlb);
+	int pos = buscar_pos(pid, pagina);
 
-	int pos = 0;
-	while(pos < config->entradas_tlb) { // recorro tlb
-
-		if( (tlb[pos].pagina == pid) && (tlb[pos].pagina == pagina) ) { // tlb hit
-
-			// actualizar referencia
-			tlb_t aux = tlb[pos];
-			int i = pos;
-			for(; i > 0; i--) tlb[i] = tlb[i-1]; // corro 1 posición la tlb para abajo
-			tlb[0] = aux; // pongo al principio la página referenciada
-
-			// retorno marco
-			sem_post(&mutex_tlb);
-			return tlb[pos].marco;
-
-		}
-
-		pos++;
+	if(pos == ERROR) { // no encontró
+		return ERROR;
 	}
 
-	sem_post(&mutex_tlb);
-	return FALSE;
+	tlb_t aux = tlb[pos];
+	correrParaArriba(pos);
+	correrParaAbajo(config->entradas_tlb-1);
+	tlb[0] = aux;
+
+	return tlb[pos].marco;
 }
 
 void agregar_tlb(int pid, int pagina, int marco) {
-
-	sem_wait(&mutex_tlb);
-
-	int pos = 0, encontro = FALSE;
-	while(pos < config->entradas_tlb) {
-
-		if(tlb[pos].pid == -1) { // encontró espacio vacío
-			encontro = TRUE;
-			int i = pos;
-			for(; i > 0; i--) tlb[i] = tlb[i-1]; // corro 1 posición la tlb para abajo
-			// seteo tlb en pos
-			tlb[0].pid = pid;
-			tlb[0].pagina = pagina;
-			tlb[0].marco = marco;
-		}
-
-		pos++;
-	}
-
-	if(!encontro) { // si en el while no encontró
-		int i = config->entradas_tlb-1;
-		for(; i > 0; i--) tlb[i] = tlb[i-1]; // corro 1 posición la tlb para abajo
-		// seteo tlb en primer pos
-		tlb[0].pid = pid;
-		tlb[0].pagina = pagina;
-		tlb[0].marco = marco;
-	}
-
-	sem_post(&mutex_tlb);
+	correrParaAbajo(config->entradas_tlb-1);
+	tlb[0].pid = pid;
+	tlb[0].pagina = pagina;
+	tlb[0].marco = marco;
 }
 
 void borrar_tlb(int pid, int pagina) {
+	int pos = buscar_pos(pid, pagina);
+	correrParaArriba(pos);
+}
 
-	sem_wait(&mutex_tlb);
+void correrParaArriba(int pos) {
+	int i = pos;
+	for(; i < config->entradas_tlb-1; i++)
+		tlb[i] = tlb[i+1];
+}
 
+void correrParaAbajo(int pos) {
+	int i = pos;
+	for(; i > 0; i--)
+		tlb[i] = tlb[i-1];
+}
+
+int buscar_pos(int pid, int pagina) {
 	int pos = 0;
 	while(pos < config->entradas_tlb) {
-
-		if( (tlb[pos].pagina == pid) && (tlb[pos].pagina == pagina) ) { // encontró
-			int i = pos;
-			for(; i < config->entradas_tlb-1; i++) tlb[i] = tlb[i+1]; // corro 1 posición la tlb para abajo
-			tlb[config->entradas_tlb-1].pid = -1;
-
+		if((tlb[pos].pid == pid) && (tlb[pos].pagina == pagina)) // encontró
+			return pos;
 		pos++;
-
-		}
 	}
-
-	sem_post(&mutex_tlb);
-
+	return ERROR;
 }
 
 // </TLB_FUNCS>
@@ -572,10 +511,7 @@ void borrar_tlb(int pid, int pagina) {
 void iniciarEstructuras() {
 
 	// semáforos
-	sem_init(&mutex_tp, 0, 1);
-	sem_init(&mutex_tlb, 0, 1);
-	sem_init(&mutex_pid, 0, 1);
-	sem_init(&mutex_mp, 0, 1);
+	sem_init(&mutex, 0, 1);
 
 	// memoria
 	int sizeof_memoria = config->marcos * config->marco_size;
@@ -623,10 +559,7 @@ void liberarRecusos() {
 	// liberar otros recursos
 	free(memoria);
 	free(tlb);
-	sem_destroy(&mutex_tp);
-	sem_destroy(&mutex_pid);
-	sem_destroy(&mutex_mp);
-	sem_destroy(&mutex_tlb);
+	sem_destroy(&mutex);
 	liberarConfig();
 }
 
@@ -666,18 +599,15 @@ void *elegirFuncion(protocolo head) {
 int buscarPosPid(int fd) {
 
 	int i = 0;
-	sem_wait(&mutex_pid);
 	while(i < MAX_CONEXIONES) {
 		if(pids[i].fd == fd) return i;
 		i++;
 	}
-	sem_post(&mutex_pid);
 	return ERROR;
 }
 
 void actualizarPid(int fd, int pid) {
 
-	sem_wait(&mutex_pid);
 	int pos = buscarPosPid(fd);
 
 	if(pos == ERROR) { // no encontró fd
@@ -686,38 +616,31 @@ void actualizarPid(int fd, int pid) {
 	}
 
 	pids[pos].pid = pid;
-	sem_post(&mutex_pid);
 }
 
 void agregarPid(int fd, int pid) {
 
-	sem_wait(&mutex_pid);
 	int pos = buscarEspacioPid();
 	if(pos == ERROR) {
 		perror("<agregarPid> Se sobrepasó el máximo de conexiones");
 	}
 	pids[pos].fd = fd;
 	pids[pos].pid = pid;
-	sem_post(&mutex_pid);
 }
 
 int buscarEspacioPid() {
 
-	sem_wait(&mutex_pid);
 	int i = 0;
 	while(i < MAX_CONEXIONES) {
 		if(pids[i].fd == -1) // encontró espacio libre
 			return i;
 		i++;
 	}
-	sem_post(&mutex_pid);
-
 	return ERROR;
 }
 
 void borrarPid(int fd) {
 
-	sem_wait(&mutex_pid);
 	int pos = 0;
 	while(pos < MAX_CONEXIONES) {
 		if(pids[pos].fd == fd) {
@@ -726,7 +649,6 @@ void borrarPid(int fd) {
 		}
 		pos++;
 	}
-	sem_post(&mutex_pid);
 }
 
 // </PID_FUNCS>
@@ -735,10 +657,8 @@ void borrarPid(int fd) {
 // <MEMORIA_FUNCS>
 
 void borrarMarco(int marco) {
-	sem_wait(&mutex_mp);
 	int direccion = marco * config->marco_size;
 	memset(memoria + direccion, '\0', config->marco_size);
-	sem_post(&mutex_mp);
 }
 
 int buscarMarcoLibre() {

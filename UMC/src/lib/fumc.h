@@ -91,10 +91,7 @@
 	void *memoria; // tha memory
 	tp_t *tabla_paginas[MAX_PROCESOS];
 	tlb_t *tlb;
-	sem_t mutex_tp;
-	sem_t mutex_pid;
-	sem_t mutex_tlb;
-	sem_t mutex_mp;
+	sem_t mutex;
 	pid_activo pids[MAX_CONEXIONES];
 	int *bitmap;
 
@@ -157,6 +154,9 @@
 	int buscar_tlb(int pid, int pagina);
 	void agregar_tlb(int pid, int pagina, int marco);
 	void borrar_tlb(int pid, int pagina);
+	void correrParaArriba(int pos);
+	void correrParaAbajo(int pos);
+	int buscar_pos(int pid, int pagina);
 	// </TLB_FUNCS>
 
 	// <MEMORIA_FUNCS>
