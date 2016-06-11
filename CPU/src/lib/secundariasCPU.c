@@ -44,8 +44,8 @@ void liberarPcbActiva(){
 	free(pcbActual->indiceStack->listaVariablesLocales);
 	free(pcbActual->indiceStack);
 
-	free(pcb);
-	pcb = NULL;
+//	free(pcbActual);
+	pcbActual = NULL;
 }
 
 void ejecutarInstruccion(pcb* pcb){

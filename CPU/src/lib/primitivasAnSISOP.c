@@ -30,14 +30,23 @@ t_puntero obtenerPosicionVariable(t_nombre_variable nombre){
 
 //HACER
 t_valor_variable dereferenciar(t_puntero direccion){
-	t_valor_variable valorVariable;
-
-	return valorVariable;
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, &direccion);
+	int protocolo;
+	int valorVariable = aplicar_protocolo_recibir(fdUMC, &protocolo);
+	respuestaPedido * respuesta = (respuestaPedido *) valorVariable;
+	return ((t_valor_variable)respuesta->dataPedida.cadena);
 }
 
 //HACER
-void asignar(t_puntero direccion_variable, t_valor_variable valor){
+void asignar(t_puntero direccionVariable, t_valor_variable valor){
+	direccion direccion = direccionVariable;
+	solicitudEscritura * solicitud;
+	solicitud->pagina = direccion.pagina;
+	solicitud->offset = direccion.offset;
+	solicitud->tamanio = direccion.size;
+	solicitud->contenido = valor;
 
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, &solicitud);
 }
 
 //NO HACER
