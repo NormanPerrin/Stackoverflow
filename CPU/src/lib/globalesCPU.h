@@ -20,13 +20,12 @@ typedef struct {
 } t_configuracion;
 
 info_quantum * infoQuantum;
+
 // Variables Globales:
 t_configuracion *config;
-int fd_clienteNucleo, fd_clienteUMC;
+int fdNucleo, fdUMC;
 int tamanioPagina;
 t_log * logger;
 pcb * pcbActual;
-
-
 
 #endif /* LIB_GLOBALESCPU_H_ */

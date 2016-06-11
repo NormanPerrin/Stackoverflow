@@ -17,6 +17,35 @@ void crearLogger(){
 	archivoLogCPU = NULL;
 }
 
+void ejecutarProcesoActivo(){
+
+	printf("El Proceso #%d entró en ejecución.\n", pcbActual->pid);
+
+	int quantumActual = infoQuantum->quantum;
+
+		while(quantumActual > 0){
+			ejecutarInstruccion();
+			quantumActual--;
+		}
+		if(quantumActual == 0){
+			aplicar_protocolo_enviar(fdNucleo, PCB, pcbActual);
+			printf("El Proceso #%d finalizó ráfaga de ejecución.\n", pcbActual->pid);
+			printf("Esperando nuevo proceso.\n");
+				liberarPcbActiva();
+		}
+}
+
+void liberarPcbActiva(){
+	free(pcbActual->indiceCodigo);
+	free(pcbActual->indiceEtiquetas);
+	free(pcbActual->indiceStack->listaPosicionesArgumentos);
+	free(pcbActual->indiceStack->listaVariablesLocales);
+	free(pcbActual->indiceStack);
+
+	free(pcb);
+	pcb = NULL;
+}
+
 void ejecutarInstruccion(pcb* pcb){
 	direccion direccionInstruccion;
 	void * entrada = NULL;
@@ -27,9 +56,9 @@ void ejecutarInstruccion(pcb* pcb){
 	direccionInstruccion.offset = pcb->indiceCodigo->offset;
 	direccionInstruccion.size = pcb->tamanioIndiceCodigo;
 
-	aplicar_protocolo_enviar(fd_clienteUMC, PEDIDO_LECTURA, &direccionInstruccion);
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, &direccionInstruccion);
 
-	entrada = aplicar_protocolo_recibir(fd_clienteUMC, &protocolo);
+	entrada = aplicar_protocolo_recibir(fdUMC, &protocolo);
 
 	if (protocolo == RESPUESTA_PEDIDO){
 		respuesta = (respuestaPedido *) entrada;
@@ -65,24 +94,6 @@ void ejecutarInstruccion(pcb* pcb){
 		}
 }
 
-void ejecutarProceso(pcb* pcb){
-
-	int quantum = pcb->quantum;
-	int estado = pcb->estado;
-
-	while(quantum > 0){
-		ejecutarInstruccion(pcb);
-		quantum--;
-	}
-	if(quantum == 0){
-		estado = READY;
-		pcb->estado = estado;
-	}
-
-	aplicar_protocolo_enviar(fd_clienteNucleo, FIN_QUANTUM, NULL);
-	aplicar_protocolo_enviar(fd_clienteNucleo, PCB, pcb);
-
-}
 
 int validar_servidor(char *id) {
 	if( !strcmp(id, "U") || !strcmp(id, "N") ) {
@@ -95,8 +106,3 @@ int validar_servidor(char *id) {
 }
 
 int validar_cliente(char *id) {return 0;}
-
-
-//	free(config->ipNucleo);
-
-

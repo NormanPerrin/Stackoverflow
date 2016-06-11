@@ -7,8 +7,9 @@
 /** PROTOTIPO FUNCIONES SECUNDARIAS **/
 void setearValores_config(t_config * archivoConfig);
 void crearLogger();
-void ejecutarInstruccion(pcb* pcb);
-void ejecutarProceso(pcb* pcb);
+void ejecutarProcesoActivo();
+void liberarPcbActiva();
+void ejecutarInstruccion();
 int validar_servidor(char *id); // Valida si la conexión es UMC o Nucleo
 int validar_cliente(char *id); // para que no joda con error
 

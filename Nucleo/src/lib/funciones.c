@@ -271,7 +271,7 @@ void manejarES(){
 
 void notificarCambioDelQuantumACPU(){
 
-	info_quantum * infoQuantum = (int*) malloc(info_quantum);
+	info_quantum * infoQuantum = (int*) malloc(sizeof(info_quantum));
 		infoQuantum->quantum = config->quantum;
 		infoQuantum->retardoQuantum = config->retardoQuantum;
 

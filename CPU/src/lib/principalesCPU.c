@@ -2,45 +2,61 @@
 #define PCBEJECUTANDO pcb
 
 void conectarConUMC(){
-	fd_clienteUMC = nuevoSocket();
-	int ret = conectarSocket(fd_clienteUMC, config->ipUMC, config->puertoUMC);
+	fdUMC = nuevoSocket();
+	int ret = conectarSocket(fdUMC, config->ipUMC, config->puertoUMC);
 	validar_conexion(ret, 1);
-	handshake_cliente(fd_clienteUMC, "P");
+	handshake_cliente(fdUMC, "P");
 
 	int * tamPagina = (int*)malloc(INT);
-	recibirPorSocket(fd_clienteUMC, tamPagina, INT);
+	recibirPorSocket(fdUMC, tamPagina, INT);
 	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC
-
+	free(tamPagina);
 }
 
 void conectarConNucleo() {
-	fd_clienteNucleo = nuevoSocket();
-	int ret = conectarSocket(fd_clienteNucleo, config->ipNucleo, config->puertoNucleo);
+	fdNucleo = nuevoSocket();
+	int ret = conectarSocket(fdNucleo, config->ipNucleo, config->puertoNucleo);
 	validar_conexion(ret, 1); // Es terminante por ser cliente
-	handshake_cliente(fd_clienteNucleo, "P");
-	int protocolo;
-
-	void * mensaje = aplicar_protocolo_recibir(fd_clienteNucleo, &protocolo);
-	if (protocolo == PCB){
-		while(mensaje!=NULL){
-				// El CPU obtiene una PCB para ejecutar:
-				pcb * pcbEnEjecucion = malloc(sizeof(pcb));
-				PCBEJECUTANDO=pcbEnEjecucion;
-				memcpy(pcbEnEjecucion, mensaje, sizeof(pcb));
-				free(mensaje);
-
-				ejecutarProceso(pcbEnEjecucion);
-			}
-	}else{
-			log_error(logger, "Se esperaba un PCB y no se recibió.");
-				//abort();
-			}
-
-	cerrarSocket(fd_clienteUMC);
-	cerrarSocket(fd_clienteNucleo);
+	handshake_cliente(fdNucleo, "P");
 }
 
-void liberarEstructura() {
+void ejecutarProcesos(){
+
+	int protocolo;
+	void * entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
+
+		while (entrada != NULL){
+			switch (protocolo){
+				case PCB:{
+					pcbActual = (pcb*)malloc(sizeof(pcb));
+					memcpy(pcbActual, entrada, sizeof(pcb));
+
+					ejecutarProcesoActivo(pcbActual);
+
+				break;
+			}
+				case QUANTUM_MODIFICADO:{
+					infoQuantum = (info_quantum*) entrada;
+				break;
+			}
+				default:
+					log_error(logger,"Recibí como un mensaje con el protocolo %d no reconocido",protocolo);
+			}
+			free(entrada);
+				entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
+		}
+
+		cerrarSocket(fdNucleo);
+		cerrarSocket(fdUMC);
+}
+
+void liberarEstructuras() {
 	free(config->ipUMC);
 	free(config);
+
+	log_destroy(logger);
+	logger = NULL;
+
+	liberarPcb(pcbActual);
+	free(infoQuantum);
 }

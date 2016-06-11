@@ -65,16 +65,16 @@ typedef struct{
 	int retardoQuantum;
 }__attribute__((packed)) info_quantum;
 
-typedef struct {
+/*typedef struct {
 		char id;
 		direccion posicion;
-} variable;
+} variable;*/
 
 typedef struct {
 		int tamanioListaArgumentos;
 		direccion* listaPosicionesArgumentos;
 		int tamanioListaVariables;
-		variable* listaVariablesLocales;
+		t_dictionary* listaVariablesLocales; // key: id -> data: dirección
 		int proximaInstruccion;
 		direccion posicionDelResultado;
 	} registroStack;
