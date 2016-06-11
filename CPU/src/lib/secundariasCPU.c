@@ -74,7 +74,6 @@ void ejecutarInstruccion(pcb* pcb){
 				free(respuesta->mensaje.cadena);
 				free(respuesta->dataPedida.cadena);
 				free(respuesta);
-				usleep(pcb->retardoQuantum);
 
 			}
 			else{
