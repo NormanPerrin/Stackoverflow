@@ -38,6 +38,7 @@ typedef enum {
 		ESCRIBIR_PAGINA = 9, 			// UMC - Swap
 		DEVOLVER_PAGINA = 11,			// Swap - UMC
 		PCB = 12,						// Núcleo - CPU / CPU - Núcleo
+		FIN_QUANTUM = 13,				// CPU - Núcleo
 		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo / Swap - UMC
 		RECHAZAR_PROGRAMA = 15,			// Todos
 		INDICAR_PID = 16, 				// CPU - UMC
@@ -70,12 +71,12 @@ typedef struct{
 
 typedef struct {
 		int tamanioListaArgumentos;
-		direccion* args;
-		int tamanioVars;
-		t_dictionary* vars; // key: id -> data: dirección
-		int retPos;
-		direccion retVar;
-		} registroStack;
+		direccion* listaPosicionesArgumentos;
+		int tamanioListaVariables;
+		t_dictionary* listaVariablesLocales; // key: id -> data: dirección
+		int proximaInstruccion;
+		direccion posicionDelResultado;
+	} registroStack;
 
 // TADS para UMC - Núcleo
 typedef struct {
