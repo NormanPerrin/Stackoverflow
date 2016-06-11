@@ -5,4 +5,7 @@
  *      Author: utnso
  */
 
-
+t_puntero ultimaPosicionDeVariable(registroStack* stack){
+	//mmm no puede ser esto :/ //
+	return (stack->listaVariablesLocales->posicion);
+}
