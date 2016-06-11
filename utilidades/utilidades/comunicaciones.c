@@ -199,14 +199,13 @@ void * serealizarPCB(void * estructura){
 	int codigoSize = (sizeof(t_intructions) * unPCB->tamanioIndiceCodigo);
 
 	int tamListaArgumentos = sizeof(direccion) * unPCB->indiceStack->tamanioListaArgumentos;
-	int tamListaVariables = sizeof(variable) * unPCB->indiceStack->tamanioListaVariables;
+	int tamListaVariables = sizeof(t_dictionary) * unPCB->indiceStack->tamanioListaVariables;
 	int tamRegistroStack = 6*INT + tamListaArgumentos + tamListaVariables;
 	int stackSize = tamRegistroStack * unPCB->tamanioIndiceStack;
 
 	int etiquetasSize = (CHAR * unPCB->tamanioIndiceEtiquetas);
 
-	tamanioTotal = 10*INT + codigoSize + stackSize + etiquetasSize;
-	// package->total_size = sizeof(package->username_long) + package->username_long + sizeof(package->message_long) + package->message_long;
+	tamanioTotal = 8*INT + codigoSize + stackSize + etiquetasSize;
 
 	void * buffer = reservarMemoria(tamanioTotal);
 	memcpy(buffer + desplazamiento,&(unPCB->pid), INT);

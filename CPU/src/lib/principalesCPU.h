@@ -6,7 +6,9 @@
 /** PROTOTIPO FUNCIONES PRINCIPALES **/
 void leerArchivoDeConfiguracion(char * ruta);
 void conectarConUMC();
+void obtenerTamanioDePagina();
 void conectarConNucleo();
-void liberarEstructura(); // Libera la memoria reservada en setear config
+void ejecutarProcesos();
+void liberarEstructuras(); // Libera la memoria reservada en setear config
 
 #endif
