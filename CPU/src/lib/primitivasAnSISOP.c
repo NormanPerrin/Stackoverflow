@@ -7,31 +7,46 @@ t_puntero definirVariable(t_nombre_variable nombre){
 	char* identificador = malloc(sizeof(char));
 	identificador = charToString((char)nombre);
 	t_puntero * pos = malloc(sizeof(t_puntero));
-	* pos = ultimaPosicionDeVariable(&(pcbActual->indiceStack));
+	* pos = ultimaPosicionDeVariable(&(pcbActual->indiceStack->listaVariablesLocales));
 	dictionary_put(pcbActual->indiceStack->listaVariablesLocales,identificador,pos);
+
 	free (identificador);
-
 	//return pos+1;//
-	return (*pos +1);
+	return (*(pos +1));
+}
+
+t_puntero obtenerPosicionVariable(t_nombre_variable nombre){
+	char * identificador = malloc(sizeof(char));
+	identificador = charToString((char)nombre);
+	t_puntero * posicion = dictionary_get(pcbActual->indiceStack->listaVariablesLocales, identificador);
+	free(identificador);
+	if(posicion != NULL){
+		return (*(posicion +1));
+	}
+	else{
+		return -1;
+	}
 }
 
 //HACER
-t_puntero obtenerPosicionVariable(t_nombre_variable identificador_variable){
-	t_puntero posicion;
-
-	return posicion;
+t_valor_variable dereferenciar(t_puntero direccion){
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, &direccion);
+	int protocolo;
+	int valorVariable = aplicar_protocolo_recibir(fdUMC, &protocolo);
+	respuestaPedido * respuesta = (respuestaPedido *) valorVariable;
+	return ((t_valor_variable)respuesta->dataPedida.cadena);
 }
 
 //HACER
-t_valor_variable dereferenciar(t_puntero direccion_variable){
-	t_valor_variable valorVariable;
+void asignar(t_puntero direccionVariable, t_valor_variable valor){
+	direccion direccion = direccionVariable;
+	solicitudEscritura * solicitud;
+	solicitud->pagina = direccion.pagina;
+	solicitud->offset = direccion.offset;
+	solicitud->tamanio = direccion.size;
+	solicitud->contenido = valor;
 
-	return valorVariable;
-}
-
-//HACER
-void asignar(t_puntero direccion_variable, t_valor_variable valor){
-
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, &solicitud);
 }
 
 //NO HACER
