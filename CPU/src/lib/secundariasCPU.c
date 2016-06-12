@@ -18,15 +18,17 @@ void crearLogger(){
 }
 
 void ejecutarProcesoActivo(){
-
-	aplicar_protocolo_enviar(fdUMC,INDICAR_PID,pcbActual->pid);
+	int * pid = malloc(INT);
+	* pid = pcbActual->pid;
+	aplicar_protocolo_enviar(fdUMC, INDICAR_PID, pid);
+	free(pid);
 	printf("El Proceso #%d entró en ejecución.\n", pcbActual->pid);
 
 	int quantumActual = infoQuantum->quantum;
 
 		while(quantumActual > 0){
 			ejecutarInstruccion();
-			usleep((infoQuantum->retardoQuantum * 0,001)); // milisegundos*0,001 = microsegundos
+			usleep(infoQuantum->retardoQuantum * 1000);
 			quantumActual--;
 		}
 		if(quantumActual == 0){
@@ -44,7 +46,7 @@ void liberarPcbActiva(){
 	free(pcbActual->indiceStack->listaVariablesLocales);
 	free(pcbActual->indiceStack);
 
-//	free(pcbActual);
+	free(pcbActual);
 	pcbActual = NULL;
 }
 
