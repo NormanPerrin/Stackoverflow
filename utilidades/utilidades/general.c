@@ -112,3 +112,22 @@ int validar_recive(int status, int modo) {
 		return TRUE;
 	}
 }
+
+/*	EJEMPLO:
+ * 	pcb * nuevoPcb = malloc(sizeof(pcb)); --> No se hace si ya se tiene una variable a la cual asignárselo
+ * 	recibirYAsignarPaquete(fdNucleo, PCB, nuevoPcb); */
+void recibirYAsignarPaquete(int fdEmisor, int protocolo, void * dondeLoQuieraAsignar){
+
+	int head;
+	void * entrada = NULL;
+
+	entrada = aplicar_protocolo_recibir(fdEmisor, &head);
+		if(head == protocolo){
+			memcpy(dondeLoQuieraAsignar, entrada, sizeof(dondeLoQuieraAsignar));
+		}
+		else{
+			printf("Se esperaba recibir un paquete del fd %d pero no se recibió.", fdEmisor);
+			abort();
+		}
+		free(entrada);
+}

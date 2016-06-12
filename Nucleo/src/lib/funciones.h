@@ -23,5 +23,6 @@ void manejarES();
 void notificarCambioDelQuantumACPU();
 void detectarCambiosEnArchivoConfig();
 void enviarNuevoQuantum(cpu * unCpu);
+int solicitarSegmentosAUMC(pcb * nuevoPcb, string programa);
 
 #endif /* LIB_FUNCIONES_H_ */

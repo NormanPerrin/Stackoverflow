@@ -27,62 +27,71 @@ void crearLogger(){
 	archivoLogNucleo = NULL;
 }
 
-pcb * crearPcb(string programa){
-	pcb * nuevoPcb = malloc(sizeof(pcb));
-
+int solicitarSegmentosAUMC(pcb * nuevoPcb, string programa){
 	nuevoPcb->pid = asignarPid(listaProcesos);
-	nuevoPcb->id_cpu = -1;
 
 	int aux_div = programa.tamanio / tamanioPagina;
 	int resto_div = programa.tamanio % tamanioPagina;
 	nuevoPcb->paginas_codigo = (resto_div==0)?aux_div:aux_div+1;
 
-	nuevoPcb->estado = READY;
-
-	// Ahora, analizo con el parser el código del programa para obtener su metadata:
-	char* codigo = malloc(programa.tamanio);
-	codigo = strdup(programa.cadena);
-	t_metadata_program* infoProg = metadata_desde_literal((const char*) codigo);
-	free(codigo);
-
-	nuevoPcb->pc = infoProg->instruccion_inicio + 1; // la siguiente al begin
-
-	// Inicializo los tres índices:
-	inicializarIndices(nuevoPcb, infoProg);
-	metadata_destruir(infoProg);
-
 	// Le solicito a UMC espacio para el heap del programa y actúo en consecuencia:
-	inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(sizeof(inicioPrograma));
-	solicitudDeInicio->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
-	solicitudDeInicio->pid = nuevoPcb->pid;
-	solicitudDeInicio->contenido = strdup(programa.cadena);
+		inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(sizeof(inicioPrograma));
+		solicitudDeInicio->paginas = config->cantidadPaginasStack + nuevoPcb->paginas_codigo;
+		solicitudDeInicio->pid = nuevoPcb->pid;
+		solicitudDeInicio->contenido = strdup(programa.cadena);
 
-	printf("Solicitando segmentos de código y de stack a UMC para el Proceso #%d", nuevoPcb->pid);
-	aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
-
-	int protocolo;
-	respuestaInicioPrograma* respuestaInicio = (respuestaInicioPrograma*)aplicar_protocolo_recibir(fd_UMC, &protocolo);
-
-	if(protocolo == INICIAR_PROGRAMA)
-
+		printf("Solicitando segmentos de código y de stack a UMC para el Proceso #%d", nuevoPcb->pid);
+		aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
 		free(solicitudDeInicio->contenido);
-			free(solicitudDeInicio);
+		free(solicitudDeInicio);
+
+		respuestaInicioPrograma* respuestaInicio = NULL;
+		recibirYAsignarPaquete(fd_UMC, INICIAR_PROGRAMA, respuestaInicio);
 
 			if(respuestaInicio->estadoDelHeap == CREADO){
-				log_info(logger,"Se pudo alocar todos los segmentos para el Proceso #%d", nuevoPcb->pid);
+				printf("Se pudo alocar todos los segmentos para el Proceso #%d", nuevoPcb->pid);
 
 				free(respuestaInicio);
 
-				return nuevoPcb;
-			}
+				return TRUE;
+				}
 			else{
-				 log_info(logger,
-			"UMC no pudo alocar segmentos para el Proceso #%d. Rechazando ingreso al sistema.", nuevoPcb->pid);
+				printf("UMC no pudo alocar segmentos para el Proceso #%d. Rechazando ingreso al sistema.",
+						nuevoPcb->pid);
 
-				 free(respuestaInicio);
+				free(respuestaInicio);
 
-				 return NULL;
-			}
+				return FALSE;
+				}
+}
+
+
+
+pcb * crearPcb(string programa){
+	pcb * nuevoPcb = malloc(sizeof(pcb));
+
+	int respuestaUMC = solicitarSegmentosAUMC(nuevoPcb, programa);
+
+	if(respuestaUMC == FALSE){
+		return NULL;
+	}
+	else{
+			nuevoPcb->estado = READY;
+			nuevoPcb->id_cpu = -1;
+			// Ahora, analizo con el parser el código del programa para obtener su metadata:
+			char* codigo = malloc(programa.tamanio);
+			codigo = strdup(programa.cadena);
+			t_metadata_program* infoProg = metadata_desde_literal((const char*) codigo);
+			free(codigo);
+
+			nuevoPcb->pc = infoProg->instruccion_inicio + 1; // la siguiente al begin
+
+			// Inicializo los tres índices:
+			inicializarIndices(nuevoPcb, infoProg);
+			metadata_destruir(infoProg);
+
+			return nuevoPcb;
+	}
 }
 
 void inicializarIndices(pcb* pcb, t_metadata_program* metaData){
@@ -271,7 +280,7 @@ void manejarES(){
 
 void notificarCambioDelQuantumACPU(){
 
-	info_quantum * infoQuantum = (int*) malloc(sizeof(info_quantum));
+	info_quantum * infoQuantum = (info_quantum*) malloc(sizeof(info_quantum));
 		infoQuantum->quantum = config->quantum;
 		infoQuantum->retardoQuantum = config->retardoQuantum;
 

@@ -12,6 +12,7 @@
 	#define INT (sizeof(int))
 	#define CHAR (sizeof(char))
 	#define HANDSHAKE_SIZE CHAR*2 // Tamaño de consola\0
+	#define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 
 	void* reservarMemoria(int size); // Hace lo mismo que el malloc pero se fija si hay error. Necesita casteo como malloc
 	void leerArchivoDeConfiguracion(char * ruta);
@@ -23,5 +24,6 @@
 	int validar_servidor(char *id); // Valida que la conexión al servidor sea correcta
 	int validar_conexion(int socket, int modo); // Decide si termina o no el programa ante un error, según el modo. Modo 1 es terminante. Con modo no terminante retorna: 0 en ERROR. 1 en éxito
 	int validar_recive(int bytes, int modo); // Decide si ante una desconexión o error en mensaje termina el programa o sigue, según el modo. Modo 1 es terminante. Retorno: 0 en desconexión o error. 1 en éxito
+	void recibirYAsignarPaquete(int fdEmisor, int protocolo, void * dondeLoQuieraAsignar);
 
 #endif

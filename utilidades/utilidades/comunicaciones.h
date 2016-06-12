@@ -26,24 +26,24 @@
 
 // PROTOCOLO (head/tipo de msj):
 typedef enum {
-		IMPRIMIR = 1, 					// CPU - Núcleo
-		IMPRIMIR_TEXTO = 2, 			// CPU - Núcleo / Núcleo - Consola
-		INICIAR_PROGRAMA = 3, 			// Núcleo - UMC / UMC - Swap
-		PEDIDO_LECTURA = 4, 			// CPU - UMC
-		PEDIDO_ESCRITURA = 5, 			// CPU - UMC
-		FINALIZAR_PROGRAMA = 6,			// Núcleo - UMC / UMC - SWAP
-		ENVIAR_SCRIPT = 7, 				// Consola - Núcleo
-		RESPUESTA_PEDIDO = 10, 			// UMC - CPU / Swap - UMC
-		LEER_PAGINA = 8, 				// UMC - Swap
-		ESCRIBIR_PAGINA = 9, 			// UMC - Swap
-		DEVOLVER_PAGINA = 11,			// Swap - UMC
-		PCB = 12,						// Núcleo - CPU / CPU - Núcleo
-		FIN_QUANTUM = 13,				// CPU - Núcleo
-		RESPUESTA_INICIO_PROGRAMA = 14, // UMC - Núcleo / Swap - UMC
-		RECHAZAR_PROGRAMA = 15,			// Todos
-		INDICAR_PID = 16, 				// CPU - UMC
-		QUANTUM_MODIFICADO = 17,		// Núcleo - CPU
-		DEVOLVER_CONTENIDO = 18,		// UMC - CPU
+		IMPRIMIR = 1, 				// CPU - Núcleo
+		IMPRIMIR_TEXTO, 			// CPU - Núcleo / Núcleo - Consola
+		INICIAR_PROGRAMA, 			// Núcleo - UMC / UMC - Swap
+		PEDIDO_LECTURA, 			// CPU - UMC
+		PEDIDO_ESCRITURA, 			// CPU - UMC
+		FINALIZAR_PROGRAMA,			// Núcleo - UMC / UMC - SWAP
+		ENVIAR_SCRIPT, 				// Consola - Núcleo
+		RESPUESTA_PEDIDO, 			// UMC - CPU / Swap - UMC
+		LEER_PAGINA, 				// UMC - Swap
+		ESCRIBIR_PAGINA, 			// UMC - Swap
+		DEVOLVER_PAGINA ,			// Swap - UMC
+		PCB,						// Núcleo - CPU / CPU - Núcleo
+		FIN_QUANTUM,				// CPU - Núcleo
+		RESPUESTA_INICIO_PROGRAMA,	// UMC - Núcleo / Swap - UMC
+		RECHAZAR_PROGRAMA,			// Todos
+		INDICAR_PID, 				// CPU - UMC
+		QUANTUM_MODIFICADO,			// Núcleo - CPU
+		DEVOLVER_CONTENIDO,			// UMC - CPU
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
 	} protocolo;
@@ -71,11 +71,11 @@ typedef struct{
 
 typedef struct {
 		int tamanioListaArgumentos;
-		direccion* listaPosicionesArgumentos;
+		direccion* listaPosicionesArgumentos; // lista del tipo de dato 'direccion'
 		int tamanioListaVariables;
-		t_dictionary* listaVariablesLocales; // key: id -> data: dirección
+		t_dictionary* listaVariablesLocales; // diccionario: key: id -> data: dirección
 		int proximaInstruccion;
-		direccion posicionDelResultado;
+		direccion posicionDelResultado; // página, offset, size
 	} registroStack;
 
 // TADS para UMC - Núcleo
