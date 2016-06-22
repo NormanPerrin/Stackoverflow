@@ -20,6 +20,7 @@
 		int backlog;
 		int puerto;
 		char *ip_swap;
+		char *algoritmo;
 		int puerto_swap;
 		int marcos;
 		int marco_size;
@@ -89,7 +90,7 @@
 	t_configuracion *config; // guarda valores del config
 	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
 	void *memoria; // tha memory
-	tp_t *tabla_paginas[MAX_PROCESOS];
+	tp_t tabla_paginas[MAX_PROCESOS];
 	tlb_t *tlb;
 	sem_t mutex;
 	pid_activo pids[MAX_CONEXIONES];
@@ -118,6 +119,8 @@
 	void liberarRecusos();
 	void *elegirFuncion(protocolo head);
 	void compararProtocolos(int protocolo1, int protocolo2);
+	subtp_t aplicar_algoritmo(subtp_t *paginas, int puntero);
+	void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid);
 	// </AUXILIARES>
 
 	// <PRINCIPAL>
@@ -138,8 +141,11 @@
 	int contar_paginas_asignadas(int pid);
 	void eliminar_pagina(int pid, int pagina);
 	int buscarPagina(int fd, int pid, int pagina);
+	subtp_t buscarVictimaReemplazo(int pid);
 	int cargar_pagina(int pid, int pagina, void *contenido);
 	void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modificacion, int b_uso);
+	void iniciar_principales(int pid, int paginas);
+	int buscarEntradaLibre();
 	// </TABLA_PAGINA>
 
 	// <PID_FUNCS>
@@ -163,5 +169,11 @@
 	void borrarMarco(int marco);
 	int buscarMarcoLibre();
 	// </MEMORIA_FUNCS>
+
+	// <ALGORITMOS>
+	subtp_t aplicarClock(subtp_t paginas[], int puntero);
+	subtp_t aplicarClockM(subtp_t paginas[], int puntero);
+	void actualizarPuntero(int pid, int pagina);
+	// </ALGORITMOS>
 
 #endif /* LIB_FUMC_H_ */

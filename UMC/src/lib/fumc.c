@@ -9,6 +9,7 @@ void setearValores_config(t_config * archivoConfig) {
 	config->backlog = config_get_int_value(archivoConfig, "BACKLOG");
 	config->puerto = config_get_int_value(archivoConfig, "PUERTO");
 	config->ip_swap = strdup(config_get_string_value(archivoConfig, "IP_SWAP"));
+	config->algoritmo = strdup(config_get_string_value(archivoConfig, "ALGORITMO"));
 	config->puerto_swap = config_get_int_value(archivoConfig, "PUERTO_SWAP");
 	config->marcos = config_get_int_value(archivoConfig, "MARCOS");
 	config->marco_size = config_get_int_value(archivoConfig, "MARCO_SIZE");
@@ -130,12 +131,14 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	// espero respuesta de Swap
 	int *protocolo = (int*)reservarMemoria(INT);
 	void *contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
-	if(contenido_pagina == NULL || *protocolo != DEVOLVER_PAGINA) {// no encontró la página o hubo un fallo
-		// seteo mensaje de respuesta
-		respuestaPedido *respuesta = NULL; // TODO
+
+	if(contenido_pagina == NULL || *protocolo != DEVOLVER_PAGINA) { // no encontró la página o hubo un fallo
+
+		// seteo mensaje de respuesta TODO
+		respuestaPedido *respuesta = NULL;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-	}
-	else // tengo que cargar la página a MP
+
+	} else // tengo que cargar la página a MP
 		marco = cargar_pagina(pid, pagina, contenido_pagina);
 
 	free(protocolo);
@@ -179,6 +182,7 @@ void inciar_programa(int fd, void *msj) {
 	inciarPrograma_t *mensaje = (inciarPrograma_t*)msj; // casteo
 
 	// 1) Agrego a tabla de páginas
+	iniciar_principales(mensaje->pid, mensaje->paginas);
 	agregar_paginas_nuevas(mensaje->pid, mensaje->paginas);
 
 	// 2) Envío a Swap
@@ -257,10 +261,10 @@ void finalizar_programa(int fd, void *msj) {
 	int pos = pos_pid(*pid);
 	int i;
 
-	for(i = 0; i < tabla_paginas[pos]->paginas; i++) {
+	for(i = 0; i < tabla_paginas[pos].paginas; i++) {
 
-		if(tabla_paginas[pos]->tabla[i].bit_presencia == 1) // elimino página de MP
-			borrarMarco(tabla_paginas[pos]->tabla[i].marco);
+		if(tabla_paginas[pos].tabla[i].bit_presencia == 1) // elimino página de MP
+			borrarMarco(tabla_paginas[pos].tabla[i].marco);
 
 		// elimino página de TP
 		eliminar_pagina(*pid, i);
@@ -285,8 +289,10 @@ void cambiarPid(int fd, void *mensaje) {
 
 void iniciarTP() {
 	int i;
-	for(i = 0; i < MAX_PROCESOS; i++)
+	for(i = 0; i < MAX_PROCESOS; i++) {
+		tabla_paginas[i].paginas = MAX_PAGINAS;
 		reset_entrada(i);
+	}
 }
 
 void reset_entrada(int pos) {
@@ -299,30 +305,47 @@ void reset_entrada(int pos) {
 	set.bit_modificado = 0;
 
 	int subpos = 0;
-	while(subpos < tabla_paginas[pos]->paginas) {
+	while(subpos < tabla_paginas[pos].paginas) {
 		setear_entrada(pos, subpos, set);
 		subpos++;
 	}
 }
 
 void setear_entrada(int pos, int subpos, subtp_t set) {
-	tabla_paginas[pos]->tabla[subpos].pagina = set.pagina;
-	tabla_paginas[pos]->tabla[subpos].marco = set.marco;
-	tabla_paginas[pos]->tabla[subpos].bit_presencia = set.bit_presencia;
-	tabla_paginas[pos]->tabla[subpos].bit_uso = set.bit_uso;
-	tabla_paginas[pos]->tabla[subpos].bit_modificado = set.bit_modificado;
+	tabla_paginas[pos].tabla[subpos].pagina = set.pagina;
+	tabla_paginas[pos].tabla[subpos].marco = set.marco;
+	tabla_paginas[pos].tabla[subpos].bit_presencia = set.bit_presencia;
+	tabla_paginas[pos].tabla[subpos].bit_uso = set.bit_uso;
+	tabla_paginas[pos].tabla[subpos].bit_modificado = set.bit_modificado;
 }
 
 int pos_pid(int pid) {
 
 	int pos = 0;
 	while(pos < MAX_PROCESOS) {
-		if(tabla_paginas[pos]->pid == pid)
+		if(tabla_paginas[pos].pid == pid)
 			return pos;
 		pos++;
 	}
 
 	return ERROR;
+}
+
+void iniciar_principales(int pid, int paginas) {
+	int pos = buscarEntradaLibre();
+	tabla_paginas[pos].pid = pid;
+	tabla_paginas[pos].paginas = paginas;
+	tabla_paginas[pos].puntero = 0;
+}
+
+int buscarEntradaLibre() {
+
+	int pos = 0;
+	for(; pos < MAX_PROCESOS; pos++) {
+		if(tabla_paginas[pos].pid == -1) // encontró una entrada libre
+			break;
+	}
+	return pos;
 }
 
 void agregar_paginas_nuevas(int pid, int paginas) {
@@ -341,7 +364,7 @@ void agregar_pagina_nueva(int pid, int pagina) {
 	set.bit_presencia = 0;
 	set.bit_modificado = 0;
 	set.bit_uso = 0;
-	setear_entrada(p, pagina-1, set);
+	setear_entrada(p, pagina, set);
 }
 
 
@@ -351,8 +374,8 @@ int contar_paginas_asignadas(int pid) {
 	int pos = pos_pid(pid);
 
 	int i = 0;
-	while(i < tabla_paginas[pos]->paginas) {
-		if(tabla_paginas[pos]->tabla[i].bit_presencia == 1)
+	while(i < tabla_paginas[pos].paginas) {
+		if(tabla_paginas[pos].tabla[i].bit_presencia == 1)
 			paginas_asignadas++;
 		i++;
 	}
@@ -381,24 +404,23 @@ int buscarPagina(int fd, int pid, int pagina) {
 	int marco;
 
 	// 1) busco en TLB
-	marco = buscar_tlb(pid, pagina);
-	if( marco != ERROR ) { // TLB Hit
+	marco = buscar_tlb(pid, pagina); // con TLB hit no entra al if
 
-	} else { // TLB fault
+	if( marco == ERROR ) { // TLB miss
 
 		// 2) busco en TP
 		int pos_tp = pos_pid(pid);
 		if(pos_tp == ERROR) {// no se inicializó el proceso
-			// setear respuesta
+			// setear respuesta TODO
 			respuestaPedido *respuesta = NULL;
-			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta); // todo
+			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 		}
 
 		// veo si está en MP y si no encuentro cargo desde Swap
-		if( tabla_paginas[pos_tp]->tabla[pagina-1].bit_presencia == 0 ) // page fault
+		if( tabla_paginas[pos_tp].tabla[pagina-1].bit_presencia == 0 ) // page fault
 			marco = pedir_pagina_swap(fd, pid, pagina);
 		else // tp hit
-			marco = tabla_paginas[pos_tp]->tabla[pagina-1].marco;
+			marco = tabla_paginas[pos_tp].tabla[pagina-1].marco;
 	}
 
 	return marco;
@@ -408,12 +430,21 @@ int cargar_pagina(int pid, int pagina, void *contenido) {
 
 	int marco = ERROR;
 	int paginas_asignadas = contar_paginas_asignadas(pid);
-	int p = pos_pid(pid);
 
 	if(paginas_asignadas < config->marco_x_proceso) { // no hay necesidad de reemplazo
+
 		marco = buscarMarcoLibre();
-	} else { // hay que elegir una víctima para reemplazar
-		// marco = buscarVictimaReemplazo(pid);
+		bitmap[marco] = 1; // actualizo bitmap
+
+	} else { // hay que elegir una víctima para reemplazar y actualizar tp
+
+		subtp_t pagina_reemplazar = buscarVictimaReemplazo(pid);
+		verificarEscrituraDisco(pagina_reemplazar, pid); // bit M víctima = 1. se escribe a disco
+		actualizar_tp(pid, pagina, pagina_reemplazar.marco, 1, -1, 1); // le asigno el marco a la página
+		actualizar_tp(pid, pagina_reemplazar.pagina, -1, 0, 0, 0); // seteo en -1 el marco de la víctima y sus bits 0
+		actualizarPuntero(pid, pagina); // seteo el puntero a la próxima página
+		marco = pagina_reemplazar.marco;
+
 	}
 
 	int pos_real = marco * config->marco_size;
@@ -425,9 +456,43 @@ int cargar_pagina(int pid, int pagina, void *contenido) {
 	set.bit_presencia = 1;
 	set.bit_modificado = 0;
 	set.bit_uso = 1;
+	int p = pos_pid(pid);
 	setear_entrada(p, pagina-1, set);
 
 	return marco;
+}
+
+subtp_t buscarVictimaReemplazo(int pid) { // TODO
+
+	// 1) seteo paginas para pasar a función aplicar_algoritmo
+	int p = pos_pid(pid);
+	int paginas_asignadas = contar_paginas_asignadas(pid);
+
+	subtp_t *paginas = (subtp_t*)reservarMemoria(paginas_asignadas * sizeof(subtp_t));
+
+	int i = 0, // va a ir hasta páginas asignadas
+		pos_tp = 0; // va a ir hasta total páginas del pid
+
+	while( pos_tp < tabla_paginas[p].paginas ) {
+
+		if( tabla_paginas[p].tabla[pos_tp].marco != -1 ) { // seteo todas las páginas con marcos para ser evaluadas
+			paginas[i].pagina = tabla_paginas[p].tabla[pos_tp].pagina;
+			paginas[i].marco = tabla_paginas[p].tabla[pos_tp].marco;
+			paginas[i].bit_uso = tabla_paginas[p].tabla[pos_tp].bit_uso;
+			paginas[i].bit_presencia = tabla_paginas[p].tabla[pos_tp].bit_presencia;
+			paginas[i].bit_modificado = tabla_paginas[p].tabla[pos_tp].bit_modificado;
+			i++;
+		}
+
+		pos_tp++;
+	}
+
+
+	// 2) aplico algoritmo y me devuelve quién debe ser reemplazado
+	subtp_t pagina_reemplazada = aplicar_algoritmo(paginas, tabla_paginas[p].puntero);
+
+	free(paginas);
+	return pagina_reemplazada;
 }
 
 void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modificacion, int b_uso) {
@@ -435,16 +500,16 @@ void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modifi
 	int p = pos_pid(pid);
 
 	if(marco != -1)
-		tabla_paginas[p]->tabla[pagina-1].marco = marco;
+		tabla_paginas[p].tabla[pagina-1].marco = marco;
 
 	if(marco != -1)
-		tabla_paginas[p]->tabla[pagina-1].bit_presencia = b_presencia;
+		tabla_paginas[p].tabla[pagina-1].bit_presencia = b_presencia;
 
 	if(marco != -1)
-		tabla_paginas[p]->tabla[pagina-1].bit_modificado = b_modificacion;
+		tabla_paginas[p].tabla[pagina-1].bit_modificado = b_modificacion;
 
 	if(marco != -1)
-		tabla_paginas[p]->tabla[pagina-1].bit_uso = b_uso;
+		tabla_paginas[p].tabla[pagina-1].bit_uso = b_uso;
 
 }
 
@@ -591,6 +656,37 @@ void *elegirFuncion(protocolo head) {
 	return NULL;
 }
 
+subtp_t aplicar_algoritmo(subtp_t *paginas, int puntero) {
+
+	subtp_t pagina_reemplazar;
+
+	if( !strcmp(config->algoritmo, "CLOCK") )
+		pagina_reemplazar  = aplicarClock(paginas, puntero);
+
+	if( !strcmp(config->algoritmo, "CLOCK-M") )
+		pagina_reemplazar  = aplicarClockM(paginas, puntero);
+
+	return pagina_reemplazar;
+}
+
+void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
+
+	if(pagina_reemplazar.bit_modificado == 1) { // tengo que escribir en disco
+
+		// seteo pedido
+		solicitudEscribirPagina *pedido = NULL;
+		pedido->pid = pid;
+		pedido->pagina = pagina_reemplazar.pagina;
+		int dir_real = pagina_reemplazar.marco * config->marco_size;
+		memcpy(pedido->contenido, memoria + dir_real, config->marco_size);
+
+		// envío pedido
+		aplicar_protocolo_enviar(sockClienteDeSwap, ESCRIBIR_PAGINA, pedido);
+
+	} // sino se puede reemplazar tranquilamente
+
+}
+
 // </AUXILIARES>
 
 
@@ -658,7 +754,8 @@ void borrarPid(int fd) {
 
 void borrarMarco(int marco) {
 	int direccion = marco * config->marco_size;
-	memset(memoria + direccion, '\0', config->marco_size);
+	memset(memoria + direccion, '\0', config->marco_size); // borro MP
+	bitmap[marco] = 0; // actualizo bitmap
 }
 
 int buscarMarcoLibre() {
@@ -672,3 +769,106 @@ int buscarMarcoLibre() {
 }
 
 // </MEMORIA_FUNCS>
+
+
+// <ALGORITMOS>
+
+subtp_t aplicarClock(subtp_t paginas[], int puntero) {
+
+	int cantidad_paginas = sizeof(paginas) / sizeof(subtp_t);
+
+	// 0) Busco la posición del puntero
+	int pagina_inicio = 0;
+	while(pagina_inicio < cantidad_paginas) {
+		if(paginas[pagina_inicio].pagina == puntero) break; // encontré página inicio
+		pagina_inicio++;
+	}
+
+	// 1) Busco bit U = 0 desde página inicio hasta cantidad páginas
+	int i = pagina_inicio;
+	for(; i < cantidad_paginas; i++) {
+		if(paginas[i].bit_uso == 0) return paginas[i]; // encontré página a reemplazar
+		paginas[i].bit_uso = 0; // si no encontré, modifico bit U al ir pasando
+	}
+
+	// 2) Busco bit U = 0 desde 0 hasta página inicio
+	i = 0;
+	for(; i < pagina_inicio; i++) {
+		if(paginas[i].bit_uso == 0) return paginas[i]; // encontré página a reemplazar
+		paginas[i].bit_uso = 0; // si no encontré, modifico bit U al ir pasando
+	}
+
+	// 3) Si no encontré en la pasada entonces devuevo la página desde donde empecé
+	return paginas[pagina_inicio];
+}
+
+
+subtp_t aplicarClockM(subtp_t paginas[], int puntero) {
+
+	int cantidad_paginas = sizeof(paginas) / sizeof(subtp_t);
+
+	// 0) Busco la posición del puntero
+	int pagina_inicio = 0;
+	while(pagina_inicio < cantidad_paginas) {
+		if(paginas[pagina_inicio].pagina == puntero) break; // encontré página inicio
+		pagina_inicio++;
+	}
+
+	// 1) Hago una pasada buscando 00(UM)
+	int i = pagina_inicio;
+	for(; i < cantidad_paginas; i++) { // desde página inicio hacia cantidad páginas
+		if(paginas[i].bit_uso == 0 && paginas[i].bit_modificado == 0)
+			return paginas[i]; // encontré página a reemplazar
+	}
+	i = 0;
+	for(; i < pagina_inicio; i++) { // desde 0 hasta página inicio
+		if(paginas[i].bit_uso == 0 && paginas[i].bit_modificado == 0)
+			return paginas[i]; // encontré página a reemplazar
+	}
+
+	// 2) Hago una pasada buscando 01(UM)
+	i = pagina_inicio;
+	for(; i < cantidad_paginas; i++) { // desde página inicio hacia cantidad páginas
+		if(paginas[i].bit_uso == 0 && paginas[i].bit_modificado == 1)
+			return paginas[i]; // encontré página a reemplazar
+		else
+			paginas[i].bit_uso = 0;
+	}
+	i = 0;
+	for(; i < pagina_inicio; i++) { // desde 0 hasta página inicio
+		if(paginas[i].bit_uso == 0 && paginas[i].bit_modificado == 1)
+			return paginas[i]; // encontré página a reemplazar
+		else
+			paginas[i].bit_uso = 0;
+	}
+
+	// si todavía no encontró entonces aplico el algorítmo de nuevo
+	return( aplicarClockM(paginas, puntero) );
+}
+
+void actualizarPuntero(int pid, int pagina) {
+
+	int pos = pos_pid(pid);
+	int encontro = FALSE;
+
+	int i = pagina+1;
+	for(; i < tabla_paginas[pos].paginas; i++) {
+		if(tabla_paginas[pos].tabla[i].marco != -1) { // es el siguiente a la página
+			tabla_paginas[pos].puntero = i;
+			encontro = TRUE;
+			break;
+		}
+	}
+
+	if(encontro) return; // si en el for encontró no hace falta hacer el otro for
+
+	i = 0;
+	for(; i < pagina; i++) {
+		if(tabla_paginas[pos].tabla[i].marco != -1) { // es el siguiente a la página
+			tabla_paginas[pos].puntero = i;
+			break;
+		}
+	}
+}
+
+// </ALGORITMOS>
