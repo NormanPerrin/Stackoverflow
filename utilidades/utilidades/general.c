@@ -113,6 +113,17 @@ int validar_recive(int status, int modo) {
 	}
 }
 
+// -- FUNCIONES EXTRA --
+void dormir(float miliseconds) {
+
+	struct timespec tim;
+	tim.tv_sec = (int)(miliseconds / 1000);
+	tim.tv_nsec = ((tim.tv_sec * 1000) - miliseconds) * 1000000;
+
+	nanosleep(&tim, NULL);
+}
+
+
 /*	EJEMPLO:
  * 	pcb * nuevoPcb = malloc(sizeof(pcb)); --> No se hace si ya se tiene una variable a la cual asignárselo
  * 	recibirYAsignarPaquete(fdNucleo, PCB, nuevoPcb); */

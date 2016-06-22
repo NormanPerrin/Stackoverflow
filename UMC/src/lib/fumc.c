@@ -120,6 +120,8 @@ void cliente(void* fdCliente) {
 
 int pedir_pagina_swap(int fd, int pid, int pagina) {
 
+	dormir(config->retardo * 2); // escritura en memoria y en tabla páginas
+
 	int marco = ERROR;
 
 	// pido página a Swap
@@ -179,6 +181,8 @@ int validar_servidor(char *id) {
 
 void inciar_programa(int fd, void *msj) {
 
+	dormir(config->retardo); // retardo por escritura en tabla páginas
+
 	inciarPrograma_t *mensaje = (inciarPrograma_t*)msj; // casteo
 
 	// 1) Agrego a tabla de páginas
@@ -200,6 +204,8 @@ void inciar_programa(int fd, void *msj) {
 }
 
 void leer_bytes(int fd, void *msj) {
+
+	dormir(config->retardo); // retardo por lectura en memoria
 
 	leerBytes_t *mensaje = (leerBytes_t*)msj; // casteo
 
@@ -228,6 +234,7 @@ void leer_bytes(int fd, void *msj) {
 
 void escribir_bytes(int fd, void *msj) {
 
+	dormir(config->retardo); // retardo por lectura en memoria
 
 	escribirBytes_t *mensaje = (escribirBytes_t*)msj; // casteo
 
@@ -249,6 +256,8 @@ void escribir_bytes(int fd, void *msj) {
 }
 
 void finalizar_programa(int fd, void *msj) {
+
+	dormir(config->retardo * 2); // retardo por borrar entradas en tabla páginas y memoria
 
 	finalizarPrograma_t *mensaje = (finalizarPrograma_t*)msj;
 
@@ -407,6 +416,8 @@ int buscarPagina(int fd, int pid, int pagina) {
 	marco = buscar_tlb(pid, pagina); // con TLB hit no entra al if
 
 	if( marco == ERROR ) { // TLB miss
+
+		dormir(config->retardo); // retardo de búsqueda en tabla página
 
 		// 2) busco en TP
 		int pos_tp = pos_pid(pid);
