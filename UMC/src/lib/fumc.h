@@ -121,6 +121,10 @@
 	void compararProtocolos(int protocolo1, int protocolo2);
 	subtp_t aplicar_algoritmo(subtp_t *paginas, int puntero);
 	void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid);
+	void generarInformePos(int pid, int paginas, int puntero, subtp_t *tabla);
+	char *obtenerArgumento(char *mensaje);
+	char *obtenerNombre(char *mensaje);
+	void *direccionarConsola(char *mensaje);
 	// </AUXILIARES>
 
 	// <PRINCIPAL>
@@ -175,5 +179,13 @@
 	subtp_t aplicarClockM(subtp_t paginas[], int puntero);
 	void actualizarPuntero(int pid, int pagina);
 	// </ALGORITMOS>
+
+	// <CONSOLA_FUNCS>
+	void retardo(char *argumento);
+	void dump(char *argumento);
+	void flush(char *argumento);
+	void limpiarTLB();
+	void cambiarModificado();
+	// </CONSOLA_FUNCS>
 
 #endif /* LIB_FUMC_H_ */

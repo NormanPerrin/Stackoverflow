@@ -46,13 +46,10 @@ void consola() {
 
 		scanf("%[^\n]%*c", mensaje);
 
-		if(!strcmp(mensaje, "salir")) {
-			printf("Saliendo de UMC\n");
-			exitFlag = TRUE;
-		} else {
-			printf("Consola: %s\n", mensaje);
-		}
-
+		void (*funcion)(char*) = direccionarConsola(mensaje); // elijo función a ejecutar según mensaje
+		char *argumento = obtenerArgumento(mensaje);
+		funcion(argumento); // ejecuto función
+		free(argumento);
 	}
 
 	free(mensaje);
@@ -667,6 +664,40 @@ void *elegirFuncion(protocolo head) {
 	return NULL;
 }
 
+void *direccionarConsola(char *mensaje) {
+
+	char *nombre = obtenerNombre(mensaje);
+
+	if(!strcmp(nombre, "retardo")) {
+		free(nombre);
+		return retardo;
+	}
+
+	if(!strcmp(nombre, "dump")) {
+		free(nombre);
+		return dump;
+	}
+
+	if(!strcmp(nombre, "flush")) {
+		free(nombre);
+		return flush;
+	}
+
+	return NULL;
+}
+
+char *obtenerNombre(char *mensaje) {
+	char *retorno = (char*)reservarMemoria(CHAR*10);
+	sscanf(mensaje, "%s ", retorno);
+	return retorno;
+}
+
+char *obtenerArgumento(char *mensaje) {
+	char *retorno = (char*)reservarMemoria(CHAR*15);
+	sscanf(mensaje, " %s", retorno);
+	return retorno;
+}
+
 subtp_t aplicar_algoritmo(subtp_t *paginas, int puntero) {
 
 	subtp_t pagina_reemplazar;
@@ -696,6 +727,19 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 
 	} // sino se puede reemplazar tranquilamente
 
+}
+
+void generarInformePos(int pid, int paginas, int puntero, subtp_t *tabla) {
+	printf("> #PID: %d; #Paginas: %d; #Puntero: %d;\n", pid, paginas, puntero);
+
+	int i = 0;
+	for(; i < paginas; i++) {
+		printf("#Pagina: %d; ", tabla[i].pagina);
+		printf("#Marco: %d; ", tabla[i].marco);
+		printf("#Bit Presencia: %d; ", tabla[i].bit_presencia);
+		printf("#Bit Uso: %d; ", tabla[i].bit_uso);
+		printf("#Bit Modificado: %d;", tabla[i].bit_modificado);
+	}
 }
 
 // </AUXILIARES>
@@ -883,3 +927,70 @@ void actualizarPuntero(int pid, int pagina) {
 }
 
 // </ALGORITMOS>
+
+
+// <CONSOLA_FUNCS>
+
+void retardo(char *argumento) {
+
+	// 1) convierto la cadena a digito
+	int numero = 0, i = 0, digito = 1;
+
+	for(; i < (strlen(argumento)); i++) {
+		numero += (argumento[i] - '0') * digito;
+		digito *= 10;
+	}
+
+	// 2) Opero con argumento  transformado (numero)
+	config->retardo = numero;
+}
+
+void dump(char *argumento) {
+
+	// 1) Generar reporte Tabla Paginas
+	printf("\nInforme Tabla Paginas\n");
+
+	int i = 0;
+	for(; i < MAX_PROCESOS; i++)
+		generarInformePos(tabla_paginas[i].pid, tabla_paginas[i].paginas, tabla_paginas[i].puntero, tabla_paginas[i].tabla);
+
+	// 2) Generar reporte Memoria Principal
+	printf("\nInforme Memoria Principal\n");
+
+	int mp_size = config->marco_size * config->marcos;
+	void *pagina = reservarMemoria(config->marco_size);
+
+	int j = 0;
+	for(; j < mp_size; i++) {
+		int posicion_mp = (int)memoria + (i * config->marco_size); 		// TODO: ver si está bien
+		memset(pagina, posicion_mp, config->marco_size);
+		printf("- Contenido página #%d: %s\n", i, (char*)pagina);
+	}
+
+	free(pagina);
+}
+
+void flush(char *argumento) {
+	if(!strcmp(argumento, "tlb")) limpiarTLB();
+	if(!strcmp(argumento, "memory")) cambiarModificado();
+}
+
+void limpiarTLB() {
+	int i = 0;
+	for(; i < config->entradas_tlb; i++) {
+		tlb[i].pid = -1;
+	}
+}
+
+void cambiarModificado() {
+	int i = 0;
+	for(; i < MAX_PROCESOS; i++) {
+		if( tabla_paginas[i].pid != -1 ) { // Hay un proceso asignado en esta posicion
+			int j = 0;
+			for(; j < tabla_paginas[i].paginas; i++)
+				tabla_paginas[i].tabla[j].bit_modificado = 1;
+		}
+	}
+}
+
+// </CONSOLA_FUNCS>
