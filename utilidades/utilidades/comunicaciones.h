@@ -26,42 +26,46 @@
 
 // PROTOCOLO (head/tipo de msj):
 typedef enum {
+	// Mensajes Estáticos:
 		IMPRIMIR = 1, 				// CPU - Núcleo
-		IMPRIMIR_TEXTO, 			// CPU - Núcleo / Núcleo - Consola
-		INICIAR_PROGRAMA, 			// Núcleo - UMC / UMC - Swap
+		RECHAZAR_PROGRAMA,			// Todos
 		PEDIDO_LECTURA, 			// CPU - UMC
 		PEDIDO_ESCRITURA, 			// CPU - UMC
 		FINALIZAR_PROGRAMA,			// Núcleo - UMC / UMC - SWAP
-		ENVIAR_SCRIPT, 				// Consola - Núcleo
-		RESPUESTA_PEDIDO, 			// UMC - CPU / Swap - UMC
-		LEER_PAGINA, 				// UMC - Swap
-		ESCRIBIR_PAGINA, 			// UMC - Swap
-		DEVOLVER_PAGINA ,			// Swap - UMC
-		PCB,						// Núcleo - CPU / CPU - Núcleo
-		FIN_QUANTUM,				// CPU - Núcleo
 		RESPUESTA_INICIO_PROGRAMA,	// UMC - Núcleo / Swap - UMC
-		RECHAZAR_PROGRAMA,			// Todos
 		INDICAR_PID, 				// CPU - UMC
 		QUANTUM_MODIFICADO,			// Núcleo - CPU
+		LEER_PAGINA, 				// UMC - Swap
+		ESCRIBIR_PAGINA, 			// UMC - Swap
+		RESPUESTA_VARIABLE, 		// UMC - CPU / Swap - UMC
+		RESPUESTA_PEDIDO, 			// UMC - CPU
+
+		// Mensajes Dinámicos;
+		INICIAR_PROGRAMA, 			// Núcleo - UMC / UMC - Swap
+		ENVIAR_SCRIPT, 				// Consola - Núcleo
+		RESPUESTA_INSTRUCCION, 			// UMC - CPU / Swap - UMC
+		DEVOLVER_PAGINA ,			// Swap - UMC
+		PCB,						// Núcleo - CPU / CPU - Núcleo
+		IMPRIMIR_TEXTO, 			// CPU - Núcleo / Núcleo - Consola
 		DEVOLVER_CONTENIDO,			// UMC - CPU
+
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
-	} protocolo;
+} protocolo;
 
-// TADS para uso general
+// TADS para uso general:
 typedef struct {
 		int pagina, offset, size;
-} __attribute__((packed)) direccion; // posición de memoria, vale también para solicitud de Lectura
+} __attribute__((packed)) direccion; // direccion lógica
 
-// TADS para texto variable y contenido PCB
+// TADS para mensajes entre módulos:
 typedef struct {
 		int tamanio;
 		char * cadena;
 } __attribute__((packed)) string;
 
 typedef struct{
-	int quantum;
-	int retardoQuantum;
+	int quantum, retardoQuantum;
 }__attribute__((packed)) info_quantum;
 
 /*typedef struct {
@@ -70,18 +74,14 @@ typedef struct{
 } variable;*/
 
 typedef struct {
-		int tamanioListaArgumentos;
+		int tamanioListaArgumentos, tamanioListaVariables, proximaInstruccion;
 		direccion* listaPosicionesArgumentos; // lista del tipo de dato 'direccion'
-		int tamanioListaVariables;
 		t_dictionary* listaVariablesLocales; // diccionario: key: id -> data: dirección
-		int proximaInstruccion;
 		direccion posicionDelResultado; // página, offset, size
 	} registroStack;
 
-// TADS para UMC - Núcleo
 typedef struct {
-	int pid;
-	int paginas;
+	int pid, paginas;
 	char *contenido;
 } __attribute__((packed)) inicioPrograma;
 
@@ -101,62 +101,42 @@ typedef enum {
 
 typedef struct pcb{
 	int pid, pc, paginas_codigo, estado, id_cpu;
-	int tamanioIndiceCodigo;
+	int tamanioIndiceCodigo, tamanioIndiceStack, tamanioIndiceEtiquetas;
 	t_intructions* indiceCodigo;
-	int tamanioIndiceEtiquetas; // Tamaño del mapa serializado de etiquetas
 	char* indiceEtiquetas; // Serializacion de las etiquetas
-	int tamanioIndiceStack; // Viene de config
 	registroStack* indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
 } __attribute__((packed)) pcb;
 
-// TADS para UMC - CPU
-//typedef struct solicitudEscritura{
-//	direccion posicion;
-//	string buffer; // lo que se manda a escribir
-//} __attribute__((packed)) solicitudEscritura;
-
 typedef struct {
-	int pagina;
-	int offset;
-	int tamanio;
-	char *contenido;
+	int pagina, offset, tamanio, contenido; // dirección lógica + variable
 } __attribute__((packed)) solicitudEscritura;
 
 typedef struct {
-	int pagina;
-	int offset;
-	int tamanio;
+	int pagina, offset, tamanio; // dirección lógica
 } __attribute__((packed)) solicitudLectura;
 
 typedef struct {
-	int pid;
-	int pagina;
+	int pid, pagina;
 } __attribute__((packed))solicitudLeerPagina;
 
 typedef struct {
-	int pid;
-	int pagina;
-	char *contenido;
+	int pid, pagina, contenido;
 } __attribute__((packed))solicitudEscribirPagina;
 
 typedef struct {
 	int pagina;
 	char *contenido;
-} __attribute__((packed))devolverPagina;
+} __attribute__((packed))devolverPaginaInstruccion;
 
 typedef struct {
-	int estadoPedido;
-	string mensaje; // msj de excepción ante solicitud
-	string dataPedida; // instrucción si se lee código, variable si se lee stack, NULL si fue pedido escritura
-}__attribute__((packed)) respuestaPedido;
+	int pagina, contenido;
+} __attribute__((packed))devolverPaginaVariable;
 
 typedef enum{
 	PERMITIDO, NO_PERMITIDO // si es NO_PERMITIDO, UMC arroja escepción y se finaliza la ejecución
 } estadoPedido;
 
-// TADS para UMC - SWAP
-
-/*** PROTOTIṔOS ***/
+/*** PROTOTIPOS ***/
 // -- Funciones definitivas para enviar y recibir PAQUETES:
 void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void * mensaje);
 void* aplicar_protocolo_recibir(int fdEmisor, int * protocolo);
@@ -174,8 +154,6 @@ void* serealizarSolicitudInicioPrograma(void* elemento);
 void* deserealizarSolicitudInicioPrograma(void* buffer);
 void* serealizarSolicitudEscritura(void * elemento);
 void * deserealizarSolicitudEscritura(void * buffer);
-void * serializarRespuestaPedido(void * elemento);
-respuestaPedido * deserializarRespuestaPedido(void * buffer);
 void *deserializarDevolverPagina(void *buffer);
 void *serealizarDevolverPagina(void *elemento);
 void *deserializarEscribirPagina(void * buffer);

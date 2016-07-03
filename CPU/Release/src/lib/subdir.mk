@@ -4,13 +4,22 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/lib/fcpu.c 
+../src/lib/primitivasAnSISOP.c \
+../src/lib/principalesCPU.c \
+../src/lib/secundariasCPU.c \
+../src/lib/secundariasPrimitivas.c 
 
 OBJS += \
-./src/lib/fcpu.o 
+./src/lib/primitivasAnSISOP.o \
+./src/lib/principalesCPU.o \
+./src/lib/secundariasCPU.o \
+./src/lib/secundariasPrimitivas.o 
 
 C_DEPS += \
-./src/lib/fcpu.d 
+./src/lib/primitivasAnSISOP.d \
+./src/lib/principalesCPU.d \
+./src/lib/secundariasCPU.d \
+./src/lib/secundariasPrimitivas.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

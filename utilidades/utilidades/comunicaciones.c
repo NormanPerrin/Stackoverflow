@@ -6,11 +6,11 @@ void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void *mensaje){
 	int desplazamiento = 0, tamanioMensaje, tamanioTotal;
 
 	if (protocolo < 1 || protocolo > FIN_DEL_PROTOCOLO){
-		fprintf(stderr, "Error al enviar paquete. No existe protocolo definido para %d\n", protocolo);
+		printf("Error al enviar paquete. No existe protocolo definido para %d\n", protocolo);
 		abort(); // es abortivo
 		}
 
-	// Serealizar un mensaje dado un protocolo, me devuelve el mensaje empaquetado:
+	// Serealizar un mensaje dado un protocolo me devuelve el mensaje empaquetado:
 	void *mensajeSerealizado = serealizar(protocolo, mensaje);
 	tamanioMensaje = sizeof(mensajeSerealizado);
 	/* Lo que se envía es: el protocolo + tamaño del msj + el msj serializado
@@ -20,7 +20,7 @@ void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void *mensaje){
 	tamanioTotal = 2*INT + tamanioMensaje;
 
 	// Meto en el paquete para enviar, esas tres cosas:
-	void *buffer = reservarMemoria(tamanioTotal);
+	void *buffer = malloc(tamanioTotal);
 	memcpy(buffer + desplazamiento, &protocolo, INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &tamanioMensaje, INT);
@@ -40,15 +40,15 @@ void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo){
 	// Recibo primero el head y lo verifico:
 	int recibido = recibirPorSocket(fdEmisor, protocolo, INT);
 
-	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0)
-		return NULL; // Validar contra NULL al recibir en cada módulo (tirar un mensaje de error notificando)
-
+	if (*protocolo < 1 || *protocolo > FIN_DEL_PROTOCOLO || recibido <= 0){
+		return NULL; // Validar contra NULL al recibir en cada módulo (lanzar un mensaje de error notificando)
+	}
 	// Recibo ahora el tamaño del mensaje:
-	int* tamanioMensaje = (int*)reservarMemoria(INT);
+	int* tamanioMensaje = (int*)malloc(INT);
 	recibirPorSocket(fdEmisor, tamanioMensaje, INT);
 
 	// Recibo por último el mensaje serializado:
-	void * mensaje = reservarMemoria(*tamanioMensaje);
+	void * mensaje = malloc(*tamanioMensaje);
 	recibirPorSocket(fdEmisor, mensaje, *tamanioMensaje);
 
 	// Deserealizo:
@@ -77,24 +77,12 @@ void * serealizar(int protocolo, void * elemento){
 			buffer = serealizarSolicitudInicioPrograma(elemento);
 			break;
 		}
-		case PEDIDO_ESCRITURA: {
-			buffer = serealizarSolicitudEscritura(elemento);
-			break;
-		}
-		case RESPUESTA_PEDIDO:{
-			buffer = serializarRespuestaPedido(elemento);
-			break;
-		}
-		case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA:
-			case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:case LEER_PAGINA: case INDICAR_PID:{
+		case RESPUESTA_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA:
+		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:case LEER_PAGINA: case INDICAR_PID:{
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
-			buffer = reservarMemoria(tamanio);
+			buffer = malloc(tamanio);
 			memcpy(buffer, elemento, tamanio);
-			break;
-		}
-		case ESCRIBIR_PAGINA:{
-			buffer = serealizarEscribirPagina(elemento);
 			break;
 		}
 		case DEVOLVER_PAGINA:{
@@ -113,7 +101,7 @@ void * deserealizar(int protocolo, void * mensaje){
 	void * buffer;
 
 	switch(protocolo){
-		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_CONTENIDO: {
+		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_CONTENIDO: case RESPUESTA_INSTRUCCION: {
 			buffer = deserealizarTexto(mensaje);
 				break;
 		} // en ambos casos se recibe un texto (char*)
@@ -125,24 +113,12 @@ void * deserealizar(int protocolo, void * mensaje){
 			buffer = deserealizarSolicitudInicioPrograma(mensaje);
 			break;
 		}
-		case PEDIDO_ESCRITURA: {
-			buffer = deserealizarSolicitudEscritura(mensaje);
-			break;
-		}
-		case RESPUESTA_PEDIDO:{
-			buffer = deserializarRespuestaPedido(mensaje);
-			break;
-		}
-		case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA:
-			case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO: case LEER_PAGINA: case INDICAR_PID: {
+		case RESPUESTA_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA:
+		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO: case LEER_PAGINA: case INDICAR_PID: {
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(mensaje);
 			buffer = reservarMemoria(tamanio);
 			memcpy(buffer, mensaje, tamanio);
-			break;
-		}
-		case ESCRIBIR_PAGINA: {
-			buffer = deserializarEscribirPagina(mensaje);
 			break;
 		}
 		case DEVOLVER_PAGINA:{
@@ -151,7 +127,7 @@ void * deserealizar(int protocolo, void * mensaje){
 		}
 		case 0:{
 			printf("Se produjo una desconexión de sockets al desearealizar\n");
-			// es el caso del recv = 0 // TODO: el retorno de recv da 0. Si es así no puede setearse protocolo y tampoco entra en la función
+			// es el caso del recv = 0
 			break;
 		}
 	}
@@ -300,60 +276,6 @@ pcb * deserealizarPCB(void * buffer){
 	return unPcb;
 }
 
-
-// ingresa:	solicitudEscritura *mensaje
-// sale:	int pagina | int offset | int tamanio_escritura | int tamanio_contenido | char *contenido
-void *serealizarSolicitudEscritura(void *elemento) {
-
-	solicitudEscritura *mensaje = (solicitudEscritura*)elemento;
-	int tamanioTotal, desplazamiento = 0;
-
-	int tamanioString = CHAR * strlen(mensaje->contenido);
-	tamanioTotal = 4 * INT + tamanioString;
-
-	void *buffer = reservarMemoria(tamanioTotal);
-	memcpy(buffer + desplazamiento, &(mensaje->pagina), INT);
-	desplazamiento += INT;
-
-	memcpy(buffer + desplazamiento, &(mensaje->offset), INT);
-	desplazamiento += INT;
-
-	memcpy(buffer + desplazamiento, &(mensaje->tamanio), INT);
-	desplazamiento += INT;
-
-	memcpy(buffer + desplazamiento, &tamanioString, INT);
-	desplazamiento += INT;
-
-	memcpy(buffer + desplazamiento, mensaje->contenido, tamanioString);
-
-	return buffer;
-}
-
-// entra:	int pagina | int offset | int tamanio_escritura | int tamanio_contenido | char *contenido
-// sale:	solicitudEscritura *mensaje
-void *deserealizarSolicitudEscritura(void *buffer) {
-
-	int desplazamiento = 0, *tamanioString = NULL;
-	solicitudEscritura *mensaje = reservarMemoria(sizeof(solicitudEscritura));
-
-	memcpy( &(mensaje->pagina), buffer + desplazamiento, INT );
-	desplazamiento += INT;
-
-	memcpy( &(mensaje->offset), buffer + desplazamiento, INT );
-	desplazamiento += INT;
-
-	memcpy( &(mensaje->tamanio), buffer + desplazamiento, INT );
-	desplazamiento += INT;
-
-	memcpy( tamanioString, buffer + desplazamiento, INT );
-	desplazamiento += INT;
-
-	mensaje->contenido = (char*)reservarMemoria(*tamanioString);
-	memcpy( mensaje->contenido, buffer + desplazamiento, *tamanioString );
-
-	return mensaje;
-}
-
 // entra:	inicioPrograma *mensaje
 // sale:	int pid | int paginas | int tamanio | char *contenido
 void *serealizarSolicitudInicioPrograma(void *elemento) {
@@ -389,104 +311,10 @@ void *deserealizarSolicitudInicioPrograma(void *buffer) {
 
 	memcpy( &(mensaje->pid), buffer + desplazamiento, INT );
 	desplazamiento += INT;
-
 	memcpy( &(mensaje->paginas), buffer + desplazamiento, INT );
 	desplazamiento += INT;
-
 	memcpy( tamanioString, buffer + desplazamiento, INT );
 	desplazamiento += INT;
-
-	mensaje->contenido = (char*)reservarMemoria(*tamanioString);
-	memcpy( mensaje->contenido, buffer + desplazamiento, *tamanioString);
-
-	return mensaje;
-}
-
-void * serializarRespuestaPedido(void * elemento){
-	respuestaPedido* respuesta = (respuestaPedido*) elemento;
-	int tamanioTotal, desplazamiento = 0;
-
-	int tamanioExcepcion = CHAR * respuesta->mensaje.tamanio;
-	int tamanioDataPedida = CHAR * respuesta->dataPedida.tamanio;
-	tamanioTotal = 3*INT + tamanioExcepcion + tamanioDataPedida;
-
-	void * buffer = reservarMemoria(tamanioTotal);
-		memcpy(buffer + desplazamiento, &(respuesta->estadoPedido), INT);
-			desplazamiento += INT;
-		memcpy(buffer + desplazamiento, &(respuesta->mensaje.tamanio), INT);
-			desplazamiento += INT;
-		memcpy(buffer + desplazamiento, respuesta->mensaje.cadena, tamanioExcepcion);
-			desplazamiento += tamanioExcepcion;
-		memcpy(buffer + desplazamiento, &(respuesta->dataPedida.tamanio), INT);
-			desplazamiento += INT;
-		memcpy(buffer + desplazamiento, respuesta->dataPedida.cadena, tamanioDataPedida);
-
-	return buffer;
-}
-
-respuestaPedido * deserializarRespuestaPedido(void * buffer){
-	int desplazamiento = 0;
-		respuestaPedido * respuesta = reservarMemoria(sizeof(respuestaPedido));
-
-		memcpy(&respuesta->estadoPedido, buffer + desplazamiento, INT);
-			desplazamiento += INT;
-
-		memcpy(&respuesta->mensaje.tamanio, buffer + desplazamiento, INT);
-			desplazamiento += INT;
-		respuesta->mensaje.cadena = reservarMemoria(respuesta->mensaje.tamanio);
-		memcpy(respuesta->mensaje.cadena, buffer + desplazamiento, respuesta->mensaje.tamanio);
-			desplazamiento += respuesta->mensaje.tamanio;
-
-		memcpy(&respuesta->dataPedida.tamanio, buffer + desplazamiento, INT);
-			desplazamiento += INT;
-		respuesta->dataPedida.cadena = reservarMemoria(respuesta->dataPedida.tamanio);
-		memcpy(respuesta->dataPedida.cadena, buffer + desplazamiento, respuesta->dataPedida.tamanio);
-
-	return respuesta;
-}
-
-// entra:	solicitudEscribirPagina *elemento
-// sale:	int pid | int pagina | int tamanio | char *contenido
-void *serealizarEscribirPagina(void *elemento) {
-
-	solicitudEscribirPagina *mensaje = (solicitudEscribirPagina*)elemento;
-	int tamanioTotal, desplazamiento = 0;
-
-	int tamanioString = CHAR * strlen(mensaje->contenido);
-	tamanioTotal = 3 * INT + tamanioString;
-
-	void *buffer = reservarMemoria(tamanioTotal);
-
-	memcpy(buffer + desplazamiento, &(mensaje->pid), INT);
-	desplazamiento += INT;
-
-	memcpy(buffer + desplazamiento, &(mensaje->pagina), INT);
-	desplazamiento += INT;
-
-	memcpy(buffer + desplazamiento, &tamanioString, INT);
-	desplazamiento += INT;
-
-	memcpy(buffer + desplazamiento, mensaje->contenido, tamanioString);
-
-	return buffer;
-}
-
-// entra:	int pid | int pagina | int tamanio | char *contenido
-// sale:	solicitudEscribirPagina *mensaje
-void *deserializarEscribirPagina(void * buffer) {
-
-	int desplazamiento = 0, *tamanioString = NULL;
-	solicitudEscribirPagina *mensaje = (solicitudEscribirPagina*)reservarMemoria(sizeof(solicitudEscribirPagina));
-
-	memcpy( &(mensaje->pid), buffer + desplazamiento, INT );
-	desplazamiento += INT;
-
-	memcpy( &(mensaje->pagina), buffer + desplazamiento, INT );
-	desplazamiento += INT;
-
-	memcpy( tamanioString, buffer + desplazamiento, INT );
-	desplazamiento += INT;
-
 	mensaje->contenido = (char*)reservarMemoria(*tamanioString);
 	memcpy( mensaje->contenido, buffer + desplazamiento, *tamanioString);
 
@@ -495,22 +323,19 @@ void *deserializarEscribirPagina(void * buffer) {
 
 // entra:	devolverPagina *elemento
 // sale:	int pagina | int tamanio | char *contenido
-void *serealizarDevolverPagina(void *elemento) {
+void *serealizarDevolverPaginaInstruccion(void *elemento) {
 
-	devolverPagina *mensaje = (devolverPagina*)elemento;
+	devolverPaginaInstruccion *mensaje = (devolverPaginaInstruccion*)elemento;
 	int tamanioTotal, desplazamiento = 0;
 
 	int tamanioString = CHAR * strlen(mensaje->contenido);
 	tamanioTotal = 2 * INT + tamanioString;
 
 	void *buffer = reservarMemoria(tamanioTotal);
-
 	memcpy(buffer + desplazamiento, &(mensaje->pagina), INT);
 	desplazamiento += INT;
-
 	memcpy(buffer + desplazamiento, &tamanioString, INT);
 	desplazamiento += INT;
-
 	memcpy(buffer + desplazamiento, mensaje->contenido, tamanioString);
 
 	return buffer;
@@ -518,17 +343,15 @@ void *serealizarDevolverPagina(void *elemento) {
 
 // entra:	int pagina | int tamanio | char *contenido
 // sale:	devolverPagina *elemento
-void *deserializarDevolverPagina(void *buffer) {
+void *deserializarDevolverPaginaInstruccion(void *buffer) {
 
 	int desplazamiento = 0, *tamanioString = NULL;
-	devolverPagina *mensaje = (devolverPagina*)reservarMemoria(sizeof(devolverPagina));
+	devolverPaginaInstruccion *mensaje = (devolverPaginaInstruccion*)reservarMemoria(sizeof(devolverPaginaInstruccion));
 
 	memcpy( &(mensaje->pagina), buffer + desplazamiento, INT );
 	desplazamiento += INT;
-
 	memcpy( tamanioString, buffer + desplazamiento, INT );
 	desplazamiento += INT;
-
 	mensaje->contenido = (char*)reservarMemoria(*tamanioString);
 	memcpy( mensaje->contenido, buffer + desplazamiento, *tamanioString);
 
