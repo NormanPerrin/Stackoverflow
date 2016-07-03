@@ -37,17 +37,17 @@ typedef enum {
 		QUANTUM_MODIFICADO,			// Núcleo - CPU
 		LEER_PAGINA, 				// UMC - Swap
 		ESCRIBIR_PAGINA, 			// UMC - Swap
-		RESPUESTA_VARIABLE, 		// UMC - CPU / Swap - UMC
+		DEVOLVER_VARIABLE, 		// UMC - CPU
 		RESPUESTA_PEDIDO, 			// UMC - CPU
+		DEVOLVER_PAGINA_VARIABLE,	// Swap - UMC
 
 		// Mensajes Dinámicos;
 		INICIAR_PROGRAMA, 			// Núcleo - UMC / UMC - Swap
 		ENVIAR_SCRIPT, 				// Consola - Núcleo
-		RESPUESTA_INSTRUCCION, 			// UMC - CPU / Swap - UMC
-		DEVOLVER_PAGINA ,			// Swap - UMC
 		PCB,						// Núcleo - CPU / CPU - Núcleo
 		IMPRIMIR_TEXTO, 			// CPU - Núcleo / Núcleo - Consola
-		DEVOLVER_CONTENIDO,			// UMC - CPU
+		DEVOLVER_INSTRUCCION,			// UMC - CPU
+		DEVOLVER_PAGINA_INSTRUCCION,	// Swap - UMC
 
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO

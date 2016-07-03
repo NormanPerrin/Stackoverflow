@@ -22,24 +22,17 @@
 
 // Estructuras:
 typedef struct {
-	int puertoPrograma;
-	int puertoCPU;
-	int puertoUMC;
+	int puertoPrograma, puertoCPU, puertoUMC, quantum, retardoQuantum, cantidadPaginasStack;
 	char * ipUMC;
-	int quantum;
-	int retardoQuantum;
 	char ** semaforosID;
-	char** semaforosValInicial;
+	char ** semaforosValInicial;
 	char ** ioID;
-	char** retardosIO;
+	char ** retardosIO;
 	char ** variablesCompartidas;
-	int cantidadPaginasStack;
 } t_configuracion;
 
 typedef struct {
-	int id;
-	int fd_consola;
-	int pid;
+	int id, fd_consola, pid;
 	string programa;
 } consola;
 
@@ -48,26 +41,18 @@ typedef enum {
 } disponibilidadCPU;
 
 typedef struct {
-	int id;
-	int fd_cpu;
-	int disponibilidad;
-	int pid;
+	int id, fd_cpu, disponibilidad, pid;
 } cpu;
 
 // VARIABLES GLOBALES:
 t_configuracion * config;
-int fd_UMC;
+int fd_UMC, tamanioPagina, fdEscuchaConsola, fdEscuchaCPU, fd_inotify;
 t_log * logger;
-t_list * listaProcesos; // listaNuevos
-t_queue * colaListos;
-t_queue * colaBloqueados;
+t_list * listaProcesos;
 t_list * listaCPU;
 t_list * listaConsolas;
-int tamanioPagina;
-
+t_queue * colaListos;
+t_queue * colaBloqueados;
 fd_set readfds;
-int fdEscuchaConsola;
-int fdEscuchaCPU;
-int fd_inotify;
 
 #endif /* LIB_GLOBALES_H_ */

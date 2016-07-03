@@ -65,7 +65,7 @@ void * serealizar(int protocolo, void * elemento){
 	void * buffer;
 
 	switch(protocolo){
-		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO:{
+		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION:{
 			buffer = serealizarTexto(elemento);
 			break;
 		} // en ambos casos se envía un texto (char*)
@@ -77,7 +77,7 @@ void * serealizar(int protocolo, void * elemento){
 			buffer = serealizarSolicitudInicioPrograma(elemento);
 			break;
 		}
-		case RESPUESTA_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA:
+		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA:
 		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:case LEER_PAGINA: case INDICAR_PID:{
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
@@ -85,7 +85,7 @@ void * serealizar(int protocolo, void * elemento){
 			memcpy(buffer, elemento, tamanio);
 			break;
 		}
-		case DEVOLVER_PAGINA:{
+		case DEVOLVER_PAGINA_INSTRUCCION:{
 			buffer = serealizarDevolverPagina(elemento);
 			break;
 		}
@@ -101,7 +101,7 @@ void * deserealizar(int protocolo, void * mensaje){
 	void * buffer;
 
 	switch(protocolo){
-		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_CONTENIDO: case RESPUESTA_INSTRUCCION: {
+		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: {
 			buffer = deserealizarTexto(mensaje);
 				break;
 		} // en ambos casos se recibe un texto (char*)
@@ -113,7 +113,7 @@ void * deserealizar(int protocolo, void * mensaje){
 			buffer = deserealizarSolicitudInicioPrograma(mensaje);
 			break;
 		}
-		case RESPUESTA_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA:
+		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA:
 		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO: case LEER_PAGINA: case INDICAR_PID: {
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(mensaje);
@@ -121,7 +121,7 @@ void * deserealizar(int protocolo, void * mensaje){
 			memcpy(buffer, mensaje, tamanio);
 			break;
 		}
-		case DEVOLVER_PAGINA:{
+		case DEVOLVER_PAGINA_INSTRUCCION:{
 			buffer = deserializarDevolverPagina(mensaje);
 			break;
 		}
