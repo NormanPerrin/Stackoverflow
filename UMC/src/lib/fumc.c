@@ -134,8 +134,10 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	if(contenido_pagina == NULL || *protocolo != DEVOLVER_PAGINA) { // no encontró la página o hubo un fallo
 
 		// seteo mensaje de respuesta TODO
-		respuestaPedido *respuesta = NULL;
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+		int* estadoDelPedido = (int*)malloc(sizeof(int));
+		*estadoDelPedido= NO_PERMITIDO;
+		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, estadoDelPedido);
+		free(estadoDelPedido);
 
 	} else // tengo que cargar la página a MP
 		marco = cargar_pagina(pid, pagina, contenido_pagina);

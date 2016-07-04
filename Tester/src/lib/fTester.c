@@ -14,7 +14,6 @@ void mostrar_protocolos() {
 				"DEVOLVER_BYTES = %d\n"
 				"DEVOLVER_PAGINA = %d\n"
 				"ENVIAR_PCB = %d\n"
-				"FIN_QUANTUM = %d\n"
 				"RESPUESTA_INICIO_PROGRAMA = %d\n\n",
 				IMPRIMIR,
 				IMPRIMIR_TEXTO,
@@ -26,10 +25,9 @@ void mostrar_protocolos() {
 				RESPUESTA_PEDIDO,
 				LEER_PAGINA,
 				ESCRIBIR_PAGINA,
-				DEVOLVER_PAGINA,
-				DEVOLVER_PAGINA,
+				DEVOLVER_PAGINA_VARIABLE,
+				DEVOLVER_PAGINA_INSTRUCCION,
 				PCB,
-				FIN_QUANTUM,
 				RESPUESTA_INICIO_PROGRAMA
 				);
 }

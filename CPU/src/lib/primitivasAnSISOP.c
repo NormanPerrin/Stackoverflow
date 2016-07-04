@@ -1,7 +1,6 @@
 #include "primitivasAnSISOP.h"
 #include "principalesCPU.h"
 
-//ARREGLAR(VER COMO OBTENER LA POSICION)
 t_puntero AnSISOP_definirVariable(t_nombre_variable var_nombre){
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
@@ -13,7 +12,7 @@ t_puntero AnSISOP_definirVariable(t_nombre_variable var_nombre){
 	*var_posicion = pcbActual->stackPointer; // Última posición disponible en memoria
 	pcbActual->stackPointer.offset += INT;
 
-	dictionary_put(&(registroActual.variables), var_id, var_posicion);
+	dictionary_put(registroActual.variables, var_id, var_posicion);
 
 	free (var_id);
 	int var_stack_offset = var_posicion->offset;
@@ -30,7 +29,7 @@ t_puntero AnSISOP_obtenerPosicionVariable(t_nombre_variable var_nombre){
 	*var_id = var_nombre;
 
 	direccion * var_posicion = malloc(sizeof(direccion));
-	*var_posicion = dictionary_get(&(registroActual.variables), var_id);
+	var_posicion = (direccion*)dictionary_get(registroActual.variables, var_id);
 	free(var_id);
 
 	if(var_posicion == NULL){
@@ -52,7 +51,7 @@ t_valor_variable AnSISOP_dereferenciar(t_puntero direccion){
 	int protocolo;
 	void * valorVariable = aplicar_protocolo_recibir(fdUMC, &protocolo);
 	if(protocolo == RESPUESTA_PEDIDO){
-	respuestaPedido * respuesta = (respuestaPedido *) valorVariable;
+		respuestaPedido * respuesta = (respuestaPedido *) valorVariable;
 	t_valor_variable valor = atoi(respuesta->dataPedida.cadena);
 	return valor;
 	}
