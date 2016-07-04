@@ -19,7 +19,7 @@ void crearLogger(){
 
 void ejecutarProcesoActivo(){
 	int * pid = malloc(INT);
-	* pid = pcbActual->pid;
+	*pid = pcbActual->pid;
 	aplicar_protocolo_enviar(fdUMC, INDICAR_PID, pid);
 	free(pid);
 	printf("El Proceso #%d entró en ejecución.\n", pcbActual->pid);
@@ -27,7 +27,9 @@ void ejecutarProcesoActivo(){
 	int quantumActual = infoQuantum->quantum;
 
 		while(quantumActual > 0){
-			ejecutarInstruccion();
+			int pc = pcbActual->pc;
+			t_intructions instruccionActual = pcbActual->indiceCodigo[pc]; // Obtengo la próxima instrucción a ejecutar
+			ejecutarInstruccion(instruccionActual);
 			usleep(infoQuantum->retardoQuantum * 1000);
 			quantumActual--;
 		}
@@ -37,6 +39,35 @@ void ejecutarProcesoActivo(){
 			printf("Esperando nuevo proceso.\n");
 				liberarPcbActiva();
 		}
+}
+
+void ejecutarInstruccion(t_intructions instruccionActual){
+	solicitudLectura* direccionInstruccion = (solicitudLectura*)malloc(sizeof(solicitudLectura));
+	int * estadoDelPedido = NULL;
+	int protocolo;
+
+	direccionInstruccion->pagina = instruccionActual.start;
+	direccionInstruccion->offset = instruccionActual.offset;
+
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, direccionInstruccion);
+	free(direccionInstruccion);
+
+	estadoDelPedido  = aplicar_protocolo_recibir(fdUMC, RESPUESTA_PEDIDO);
+
+	if(*estadoDelPedido  == NO_PERMITIDO){
+		printf("UMC ha rechazado pedido de lectura de instrucción del proceso #%d", pcbActual->pid);
+		free(estadoDelPedido );
+		abort();
+	}
+
+	char * instruccion = NULL;
+	instruccion = strdup( (char*)aplicar_protocolo_recibir(fdUMC, DEVOLVER_INSTRUCCION) );
+
+	analizadorLinea((char * const)instruccion, &funcionesAnSISOP, &funcionesKernel);
+	(pcbActual->pc)++; // Incremento Program Counter del PCB
+
+	free(estadoDelPedido );
+	free(instruccion);
 }
 
 void liberarPcbActiva(){
@@ -50,54 +81,6 @@ void liberarPcbActiva(){
 	pcbActual = NULL;
 }
 
-void ejecutarInstruccion(pcb* pcb){
-	direccion direccionInstruccion;
-	void * entrada = NULL;
-	int protocolo;
-	respuestaPedido * respuesta = NULL;
-
-	direccionInstruccion.pagina = pcb->indiceCodigo[pcb->pc]; // falta obtener el numero de pagina!!
-	direccionInstruccion.offset = pcb->indiceCodigo->offset;
-	direccionInstruccion.size = pcb->tamanioIndiceCodigo;
-
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, &direccionInstruccion);
-
-	entrada = aplicar_protocolo_recibir(fdUMC, &protocolo);
-
-	if (protocolo == RESPUESTA_PEDIDO){
-		respuesta = (respuestaPedido *) entrada;
-		if(respuesta->estadoPedido==PERMITIDO){
-				(pcb->pc)++; //incremento Program Counter del PCB
-				char* instruccion = (char*)malloc(respuesta->dataPedida.tamanio);
-				instruccion = strdup(respuesta->dataPedida.cadena);
-
-				analizadorLinea(instruccion, &funcionesAnSISOP, &funcionesKernel);
-
-				free(instruccion);
-				free(respuesta->mensaje.cadena);
-				free(respuesta->dataPedida.cadena);
-				free(respuesta);
-
-			}
-			else{
-				// UMC arrojó excepción:
-				char* msjExcepcion = NULL;
-				msjExcepcion = strdup(respuesta->mensaje.cadena);
-				printf("%s", msjExcepcion);
-
-				// es abortiva, ver qué se hace con la excepción recibida y con la ejecución
-				/* Al terminar:
-				 * free(respuesta->mensaje.cadena);
-				 * free(respuesta->dataPedida.cadena);
-				 * free(respuesta);*/
-			}
-		}else{
-			log_error(logger, "Se esperaba una respuesta de lectura y no se recibió.");
-			//abort();
-		}
-}
-
-
 int validar_servidor(char *id) {
 	if( !strcmp(id, "U") || !strcmp(id, "N") ) {
 		printf("Servidor aceptado\n");
@@ -110,10 +93,9 @@ int validar_servidor(char *id) {
 
 int validar_cliente(char *id) {return 0;}
 
-char* charToString(char element) {
-	char* new = conitos_malloc(2);
-	*new = element;
-	*(new + 1) = '\0';
-	return new;
+char* charToString(char c) {
+	char* caracter = malloc(2);
+	*caracter = c;
+	*(caracter + 1) = '\0';
+	return caracter;
 }
-

@@ -174,14 +174,14 @@ void * serealizarPCB(void * estructura){
 
 	int codigoSize = (sizeof(t_intructions) * unPCB->tamanioIndiceCodigo);
 
-	int tamListaArgumentos = sizeof(direccion) * unPCB->indiceStack->tamanioListaArgumentos;
-	int tamListaVariables = sizeof(t_dictionary) * unPCB->indiceStack->tamanioListaVariables;
+	int tamListaArgumentos = sizeof(direccion) * unPCB->indiceStack->tamanioArgumentos;
+	int tamListaVariables = sizeof(t_dictionary) * unPCB->indiceStack->tamanioVariables;
 	int tamRegistroStack = 6*INT + tamListaArgumentos + tamListaVariables;
 	int stackSize = tamRegistroStack * unPCB->tamanioIndiceStack;
 
 	int etiquetasSize = (CHAR * unPCB->tamanioIndiceEtiquetas);
 
-	tamanioTotal = 8*INT + codigoSize + stackSize + etiquetasSize;
+	tamanioTotal = 12*INT + codigoSize + stackSize + etiquetasSize;
 
 	void * buffer = reservarMemoria(tamanioTotal);
 	memcpy(buffer + desplazamiento,&(unPCB->pid), INT);
@@ -192,6 +192,10 @@ void * serealizarPCB(void * estructura){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->paginas_codigo), INT);
 		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPCB->ultimaPosicionIndiceStack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPCB->stackPointer), 3*INT);
+		desplazamiento += 3*INT;
 	memcpy(buffer + desplazamiento, &(unPCB->estado), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->estado), INT);
@@ -212,17 +216,17 @@ void * serealizarPCB(void * estructura){
 	// Serealizo el índice de stack:
 	memcpy(buffer + desplazamiento, &(unPCB->tamanioIndiceStack), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->proximaInstruccion), INT);
+	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->posicionIndiceCodigo), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->posicionDelResultado), sizeof(direccion));
+	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->posicionResultado), sizeof(direccion));
 		desplazamiento += sizeof(direccion);
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioListaArgumentos), INT);
+	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioArgumentos), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceStack->listaPosicionesArgumentos, tamListaArgumentos);
+	memcpy(buffer + desplazamiento, unPCB->indiceStack->posicionesArgumentos, tamListaArgumentos);
 		desplazamiento += tamListaArgumentos;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioListaVariables), INT);
+	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioVariables), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceStack->listaVariablesLocales, tamListaVariables);
+	memcpy(buffer + desplazamiento, unPCB->indiceStack->variables, tamListaVariables);
 
 	return buffer;
 }
@@ -259,19 +263,19 @@ pcb * deserealizarPCB(void * buffer){
 	// Deserealizo el índice de stack:
 	memcpy(&unPcb->tamanioIndiceStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&unPcb->indiceStack->proximaInstruccion, buffer + desplazamiento, INT);
+	memcpy(&unPcb->indiceStack->posicionIndiceCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&unPcb->indiceStack->posicionDelResultado, buffer + desplazamiento, sizeof(direccion));
+	memcpy(&unPcb->indiceStack->posicionResultado, buffer + desplazamiento, sizeof(direccion));
 		desplazamiento += sizeof(direccion);
-	memcpy(&unPcb->indiceStack->tamanioListaArgumentos, buffer + desplazamiento, INT);
+	memcpy(&unPcb->indiceStack->tamanioArgumentos, buffer + desplazamiento, INT);
 			desplazamiento += INT;
-	unPcb->indiceStack->listaPosicionesArgumentos = reservarMemoria(unPcb->indiceStack->tamanioListaArgumentos);
-	memcpy(unPcb->indiceStack->listaPosicionesArgumentos, buffer + desplazamiento, unPcb->indiceStack->tamanioListaArgumentos);
-		desplazamiento += unPcb->indiceStack->tamanioListaArgumentos;
-	memcpy(&unPcb->indiceStack->tamanioListaVariables, buffer + desplazamiento, INT);
+	unPcb->indiceStack->posicionesArgumentos = reservarMemoria(unPcb->indiceStack->tamanioArgumentos);
+	memcpy(unPcb->indiceStack->posicionesArgumentos, buffer + desplazamiento, unPcb->indiceStack->tamanioArgumentos);
+		desplazamiento += unPcb->indiceStack->tamanioArgumentos;
+	memcpy(&unPcb->indiceStack->tamanioVariables, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceStack->listaVariablesLocales = reservarMemoria(unPcb->indiceStack->tamanioListaVariables);
-	memcpy(unPcb->indiceStack->listaVariablesLocales, buffer + desplazamiento, unPcb->indiceStack->tamanioListaVariables);
+	unPcb->indiceStack->variables = reservarMemoria(unPcb->indiceStack->tamanioVariables);
+	memcpy(unPcb->indiceStack->variables, buffer + desplazamiento, unPcb->indiceStack->tamanioVariables);
 
 	return unPcb;
 }

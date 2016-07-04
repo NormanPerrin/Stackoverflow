@@ -68,17 +68,13 @@ typedef struct{
 	int quantum, retardoQuantum;
 }__attribute__((packed)) info_quantum;
 
-/*typedef struct {
-		char id;
-		direccion posicion;
-} variable;*/
-
 typedef struct {
-		int tamanioListaArgumentos, tamanioListaVariables, proximaInstruccion;
-		direccion* listaPosicionesArgumentos; // lista del tipo de dato 'direccion'
-		t_dictionary* listaVariablesLocales; // diccionario: key: id -> data: dirección
-		direccion posicionDelResultado; // página, offset, size
-	} registroStack;
+	int tamanioArgumentos, tamanioVariables;
+	int posicionIndiceCodigo; // Posición donde se retorna al terminarse la función
+	direccion* posicionesArgumentos; // Direcciones lógicas de los argumentos de la función
+	t_dictionary* variables; // Diccionario de variables locales con key: id y data: dirección lógica
+	direccion posicionResultado; // Dirección lógica donde guardar el resultado de la función
+} registroStack;
 
 typedef struct {
 	int pid, paginas;
@@ -86,7 +82,7 @@ typedef struct {
 } __attribute__((packed)) inicioPrograma;
 
 typedef struct {
-		int pid, estadoDelHeap;
+	int pid, estadoDelHeap;
 // Si el heap es NO_CREADO, Núcleo rechaza acceso al sistema informando a Consola
 	} __attribute__((packed)) respuestaInicioPrograma;
 
@@ -100,7 +96,8 @@ typedef enum {
 } estadoProceso;
 
 typedef struct pcb{
-	int pid, pc, paginas_codigo, estado, id_cpu;
+	int pid, pc, paginas_codigo, estado, id_cpu, ultimaPosicionIndiceStack;
+	direccion stackPointer;
 	int tamanioIndiceCodigo, tamanioIndiceStack, tamanioIndiceEtiquetas;
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas; // Serializacion de las etiquetas

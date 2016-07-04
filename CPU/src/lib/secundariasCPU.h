@@ -9,7 +9,7 @@ void setearValores_config(t_config * archivoConfig);
 void crearLogger();
 void ejecutarProcesoActivo();
 void liberarPcbActiva();
-void ejecutarInstruccion();
+void ejecutarInstruccion(t_intructions instruccionActual);
 int validar_servidor(char *id); // Valida si la conexión es UMC o Nucleo
 int validar_cliente(char *id); // para que no joda con error
 char* charToString(char element);

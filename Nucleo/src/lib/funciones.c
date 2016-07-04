@@ -65,8 +65,6 @@ int solicitarSegmentosAUMC(pcb * nuevoPcb, string programa){
 				}
 }
 
-
-
 pcb * crearPcb(string programa){
 	pcb * nuevoPcb = malloc(sizeof(pcb));
 
@@ -85,6 +83,9 @@ pcb * crearPcb(string programa){
 			free(codigo);
 
 			nuevoPcb->pc = infoProg->instruccion_inicio + 1; // la siguiente al begin
+			nuevoPcb->ultimaPosicionIndiceStack = 0;
+			nuevoPcb->stackPointer.pagina = 0;
+			nuevoPcb->stackPointer.offset = 0;
 
 			// Inicializo los tres índices:
 			inicializarIndices(nuevoPcb, infoProg);
@@ -146,8 +147,8 @@ void salvarProcesoEnCPU(int id_cpu){
 void liberarPcb(pcb * pcb){
 	free(pcb->indiceCodigo);
 	free(pcb->indiceEtiquetas);
-	free(pcb->indiceStack->listaPosicionesArgumentos);
-	free(pcb->indiceStack->listaVariablesLocales);
+	free(pcb->indiceStack->posicionesArgumentos);
+	free(pcb->indiceStack->variables);
 	free(pcb->indiceStack);
 
 	free(pcb);

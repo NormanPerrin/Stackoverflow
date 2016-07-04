@@ -43,11 +43,9 @@ void ejecutarProcesos(){
 					free(nuevoQuantum);
 				break;
 			}
-				default:
-					log_error(logger,"Recibí como un mensaje con el protocolo %d no reconocido",protocolo);
-			}
-			free(entrada);
-				entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
+				}
+					free(entrada);
+					entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
 		}
 
 		cerrarSocket(fdNucleo);

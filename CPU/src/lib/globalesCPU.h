@@ -23,8 +23,7 @@ info_quantum * infoQuantum;
 
 // Variables Globales:
 t_configuracion *config;
-int fdNucleo, fdUMC;
-int tamanioPagina;
+int fdNucleo, fdUMC, tamanioPagina;
 t_log * logger;
 pcb * pcbActual;
 

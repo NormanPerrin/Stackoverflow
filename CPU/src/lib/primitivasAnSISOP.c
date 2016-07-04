@@ -2,30 +2,44 @@
 #include "principalesCPU.h"
 
 //ARREGLAR(VER COMO OBTENER LA POSICION)
-t_puntero AnSISOP_definirVariable(t_nombre_variable nombre){
+t_puntero AnSISOP_definirVariable(t_nombre_variable var_nombre){
+	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
+	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
-	char* identificador = malloc(sizeof(char));
-	identificador = charToString((char)nombre);
-	t_puntero * pos = malloc(sizeof(t_puntero));
-	*pos = ultimaPosicionDeVariable(&(pcbActual->indiceStack->listaVariablesLocales));
-	dictionary_put(pcbActual->indiceStack->listaVariablesLocales,identificador,pos);
+	char * var_id = malloc(CHAR);
+	*var_id = var_nombre;
 
-	free (identificador);
-	//return pos+1;//
-	return (*(pos +1));
+	direccion * var_posicion = malloc(sizeof(direccion));
+	*var_posicion = pcbActual->stackPointer; // Última posición disponible en memoria
+	pcbActual->stackPointer.offset += INT;
+
+	dictionary_put(&(registroActual.variables), var_id, var_posicion);
+
+	free (var_id);
+	int var_stack_offset = var_posicion->offset;
+	free(var_posicion);
+
+	return var_stack_offset;
 }
 
-//HECHA(REVISAR SI ESTA BIEN)
-t_puntero AnSISOP_obtenerPosicionVariable(t_nombre_variable nombre){
-	char * identificador = malloc(sizeof(char));
-	identificador = charToString((char)nombre);
-	t_puntero * posicion = dictionary_get(pcbActual->indiceStack->listaVariablesLocales, identificador);
-	free(identificador);
-	if(posicion != NULL){
-		return (*(posicion +1));
+t_puntero AnSISOP_obtenerPosicionVariable(t_nombre_variable var_nombre){
+	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
+	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
+
+	char * var_id = malloc(CHAR);
+	*var_id = var_nombre;
+
+	direccion * var_posicion = malloc(sizeof(direccion));
+	*var_posicion = dictionary_get(&(registroActual.variables), var_id);
+	free(var_id);
+
+	if(var_posicion == NULL){
+		free(var_posicion);
+		return -1;
 	}
 	else{
-		return -1;
+		int var_stack_offset = var_posicion->offset;
+		return var_stack_offset;
 	}
 }
 
