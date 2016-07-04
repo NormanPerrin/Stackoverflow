@@ -46,13 +46,18 @@ void ejecutarInstruccion(t_intructions instruccionActual){
 	int * estadoDelPedido = NULL;
 	int protocolo;
 
-	direccionInstruccion->pagina = instruccionActual.start;
-	direccionInstruccion->offset = instruccionActual.offset;
+	// Obtengo la dirección lógica de la instrucción a partir del índice de código:
+	int num_pagina = instruccionActual.start / tamanioPagina;
+	int offset = instruccionActual.start - (tamanioPagina*num_pagina);
+
+	direccionInstruccion->pagina = num_pagina;
+	direccionInstruccion->offset = offset;
+	direccionInstruccion->tamanio = instruccionActual.offset;
 
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, direccionInstruccion);
 	free(direccionInstruccion);
 
-	estadoDelPedido  = aplicar_protocolo_recibir(fdUMC, RESPUESTA_PEDIDO);
+	estadoDelPedido = aplicar_protocolo_recibir(fdUMC, RESPUESTA_PEDIDO);
 
 	if(*estadoDelPedido  == NO_PERMITIDO){
 		printf("UMC ha rechazado pedido de lectura de instrucción del proceso #%d", pcbActual->pid);
