@@ -3,7 +3,4 @@
 
 #include "globales.h"
 
-// Diccionario:
-t_dictionary *dictionarySharedVariables;
-
 #endif /* LIB_VARIABLESCOMPARTIDAS_H_ */

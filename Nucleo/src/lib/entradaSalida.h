@@ -2,10 +2,7 @@
 #define LIB_ENTRADASALIDA_H_
 
 #include "globales.h"
-
-// Diccionarios:
-t_dictionary * dictionaryIO;
-t_dictionary *dictionarySemaphores;
+#include "funciones.h"
 
 typedef struct{
 	char* nombre;
@@ -20,11 +17,16 @@ typedef struct{
 	dataDispositivo dataHilo;
 } hiloIO;
 
-void bloquearProcesoPorIO(hiloIO* dispositivoIO, pcb* unPcb);
+typedef struct{
+	pcb* proceso;
+	int espera;
+} proceso_bloqueadoIO;
+
+void bloquearProcesoPorIO(hiloIO* dispositivoIO, proceso_bloqueadoIO* unPcb);
 void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
 void* entradaSalidaThread(void* dataHilo);
 hiloIO* crearHiloIO(int index);
 void lanzarIOThreads();
-pcb* esperarPorProceso(dataDispositivo* datos);
+proceso_bloqueadoIO* esperarPorProceso(dataDispositivo* datos);
 
 #endif /* LIB_ENTRADASALIDA_H_ */

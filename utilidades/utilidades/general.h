@@ -27,5 +27,6 @@
 	int validar_recive(int bytes, int modo); // Decide si ante una desconexión o error en mensaje termina el programa o sigue, según el modo. Modo 1 es terminante. Retorno: 0 en desconexión o error. 1 en éxito
 	void recibirYAsignarPaquete(int fdEmisor, int protocolo, void * dondeLoQuieraAsignar);
 	void dormir(float miliseconds); // Duerme el hilo del que se está ejecutando milisegundos (más preciso y consistente que sleep y usleep)
+	char* charAString(char caracter);
 
 #endif

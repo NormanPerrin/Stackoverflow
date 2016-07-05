@@ -127,6 +127,21 @@ pcb * buscarProcesoPorPid(int pid, int* index){
 	return NULL; // no se encontró el proceso
 }
 
+int pcbListIndex(int pid){
+	int i, index;
+		pcb * unPcb;
+		for (i = 0; i < list_size(listaProcesos); i++){
+			unPcb = (pcb *)list_get(listaProcesos, i);
+			if(unPcb->pid == pid){
+				index = i;
+				free(unPcb);
+				return index;
+			}
+		}
+		free(unPcb);
+		return -1; // no se encontró el proceso
+}
+
 void salvarProcesoEnCPU(int id_cpu){
 	bool esLaPcbEnEjecucion(pcb * pcb){ return pcb->id_cpu == id_cpu; }
 
@@ -155,21 +170,35 @@ void liberarPcb(pcb * pcb){
 }
 
 void liberarCPU(cpu * cpu){ free(cpu); cpu = NULL; }
+
 void liberarConsola(consola * consola){ free(consola->programa.cadena);
 	consola->programa.cadena = NULL; free(consola); consola = NULL; }
 
-void limpiarListasYColas(){
-	list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPcb );
+void liberarSemaforo(t_semaforo * sem){
+	free(sem->nombre);
+	queue_destroy_and_destroy_elements(sem->bloqueados, (void *) liberarPcb);
+	sem->bloqueados = NULL; free(sem); sem = NULL; }
+
+void liberarVarCompartida(var_compartida * var){ free(var->nombre); free(var); var = NULL; }
+
+void limpiarColecciones(){
+	list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPcb);
 	listaProcesos = NULL;
 
-	list_destroy_and_destroy_elements(listaCPU,(void *) liberarCPU );
+	list_destroy_and_destroy_elements(listaCPU,(void *) liberarCPU);
 	listaCPU = NULL;
 
-	list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola );
+	list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola);
 	listaConsolas = NULL;
 
-	queue_destroy(colaListos);
+	queue_destroy_and_destroy_elements(colaListos, (void *) liberarPcb);
 	colaListos = NULL;
+
+	dictionary_destroy_and_destroy_elements(diccionarioSemaforos, (void *) liberarSemaforo);
+	diccionarioSemaforos = NULL;
+
+	dictionary_destroy_and_destroy_elements(diccionarioVarCompartidas, (void *) liberarVarCompartida);
+	diccionarioVarCompartidas = NULL;
 }
 
 void limpiarArchivoConfig(){
@@ -230,38 +259,44 @@ void actualizarDatosDePcbEjecutada(cpu * unCPU, pcb * pcbNuevo){
 		unPcb->id_cpu = -1;
 
 		switch (unPcb->estado) {
-			case EXEC:
+
+			case EXEC:{
+
 				unPcb->estado = READY;
 				queue_push(colaListos, unPcb);
-				break;
-			case BLOCK:
-				// Manejar I/O
 
 				break;
-			case EXIT:
+			}
+			case BLOCK:{
+
+
+
+				break;
+			}
+			case EXIT:{
 				log_info(logger, "El Programa #%i ha finalizado.", unPcb->pid);
 
 				// Le informo a UMC:
 				finalizarPrograma(unPcb->pid);
 
-				bool consolaTieneElPid(void* unaConsola){
-					return (((consola*) unaConsola)->pid) == unPcb->pid;}
-				consola * consolaAsociada = list_remove_by_condition(listaConsolas, consolaTieneElPid);
+			bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == unPcb->pid;}
+			consola * consolaAsociada = list_remove_by_condition(listaConsolas, consolaTieneElPid);
 
-				// Le informo a la Consola asociada:
-				aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, NULL);
-				liberarConsola(consolaAsociada);
+		    // Le informo a la Consola asociada:
+			aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, NULL);
+			liberarConsola(consolaAsociada);
 
-				// Libero el PCB del proceso:
-				liberarPcb(list_remove(listaProcesos, index));
+			// Libero el PCB del proceso:
+			liberarPcb(list_remove(listaProcesos, index));
 
-				break;
+			break;
+			}
 		}
 		liberarPcb(pcbNuevo);
 }
-
+/*
 void manejarES(){
-	/*if (!queue_is_empty(colaBloqueados)){
+	if (!queue_is_empty(colaBloqueados)){
 		pcb * unPcb = queue_pop(colaBloqueados);
 
 		*** MANEJAR ENTRADA/SALIDA ***
@@ -273,8 +308,8 @@ void manejarES(){
 			planificarProceso();
 
 		}
-	}*/
-}
+	}
+}*/
 
 void notificarCambioDelQuantumACPU(){
 
@@ -338,4 +373,12 @@ void encolarPcbAListos(pcb* proceso){
   pcb* copia = copiarPcb(proceso);
   log_info(logger,"Moviendo proceso %d a la cola de Listos", proceso->pid);
   queue_push(colaListos, copia);
+}
+
+void detenerEjecucion(pcb* pcb){
+	// Proceso pasa de Ejecutando a Bloqueado
+			// --> Lo cambia CPU
+
+	// CPU pasa de Ocupada a Libre
+
 }

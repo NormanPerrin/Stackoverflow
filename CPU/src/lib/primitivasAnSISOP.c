@@ -9,8 +9,7 @@ t_puntero AnSISOP_definirVariable(t_nombre_variable var_nombre){
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
-	char * var_id = malloc(CHAR);
-	*var_id = var_nombre;
+	char * var_id = charAString(var_nombre);
 
 	direccion * var_direccion = malloc(sizeof(direccion));
 	var_direccion->pagina = 0;
@@ -42,8 +41,7 @@ t_puntero AnSISOP_obtenerPosicionVariable(t_nombre_variable var_nombre){
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack -1;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
-	char * var_id = malloc(CHAR);
-	*var_id = var_nombre;
+	char* var_id = charAString(var_nombre);
 
 	direccion * var_direccion = malloc(sizeof(direccion));
 	var_direccion = (direccion*)dictionary_get(registroActual.variables, var_id);
@@ -76,24 +74,15 @@ t_valor_variable AnSISOP_dereferenciar(t_puntero var_stack_offset){
 	int head;
 	void* entrada = NULL;
 	int* valor_variable = NULL;
-	int* estadoDelPedido = NULL;
 
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, var_direccion);
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_VARIABLE, var_direccion);
 
 	entrada = aplicar_protocolo_recibir(fdUMC, &head);
 
-	if(head == RESPUESTA_PEDIDO){
-		 estadoDelPedido = (int*)entrada;
-		 free(entrada);
-		 entrada = NULL;
+	recibirYvalidarEstadoDelPedidoAUMC();
 
-		 if(*estadoDelPedido == NO_PERMITIDO){
-		 	printf("UMC ha rechazado pedido de lectura de variable del proceso #%d", pcbActual->pid);
-		 	free(estadoDelPedido);
-		 	abort();
-		 }
-	}
 	entrada = aplicar_protocolo_recibir(fdUMC, &head);
+
 	if(head == DEVOLVER_VARIABLE){
 		valor_variable = (int*)entrada;
 	}

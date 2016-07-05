@@ -1,28 +1,45 @@
 #include "entradaSalida.h"
 
-void bloquearProcesoPorIO(hiloIO* dispositivoIO, pcb* unPcb){
+void bloquearProcesoPorIO(hiloIO* dispositivoIO, proceso_bloqueadoIO* unPcb){
 	pthread_mutex_lock(&dispositivoIO->dataHilo.mutex_io);
 	queue_push(dispositivoIO->dataHilo.bloqueados, unPcb);
 	pthread_mutex_unlock(&dispositivoIO->dataHilo.mutex_io);
 	sem_post(&dispositivoIO->dataHilo.sem_io);
 }
 
-pcb* esperarPorProceso(dataDispositivo* datos){
+proceso_bloqueadoIO* esperarPorProceso(dataDispositivo* datos){
 	sem_wait(&datos->sem_io);
 	pthread_mutex_lock(&datos->mutex_io);
-	pcb* proceso = queue_pop(datos->bloqueados);
+	proceso_bloqueadoIO* proceso = queue_pop(datos->bloqueados);
 	pthread_mutex_unlock(&datos->mutex_io);
 
 	return proceso;
 }
 
 void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos){
-	// completar
+
+	proceso_bloqueadoIO* pcbIO = malloc(sizeof *pcbIO);
+	hiloIO* dispositivoIO = dictionary_get(diccionarioIO, datos->nombreDispositivo);
+		pcbIO->espera = datos->tiempo;
+		pcbIO->proceso = copiarPcb(procesoEjecutando);
+	bloquearProcesoPorIO(dispositivoIO, pcbIO);
 }
 
 void* entradaSalidaThread(void* dataHilo){
-	// completar
-	return NULL ;
+	int tiempoDeEspera;
+
+		dataDispositivo *datos = dataHilo;
+		proceso_bloqueadoIO* proceso;
+
+		while (TRUE){
+
+			proceso = esperarPorProceso(datos);
+			tiempoDeEspera = (datos->retardo * proceso->espera) * 1000;
+			usleep(tiempoDeEspera);
+			encolarPcbAListos(proceso->proceso);
+			free(proceso);
+		}
+		return NULL ;
 }
 
 /*** Planificación a corto plazo (PCP) ****/
@@ -45,7 +62,7 @@ void lanzarIOThreads(){
 
       hiloIO *hilo = crearHiloIO(i);
       pthread_create(&hilo->hiloID, NULL, &entradaSalidaThread, (void*) &hilo->dataHilo);
-      dictionary_put(dictionaryIO, config->ioID[i], hilo);
+      dictionary_put(diccionarioIO, config->ioID[i], hilo);
       log_info(logger, "Lanzando hilo de IO %d que pertenece al dispositivo %s", i, hilo->dataHilo.nombre);
 
       i++;

@@ -4,12 +4,6 @@
 #include "globales.h"
 #include "funciones.h"
 
-typedef struct {
-	char *nombre;
-	int valor;
-	t_queue *bloqueados;
-} t_semaforo;
-
 t_semaforo* semaforo_create(char*nombre, int valor);
 void semaforo_signal(t_semaforo* semaforo);
 int semaforo_wait(t_semaforo* semaforo);

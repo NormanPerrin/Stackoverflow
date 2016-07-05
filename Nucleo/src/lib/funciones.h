@@ -16,16 +16,20 @@ void salvarProcesoEnCPU(int cpuId);
 void liberarPcb(pcb * pcb);
 void planificarProceso();
 void finalizarPrograma(int pid);
-void limpiarListasYColas();
+void limpiarColecciones();
+void liberarSemaforo(t_semaforo * sem);
+void liberarVarCompartida(var_compartida * var);
 void liberarConsola(consola * consola);
 void liberarCPU(cpu * cpu);
 void limpiarArchivoConfig();
-void manejarES();
+//void manejarES();
 void notificarCambioDelQuantumACPU();
 void detectarCambiosEnArchivoConfig();
 void enviarNuevoQuantum(cpu * unCpu);
 int solicitarSegmentosAUMC(pcb * nuevoPcb, string programa);
 pcb* copiarPcb(pcb* proceso);
 void encolarPcbAListos(pcb* proceso);
+void detenerEjecucion(pcb* pcb);
+int pcbListIndex(int pid);
 
 #endif /* LIB_FUNCIONES_H_ */

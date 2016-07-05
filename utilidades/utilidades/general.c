@@ -142,3 +142,10 @@ void recibirYAsignarPaquete(int fdEmisor, int protocolo, void * dondeLoQuieraAsi
 		}
 		free(entrada);
 }
+
+char* charAString(char caracter){
+	char* caracterMasBarraCero = (char*)malloc(2);
+		*caracterMasBarraCero = caracter;
+		*(caracterMasBarraCero + 1) = '\0';
+		return caracterMasBarraCero;
+}

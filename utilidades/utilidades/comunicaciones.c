@@ -34,7 +34,6 @@ void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void *mensaje){
 	free(mensajeSerealizado);
 }
 
-
 void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo){
 
 	// Recibo primero el head y lo verifico:
@@ -70,7 +69,7 @@ void * serealizar(int protocolo, void * elemento){
 			break;
 		} // en todos los casos se envía un texto (char*)
 		case ENTRADA_SALIDA:{
-			//buffer = serealizarIOrequest(elemento);
+			//buffer = serealizarOperacionPrivilegiada(elemento);
 			break;
 		}
 		case PCB: {
@@ -82,10 +81,10 @@ void * serealizar(int protocolo, void * elemento){
 			break;
 		}
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
-		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
+		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
 		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:
 		case LEER_PAGINA: case INDICAR_PID: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_VAR_COMPARTIDA:
-		case GRABAR_VAR_COMPARTIDA:{
+		case GRABAR_VAR_COMPARTIDA: case PEDIDO_LECTURA_INSTRUCCION:{
 		// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
 			buffer = malloc(tamanio);
@@ -117,7 +116,7 @@ void * deserealizar(int protocolo, void * mensaje){
 			break;
 		}
 		case ENTRADA_SALIDA:{
-			//buffer = deserealizarIOrequest(mensaje);
+			//buffer = deserealizarOperacionPrivilegiada(mensaje);
 			break;
 		}
 		case INICIAR_PROGRAMA:{
@@ -125,10 +124,10 @@ void * deserealizar(int protocolo, void * mensaje){
 			break;
 		}
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
-		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
+		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
 		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:
 		case LEER_PAGINA: case INDICAR_PID: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_VAR_COMPARTIDA:
-		case GRABAR_VAR_COMPARTIDA:{
+		case GRABAR_VAR_COMPARTIDA: case PEDIDO_LECTURA_INSTRUCCION:{
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(mensaje);
 			buffer = reservarMemoria(tamanio);
@@ -380,13 +379,13 @@ void *deserializarDevolverPaginaInstruccion(void *buffer) {
 	return mensaje;
 }
 /*
-void* serealizarIO(void* elemento){
+void* serealizarOperacionPrivilegiada(void* elemento){
 
 	// completar
 
 }
 
-pedidoIO* deserealizarIO(void* buffer){
+void* deserealizarOperacionPrivilegiada(void* buffer){
 
 	// completar
 

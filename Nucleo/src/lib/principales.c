@@ -11,14 +11,14 @@ void abrirArchivoDeConfiguracion(char * ruta){
 		}*/
 }
 
-void inicializarListasYColas(){
+void inicializarColecciones(){
 	listaCPU = list_create();
 	listaConsolas = list_create();
 	listaProcesos = list_create(); // listaNuevos
 	colaListos = queue_create();
-	dictionaryIO = dictionary_create();
-	dictionarySemaphores = dictionary_create();
-	dictionarySharedVariables = dictionary_create();
+	diccionarioIO = dictionary_create();
+	diccionarioSemaforos = dictionary_create();
+	diccionarioVarCompartidas = dictionary_create();
 }
 
 void conectarConUMC(){
@@ -165,8 +165,8 @@ void atenderNuevoMensajeDeCPU(){
 	switch(protocolo){
 
 	case PCB:{
-
-		pcb * pcbEjecutada = (pcb *) mensaje;
+		// PCB que llega por fin de quantum, o bien, porque finalizó su ejecución.
+		pcb * pcbEjecutada = (pcb*) mensaje;
 		log_info(logger, "Programa AnSISOP %i salió de CPU %i.", pcbEjecutada->pid, unCPU->id);
 
 		// Evalúo si es FIN DE QUANTUM o FIN DE EJECUCIÓN:
@@ -178,18 +178,18 @@ void atenderNuevoMensajeDeCPU(){
 			           }
 	case IMPRIMIR:{
 
-		string* variableImprimible = (string*)reservarMemoria(sizeof(string));
-		variableImprimible->cadena = string_itoa(*((int*) mensaje));
-		variableImprimible->tamanio = string_length(variableImprimible->cadena + 1);
+		string* variable = (string*)malloc(sizeof(string));
+		variable->cadena = string_itoa(*((int*) mensaje));
+		variable->tamanio = CHAR * string_length(variable->cadena + 1);
 
 		bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == unCPU->pid;}
 
 		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
 
 		// Le mando el msj a la Consola asociada:
-		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variableImprimible);
-			free(variableImprimible->cadena);
-			free(variableImprimible);
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variable);
+			free(variable->cadena);
+			free(variable);
 
 		break;
 						}
@@ -206,7 +206,7 @@ void atenderNuevoMensajeDeCPU(){
 	case ABORTO_PROCESO:{
 
 		int* pid = (int*)mensaje;
-
+		int index = pcbListIndex(*pid);
 		// Le informo a UMC:
 		finalizarPrograma(*pid);
 
@@ -217,23 +217,26 @@ void atenderNuevoMensajeDeCPU(){
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, NULL);
 		liberarConsola(consolaAsociada);
 
-		// Libero el PCB del proceso:
-		//liberarPcb(list_remove(listaProcesos, index));
+		// Quito el PCB del sistema:
+		liberarPcb(list_remove(listaProcesos, index));
+		free(pid);
 
 		break;
 			            }
 	case SIGNAL_REQUEST:{
 
 		char* sem_id = (char*)mensaje;
-		t_semaforo* semaforo = dictionary_get(dictionarySemaphores, sem_id);
+		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, sem_id);
 		semaforo_signal(semaforo);
+		free(sem_id);
 
 		break;
 					  }
 	case WAIT_REQUEST:{
 
 		char* sem_id = (char*)mensaje;
-		t_semaforo* semaforo = dictionary_get(dictionarySemaphores, sem_id);
+		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, sem_id);
+		free(sem_id);
 
 		if (semaforo_wait(semaforo)){
 		// WAIT NO OK: El proceso se bloquea, etonces tomo su pcb.
@@ -264,7 +267,7 @@ void atenderNuevoMensajeDeCPU(){
 						  }
 	case OBTENER_VAR_COMPARTIDA:{
 
-		var_compartida* varPedida = dictionary_get(dictionarySharedVariables, (char*)mensaje);
+		var_compartida* varPedida = dictionary_get(diccionarioVarCompartidas, (char*)mensaje);
 
 		aplicar_protocolo_enviar(fd, DEVOLVER_VAR_COMPARTIDA, &(varPedida->valor));
 
@@ -272,13 +275,37 @@ void atenderNuevoMensajeDeCPU(){
 						  }
 	case GRABAR_VAR_COMPARTIDA:{
 
-		// completar
+		var_compartida* var_aGrabar = (var_compartida*)mensaje;
+
+		// Actualizo el valor de la variable solicitada:
+		var_compartida* varBuscada = dictionary_get(diccionarioVarCompartidas, var_aGrabar->nombre);
+		varBuscada->valor = var_aGrabar->valor;
+
+			free(var_aGrabar->nombre);
+			free(var_aGrabar);
 
 		break;
 					 }
 	case ENTRADA_SALIDA:{
 
-		// completar
+			pedidoIO* datos = (pedidoIO*)mensaje;
+
+			pcb* pcbIO = NULL;
+			int head;
+
+			void* entrada = aplicar_protocolo_recibir(fd, &head);
+					if(head == PCB_EN_ESPERA){
+						pcbIO = (pcb*)entrada;
+					}
+
+			detenerEjecucion(pcbIO); // Proceso pasa de Ejecutando a Bloqueado
+									// CPU pasa de Ocupada a Libre
+
+			realizarEntradaSalida(pcbIO, datos);
+
+			free(entrada);
+			liberarPcb(pcbIO);
+			free(datos);
 
 		break;
 					}
@@ -323,8 +350,8 @@ void aceptarConexionEntranteDeCPU(){
 		    	}
 }
 
-void liberarTodaLaMemoria(){
-	limpiarListasYColas();
+void liberarMemoriaUtilizada(){
+	limpiarColecciones();
 	limpiarArchivoConfig();
 	log_destroy(logger);
 	logger = NULL;
@@ -333,23 +360,21 @@ void liberarTodaLaMemoria(){
 /************************************
  *    OPERACIONES PRIVILEGIADAS     *
  ************************************/
-#define registerWithNameAndValue(functionName,type,typeText,dictionary,creator)\
+#define registrarConNombreYValor(functionName,type,typeText,dictionary,creator)\
 				void functionName(char* name,int value) { \
 						type *var = creator(name,value);\
 						dictionary_put(dictionary, var->nombre, var);\
 				}\
 
-registerWithNameAndValue(registerSemaphore, t_semaforo,
-		"semaphore", dictionarySemaphores, semaforo_create)
-registerWithNameAndValue(registerSharedVariable, var_compartida,
-    "shared variable", dictionarySharedVariables, crearVariableCompartida)
+registrarConNombreYValor(registrarSemaforo, t_semaforo, "semaforo", diccionarioSemaforos, semaforo_create)
+registrarConNombreYValor(registrarVariableCompartida, var_compartida, "variable compartida", diccionarioVarCompartidas, crearVariableCompartida)
 
 void llenarDiccionarioSemaforos(){
 
   int i = 0;
 
   while (config->semaforosID[i] != '\0'){
-      registerSemaphore(config->semaforosID[i],
+      registrarSemaforo(config->semaforosID[i],
           atoi(config->semaforosValInicial[i]));
       i++;
     }
@@ -360,7 +385,7 @@ void llenarDiccionarioVarCompartidas(){
 	int i = 0;
 
   while (config->variablesCompartidas[i] != '\0'){
-      registerSharedVariable(config->variablesCompartidas[i], 0);
+	  registrarVariableCompartida(config->variablesCompartidas[i], 0);
       i++;
     }
 }

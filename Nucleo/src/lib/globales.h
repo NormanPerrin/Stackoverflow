@@ -19,7 +19,6 @@
 #define RUTA_CONFIG_NUCLEO "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Nucleo/configNucleo.txt"
 #define logearError(msg){log_error(logger, msg); return FALSE;}
 
-// Estructuras:
 typedef struct {
 	int puertoPrograma, puertoCPU, puertoUMC, quantum, retardoQuantum, cantidadPaginasStack;
 	char * ipUMC;
@@ -29,6 +28,12 @@ typedef struct {
 	char ** retardosIO;
 	char ** variablesCompartidas;
 } t_configuracion;
+
+typedef struct {
+	char *nombre;
+	int valor;
+	t_queue *bloqueados;
+} t_semaforo;
 
 typedef struct {
 	int id, fd_consola, pid;
@@ -44,15 +49,20 @@ typedef struct {
 } cpu;
 
 // VARIABLES GLOBALES:
+
 t_configuracion * config;
 int fd_UMC, tamanioPagina, fdEscuchaConsola, fdEscuchaCPU, fd_inotify;
 t_log * logger;
+fd_set readfds;
+
 t_list * listaProcesos;
 t_list * listaCPU;
 t_list * listaConsolas;
 
 t_queue * colaListos;
 
-fd_set readfds;
+t_dictionary * diccionarioIO;
+t_dictionary * diccionarioSemaforos;
+t_dictionary * diccionarioVarCompartidas;
 
 #endif /* LIB_GLOBALES_H_ */

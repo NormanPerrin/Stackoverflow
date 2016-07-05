@@ -8,7 +8,7 @@ int main(void) {
 
 	abrirArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
 
-	inicializarListasYColas();
+	inicializarColecciones();
 
 	llenarDiccionarioSemaforos();
 
@@ -18,7 +18,7 @@ int main(void) {
 
 	esperar_y_PlanificarProgramas(); // Select de Consolas y CPUs
 
-	liberarTodaLaMemoria();
+	liberarMemoriaUtilizada();
 
 	return EXIT_SUCCESS;
 }

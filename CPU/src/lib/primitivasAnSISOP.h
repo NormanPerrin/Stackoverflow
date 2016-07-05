@@ -42,5 +42,4 @@ AnSISOP_kernel funcionesKernel = {
 //		.AnSISOP_signal 	= AnSISOP_signal,
 };
 
-
 #endif /* LIB_PRIMITIVASANSISOP_H_ */

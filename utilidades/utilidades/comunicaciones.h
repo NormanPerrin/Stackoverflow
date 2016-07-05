@@ -29,7 +29,8 @@ typedef enum {
 	// Mensajes Estáticos:
 		IMPRIMIR = 1, 				// CPU - Núcleo
 		RECHAZAR_PROGRAMA,			// Todos
-		PEDIDO_LECTURA, 			// CPU - UMC
+		PEDIDO_LECTURA_INSTRUCCION, // CPU - UMC
+		PEDIDO_LECTURA_VARIABLE, // CPU - UMC
 		PEDIDO_ESCRITURA, 			// CPU - UMC
 		FINALIZAR_PROGRAMA,			// Núcleo - UMC / UMC - SWAP
 		RESPUESTA_INICIO_PROGRAMA,	// UMC - Núcleo / Swap - UMC
@@ -37,7 +38,7 @@ typedef enum {
 		QUANTUM_MODIFICADO,			// Núcleo - CPU
 		LEER_PAGINA, 				// UMC - Swap
 		ESCRIBIR_PAGINA, 			// UMC - Swap
-		DEVOLVER_VARIABLE, 		// UMC - CPU
+		DEVOLVER_VARIABLE, 			// UMC - CPU
 		RESPUESTA_PEDIDO, 			// UMC - CPU
 		DEVOLVER_PAGINA_VARIABLE,	// Swap - UMC
 		ABORTO_PROCESO,				// CPU - Núcleo
@@ -176,7 +177,7 @@ void *deserializarDevolverPagina(void *buffer);
 void *serealizarDevolverPagina(void *elemento);
 void *deserializarEscribirPagina(void * buffer);
 void *serealizarEscribirPagina(void *elemento);
-void* serealizarIO(void* elemento);
-pedidoIO* deserealizarIO(void* buffer);
+void* serealizarOperacionPrivilegiada(void* elemento);
+void* deserealizarOperacionPrivilegiada(void* buffer);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

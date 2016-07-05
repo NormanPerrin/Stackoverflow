@@ -7,16 +7,16 @@
 #include "semaforos.h"
 #include "variablesCompartidas.h"
 
-/**** FUNCIONES PRINCIPALES ****/
+/*** FUNCIONES PRINCIPALES ***/
 void abrirArchivoDeConfiguracion(char * ruta);
-void inicializarListasYColas();
+void inicializarColecciones();
 void llenarDiccionarioSemaforos();
 void llenarDiccionarioVarCompartidas();
 void conectarConUMC();
 void esperar_y_PlanificarProgramas();
-void liberarTodaLaMemoria();
+void liberarMemoriaUtilizada();
 
-// INCLUIDAS:
+/*** INCLUÍDAS ***/
 void aceptarConexionEntranteDeConsola();
 void aceptarConexionEntranteDeCPU();
 void atenderNuevoMensajeDeCPU();

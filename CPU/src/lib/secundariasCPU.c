@@ -54,7 +54,7 @@ void ejecutarInstruccion(t_intructions instruccionActual){
 	direccionInstruccion->offset = offset;
 	direccionInstruccion->tamanio = instruccionActual.offset;
 
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, direccionInstruccion);
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
 	free(direccionInstruccion);
 
 	recibirYvalidarEstadoDelPedidoAUMC();
@@ -85,11 +85,15 @@ void recibirYvalidarEstadoDelPedidoAUMC(){
 				free(entrada);
 
 	 if(*estadoDelPedido == NO_PERMITIDO){
-			printf("UMC ha rechazado un pedido de lectura/escritura del proceso #%d", pcbActual->pid);
+			printf("UMC ha rechazado un pedido de lectura/escritura del proceso #%d\n", pcbActual->pid);
 				free(estadoDelPedido);
 
-			aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, pcbActual->pid);
-			printf("Finalizando ejecución del programa actual.", pcbActual->pid);
+			int* _pid = malloc(INT);
+			*_pid= pcbActual->pid;
+
+			aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, _pid);
+			free(_pid);
+			printf("Finalizando ejecución del programa actual.\n");
 				liberarPcbActiva();
 			printf("Esperando nuevo proceso.\n");
 		 }
