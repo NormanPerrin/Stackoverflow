@@ -3,6 +3,9 @@
 
 #include "funciones.h"
 #include "globales.h"
+#include "entradaSalida.h"
+#include "semaforos.h"
+#include "variablesCompartidas.h"
 
 /**** FUNCIONES PRINCIPALES ****/
 void abrirArchivoDeConfiguracion(char * ruta);
@@ -16,6 +19,6 @@ void liberarTodaLaMemoria();
 // INCLUIDAS:
 void aceptarConexionEntranteDeConsola();
 void aceptarConexionEntranteDeCPU();
-t_varCompartida *createSharedVariable(char*, uint32_t);
+var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
 
 #endif /* LIB_PRINCIPALES_H_ */

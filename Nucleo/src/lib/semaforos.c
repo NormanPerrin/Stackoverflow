@@ -1,3 +1,4 @@
+#include "semaforos.h"
 
 void semaforo_blockProcess(t_queue* colaBloqueados, pcb* procesoEjecutando){
   pcb* copia = malloc(sizeof *copia);

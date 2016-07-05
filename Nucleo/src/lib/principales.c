@@ -40,7 +40,7 @@ void esperar_y_PlanificarProgramas(){
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
 
-	launchIOThreads(); // Hilos de E/S
+	lanzarIOThreads(); // Hilos de E/S
 
 	fdEscuchaCPU = nuevoSocket();
 	asociarSocket(fdEscuchaCPU, config->puertoCPU);
@@ -218,7 +218,7 @@ void atenderNuevoMensajeDeCPU(){
 		liberarConsola(consolaAsociada);
 
 		// Libero el PCB del proceso:
-		liberarPcb(list_remove(listaProcesos, index));
+		//liberarPcb(list_remove(listaProcesos, index));
 
 		break;
 			            }
@@ -238,7 +238,7 @@ void atenderNuevoMensajeDeCPU(){
 		if (semaforo_wait(semaforo)){
 		// WAIT NO OK: El proceso se bloquea, etonces tomo su pcb.
 
-			aplicar_protolo_enviar(fd, WAIT_CON_BLOQUEO, NULL);
+			aplicar_protocolo_enviar(fd, WAIT_CON_BLOQUEO, NULL);
 
 			pcb* waitPcb = NULL;
 			int head;
@@ -257,7 +257,7 @@ void atenderNuevoMensajeDeCPU(){
 
 		else{
 		// WAIT OK: El proceso no se bloquea, entonces puede seguir ejecutando.
-			aplicar_protolo_enviar(fd, WAIT_SIN_BLOQUEO, NULL);
+			aplicar_protocolo_enviar(fd, WAIT_SIN_BLOQUEO, NULL);
 			}
 
 		break;
@@ -312,7 +312,7 @@ void aceptarConexionEntranteDeCPU(){
 
 		    		int* quantum = (int*)malloc(INT);
 		    		*quantum = config->quantum;
-		    		aplicar_protocolo_enviar(nuevoCPU->fd_cpu, quantum, QUANTUM_MODIFICADO);
+		    		aplicar_protocolo_enviar(nuevoCPU->fd_cpu, QUANTUM_MODIFICADO, quantum);
 		    		free(quantum);
 
 		    		list_add(listaCPU, nuevoCPU);
@@ -342,7 +342,7 @@ void liberarTodaLaMemoria(){
 registerWithNameAndValue(registerSemaphore, t_semaforo,
 		"semaphore", dictionarySemaphores, semaforo_create)
 registerWithNameAndValue(registerSharedVariable, var_compartida,
-    "shared variable", dictionarySharedVariables, createSharedVariable)
+    "shared variable", dictionarySharedVariables, crearVariableCompartida)
 
 void llenarDiccionarioSemaforos(){
 
@@ -365,7 +365,7 @@ void llenarDiccionarioVarCompartidas(){
     }
 }
 
-var_compartida* createSharedVariable(char* nombre, int valorInicial){
+var_compartida* crearVariableCompartida(char* nombre, int valorInicial){
 
 var_compartida* var = malloc(sizeof(var_compartida));
   var->nombre = strdup(nombre);

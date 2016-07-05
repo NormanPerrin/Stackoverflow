@@ -2,6 +2,7 @@
 #define LIB_SEMAFOROS_H_
 
 #include "globales.h"
+#include "funciones.h"
 
 typedef struct {
 	char *nombre;
