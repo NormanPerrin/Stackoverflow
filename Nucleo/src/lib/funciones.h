@@ -2,6 +2,7 @@
 #define LIB_FUNCIONES_H_
 
 #include "globales.h"
+#include <parser/metadata_program.h>
 
 /**** FUNCIONES SECUNDARIAS ****/
 void setearValores_config(t_config * archivoConfig);

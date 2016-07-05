@@ -11,7 +11,6 @@
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 #include <semaphore.h>
-#include <parser/metadata_program.h>
 #include <sys/inotify.h>
 
 #define EVENT_SIZE ( sizeof (struct inotify_event) + strlen(RUTA_CONFIG_NUCLEO) + 1 )

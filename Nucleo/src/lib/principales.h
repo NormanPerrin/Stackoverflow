@@ -19,6 +19,7 @@ void liberarTodaLaMemoria();
 // INCLUIDAS:
 void aceptarConexionEntranteDeConsola();
 void aceptarConexionEntranteDeCPU();
+void atenderNuevoMensajeDeCPU();
 var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
 
 #endif /* LIB_PRINCIPALES_H_ */
