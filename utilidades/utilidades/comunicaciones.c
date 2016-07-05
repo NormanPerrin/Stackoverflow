@@ -65,10 +65,14 @@ void * serealizar(int protocolo, void * elemento){
 	void * buffer;
 
 	switch(protocolo){
-		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION:{
+		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:{
 			buffer = serealizarTexto(elemento);
 			break;
-		} // en ambos casos se envía un texto (char*)
+		} // en todos los casos se envía un texto (char*)
+		case ENTRADA_SALIDA:{
+			//buffer = serealizarIOrequest(elemento);
+			break;
+		}
 		case PCB: {
 			buffer = serealizarPCB(elemento);
 			break;
@@ -77,9 +81,12 @@ void * serealizar(int protocolo, void * elemento){
 			buffer = serealizarSolicitudInicioPrograma(elemento);
 			break;
 		}
-		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA:
-		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:case LEER_PAGINA: case INDICAR_PID:{
-			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
+		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
+		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
+		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:
+		case LEER_PAGINA: case INDICAR_PID: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_VAR_COMPARTIDA:
+		case GRABAR_VAR_COMPARTIDA:{
+		// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
 			buffer = malloc(tamanio);
 			memcpy(buffer, elemento, tamanio);
@@ -101,7 +108,7 @@ void * deserealizar(int protocolo, void * mensaje){
 	void * buffer;
 
 	switch(protocolo){
-		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: {
+		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:{
 			buffer = deserealizarTexto(mensaje);
 				break;
 		} // en ambos casos se recibe un texto (char*)
@@ -109,12 +116,19 @@ void * deserealizar(int protocolo, void * mensaje){
 			buffer = deserealizarPCB(mensaje);
 			break;
 		}
+		case ENTRADA_SALIDA:{
+			//buffer = deserealizarIOrequest(mensaje);
+			break;
+		}
 		case INICIAR_PROGRAMA:{
 			buffer = deserealizarSolicitudInicioPrograma(mensaje);
 			break;
 		}
-		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA:
-		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO: case LEER_PAGINA: case INDICAR_PID: {
+		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
+		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
+		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:
+		case LEER_PAGINA: case INDICAR_PID: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_VAR_COMPARTIDA:
+		case GRABAR_VAR_COMPARTIDA:{
 			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(mensaje);
 			buffer = reservarMemoria(tamanio);
@@ -365,3 +379,16 @@ void *deserializarDevolverPaginaInstruccion(void *buffer) {
 
 	return mensaje;
 }
+/*
+void* serealizarIO(void* elemento){
+
+	// completar
+
+}
+
+pedidoIO* deserealizarIO(void* buffer){
+
+	// completar
+
+}
+*/

@@ -82,10 +82,9 @@ pcb * crearPcb(string programa){
 			t_metadata_program* infoProg = metadata_desde_literal((const char*) codigo);
 			free(codigo);
 
-			nuevoPcb->pc = infoProg->instruccion_inicio + 1; // la siguiente al begin
+			nuevoPcb->pc = infoProg->instruccion_inicio; // la siguiente al begin
 			nuevoPcb->ultimaPosicionIndiceStack = 0;
-			nuevoPcb->stackPointer.pagina = 0;
-			nuevoPcb->stackPointer.offset = 0;
+			nuevoPcb->stackPointer = 0;
 
 			// Inicializo los tres índices:
 			inicializarIndices(nuevoPcb, infoProg);
@@ -170,9 +169,7 @@ void limpiarListasYColas(){
 	listaConsolas = NULL;
 
 	queue_destroy(colaListos);
-	queue_destroy(colaBloqueados);
 	colaListos = NULL;
-	colaBloqueados = NULL;
 }
 
 void limpiarArchivoConfig(){
@@ -239,7 +236,7 @@ void actualizarDatosDePcbEjecutada(cpu * unCPU, pcb * pcbNuevo){
 				break;
 			case BLOCK:
 				// Manejar I/O
-				queue_push(colaBloqueados, unPcb);
+
 				break;
 			case EXIT:
 				log_info(logger, "El Programa #%i ha finalizado.", unPcb->pid);
@@ -329,6 +326,16 @@ void detectarCambiosEnArchivoConfig(){
 
 		inotify_rm_watch(fd_inotify, watch_descriptor);
 		close(fd_inotify);
+} // TODO: METER EN EL SELECT EL FD INOTIFY
+
+pcb* copiarPcb(pcb* proceso){
+ pcb* copia = malloc(sizeof *copia);
+  memcpy(copia, proceso, sizeof *copia);
+  return copia;
 }
 
-// TODO: METER EN EL SELECT EL FD INOTIFY
+void encolarPcbAListos(pcb* proceso){
+  pcb* copia = copiarPcb(proceso);
+  log_info(logger,"Moviendo proceso %d a la cola de Listos", proceso->pid);
+  queue_push(colaListos, copia);
+}

@@ -10,7 +10,9 @@ int main(void) {
 
 	inicializarListasYColas();
 
-	// semáforos y diccionaries
+	llenarDiccionarioSemaforos();
+
+	llenarDiccionarioVarCompartidas();
 
 	conectarConUMC();
 

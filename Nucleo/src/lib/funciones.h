@@ -24,5 +24,7 @@ void notificarCambioDelQuantumACPU();
 void detectarCambiosEnArchivoConfig();
 void enviarNuevoQuantum(cpu * unCpu);
 int solicitarSegmentosAUMC(pcb * nuevoPcb, string programa);
+pcb* copiarPcb(pcb* proceso);
+void encolarPcbAListos(pcb* proceso);
 
 #endif /* LIB_FUNCIONES_H_ */

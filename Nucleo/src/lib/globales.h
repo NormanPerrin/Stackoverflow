@@ -51,8 +51,9 @@ t_log * logger;
 t_list * listaProcesos;
 t_list * listaCPU;
 t_list * listaConsolas;
+
 t_queue * colaListos;
-t_queue * colaBloqueados;
+
 fd_set readfds;
 
 #endif /* LIB_GLOBALES_H_ */

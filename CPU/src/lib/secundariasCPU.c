@@ -82,16 +82,19 @@ void recibirYvalidarEstadoDelPedidoAUMC(){
 
 	if(head == RESPUESTA_PEDIDO){
 			estadoDelPedido = (int*)entrada;
-			free(entrada);
+				free(entrada);
 
 	 if(*estadoDelPedido == NO_PERMITIDO){
 			printf("UMC ha rechazado un pedido de lectura/escritura del proceso #%d", pcbActual->pid);
-			printf("Finalizando ejecución del programa actual...");
-			free(estadoDelPedido);
-			// TODO: FINALIZAR PROGRAMA
+				free(estadoDelPedido);
+
+			aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, pcbActual->pid);
+			printf("Finalizando ejecución del programa actual.", pcbActual->pid);
+				liberarPcbActiva();
+			printf("Esperando nuevo proceso.\n");
 		 }
 	}
-	free(estadoDelPedido);
+		free(estadoDelPedido);
 }
 
 void liberarPcbActiva(){

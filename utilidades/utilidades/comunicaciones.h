@@ -40,6 +40,13 @@ typedef enum {
 		DEVOLVER_VARIABLE, 		// UMC - CPU
 		RESPUESTA_PEDIDO, 			// UMC - CPU
 		DEVOLVER_PAGINA_VARIABLE,	// Swap - UMC
+		ABORTO_PROCESO,				// CPU - Núcleo
+
+		OBTENER_VAR_COMPARTIDA,		// CPU - Núcleo
+		DEVOLVER_VAR_COMPARTIDA,	// Núcleo - CPU
+		WAIT_SIN_BLOQUEO,
+		WAIT_CON_BLOQUEO,
+		PCB_EN_ESPERA,
 
 		// Mensajes Dinámicos;
 		INICIAR_PROGRAMA, 			// Núcleo - UMC / UMC - Swap
@@ -48,6 +55,10 @@ typedef enum {
 		IMPRIMIR_TEXTO, 			// CPU - Núcleo / Núcleo - Consola
 		DEVOLVER_INSTRUCCION,			// UMC - CPU
 		DEVOLVER_PAGINA_INSTRUCCION,	// Swap - UMC
+		WAIT_REQUEST,				// CPU - Núcleo
+		SIGNAL_REQUEST,				// CPU - Núcleo
+		ENTRADA_SALIDA,				// CPU - Núcleo
+		GRABAR_VAR_COMPARTIDA,		// CPU - Núcleo
 
 		// hay que agregar las que falten...
 		FIN_DEL_PROTOCOLO
@@ -80,6 +91,16 @@ typedef struct {
 	int pid, paginas;
 	char *contenido;
 } __attribute__((packed)) inicioPrograma;
+
+typedef struct {
+	char *nombre;
+	int valor;
+} __attribute__((packed)) var_compartida;
+
+typedef struct {
+	int tiempo;
+	char* nombreDispositivo;
+} __attribute__((packed)) pedidoIO;
 
 typedef struct {
 	int pid, estadoDelHeap;
@@ -143,9 +164,9 @@ void * serealizar(int head, void * elemento);
 void * deserealizar(int head, void * mensaje);
 
 // -- Serializaciones y deserializaciones DINÁMICAS:
-void* serealizarPCB(void* estructura);
+void* serealizarPCB(void* elemento);
 pcb* deserealizarPCB(void* buffer);
-void* serealizarTexto(void* estructura);
+void* serealizarTexto(void* elemento);
 void* deserealizarTexto(void* buffer);
 void* serealizarSolicitudInicioPrograma(void* elemento);
 void* deserealizarSolicitudInicioPrograma(void* buffer);
@@ -155,6 +176,7 @@ void *deserializarDevolverPagina(void *buffer);
 void *serealizarDevolverPagina(void *elemento);
 void *deserializarEscribirPagina(void * buffer);
 void *serealizarEscribirPagina(void *elemento);
-
+void* serealizarIO(void* elemento);
+pedidoIO* deserealizarIO(void* buffer);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

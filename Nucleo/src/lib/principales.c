@@ -16,7 +16,9 @@ void inicializarListasYColas(){
 	listaConsolas = list_create();
 	listaProcesos = list_create(); // listaNuevos
 	colaListos = queue_create();
-	colaBloqueados = queue_create();
+	dictionaryIO = dictionary_create();
+	dictionarySemaphores = dictionary_create();
+	dictionarySharedVariables = dictionary_create();
 }
 
 void conectarConUMC(){
@@ -37,6 +39,9 @@ void esperar_y_PlanificarProgramas(){
 	fdEscuchaConsola = nuevoSocket();
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
+
+	launchIOThreads(); // Hilos de E/S
+
 	fdEscuchaCPU = nuevoSocket();
 	asociarSocket(fdEscuchaCPU, config->puertoCPU);
 	escucharSocket(fdEscuchaCPU, CONEXIONES_PERMITIDAS);
@@ -156,50 +161,136 @@ void atenderNuevoMensajeDeCPU(){
 			          free(list_remove(listaCPU, i));
 
 		}else{
-			switch(protocolo){
-			   case PCB:{
-			          pcb * pcbEjecutada = (pcb *) mensaje;
-			          log_info(logger, "Programa AnSISOP %i salió de CPU %i.", pcbEjecutada->pid, unCPU->id);
 
-			          actualizarDatosDePcbEjecutada(unCPU, pcbEjecutada);
+	switch(protocolo){
 
-			          planificarProceso();
+	case PCB:{
 
-			          break;
+		pcb * pcbEjecutada = (pcb *) mensaje;
+		log_info(logger, "Programa AnSISOP %i salió de CPU %i.", pcbEjecutada->pid, unCPU->id);
+
+		// Evalúo si es FIN DE QUANTUM o FIN DE EJECUCIÓN:
+		actualizarDatosDePcbEjecutada(unCPU, pcbEjecutada);
+
+		planificarProceso();
+
+		break;
 			           }
-			   case IMPRIMIR:{
-				   	string* variableImprimible = (string*)reservarMemoria(sizeof(string));
-				   	variableImprimible->cadena = string_itoa(*((int*) mensaje));
-				   	variableImprimible->tamanio = string_length(variableImprimible->cadena + 1);
+	case IMPRIMIR:{
 
-				   	bool consolaTieneElPid(void* unaConsola){
-				   return (((consola*) unaConsola)->pid) == unCPU->pid;}
-				   consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
+		string* variableImprimible = (string*)reservarMemoria(sizeof(string));
+		variableImprimible->cadena = string_itoa(*((int*) mensaje));
+		variableImprimible->tamanio = string_length(variableImprimible->cadena + 1);
 
-				  // Le mando el msj a la Consola asociada:
-				 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variableImprimible);
-				 free(variableImprimible->cadena);
-				 free(variableImprimible);
-			   		break;
-			   	 }
-			   case IMPRIMIR_TEXTO:{
-				   bool consolaTieneElPid(void* unaConsola){
-				 return (((consola*) unaConsola)->pid) == unCPU->pid;}
-				 consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
+		bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == unCPU->pid;}
 
-				 // Le mando el msj a la Consola asociada:
-				 aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
-			   		break;
+		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
+
+		// Le mando el msj a la Consola asociada:
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variableImprimible);
+			free(variableImprimible->cadena);
+			free(variableImprimible);
+
+		break;
+						}
+	case IMPRIMIR_TEXTO:{
+
+		bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == unCPU->pid;}
+		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
+
+		// Le mando el msj a la Consola asociada:
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
+
+		break;
 			   		   	 }
+	case ABORTO_PROCESO:{
 
-			           default:
-			            printf("Recibí el protocolo %i de CPU\n", protocolo);
-			            break;
-			            	}
-			free(mensaje);
+		int* pid = (int*)mensaje;
+
+		// Le informo a UMC:
+		finalizarPrograma(*pid);
+
+		bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == *pid;}
+		consola * consolaAsociada = list_remove_by_condition(listaConsolas, consolaTieneElPid);
+
+		// Le informo a la Consola asociada:
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, NULL);
+		liberarConsola(consolaAsociada);
+
+		// Libero el PCB del proceso:
+		liberarPcb(list_remove(listaProcesos, index));
+
+		break;
 			            }
-			        }
-			    }
+	case SIGNAL_REQUEST:{
+
+		char* sem_id = (char*)mensaje;
+		t_semaforo* semaforo = dictionary_get(dictionarySemaphores, sem_id);
+		semaforo_signal(semaforo);
+
+		break;
+					  }
+	case WAIT_REQUEST:{
+
+		char* sem_id = (char*)mensaje;
+		t_semaforo* semaforo = dictionary_get(dictionarySemaphores, sem_id);
+
+		if (semaforo_wait(semaforo)){
+		// WAIT NO OK: El proceso se bloquea, etonces tomo su pcb.
+
+			aplicar_protolo_enviar(fd, WAIT_CON_BLOQUEO, NULL);
+
+			pcb* waitPcb = NULL;
+			int head;
+
+			void* entrada = aplicar_protocolo_recibir(fd, &head);
+			if(head == PCB_EN_ESPERA){
+				waitPcb = (pcb*)entrada;
+			}
+
+		// El proceso cambia de Ejecutando a Bloqueado:
+		waitPcb->estado = BLOCK,
+
+		semaforo_blockProcess(semaforo->bloqueados, waitPcb);
+			free(waitPcb);
+			}
+
+		else{
+		// WAIT OK: El proceso no se bloquea, entonces puede seguir ejecutando.
+			aplicar_protolo_enviar(fd, WAIT_SIN_BLOQUEO, NULL);
+			}
+
+		break;
+						  }
+	case OBTENER_VAR_COMPARTIDA:{
+
+		var_compartida* varPedida = dictionary_get(dictionarySharedVariables, (char*)mensaje);
+
+		aplicar_protocolo_enviar(fd, DEVOLVER_VAR_COMPARTIDA, &(varPedida->valor));
+
+		break;
+						  }
+	case GRABAR_VAR_COMPARTIDA:{
+
+		// completar
+
+		break;
+					 }
+	case ENTRADA_SALIDA:{
+
+		// completar
+
+		break;
+					}
+
+	default:
+			printf("Recibí el protocolo %i de CPU\n", protocolo);
+		break;
+	}
+			free(mensaje);
+			}
+		}
+	}
 }
 
 void aceptarConexionEntranteDeCPU(){
@@ -237,4 +328,48 @@ void liberarTodaLaMemoria(){
 	limpiarArchivoConfig();
 	log_destroy(logger);
 	logger = NULL;
+}
+
+/************************************
+ *    OPERACIONES PRIVILEGIADAS     *
+ ************************************/
+#define registerWithNameAndValue(functionName,type,typeText,dictionary,creator)\
+				void functionName(char* name,int value) { \
+						type *var = creator(name,value);\
+						dictionary_put(dictionary, var->nombre, var);\
+				}\
+
+registerWithNameAndValue(registerSemaphore, t_semaforo,
+		"semaphore", dictionarySemaphores, semaforo_create)
+registerWithNameAndValue(registerSharedVariable, var_compartida,
+    "shared variable", dictionarySharedVariables, createSharedVariable)
+
+void llenarDiccionarioSemaforos(){
+
+  int i = 0;
+
+  while (config->semaforosID[i] != '\0'){
+      registerSemaphore(config->semaforosID[i],
+          atoi(config->semaforosValInicial[i]));
+      i++;
+    }
+}
+
+void llenarDiccionarioVarCompartidas(){
+
+	int i = 0;
+
+  while (config->variablesCompartidas[i] != '\0'){
+      registerSharedVariable(config->variablesCompartidas[i], 0);
+      i++;
+    }
+}
+
+var_compartida* createSharedVariable(char* nombre, int valorInicial){
+
+var_compartida* var = malloc(sizeof(var_compartida));
+  var->nombre = strdup(nombre);
+  var->valor = valorInicial;
+
+  return var;
 }
