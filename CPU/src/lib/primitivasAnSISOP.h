@@ -2,7 +2,6 @@
 #define LIB_PRIMITIVASANSISOP_H_
 
 #include "globalesCPU.h"
-#include "secundariasPrimitivas.h"
 #include <commons/collections/dictionary.h>
 
 /** PROTOTIPO PRIMITIVAS ANSISOP **/

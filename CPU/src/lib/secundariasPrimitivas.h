@@ -3,6 +3,4 @@
 
 #include "globalesCPU.h"
 
-t_puntero ultimaPosicionDeVariable(registroStack* );
-
 #endif /* LIB_SECUNDARIASPRIMITIVAS_H_ */

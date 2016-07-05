@@ -2,72 +2,128 @@
 #include "principalesCPU.h"
 
 t_puntero AnSISOP_definirVariable(t_nombre_variable var_nombre){
+
+	/* Le asigna una posición en memoria a la variable,
+	 y retorna el offset total respecto al inicio del stack. */
+
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
 	char * var_id = malloc(CHAR);
 	*var_id = var_nombre;
 
-	direccion * var_posicion = malloc(sizeof(direccion));
-	*var_posicion = pcbActual->stackPointer; // Última posición disponible en memoria
-	pcbActual->stackPointer.offset += INT;
+	direccion * var_direccion = malloc(sizeof(direccion));
+	var_direccion->pagina = 0;
+	var_direccion->offset = pcbActual->stackPointer;
+	var_direccion->size = INT;
 
-	dictionary_put(registroActual.variables, var_id, var_posicion);
+		while(var_direccion->offset > tamanioPagina){
+			(var_direccion->pagina)++;
+			var_direccion->offset -= tamanioPagina;
+		}
 
+	// pcbActual->stackPointer: offset total de la última posición disponible en el stack de memoria
+
+	dictionary_put(registroActual.variables, var_id, var_direccion);
 	free (var_id);
-	int var_stack_offset = var_posicion->offset;
-	free(var_posicion);
+	free(var_direccion);
+
+	int var_stack_offset = pcbActual->stackPointer;
+	pcbActual->stackPointer += INT;
 
 	return var_stack_offset;
 }
 
 t_puntero AnSISOP_obtenerPosicionVariable(t_nombre_variable var_nombre){
-	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
+
+	/* En base a la posición de memoria de la variable,
+	 retorna el offset total respecto al inicio del stack. */
+
+	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack -1;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
 	char * var_id = malloc(CHAR);
 	*var_id = var_nombre;
 
-	direccion * var_posicion = malloc(sizeof(direccion));
-	var_posicion = (direccion*)dictionary_get(registroActual.variables, var_id);
+	direccion * var_direccion = malloc(sizeof(direccion));
+	var_direccion = (direccion*)dictionary_get(registroActual.variables, var_id);
 	free(var_id);
 
-	if(var_posicion == NULL){
-		free(var_posicion);
-		return -1;
+	if(var_direccion == NULL){
+		free(var_direccion);
+
+		return ERROR;
 	}
 	else{
-		int var_stack_offset = var_posicion->offset;
+		int var_stack_offset = (var_direccion->pagina * tamanioPagina) + var_direccion->offset;
+
 		return var_stack_offset;
 	}
 }
 
-//HECHA(REVISAR SI ESTA BIEN)
-t_valor_variable AnSISOP_dereferenciar(t_puntero direccion){
-	int * direccionVar = malloc(INT);
-	direccionVar = direccion;
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, &direccionVar);
-	free(direccionVar);
-	int protocolo;
-	void * valorVariable = aplicar_protocolo_recibir(fdUMC, &protocolo);
-	if(protocolo == RESPUESTA_PEDIDO){
-		respuestaPedido * respuesta = (respuestaPedido *) valorVariable;
-	t_valor_variable valor = atoi(respuesta->dataPedida.cadena);
-	return valor;
+t_valor_variable AnSISOP_dereferenciar(t_puntero var_stack_offset){
+
+	// Retorna el valor leído a partir de var_stack_offset.
+
+	solicitudLectura * var_direccion = malloc(sizeof(solicitudLectura));
+
+	int num_pagina =  var_stack_offset / tamanioPagina;
+	int offset = var_stack_offset - (num_pagina*tamanioPagina);
+		var_direccion->pagina = num_pagina;
+		var_direccion->offset = offset;
+		var_direccion->tamanio = INT;
+
+	int head;
+	void* entrada = NULL;
+	int* valor_variable = NULL;
+	int* estadoDelPedido = NULL;
+
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, var_direccion);
+
+	entrada = aplicar_protocolo_recibir(fdUMC, &head);
+
+	if(head == RESPUESTA_PEDIDO){
+		 estadoDelPedido = (int*)entrada;
+		 free(entrada);
+		 entrada = NULL;
+
+		 if(*estadoDelPedido == NO_PERMITIDO){
+		 	printf("UMC ha rechazado pedido de lectura de variable del proceso #%d", pcbActual->pid);
+		 	free(estadoDelPedido);
+		 	abort();
+		 }
 	}
+	entrada = aplicar_protocolo_recibir(fdUMC, &head);
+	if(head == DEVOLVER_VARIABLE){
+		valor_variable = (int*)entrada;
+	}
+	else{
+		printf("Error al leer una variable del proceso #%d", pcbActual->pid);
+	}
+		free(entrada);
+		int var_valor = *valor_variable;
+		free(valor_variable);
+
+	return var_valor;
 }
 
-//ARREGLAR(VER COMO PASAR DE UN TIPO T_PUNTERO A TIPO DIRECCION)
-void AnSISOP_asignar(t_puntero direccionVariable, t_valor_variable valor){
-	direccion direccion = direccionVariable;
-	solicitudEscritura * solicitud;
-	pcbActual->indiceStack->posicionDelResultado.
-	solicitud->pagina = direccion.pagina;
-	solicitud->offset = direccion.offset;
-	solicitud->tamanio = direccion.size;
-	solicitud->contenido = valor;
+void AnSISOP_asignar(t_puntero var_stack_offset, t_valor_variable valor){
 
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, &solicitud);
+	// Escribe en memoria el valor en la posición dada.
+
+	solicitudEscritura * var_escritura = malloc(sizeof(solicitudEscritura));
+
+	int num_pagina =  var_stack_offset / tamanioPagina;
+	int offset = var_stack_offset - (num_pagina*tamanioPagina);
+		var_escritura->pagina = num_pagina;
+		var_escritura->offset = offset;
+		var_escritura->tamanio = INT;
+		var_escritura->contenido = valor;
+
+		aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
+		free(var_escritura),
+
+		recibirYvalidarEstadoDelPedidoAUMC();
 }
 
 //HACER

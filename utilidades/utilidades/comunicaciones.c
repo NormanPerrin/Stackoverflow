@@ -181,7 +181,7 @@ void * serealizarPCB(void * estructura){
 
 	int etiquetasSize = (CHAR * unPCB->tamanioIndiceEtiquetas);
 
-	tamanioTotal = 12*INT + codigoSize + stackSize + etiquetasSize;
+	tamanioTotal = 10*INT + codigoSize + stackSize + etiquetasSize;
 
 	void * buffer = reservarMemoria(tamanioTotal);
 	memcpy(buffer + desplazamiento,&(unPCB->pid), INT);
@@ -194,8 +194,8 @@ void * serealizarPCB(void * estructura){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->ultimaPosicionIndiceStack), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->stackPointer), 3*INT);
-		desplazamiento += 3*INT;
+	memcpy(buffer + desplazamiento, &(unPCB->stackPointer), INT);
+		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->estado), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->estado), INT);
@@ -244,6 +244,10 @@ pcb * deserealizarPCB(void * buffer){
 	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, INT );
 		desplazamiento += INT;
 	memcpy(&unPcb->estado, buffer + desplazamiento, INT );
+		desplazamiento += INT;
+	memcpy(&unPcb->ultimaPosicionIndiceStack, buffer + desplazamiento, INT );
+		desplazamiento += INT;
+	memcpy(&unPcb->stackPointer, buffer + desplazamiento, INT );
 		desplazamiento += INT;
 
 	// Deserealizo el índice de código:

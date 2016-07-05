@@ -43,8 +43,8 @@ void ejecutarProcesoActivo(){
 
 void ejecutarInstruccion(t_intructions instruccionActual){
 	solicitudLectura* direccionInstruccion = (solicitudLectura*)malloc(sizeof(solicitudLectura));
-	int * estadoDelPedido = NULL;
-	int protocolo;
+	void* entrada = NULL;
+	int head;
 
 	// Obtengo la dirección lógica de la instrucción a partir del índice de código:
 	int num_pagina = instruccionActual.start / tamanioPagina;
@@ -57,29 +57,48 @@ void ejecutarInstruccion(t_intructions instruccionActual){
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA, direccionInstruccion);
 	free(direccionInstruccion);
 
-	estadoDelPedido = aplicar_protocolo_recibir(fdUMC, RESPUESTA_PEDIDO);
-
-	if(*estadoDelPedido  == NO_PERMITIDO){
-		printf("UMC ha rechazado pedido de lectura de instrucción del proceso #%d", pcbActual->pid);
-		free(estadoDelPedido );
-		abort();
-	}
+	recibirYvalidarEstadoDelPedidoAUMC();
 
 	char * instruccion = NULL;
-	instruccion = strdup( (char*)aplicar_protocolo_recibir(fdUMC, DEVOLVER_INSTRUCCION) );
+	entrada = aplicar_protocolo_recibir(fdUMC, &head);
+	if(head == DEVOLVER_INSTRUCCION){
+		instruccion = strdup( (char*)entrada );
+		free(entrada);
+	}
 
 	analizadorLinea((char * const)instruccion, &funcionesAnSISOP, &funcionesKernel);
 	(pcbActual->pc)++; // Incremento Program Counter del PCB
 
-	free(estadoDelPedido );
 	free(instruccion);
+}
+
+void recibirYvalidarEstadoDelPedidoAUMC(){
+
+	int head;
+	void* entrada = NULL;
+	int* estadoDelPedido = NULL;
+
+	entrada = aplicar_protocolo_recibir(fdUMC, &head);
+
+	if(head == RESPUESTA_PEDIDO){
+			estadoDelPedido = (int*)entrada;
+			free(entrada);
+
+	 if(*estadoDelPedido == NO_PERMITIDO){
+			printf("UMC ha rechazado un pedido de lectura/escritura del proceso #%d", pcbActual->pid);
+			printf("Finalizando ejecución del programa actual...");
+			free(estadoDelPedido);
+			// TODO: FINALIZAR PROGRAMA
+		 }
+	}
+	free(estadoDelPedido);
 }
 
 void liberarPcbActiva(){
 	free(pcbActual->indiceCodigo);
 	free(pcbActual->indiceEtiquetas);
-	free(pcbActual->indiceStack->listaPosicionesArgumentos);
-	free(pcbActual->indiceStack->listaVariablesLocales);
+	free(pcbActual->indiceStack->posicionesArgumentos);
+	free(pcbActual->indiceStack->variables);
 	free(pcbActual->indiceStack);
 
 	free(pcbActual);

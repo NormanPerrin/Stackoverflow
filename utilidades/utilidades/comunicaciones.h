@@ -97,7 +97,7 @@ typedef enum {
 
 typedef struct pcb{
 	int pid, pc, paginas_codigo, estado, id_cpu, ultimaPosicionIndiceStack;
-	direccion stackPointer;
+	int stackPointer;
 	int tamanioIndiceCodigo, tamanioIndiceStack, tamanioIndiceEtiquetas;
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas; // Serializacion de las etiquetas
