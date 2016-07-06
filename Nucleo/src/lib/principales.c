@@ -252,7 +252,7 @@ void atenderNuevoMensajeDeCPU(){
 			}
 
 		// El proceso cambia de Ejecutando a Bloqueado:
-		waitPcb->estado = BLOCK,
+			// --> Lo hace CPU antes de mandar
 
 		semaforo_blockProcess(semaforo->bloqueados, waitPcb);
 			free(waitPcb);

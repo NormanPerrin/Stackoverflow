@@ -207,8 +207,8 @@ void AnSISOP_entradaSalida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
 
 void AnSISOP_wait(t_nombre_semaforo identificador_semaforo){
 
-	char* id_semaforo = malloc(sizeof(char*));
-	id_semaforo = identificador_semaforo;
+	char* id_semaforo = malloc(strlen(identificador_semaforo)+1);
+	id_semaforo = strdup((char*)identificador_semaforo);
 	int head;
 	void* entrada = NULL;
 
@@ -218,11 +218,14 @@ void AnSISOP_wait(t_nombre_semaforo identificador_semaforo){
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 
 	if(head == WAIT_CON_BLOQUEO){
+		// Mando la pcb bloqueada y la saco de ejecución:
 		pcbActual->estado = BLOCK;
+		// TODO: Ver el tipo de mensaje
 		aplicar_protocolo_enviar(fdNucleo, PCB_EN_ESPERA, pcbActual);
 		log_info(logger, "El proceso %i queda bloqueado al hacer WAIT", pcbActual->pid);
+		liberarPcbActiva();
 	}
-	if(head == WAIT_SIN_BLOQUEO){
+	else{
 		log_info(logger, "El proceso %i sigue ejecutando correctamente al hacer WAIT", pcbActual->pid);
 	}
 	free(entrada);
@@ -230,10 +233,11 @@ void AnSISOP_wait(t_nombre_semaforo identificador_semaforo){
 
 void AnSISOP_signal(t_nombre_semaforo identificador_semaforo){
 
-	char* id_semaforo = malloc(sizeof(char*));
-	id_semaforo = identificador_semaforo;
+	char* id_semaforo = malloc(strlen(identificador_semaforo)+1);
+	id_semaforo = strdup((char*)identificador_semaforo);
 
 	aplicar_protocolo_enviar(fdNucleo,SIGNAL_REQUEST,id_semaforo);
+
 	log_info(logger, "SIGNAL en el proceso %i", pcbActual->pid);
 	free(id_semaforo);
 
