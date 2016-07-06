@@ -9,7 +9,7 @@ t_puntero AnSISOP_definirVariable(t_nombre_variable var_nombre){
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
-	char * var_id = charAString(var_nombre);
+	char * var_id = strdup(charAString(var_nombre));
 
 	direccion * var_direccion = malloc(sizeof(direccion));
 	var_direccion->pagina = 0;
@@ -41,7 +41,7 @@ t_puntero AnSISOP_obtenerPosicionVariable(t_nombre_variable var_nombre){
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack -1;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
-	char* var_id = charAString(var_nombre);
+	char* var_id = strdup(charAString(var_nombre));
 
 	direccion * var_direccion = malloc(sizeof(direccion));
 	var_direccion = (direccion*)dictionary_get(registroActual.variables, var_id);
@@ -118,12 +118,13 @@ void AnSISOP_asignar(t_puntero var_stack_offset, t_valor_variable valor){
 
 t_valor_variable AnSISOP_obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
-	var_compartida * variableCompartida = malloc(sizeof(var_compartida));
+
+	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
 	void* entrada = NULL;
 	int* valor_variable = NULL;
 	int head;
 
-	variableCompartida->nombre = (char*) var_compartida_nombre;
+	variableCompartida = strdup((char*) var_compartida_nombre);
 
 	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, variableCompartida);
 	free(variableCompartida);
@@ -137,39 +138,24 @@ t_valor_variable AnSISOP_obtenerValorCompartida(t_nombre_compartida var_comparti
 	}
 
 	free(entrada);
-	int valorVariable = *valor_variable;
+	int valor = *valor_variable;
 	free(valor_variable);
 
-	return valorVariable;
-
+	return valor;
 }
 
 t_valor_variable AnSISOP_asignarValorCompartida(t_nombre_compartida var_compartida_nombre, t_valor_variable var_compartida_valor){
 
 	var_compartida * variableCompartida = malloc(sizeof(var_compartida));
-	void* entrada = NULL;
-	int* valor_variable = NULL;
-	int head;
 
-	variableCompartida->nombre = (char*) var_compartida_nombre;
-	variableCompartida->valor = (int) var_compartida_valor;
+	variableCompartida->nombre = strdup((char*) var_compartida_nombre);
+	variableCompartida->valor = var_compartida_valor;
 
 	aplicar_protocolo_enviar(fdNucleo, GRABAR_VAR_COMPARTIDA, variableCompartida);
+	free(variableCompartida->nombre);
 	free(variableCompartida);
 
-	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
-	if(head == DEVOLVER_VAR_COMPARTIDA){
-		valor_variable = (int*) entrada;
-	}
-	else{
-		printf("Error al asignar variable compartida del proceso #%d", pcbActual->pid);
-	}
-
-	free(entrada);
-	int valorVariable = *valor_variable;
-	free(valor_variable);
-
-	return valorVariable;
+	return var_compartida_valor;
 }
 
 //HACER
@@ -187,20 +173,22 @@ void AnSISOP_retornar(t_valor_variable retorno){
 
 }
 
-//ARREGLAR
 void AnSISOP_imprimir(t_valor_variable valor_mostrar){
 	int * valor = malloc(INT);
-	* valor = valor_mostrar;
+	*valor = valor_mostrar;
+
 	aplicar_protocolo_enviar(fdNucleo,IMPRIMIR, valor);
+
 	free(valor);
 }
 
-//HECHA(REVISAR SI ESTA BIEN)
 void AnSISOP_imprimirTexto(char* texto){
 	string * txt = malloc(STRING);
 	txt->cadena = strdup(texto);
 	txt->tamanio = strlen(texto) + 1;
+
 	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, txt);
+
 	free(txt->cadena);
 	free(txt);
 }

@@ -267,6 +267,7 @@ void atenderNuevoMensajeDeCPU(){
 						  }
 	case OBTENER_VAR_COMPARTIDA:{
 
+		// Recibo un char* y devuelvo un int:
 		var_compartida* varPedida = dictionary_get(diccionarioVarCompartidas, (char*)mensaje);
 
 		aplicar_protocolo_enviar(fd, DEVOLVER_VAR_COMPARTIDA, &(varPedida->valor));
