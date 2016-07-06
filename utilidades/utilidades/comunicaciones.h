@@ -8,6 +8,8 @@
 	#include <parser/metadata_program.h>
 	#define STRING (sizeof(string))
 
+// TODO: pedidoIO, string, var_compartida y devolverPaginaInstruccion son el mismo mensaje. Generalizar.
+
 /* *** IMPORTANTE - LEER ***
  *
  * PARA ENVIAR UN PAQUETE USAMOS:

@@ -118,7 +118,6 @@ void AnSISOP_asignar(t_puntero var_stack_offset, t_valor_variable valor){
 
 t_valor_variable AnSISOP_obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
-
 	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
 	void* entrada = NULL;
 	int* valor_variable = NULL;
@@ -195,14 +194,15 @@ void AnSISOP_imprimirTexto(char* texto){
 
 void AnSISOP_entradaSalida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
 
-	pedidoIO * pedidoEntradaSalida = malloc(sizeof(pedidoEntradaSalida));
-	pedidoEntradaSalida->nombreDispositivo = (char*) nombre_dispositivo;
+	pedidoIO * pedidoEntradaSalida = malloc(strlen(nombre_dispositivo)+ 1+ INT);
+	pedidoEntradaSalida->nombreDispositivo = strdup((char*) nombre_dispositivo);
 	pedidoEntradaSalida->tiempo = tiempo;
 
 	aplicar_protocolo_enviar(fdNucleo,ENTRADA_SALIDA, pedidoEntradaSalida);
-	log_info(logger, "Proceso %i utiliza dispositivo I/O : %s durante %i", pcbActual->pid,(char*)nombre_dispositivo,tiempo);
-	free(pedidoEntradaSalida);
 
+	log_info(logger, "Proceso %i utiliza dispositivo I/O: %s durante %i unidades de tiempo.", pcbActual->pid,nombre_dispositivo,tiempo);
+	free(pedidoEntradaSalida->nombreDispositivo);
+	free(pedidoEntradaSalida);
 }
 
 void AnSISOP_wait(t_nombre_semaforo identificador_semaforo){
