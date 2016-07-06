@@ -115,22 +115,65 @@ void AnSISOP_asignar(t_puntero var_stack_offset, t_valor_variable valor){
 		recibirYvalidarEstadoDelPedidoAUMC();
 }
 
-//HACER
-t_valor_variable AnSISOP_obtenerValorCompartida(t_nombre_compartida variable){
-	t_valor_variable valorVariable;
+
+t_valor_variable AnSISOP_obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
+
+	var_compartida * variableCompartida = malloc(sizeof(var_compartida));
+	void* entrada = NULL;
+	int* valor_variable = NULL;
+	int head;
+
+	variableCompartida->nombre = (char*) var_compartida_nombre;
+
+	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, variableCompartida);
+	free(variableCompartida);
+
+	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
+	if(head == DEVOLVER_VAR_COMPARTIDA){
+		valor_variable = (int*) entrada;
+	}
+	else{
+		printf("Error al obtener variable compartida del proceso #%d", pcbActual->pid);
+	}
+
+	free(entrada);
+	int valorVariable = *valor_variable;
+	free(valor_variable);
+
+	return valorVariable;
+
+}
+
+t_valor_variable AnSISOP_asignarValorCompartida(t_nombre_compartida var_compartida_nombre, t_valor_variable var_compartida_valor){
+
+	var_compartida * variableCompartida = malloc(sizeof(var_compartida));
+	void* entrada = NULL;
+	int* valor_variable = NULL;
+	int head;
+
+	variableCompartida->nombre = (char*) var_compartida_nombre;
+	variableCompartida->valor = (int) var_compartida_valor;
+
+	aplicar_protocolo_enviar(fdNucleo, GRABAR_VAR_COMPARTIDA, variableCompartida);
+	free(variableCompartida);
+
+	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
+	if(head == DEVOLVER_VAR_COMPARTIDA){
+		valor_variable = (int*) entrada;
+	}
+	else{
+		printf("Error al asignar variable compartida del proceso #%d", pcbActual->pid);
+	}
+
+	free(entrada);
+	int valorVariable = *valor_variable;
+	free(valor_variable);
 
 	return valorVariable;
 }
 
 //HACER
-t_valor_variable AnSISOP_asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){
-	t_valor_variable valorVariable;
-
-	return valorVariable;
-}
-
-//HACER
-void AnSISOP_irAlLabel(t_nombre_etiqueta t_nombre_etiqueta){
+void AnSISOP_irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
 }
 
@@ -162,18 +205,49 @@ void AnSISOP_imprimirTexto(char* texto){
 	free(txt);
 }
 
-//HACER
-void AnSISOP_entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
+void AnSISOP_entradaSalida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
+
+	pedidoIO * pedidoEntradaSalida = malloc(sizeof(pedidoEntradaSalida));
+	pedidoEntradaSalida->nombreDispositivo = (char*) nombre_dispositivo;
+	pedidoEntradaSalida->tiempo = tiempo;
+
+	aplicar_protocolo_enviar(fdNucleo,ENTRADA_SALIDA, pedidoEntradaSalida);
+	log_info(logger, "Proceso %i utiliza dispositivo I/O : %s durante %i", pcbActual->pid,(char*)nombre_dispositivo,tiempo);
+	free(pedidoEntradaSalida);
 
 }
 
-//HACER
 void AnSISOP_wait(t_nombre_semaforo identificador_semaforo){
 
+	char* id_semaforo = malloc(sizeof(char*));
+	id_semaforo = identificador_semaforo;
+	int head;
+	void* entrada = NULL;
+
+	aplicar_protocolo_enviar(fdNucleo,WAIT_REQUEST,id_semaforo);
+	free(id_semaforo);
+
+	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
+
+	if(head == WAIT_CON_BLOQUEO){
+		pcbActual->estado = BLOCK;
+		aplicar_protocolo_enviar(fdNucleo, PCB_EN_ESPERA, pcbActual);
+		log_info(logger, "El proceso %i queda bloqueado al hacer WAIT", pcbActual->pid);
+	}
+	if(head == WAIT_SIN_BLOQUEO){
+		log_info(logger, "El proceso %i sigue ejecutando correctamente al hacer WAIT", pcbActual->pid);
+	}
+	free(entrada);
 }
 
-//HACER
 void AnSISOP_signal(t_nombre_semaforo identificador_semaforo){
+
+	char* id_semaforo = malloc(sizeof(char*));
+	id_semaforo = identificador_semaforo;
+
+	aplicar_protocolo_enviar(fdNucleo,SIGNAL_REQUEST,id_semaforo);
+	log_info(logger, "SIGNAL en el proceso %i", pcbActual->pid);
+	free(id_semaforo);
 
 }
 
