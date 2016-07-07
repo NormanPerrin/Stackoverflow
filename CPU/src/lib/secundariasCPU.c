@@ -9,61 +9,6 @@ void setearValores_config(t_config * archivoConfig){
 	config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
 }
 
-void ejecutarProcesoActivo(){
-	int * pid = malloc(INT);
-	*pid = pcbActual->pid;
-	aplicar_protocolo_enviar(fdUMC, INDICAR_PID, pid);
-	free(pid);
-	printf("El Proceso #%d entró en ejecución.\n", pcbActual->pid);
-
-	int quantumActual = infoQuantum->quantum;
-
-		while(quantumActual > 0){
-			int pc = pcbActual->pc;
-			t_intructions instruccionActual = pcbActual->indiceCodigo[pc]; // Obtengo la próxima instrucción a ejecutar
-			ejecutarInstruccion(instruccionActual);
-			usleep(infoQuantum->retardoQuantum * 1000);
-			quantumActual--;
-		}
-		if(quantumActual == 0){
-			aplicar_protocolo_enviar(fdNucleo, PCB, pcbActual);
-			printf("El Proceso #%d finalizó ráfaga de ejecución.\n", pcbActual->pid);
-			printf("Esperando nuevo proceso.\n");
-				liberarPcbActiva();
-		}
-}
-
-void ejecutarInstruccion(t_intructions instruccionActual){
-	solicitudLectura* direccionInstruccion = (solicitudLectura*)malloc(sizeof(solicitudLectura));
-	void* entrada = NULL;
-	int head;
-
-	// Obtengo la dirección lógica de la instrucción a partir del índice de código:
-	int num_pagina = instruccionActual.start / tamanioPagina;
-	int offset = instruccionActual.start - (tamanioPagina*num_pagina);
-
-	direccionInstruccion->pagina = num_pagina;
-	direccionInstruccion->offset = offset;
-	direccionInstruccion->tamanio = instruccionActual.offset;
-
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
-	free(direccionInstruccion);
-
-	recibirYvalidarEstadoDelPedidoAUMC();
-
-	char * instruccion = NULL;
-	entrada = aplicar_protocolo_recibir(fdUMC, &head);
-	if(head == DEVOLVER_INSTRUCCION){
-		instruccion = strdup( (char*)entrada );
-		free(entrada);
-	}
-
-	analizadorLinea((char * const)instruccion, &funcionesAnSISOP, &funcionesKernel);
-	(pcbActual->pc)++; // Incremento Program Counter del PCB
-
-	free(instruccion);
-}
-
 void recibirYvalidarEstadoDelPedidoAUMC(){
 
 	int head;

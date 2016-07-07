@@ -1,6 +1,0 @@
-#ifndef LIB_SECUNDARIASPRIMITIVAS_H_
-#define LIB_SECUNDARIASPRIMITIVAS_H_
-
-#include "globalesCPU.h"
-
-#endif /* LIB_SECUNDARIASPRIMITIVAS_H_ */

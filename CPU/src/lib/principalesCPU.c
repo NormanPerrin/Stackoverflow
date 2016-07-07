@@ -29,37 +29,6 @@ void conectarConNucleo() {
 	handshake_cliente(fdNucleo, "P");
 }
 
-void ejecutarProcesos(){
-
-	int protocolo;
-	void * entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
-
-		while (entrada != NULL){
-			switch (protocolo){
-				case PCB:{
-					pcbActual = (pcb*)malloc(sizeof(pcb));
-					memcpy(pcbActual, entrada, sizeof(pcb));
-
-					ejecutarProcesoActivo(pcbActual);
-
-				break;
-			}
-				case QUANTUM_MODIFICADO:{
-					info_quantum* nuevoQuantum = (info_quantum*) entrada;
-					infoQuantum->quantum = nuevoQuantum->quantum;
-					infoQuantum->retardoQuantum = nuevoQuantum->retardoQuantum;
-					free(nuevoQuantum);
-				break;
-			}
-				}
-					free(entrada);
-					entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
-		}
-
-		cerrarSocket(fdNucleo);
-		cerrarSocket(fdUMC);
-}
-
 void liberarEstructuras() {
 	free(config->ipUMC);
 	free(config);

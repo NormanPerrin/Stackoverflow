@@ -4,12 +4,13 @@
 #include "secundariasCPU.h"
 
 /** PROTOTIPO FUNCIONES PRINCIPALES **/
-void leerArchivoDeConfiguracion(char * ruta);
 void crearLogger();
 void conectarConUMC();
 void obtenerTamanioDePagina();
 void conectarConNucleo();
 void ejecutarProcesos();
 void liberarEstructuras(); // Libera la memoria reservada en setear config
+void ejecutarProcesoActivo();
+void ejecutarInstruccion(t_intructions instruccionActual);
 
 #endif

@@ -1,7 +1,6 @@
 #include "primitivasAnSISOP.h"
-#include "principalesCPU.h"
 
-t_puntero AnSISOP_definirVariable(t_nombre_variable var_nombre){
+t_puntero definirVariable(t_nombre_variable var_nombre){
 
 	/* Le asigna una posición en memoria a la variable,
 	 y retorna el offset total respecto al inicio del stack. */
@@ -33,7 +32,7 @@ t_puntero AnSISOP_definirVariable(t_nombre_variable var_nombre){
 	return var_stack_offset;
 }
 
-t_puntero AnSISOP_obtenerPosicionVariable(t_nombre_variable var_nombre){
+t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 
 	/* En base a la posición de memoria de la variable,
 	 retorna el offset total respecto al inicio del stack. */
@@ -59,7 +58,7 @@ t_puntero AnSISOP_obtenerPosicionVariable(t_nombre_variable var_nombre){
 	}
 }
 
-t_valor_variable AnSISOP_dereferenciar(t_puntero var_stack_offset){
+t_valor_variable dereferenciar(t_puntero var_stack_offset){
 
 	// Retorna el valor leído a partir de var_stack_offset.
 
@@ -96,7 +95,7 @@ t_valor_variable AnSISOP_dereferenciar(t_puntero var_stack_offset){
 	return var_valor;
 }
 
-void AnSISOP_asignar(t_puntero var_stack_offset, t_valor_variable valor){
+void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 
 	// Escribe en memoria el valor en la posición dada.
 
@@ -116,7 +115,7 @@ void AnSISOP_asignar(t_puntero var_stack_offset, t_valor_variable valor){
 }
 
 
-t_valor_variable AnSISOP_obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
+t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
 	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
 	void* entrada = NULL;
@@ -143,7 +142,7 @@ t_valor_variable AnSISOP_obtenerValorCompartida(t_nombre_compartida var_comparti
 	return valor;
 }
 
-t_valor_variable AnSISOP_asignarValorCompartida(t_nombre_compartida var_compartida_nombre, t_valor_variable var_compartida_valor){
+t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombre, t_valor_variable var_compartida_valor){
 
 	var_compartida * variableCompartida = malloc(sizeof(var_compartida));
 
@@ -157,7 +156,7 @@ t_valor_variable AnSISOP_asignarValorCompartida(t_nombre_compartida var_comparti
 	return var_compartida_valor;
 }
 
-t_puntero_instruccion AnSISOP_irAlLabel(t_nombre_etiqueta nombre_etiqueta){
+t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
 	t_puntero_instruccion next_pc = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
 
@@ -165,7 +164,7 @@ t_puntero_instruccion AnSISOP_irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 }
 
 //HACER
-void AnSISOP_llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 	// Creo un nuevo registro en el índice stack:
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
@@ -176,11 +175,11 @@ void AnSISOP_llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retorn
 }
 
 //HACER
-void AnSISOP_retornar(t_valor_variable retorno){
+void retornar(t_valor_variable retorno){
 
 }
 
-void AnSISOP_imprimir(t_valor_variable valor_mostrar){
+void imprimir(t_valor_variable valor_mostrar){
 	int * valor = malloc(INT);
 	*valor = valor_mostrar;
 
@@ -189,7 +188,7 @@ void AnSISOP_imprimir(t_valor_variable valor_mostrar){
 	free(valor);
 }
 
-void AnSISOP_imprimirTexto(char* texto){
+void imprimirTexto(char* texto){
 	string * txt = malloc(STRING);
 	txt->cadena = strdup(texto);
 	txt->tamanio = strlen(texto) + 1;
@@ -200,7 +199,7 @@ void AnSISOP_imprimirTexto(char* texto){
 	free(txt);
 }
 
-void AnSISOP_entradaSalida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
+void entradaSalida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
 
 	pedidoIO * pedidoEntradaSalida = malloc(strlen(nombre_dispositivo)+ 1+ INT);
 	pedidoEntradaSalida->nombreDispositivo = strdup((char*) nombre_dispositivo);
@@ -213,7 +212,7 @@ void AnSISOP_entradaSalida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
 	free(pedidoEntradaSalida);
 }
 
-void AnSISOP_wait(t_nombre_semaforo identificador_semaforo){
+void s_wait(t_nombre_semaforo identificador_semaforo){
 
 	char* id_semaforo = malloc(strlen(identificador_semaforo)+1);
 	id_semaforo = strdup((char*)identificador_semaforo);
@@ -239,7 +238,7 @@ void AnSISOP_wait(t_nombre_semaforo identificador_semaforo){
 	free(entrada);
 }
 
-void AnSISOP_signal(t_nombre_semaforo identificador_semaforo){
+void s_signal(t_nombre_semaforo identificador_semaforo){
 
 	char* id_semaforo = malloc(strlen(identificador_semaforo)+1);
 	id_semaforo = strdup((char*)identificador_semaforo);
@@ -248,6 +247,4 @@ void AnSISOP_signal(t_nombre_semaforo identificador_semaforo){
 
 	log_info(logger, "SIGNAL en el proceso %i", pcbActual->pid);
 	free(id_semaforo);
-
 }
-
