@@ -157,13 +157,21 @@ t_valor_variable AnSISOP_asignarValorCompartida(t_nombre_compartida var_comparti
 	return var_compartida_valor;
 }
 
-//HACER
-void AnSISOP_irAlLabel(t_nombre_etiqueta nombre_etiqueta){
+t_puntero_instruccion AnSISOP_irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
+	t_puntero_instruccion next_pc = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
+
+	return next_pc;
 }
 
 //HACER
 void AnSISOP_llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
+	// Creo un nuevo registro en el índice stack:
+	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
+	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
+
+	registroActual.posicionIndiceCodigo = donde_retornar;
+	pcbActual->pc = metadata_buscar_etiqueta(etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
 
 }
 

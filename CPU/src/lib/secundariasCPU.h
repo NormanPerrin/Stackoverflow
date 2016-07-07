@@ -1,12 +1,10 @@
 #ifndef LIB_SECUNDARIASCPU_H_
 #define LIB_SECUNDARIASCPU_H_
 
-#include "globalesCPU.h"
 #include "primitivasAnSISOP.h"
 
 /** PROTOTIPO FUNCIONES SECUNDARIAS **/
 void setearValores_config(t_config * archivoConfig);
-void crearLogger();
 void ejecutarProcesoActivo();
 void liberarPcbActiva();
 void ejecutarInstruccion(t_intructions instruccionActual);

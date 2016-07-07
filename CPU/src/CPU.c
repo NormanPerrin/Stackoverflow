@@ -1,12 +1,9 @@
-#include <stdlib.h>
-#include <parser/parser.h>
-#include <utilidades/general.h>
-
 #include "lib/principalesCPU.h"
 
 int main(void) {
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU); // Abro archivo configuración
+
 	crearLogger();
 
 	conectarConUMC(); // Conexión con UMC
@@ -17,7 +14,7 @@ int main(void) {
 
 	ejecutarProcesos();
 
-	liberarEstructura(); // Libero memoria reservada para setear config
+	liberarEstructuras(); // Libero memoria reservada para setear config
 
 	return EXIT_SUCCESS;
 }

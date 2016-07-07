@@ -1,5 +1,13 @@
 #include "principalesCPU.h"
 
+// --LOGGER--
+void crearLogger(){
+	char * archivoLogCPU = strdup("CPU_LOG.log");
+	logger = log_create("CPU_LOG.log", archivoLogCPU, TRUE, LOG_LEVEL_INFO);
+	free(archivoLogCPU);
+	archivoLogCPU = NULL;
+}
+
 void conectarConUMC(){
 	fdUMC = nuevoSocket();
 	int ret = conectarSocket(fdUMC, config->ipUMC, config->puertoUMC);
@@ -59,6 +67,6 @@ void liberarEstructuras() {
 	log_destroy(logger);
 	logger = NULL;
 
-	liberarPcb(pcbActual);
+	liberarPcbActiva();
 	free(infoQuantum);
 }

@@ -5,6 +5,7 @@
 
 /** PROTOTIPO FUNCIONES PRINCIPALES **/
 void leerArchivoDeConfiguracion(char * ruta);
+void crearLogger();
 void conectarConUMC();
 void obtenerTamanioDePagina();
 void conectarConNucleo();

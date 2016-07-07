@@ -9,14 +9,6 @@ void setearValores_config(t_config * archivoConfig){
 	config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
 }
 
-// --LOGGER--
-void crearLogger(){
-	char * archivoLogCPU = strdup("CPU_LOG.log");
-	logger = log_create("CPU_LOG.log", archivoLogCPU, TRUE, LOG_LEVEL_INFO);
-	free(archivoLogCPU);
-	archivoLogCPU = NULL;
-}
-
 void ejecutarProcesoActivo(){
 	int * pid = malloc(INT);
 	*pid = pcbActual->pid;

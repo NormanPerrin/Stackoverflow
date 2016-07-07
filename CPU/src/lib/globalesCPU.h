@@ -7,6 +7,7 @@
 #include <commons/log.h>
 #include <parser/parser.h>
 #include <parser/metadata_program.h>
+#include <commons/collections/dictionary.h>
 
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 #define RUTA_CONFIG_CPU "configCPU.txt"
