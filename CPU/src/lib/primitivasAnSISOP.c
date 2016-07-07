@@ -59,8 +59,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 }
 
 t_valor_variable dereferenciar(t_puntero var_stack_offset){
-
-	// Retorna el valor leído a partir de var_stack_offset.
+// Retorna el valor leído a partir de var_stack_offset.
 
 	solicitudLectura * var_direccion = malloc(sizeof(solicitudLectura));
 
@@ -114,7 +113,6 @@ void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 		recibirYvalidarEstadoDelPedidoAUMC();
 }
 
-
 t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
 	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
@@ -165,6 +163,7 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
 //HACER
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
+
 	// Creo un nuevo registro en el índice stack:
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
@@ -180,6 +179,7 @@ void retornar(t_valor_variable retorno){
 }
 
 void imprimir(t_valor_variable valor_mostrar){
+
 	int * valor = malloc(INT);
 	*valor = valor_mostrar;
 
@@ -189,6 +189,7 @@ void imprimir(t_valor_variable valor_mostrar){
 }
 
 void imprimirTexto(char* texto){
+
 	string * txt = malloc(STRING);
 	txt->cadena = strdup(texto);
 	txt->tamanio = strlen(texto) + 1;
