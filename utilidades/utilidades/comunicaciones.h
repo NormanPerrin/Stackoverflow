@@ -50,16 +50,17 @@ typedef enum {
 		WAIT_SIN_BLOQUEO,
 		WAIT_CON_BLOQUEO,
 		PCB_EN_ESPERA,
+		SIGUSR,
 
 		// Mensajes Dinámicos;
 		INICIAR_PROGRAMA, 			// Núcleo - UMC / UMC - Swap
 		ENVIAR_SCRIPT, 				// Consola - Núcleo
-		PCB,						// Núcleo - CPU / CPU - Núcleo
+		PCB, // Núcleo - CPU
+		PCB_FIN_EJECUCION, PCB_FIN_QUANTUM, PCB_ENTRADA_SALIDA,	// CPU - Núcleo
 		IMPRIMIR_TEXTO, 			// CPU - Núcleo / Núcleo - Consola
 		DEVOLVER_INSTRUCCION,			// UMC - CPU
 		DEVOLVER_PAGINA_INSTRUCCION,	// Swap - UMC
-		WAIT_REQUEST,				// CPU - Núcleo
-		SIGNAL_REQUEST,				// CPU - Núcleo
+		WAIT_REQUEST, SIGNAL_REQUEST, // CPU - Núcleo
 		ENTRADA_SALIDA,				// CPU - Núcleo
 		GRABAR_VAR_COMPARTIDA,		// CPU - Núcleo
 
@@ -83,14 +84,6 @@ typedef struct{
 }__attribute__((packed)) info_quantum;
 
 typedef struct {
-	int tamanioArgumentos, tamanioVariables;
-	int posicionIndiceCodigo; // Posición donde se retorna al terminarse la función
-	direccion* posicionesArgumentos; // Direcciones lógicas de los argumentos de la función
-	t_dictionary* variables; // Diccionario de variables locales con key: id y data: dirección lógica
-	direccion posicionResultado; // Dirección lógica donde guardar el resultado de la función
-} registroStack;
-
-typedef struct {
 	int pid, paginas;
 	char *contenido;
 } __attribute__((packed)) inicioPrograma;
@@ -105,27 +98,38 @@ typedef struct {
 	char* nombreDispositivo;
 } __attribute__((packed)) pedidoIO;
 
-typedef struct {
-	int pid, estadoDelHeap;
-// Si el heap es NO_CREADO, Núcleo rechaza acceso al sistema informando a Consola
-	} __attribute__((packed)) respuestaInicioPrograma;
+typedef int respuestaInicioPrograma;
 
 typedef enum {
 	CREADO, NO_CREADO
 } estadoDelHeap;
 
-// TADS para Núcleo - CPU
-typedef enum {
-	NEW, READY, EXEC, BLOCK, EXIT
-} estadoProceso;
+typedef struct {
+	direccion* args;
+	t_dictionary* vars;
+	int retPos;
+	direccion retVar;
+} registroStack;
 
 typedef struct pcb{
-	int pid, pc, paginas_codigo, estado, id_cpu, ultimaPosicionIndiceStack;
+	int pid; // id del proceso
+	int paginas_codigo; // tamaño en páginas del segmento de código
+	int paginas_stack; // tamaño en páginas del segmento de stack
+	int pc; // program counter
+	int id_cpu; // id del CPU que ejecuta al proceso actualmente
+	int cantidad_instrucciones;
+
+	int ultimaPosicionIndiceStack;
 	int stackPointer;
-	int tamanioIndiceCodigo, tamanioIndiceStack, tamanioIndiceEtiquetas;
-	t_intructions* indiceCodigo;
-	char* indiceEtiquetas; // Serializacion de las etiquetas
-	registroStack* indiceStack; // Indica qué variables hay en cada contexto y dónde están guardadas
+	int paginaActualCodigo;
+	int paginaActualStack;
+	int primerPaginaStack;
+	int numeroContextoEjecucionActualStack;
+
+	int tamanioIndiceCodigo, tamanioIndiceStack, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
+	t_intructions* indiceCodigo;  // Índice de código
+	char* indiceEtiquetas;  // Índice de etiquetas
+	t_list* indiceStack; // Índice de stack
 } __attribute__((packed)) pcb;
 
 typedef struct {

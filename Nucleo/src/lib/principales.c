@@ -3,22 +3,86 @@
 /*******************************
  *    FUNCIONES PRINCIPALES    *
  ******************************/
-void abrirArchivoDeConfiguracion(char * ruta){
-	crearLogger();
-	leerArchivoDeConfiguracion(ruta);
-	/*if( seteoCorrecto() ){
-			log_info(logger, "El archivo de configuración ha sido leído correctamente");
-		}*/
+void crearLoggerNucleo(){
+	char * archivoLogNucleo = strdup("NUCLEO_LOG.log");
+	logger = log_create("NUCLEO_LOG.log", archivoLogNucleo, true, LOG_LEVEL_INFO);
+	free(archivoLogNucleo); archivoLogNucleo = NULL;
 }
 
 void inicializarColecciones(){
 	listaCPU = list_create();
 	listaConsolas = list_create();
-	listaProcesos = list_create(); // listaNuevos
+	listaProcesos = list_create(); // Lista de todos los procesos en el sistema
 	colaListos = queue_create();
 	diccionarioIO = dictionary_create();
 	diccionarioSemaforos = dictionary_create();
 	diccionarioVarCompartidas = dictionary_create();
+}
+
+#define registrarConNombreYValor(functionName,type,dictionary,creator)\
+				void functionName(char* name,int value) { \
+						type *var = creator(name,value);\
+						dictionary_put(dictionary, var->nombre, var);\
+				}\
+
+registrarConNombreYValor(registrarSemaforo, t_semaforo, diccionarioSemaforos, semaforo_create)
+registrarConNombreYValor(registrarVariableCompartida, var_compartida, diccionarioVarCompartidas, crearVariableCompartida)
+
+void llenarDiccionarioSemaforos(){
+
+  int i = 0;
+
+  while (config->semaforosID[i] != '\0'){
+      registrarSemaforo(config->semaforosID[i],
+          atoi(config->semaforosValInicial[i]));
+      i++;
+    }
+}
+
+void llenarDiccionarioVarCompartidas(){
+
+	int i = 0;
+
+  while (config->variablesCompartidas[i] != '\0'){
+	  registrarVariableCompartida(config->variablesCompartidas[i], 0);
+      i++;
+    }
+}
+
+var_compartida* crearVariableCompartida(char* nombre, int valorInicial){
+
+var_compartida* var = malloc(sizeof(var_compartida));
+  var->nombre = strdup(nombre);
+  var->valor = valorInicial;
+
+  return var;
+}
+
+void lanzarHilosIO(){
+  int i = 0;
+  while (config->ioID[i] != '\0'){
+
+      hiloIO *hilo = crearHiloIO(i);
+      pthread_create(&hilo->hiloID, NULL, &entradaSalidaThread, (void*) &hilo->dataHilo);
+      dictionary_put(diccionarioIO, config->ioID[i], hilo);
+      log_info(logger, "Lanzando hilo de IO %d que pertenece al dispositivo %s", i, hilo->dataHilo.nombre);
+
+      i++;
+    }
+}
+
+void unirHilosIO(){
+	int i = 0;
+	  while (config->ioID[i] != '\0'){
+
+	      hiloIO*hilo = (hiloIO*)dictionary_get(diccionarioIO, config->ioID[i]);
+	      log_info(logger, "Cerrando hilo de IO %d que pertenece al dispositivo %s", i, hilo->dataHilo.nombre);
+	      pthread_join(hilo->hiloID, NULL );
+	      free(hilo);
+	      hilo = NULL;
+
+	      i++;
+	    }
 }
 
 void conectarConUMC(){
@@ -33,20 +97,19 @@ void conectarConUMC(){
 	free(tamPagina);
 }
 
-void esperar_y_PlanificarProgramas(){
-	int i, fd, max_fd;
-
+void activarConexionConConsolasYCPUs(){
 	fdEscuchaConsola = nuevoSocket();
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
 
-	lanzarIOThreads(); // Hilos de E/S
-
 	fdEscuchaCPU = nuevoSocket();
 	asociarSocket(fdEscuchaCPU, config->puertoCPU);
 	escucharSocket(fdEscuchaCPU, CONEXIONES_PERMITIDAS);
+}
 
-	while(TRUE){
+void esperar_y_PlanificarProgramas(){
+
+		int i, fd, max_fd;
 
 	    FD_ZERO(&readfds);
 	    FD_SET(fdEscuchaConsola, &readfds);
@@ -78,13 +141,14 @@ void esperar_y_PlanificarProgramas(){
 	    seleccionarSocket(max_fd, &readfds , NULL , NULL , NULL, NULL);
 
 	if (FD_ISSET(fdEscuchaConsola, &readfds) || FD_ISSET(fdEscuchaCPU, &readfds)) {
+
 		if (FD_ISSET(fdEscuchaCPU, &readfds)) aceptarConexionEntranteDeCPU();
+
 		if (FD_ISSET(fdEscuchaConsola, &readfds)) aceptarConexionEntranteDeConsola();
 	}
 	else{
 	    		atenderNuevoMensajeDeCPU();
 	    }
-	 } // fin while
 } // fin select
 
 void aceptarConexionEntranteDeConsola(){
@@ -115,7 +179,7 @@ void aceptarConexionEntranteDeConsola(){
 		    	free(nuevoPrograma);
 
 		    	// Creo la PCB asociada a ese programa:
-		    pcb * nuevoPcb = crearPcb(nuevaConsola->programa);
+		    pcb * nuevoPcb = crearPcb(nuevaConsola->programa.cadena);
 		    if(nuevoPcb == NULL){
 		    	//  UMC no pudo alocar los segmentos del programa, lo rachazo:
 		    	aplicar_protocolo_enviar(nuevaConsola->fd_consola, RECHAZAR_PROGRAMA, NULL);
@@ -164,18 +228,54 @@ void atenderNuevoMensajeDeCPU(){
 
 	switch(protocolo){
 
-	case PCB:{
-		// PCB que llega por fin de quantum, o bien, porque finalizó su ejecución.
+	case PCB_FIN_QUANTUM:{
+
 		pcb * pcbEjecutada = (pcb*) mensaje;
-		log_info(logger, "Programa AnSISOP %i salió de CPU %i.", pcbEjecutada->pid, unCPU->id);
 
-		// Evalúo si es FIN DE QUANTUM o FIN DE EJECUCIÓN:
-		actualizarDatosDePcbEjecutada(unCPU, pcbEjecutada);
+		log_info(logger, "Programa AnSISOP %i fin de quantum en CPU %i.", pcbEjecutada->pid, unCPU->id);
 
-		planificarProceso();
+		actualizarPcbEjecutada(unCPU, pcbEjecutada, PCB_FIN_QUANTUM);
 
 		break;
 			           }
+	case PCB_FIN_EJECUCION:{
+
+			pcb * pcbEjecutada = (pcb*) mensaje;
+
+			log_info(logger, "Programa AnSISOP %i fin de ejecución en CPU %i.", pcbEjecutada->pid, unCPU->id);
+
+			actualizarPcbEjecutada(unCPU, pcbEjecutada, PCB_FIN_EJECUCION);
+
+			break;
+				           }
+	case ENTRADA_SALIDA:{
+
+			pedidoIO* datos = (pedidoIO*)mensaje;
+
+			pcb* pcbEjecutada = NULL;
+			int head;
+			void* entrada = aplicar_protocolo_recibir(fd, &head);
+				if(head == PCB_ENTRADA_SALIDA){
+					pcbEjecutada = (pcb*)entrada;
+				}
+
+			log_info(logger, "Programa AnSISOP %i entrada salida en CPU %i.", pcbEjecutada->pid, unCPU->id);
+
+			// El CPU pasa de Ocupada a Libre:
+			unCPU->disponibilidad = LIBRE;
+			pcbEjecutada->id_cpu = -1; // El proceso no tiene asignado aún un CPU.
+
+			planificarProceso();
+
+			realizarEntradaSalida(pcbEjecutada, datos);
+
+			liberarPcb(pcbEjecutada);
+
+				free(entrada);
+				free(datos);
+
+			break;
+						}
 	case IMPRIMIR:{
 
 		string* variable = (string*)malloc(sizeof(string));
@@ -287,29 +387,10 @@ void atenderNuevoMensajeDeCPU(){
 
 		break;
 					 }
-	case ENTRADA_SALIDA:{
-
-			pedidoIO* datos = (pedidoIO*)mensaje;
-
-			pcb* pcbIO = NULL;
-			int head;
-
-			void* entrada = aplicar_protocolo_recibir(fd, &head);
-					if(head == PCB_EN_ESPERA){
-						pcbIO = (pcb*)entrada;
-					}
-
-			detenerEjecucion(pcbIO); // Proceso pasa de Ejecutando a Bloqueado
-									// CPU pasa de Ocupada a Libre
-
-			realizarEntradaSalida(pcbIO, datos);
-
-			free(entrada);
-			liberarPcb(pcbIO);
-			free(datos);
-
+	case SIGUSR: {
+			// completar
 		break;
-					}
+	}
 
 	default:
 			printf("Recibí el protocolo %i de CPU\n", protocolo);
@@ -356,46 +437,4 @@ void liberarMemoriaUtilizada(){
 	limpiarArchivoConfig();
 	log_destroy(logger);
 	logger = NULL;
-}
-
-/************************************
- *    OPERACIONES PRIVILEGIADAS     *
- ************************************/
-#define registrarConNombreYValor(functionName,type,typeText,dictionary,creator)\
-				void functionName(char* name,int value) { \
-						type *var = creator(name,value);\
-						dictionary_put(dictionary, var->nombre, var);\
-				}\
-
-registrarConNombreYValor(registrarSemaforo, t_semaforo, "semaforo", diccionarioSemaforos, semaforo_create)
-registrarConNombreYValor(registrarVariableCompartida, var_compartida, "variable compartida", diccionarioVarCompartidas, crearVariableCompartida)
-
-void llenarDiccionarioSemaforos(){
-
-  int i = 0;
-
-  while (config->semaforosID[i] != '\0'){
-      registrarSemaforo(config->semaforosID[i],
-          atoi(config->semaforosValInicial[i]));
-      i++;
-    }
-}
-
-void llenarDiccionarioVarCompartidas(){
-
-	int i = 0;
-
-  while (config->variablesCompartidas[i] != '\0'){
-	  registrarVariableCompartida(config->variablesCompartidas[i], 0);
-      i++;
-    }
-}
-
-var_compartida* crearVariableCompartida(char* nombre, int valorInicial){
-
-var_compartida* var = malloc(sizeof(var_compartida));
-  var->nombre = strdup(nombre);
-  var->valor = valorInicial;
-
-  return var;
 }

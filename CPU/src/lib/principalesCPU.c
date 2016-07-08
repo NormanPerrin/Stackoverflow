@@ -1,7 +1,7 @@
 #include "principalesCPU.h"
 
 // --LOGGER--
-void crearLogger(){
+void crearLoggerCPU(){
 	char * archivoLogCPU = strdup("CPU_LOG.log");
 	logger = log_create("CPU_LOG.log", archivoLogCPU, TRUE, LOG_LEVEL_INFO);
 	free(archivoLogCPU);

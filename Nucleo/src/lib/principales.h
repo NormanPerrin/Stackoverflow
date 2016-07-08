@@ -5,15 +5,17 @@
 #include "globales.h"
 #include "entradaSalida.h"
 #include "semaforos.h"
-#include "variablesCompartidas.h"
 
 /*** FUNCIONES PRINCIPALES ***/
-void abrirArchivoDeConfiguracion(char * ruta);
+void crearLoggerNucleo();
 void inicializarColecciones();
 void llenarDiccionarioSemaforos();
 void llenarDiccionarioVarCompartidas();
+void lanzarHilosIO();
 void conectarConUMC();
+void activarConexionConConsolasYCPUs();
 void esperar_y_PlanificarProgramas();
+void unirHilosIO();
 void liberarMemoriaUtilizada();
 
 /*** INCLUÍDAS ***/

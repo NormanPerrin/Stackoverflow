@@ -1,6 +1,5 @@
 #include "fconsola.h"
 
-
 void validar_argumentos(int arg) {
 	if(arg != 2) {
 		printf("Debe ingresar el archivo a ejecutar como parámetro\n");
@@ -14,13 +13,13 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void leerScript(char * rutaPrograma){
-	programa = (string*)malloc(sizeof(string));
+	programa = (string*)malloc(string);
 
 	int _tamanio, descriptorArchivo;
 	struct stat infoArchivo; // Ver función 'stat' en stat.h
 
 	descriptorArchivo = open(rutaPrograma, O_RDONLY); // Abre el archivo .asnsisop
-		fstat(descriptorArchivo, &infoArchivo); // Obtenemos su información
+		fstat(descriptorArchivo, &infoArchivo); // Obtiene su información
 		_tamanio = infoArchivo.st_size;
 		programa->tamanio = _tamanio;
 
@@ -30,7 +29,7 @@ void leerScript(char * rutaPrograma){
 		rutaScript = strdup(rutaPrograma); // Extra: se guarda la ruta en una variable global
 } // El programa ya está listo para ser enviado a Núcleo
 
-void conectarConNucleo(){
+void conectarCon_Nucleo(){
 	fd_nucleo = nuevoSocket();
 	int ret = conectarSocket(fd_nucleo, ipNucleo, puertoNucleo);
 	validar_conexion(ret, 1); // Al ser cliente es terminante
@@ -39,12 +38,11 @@ void conectarConNucleo(){
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
 	free(programa->cadena);
 	free(programa);
-
-	esperar_mensajes();
-
 }
 
 void liberarRecursos() {
+	free(programa->cadena);
+	free(programa);
 	free(ipNucleo);
 	free(rutaScript);
 	log_destroy(logger);
@@ -62,7 +60,7 @@ int validar_servidor(char *id) {
 }
 int validar_cliente(char *id) {return 0;}
 
-void esperar_mensajes() {
+void esperarMensajesDeNucleo() {
 	int head;
 	void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
 	if (mensaje == NULL) { // desconexión o error
@@ -104,7 +102,7 @@ void esperar_mensajes() {
 }
 
 // --LOGGER--
-void crearLogger(){
+void crearLoggerConsola(){
 	char * archivoLogConsola = strdup("CONSOLA_LOG.log");
 	logger = log_create("CONSOLA_LOG.log", archivoLogConsola, TRUE, LOG_LEVEL_INFO);
 	free(archivoLogConsola);

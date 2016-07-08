@@ -12,6 +12,7 @@
 #include <commons/collections/queue.h>
 #include <semaphore.h>
 #include <sys/inotify.h>
+#include <parser/metadata_program.h>
 
 #define EVENT_SIZE ( sizeof (struct inotify_event) + strlen(RUTA_CONFIG_NUCLEO) + 1 )
 #define CONEXIONES_PERMITIDAS 10
@@ -55,14 +56,16 @@ int fd_UMC, tamanioPagina, fdEscuchaConsola, fdEscuchaCPU, fd_inotify;
 t_log * logger;
 fd_set readfds;
 
-t_list * listaProcesos;
-t_list * listaCPU;
-t_list * listaConsolas;
+t_list * listaProcesos; // Lista de todos los procesos en el sistema
+t_list * listaCPU; // Lista de todos las CPU conectadas
+t_list * listaConsolas;  // Lista de todos las Consolas conectadas
 
-t_queue * colaListos;
+t_queue * colaListos; // Lista de todos los procesos listos para ejecutar
 
-t_dictionary * diccionarioIO;
-t_dictionary * diccionarioSemaforos;
-t_dictionary * diccionarioVarCompartidas;
+t_dictionary * diccionarioIO; // Diccionario de todos los dispositivos IO
+t_dictionary * diccionarioSemaforos; // Diccionario de todos los semáforos
+t_dictionary * diccionarioVarCompartidas; // Diccionario de todos las variables compartidas
+
+pthread_mutex_t mutex_planificarProceso;
 
 #endif /* LIB_GLOBALES_H_ */
