@@ -14,6 +14,7 @@ AnSISOP_funciones funcionesAnSISOP = {
 		.AnSISOP_imprimir = imprimir,
 		.AnSISOP_imprimirTexto	= imprimirTexto,
 		.AnSISOP_entradaSalida	= entradaSalida,
+		.AnSISOP_finalizar = finalizar,
 };
 
 AnSISOP_kernel funcionesKernel = {
