@@ -240,6 +240,8 @@ void * serealizarPCB(void * estructura){
 	memcpy(buffer + desplazamiento, unPCB->indiceStack->variables, tamListaVariables);
 
 	return buffer;*/
+	void* r = NULL;
+	return r;
 }
 
 pcb * deserealizarPCB(void * buffer){
@@ -291,6 +293,8 @@ pcb * deserealizarPCB(void * buffer){
 	memcpy(unPcb->indiceStack->variables, buffer + desplazamiento, unPcb->indiceStack->tamanioVariables);
 
 	return unPcb;*/
+	pcb* r = NULL;
+	return r;
 }
 
 // entra:	inicioPrograma *mensaje

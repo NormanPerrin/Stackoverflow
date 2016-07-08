@@ -23,7 +23,7 @@ void limpiarArchivoConfig();
 void notificarCambioDelQuantumACPU();
 void detectarCambiosEnArchivoConfig();
 void enviarNuevoQuantum(cpu * unCpu);
-int solicitarSegmentosAUMC(pcb * nuevoPcb, string programa);
+int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa);
 pcb* copiarPcb(pcb* proceso);
 void encolarPcbAListos(pcb* proceso);
 int pcbListIndex(int pid);

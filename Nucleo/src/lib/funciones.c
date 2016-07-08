@@ -20,11 +20,12 @@ void setearValores_config(t_config * archivoConfig){
 	config->cantidadPaginasStack = config_get_int_value(archivoConfig, "STACK_SIZE");
 }
 
-int solicitarSegmentosAUMC(pcb * nuevoPcb, string programa){
+int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa){
 	nuevoPcb->pid = asignarPid(listaProcesos);
 
-	int aux_div = programa.tamanio / tamanioPagina;
-	int resto_div = programa.tamanio % tamanioPagina;
+	int tam_prog = strlen(programa)+1;
+	int aux_div = tam_prog / tamanioPagina;
+	int resto_div = tam_prog % tamanioPagina;
 	nuevoPcb->paginas_codigo = (resto_div==0)?aux_div:aux_div+1;
 	nuevoPcb->paginas_stack = config->cantidadPaginasStack;
 
@@ -32,7 +33,7 @@ int solicitarSegmentosAUMC(pcb * nuevoPcb, string programa){
 		inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(sizeof(inicioPrograma));
 		solicitudDeInicio->paginas = nuevoPcb->paginas_stack + nuevoPcb->paginas_codigo;
 		solicitudDeInicio->pid = nuevoPcb->pid;
-		solicitudDeInicio->contenido = strdup(programa.cadena);
+		solicitudDeInicio->contenido = strdup(programa);
 
 		printf("Solicitando segmentos de código y de stack a UMC para el Proceso #%d.\n", nuevoPcb->pid);
 		aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
@@ -84,7 +85,7 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
 		// Inicializo índice de código:
-			nuevoPcb->tamanioIndiceCodigo = sizeof(t_intructions) * metaData->instrucciones_size;
+			nuevoPcb->tamanioIndiceCodigo = sizeof(t_intructions) * infoProg->instrucciones_size;
 			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:

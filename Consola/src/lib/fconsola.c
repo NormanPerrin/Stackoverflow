@@ -13,7 +13,7 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void leerScript(char * rutaPrograma){
-	programa = (string*)malloc(string);
+	programa = (string*)malloc(sizeof(string));
 
 	int _tamanio, descriptorArchivo;
 	struct stat infoArchivo; // Ver función 'stat' en stat.h

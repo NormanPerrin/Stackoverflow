@@ -308,7 +308,7 @@ void atenderNuevoMensajeDeCPU(){
 		int* pid = (int*)mensaje;
 		int index = pcbListIndex(*pid);
 		// Le informo a UMC:
-		finalizarPrograma(*pid);
+		finalizarPrograma(*pid, index);
 
 		bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == *pid;}
 		consola * consolaAsociada = list_remove_by_condition(listaConsolas, consolaTieneElPid);
