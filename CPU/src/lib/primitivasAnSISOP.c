@@ -173,11 +173,20 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
 }
 
-//HACER
+//HACER//TERMINAR
 void retornar(t_valor_variable retorno){
 
-}
+	t_puntero* direccion_de_retorno;/*= VER ESTO*/
 
+	asignar(direccion_de_retorno,retorno);
+	pcbActual->ultimaPosicionIndiceStack-=sizeof(t_puntero);
+	finalizar();
+
+}
+//HACER//ISSUE #339
+void finalizar(){
+
+}
 void imprimir(t_valor_variable valor_mostrar){
 
 	int * valor = malloc(INT);
