@@ -45,14 +45,19 @@
 	void inicializarTablaDePaginas();
 	void inicializarTablaBitMap();
 	int buscarPosLibresEnBitMap(int paginas);
+	int buscarPosLibreEnBitMap();
 	int escribir_pagina(void *msj);
 	int buscarPaginaEnTablaDePaginas(int pid ,int pagina);
 	void avanzarPaginas(int cantidad);
 	int eliminar_programa(void *msj);
-	void *elegirFuncion(protocolo head);
+	void *elegirFuncion(int head);
 	int buscarAPartirDeEnTablaDePaginas(int pid);
 	int calcularFragmentacion();
 	void compactar();
 	void actualizarBitMap();
+	int buscarPosOcupadaDesdeLaUltimaLibreEnTablaDeBitMap(int posLibre);
+	int cuantasPaginasTieneElProceso(int arrancaProceso);
+	void mover(int posLibre ,int arrancaProceso , int cantidadDePaginasDelProceso);
+
 
 #endif /* FSWAP_H_ */
