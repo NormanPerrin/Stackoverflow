@@ -134,7 +134,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	if(contenido_pagina == NULL || *protocolo != DEVOLVER_PAGINA) { // no encontró la página o hubo un fallo
 
 		// seteo mensaje de respuesta TODO
-		int* estadoDelPedido = (int*)malloc(sizeof(int));
+		int* estadoDelPedido = (int*)reservarMemoria(sizeof(int));
 		*estadoDelPedido= NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, estadoDelPedido);
 		free(estadoDelPedido);
@@ -187,6 +187,9 @@ void inciar_programa(int fd, void *msj) {
 	// 1) Agrego a tabla de páginas
 	iniciar_principales(mensaje->pid, mensaje->paginas);
 	agregar_paginas_nuevas(mensaje->pid, mensaje->paginas);
+	if( asignarMarcos(mensaje->pid) == FALSE ) {
+		// TODO: respuesta operación inválida
+	}
 
 	// 2) Envío a Swap
 	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, msj);
@@ -269,6 +272,8 @@ void finalizar_programa(int fd, void *msj) {
 	int pos = pos_pid(*pid);
 	int i;
 
+	free(tabla_paginas[pos].marcos_reservados);
+
 	for(i = 0; i < tabla_paginas[pos].paginas; i++) {
 
 		if(tabla_paginas[pos].tabla[i].bit_presencia == 1) // elimino página de MP
@@ -299,6 +304,10 @@ void iniciarTP() {
 	int i;
 	for(i = 0; i < MAX_PROCESOS; i++) {
 		tabla_paginas[i].paginas = MAX_PAGINAS;
+		tabla_paginas[i].marcos_reservados = (int*)reservarMemoria(config->marco_x_proceso * INT);
+		int k = 0;
+		for(; k < config->marco_x_proceso; k++)
+			tabla_paginas[i].marcos_reservados[k] = -1;
 		reset_entrada(i);
 	}
 }
@@ -311,6 +320,7 @@ void reset_entrada(int pos) {
 	set.bit_presencia = 0;
 	set.bit_uso = 0;
 	set.bit_modificado = 0;
+
 
 	int subpos = 0;
 	while(subpos < tabla_paginas[pos].paginas) {
@@ -420,7 +430,7 @@ int buscarPagina(int fd, int pid, int pagina) {
 
 		// 2) busco en TP
 		int pos_tp = pos_pid(pid);
-		if(pos_tp == ERROR) {// no se inicializó el proceso
+		if(pos_tp == ERROR) { // no se inicializó el proceso
 			// setear respuesta TODO
 			respuestaPedido *respuesta = NULL;
 			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
@@ -443,8 +453,7 @@ int cargar_pagina(int pid, int pagina, void *contenido) {
 
 	if(paginas_asignadas < config->marco_x_proceso) { // no hay necesidad de reemplazo
 
-		marco = buscarMarcoLibre();
-		bitmap[marco] = 1; // actualizo bitmap
+		marco = buscarMarcoLibre(pid);
 
 	} else { // hay que elegir una víctima para reemplazar y actualizar tp
 
@@ -481,7 +490,7 @@ subtp_t buscarVictimaReemplazo(int pid) { // TODO
 	subtp_t *paginas = (subtp_t*)reservarMemoria(paginas_asignadas * sizeof(subtp_t));
 
 	int i = 0, // va a ir hasta páginas asignadas
-		pos_tp = 0; // va a ir hasta total páginas del pid
+	pos_tp = 0; // va a ir hasta total páginas del pid
 
 	while( pos_tp < tabla_paginas[p].paginas ) {
 
@@ -585,6 +594,9 @@ int buscar_pos(int pid, int pagina) {
 
 void iniciarEstructuras() {
 
+	// logger
+	logger = log_create("UMC_LOG.log", "UMC_LOG.log", TRUE, LOG_LEVEL_INFO);
+
 	// semáforos
 	sem_init(&mutex, 0, 1);
 
@@ -634,8 +646,10 @@ void liberarRecusos() {
 	// liberar otros recursos
 	free(memoria);
 	free(tlb);
+	free(bitmap);
 	sem_destroy(&mutex);
 	liberarConfig();
+	log_destroy(logger);
 }
 
 void *elegirFuncion(protocolo head) {
@@ -721,8 +735,8 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 		solicitudEscribirPagina *pedido = NULL;
 		pedido->pid = pid;
 		pedido->pagina = pagina_reemplazar.pagina;
-		int dir_real = pagina_reemplazar.marco * config->marco_size;
-		memcpy(pedido->contenido, memoria + dir_real, config->marco_size);
+		void *dir_real = memoria + pagina_reemplazar.marco * config->marco_size;
+		memcpy(pedido->contenido, dir_real, config->marco_size);
 
 		// envío pedido
 		aplicar_protocolo_enviar(sockClienteDeSwap, ESCRIBIR_PAGINA, pedido);
@@ -731,17 +745,23 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 
 }
 
-void generarInformePos(int pid, int paginas, int puntero, subtp_t *tabla) {
-	printf("> #PID: %d; #Paginas: %d; #Puntero: %d;\n", pid, paginas, puntero);
+char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla) {
+
+	char *mensaje = (char*)reservarMemoria(CHAR * 2000);
+	mensaje[0] = '\0';
+
+	sprintf(mensaje, "> #PID: %d; #Paginas: %d; #Puntero: %d;\n", pid, paginas, puntero);
 
 	int i = 0;
 	for(; i < paginas; i++) {
-		printf("#Pagina: %d; ", tabla[i].pagina);
-		printf("#Marco: %d; ", tabla[i].marco);
-		printf("#Bit Presencia: %d; ", tabla[i].bit_presencia);
-		printf("#Bit Uso: %d; ", tabla[i].bit_uso);
-		printf("#Bit Modificado: %d;", tabla[i].bit_modificado);
+		sprintf(mensaje, "#Pagina: %d; ", tabla[i].pagina);
+		sprintf(mensaje, "#Marco: %d; ", tabla[i].marco);
+		sprintf(mensaje, "#Bit Presencia: %d; ", tabla[i].bit_presencia);
+		sprintf(mensaje, "#Bit Uso: %d; ", tabla[i].bit_uso);
+		sprintf(mensaje, "#Bit Modificado: %d;", tabla[i].bit_modificado);
 	}
+
+	return mensaje;
 }
 
 // </AUXILIARES>
@@ -815,14 +835,52 @@ void borrarMarco(int marco) {
 	bitmap[marco] = 0; // actualizo bitmap
 }
 
-int buscarMarcoLibre() {
-	int marco = 0;
-	while(marco < config->marcos) {
-		if(bitmap[marco] == 0)
-			return marco;
-		marco++;
+int buscarMarcoLibre(int pid) {
+	int pos = pos_pid(pid);
+	int cant_paginas_libres = contar_paginas_asignadas(pid);
+	if(cant_paginas_libres != 0) {
+		int i = 0;
+		for(; i < config->marco_x_proceso; i++) {
+			int marco = tabla_paginas[pos].marcos_reservados[i];
+			if(verificarMarcoLibre(pid, marco))
+				return marco;
+		}
 	}
 	return ERROR;
+}
+
+int verificarMarcoLibre(int pid, int marco) {
+	int pos = pos_pid(pid);
+	int paginas = tabla_paginas[pos].paginas;
+	int i = 0;
+	for(; i < paginas; i++) {
+		if(tabla_paginas[pos].tabla[i].marco == marco)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+int asignarMarcos(int pid) {
+
+	int pos = pos_pid(pid);
+
+	int cont_locales = 0, cont_globales = 0;
+	for(; cont_locales < config->marco_x_proceso; cont_locales++) {
+
+		for(; cont_globales < config->marcos; cont_globales++) {
+			if(bitmap[cont_globales] == 0) {
+				break;
+			}
+		}
+
+		if(bitmap[cont_globales] != 0)
+			return FALSE;
+
+		tabla_paginas[pos].marcos_reservados[cont_locales] = cont_globales;
+		bitmap[cont_globales] = 1;
+	}
+
+	return TRUE;
 }
 
 // </MEMORIA_FUNCS>
@@ -949,24 +1007,24 @@ void retardo(char *argumento) {
 
 void dump(char *argumento) {
 
-	// 1) Generar reporte Tabla Paginas
-	printf("\nInforme Tabla Paginas\n");
+	char *mensaje;
 
+	// 1) Generar reporte Tabla Paginas
 	int i = 0;
 	for(; i < MAX_PROCESOS; i++)
-		generarInformePos(tabla_paginas[i].pid, tabla_paginas[i].paginas, tabla_paginas[i].puntero, tabla_paginas[i].tabla);
+		mensaje = generarStringInforme(tabla_paginas[i].pid, tabla_paginas[i].paginas, tabla_paginas[i].puntero, tabla_paginas[i].tabla);
+	log_info(logger, "Tabla Paginas: %s", mensaje);
+
+	strcpy(mensaje, ""); // limpio para volverlo a setear
 
 	// 2) Generar reporte Memoria Principal
-	printf("\nInforme Memoria Principal\n");
-
 	int mp_size = config->marco_size * config->marcos;
 	void *pagina = reservarMemoria(config->marco_size);
-
 	int j = 0;
-	for(; j < mp_size; i++) {
-		int posicion_mp = (int)memoria + (i * config->marco_size); 		// TODO: ver si está bien
-		memset(pagina, posicion_mp, config->marco_size);
-		printf("- Contenido página #%d: %s\n", i, (char*)pagina);
+	for(; j < mp_size; j++) {
+		void *posicion_mp = memoria + (j * config->marco_size); 		// TODO: ver si está bien
+		memcpy(pagina, posicion_mp, config->marco_size);
+		sprintf(mensaje, "- Contenido página #%d: %s\n", j, (char*)pagina);
 	}
 
 	free(pagina);
