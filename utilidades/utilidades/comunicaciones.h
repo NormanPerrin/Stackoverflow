@@ -94,6 +94,11 @@ typedef struct {
 } __attribute__((packed)) var_compartida;
 
 typedef struct {
+	char *nombre;
+	direccion direccion;
+} __attribute__((packed)) variable;
+
+typedef struct {
 	int tiempo;
 	char* nombreDispositivo;
 } __attribute__((packed)) pedidoIO;

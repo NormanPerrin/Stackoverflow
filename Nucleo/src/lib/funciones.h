@@ -11,7 +11,6 @@ int asignarPid(t_list * procesos);
 pcb* buscarProcesoPorPid(int pid, int* index);
 pcb* crearPcb(char* programa);
 void salvarProcesoEnCPU(int cpuId);
-void liberarPcb(pcb * pcb);
 void planificarProceso();
 void finalizarPrograma(int pid, int index);
 void limpiarColecciones();

@@ -236,7 +236,6 @@ void s_wait(t_nombre_semaforo identificador_semaforo){
 
 	if(head == WAIT_CON_BLOQUEO){
 		// Mando la pcb bloqueada y la saco de ejecución:
-		pcbActual->estado = BLOCK;
 		// TODO: Ver el tipo de mensaje
 		aplicar_protocolo_enviar(fdNucleo, PCB_EN_ESPERA, pcbActual);
 		log_info(logger, "El proceso %i queda bloqueado al hacer WAIT", pcbActual->pid);

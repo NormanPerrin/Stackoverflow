@@ -149,3 +149,18 @@ char* charAString(char caracter){
 		*(caracterMasBarraCero + 1) = '\0';
 		return caracterMasBarraCero;
 }
+
+void liberarVariable(variable * var){ free(var->nombre); free(var);}
+
+void liberarRegistroStack(registroStack * reg){ free(reg->args);
+dictionary_destroy_and_destroy_elements(reg->vars, (void *) liberarVariable);
+reg->vars = NULL;reg = NULL; }
+
+void liberarPcb(pcb * pcb){
+	free(pcb->indiceCodigo);
+	free(pcb->indiceEtiquetas);
+	list_destroy_and_destroy_elements(pcb->indiceStack, (void*) liberarRegistroStack);
+
+	free(pcb);
+	pcb = NULL;
+}

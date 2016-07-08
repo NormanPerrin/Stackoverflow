@@ -72,6 +72,7 @@ pcb * crearPcb(char* programa){
 	else{
 		// La UMC pudo alocar los segmentos del proceso, entonces sigo:
 			nuevoPcb->id_cpu = -1;
+
 		// Ahora, analizo con el parser el código del programa para obtener su metadata:
 			t_metadata_program* infoProg = metadata_desde_literal(programa);
 
@@ -99,8 +100,6 @@ pcb * crearPcb(char* programa){
 				nuevoPcb->indiceEtiquetas = NULL;
 			}
 
-		// Inicializo los tres índices:
-			inicializarIndices(nuevoPcb, infoProg);
 			metadata_destruir(infoProg);
 
 			return nuevoPcb;
@@ -151,24 +150,12 @@ void salvarProcesoEnCPU(int id_cpu){
 
 	if(unPcb != NULL){
 		unPcb->id_cpu = -1;
-		unPcb->estado = READY;
 
 		queue_push(colaListos, unPcb);
 
 		planificarProceso();
 	}
 	// TODO: ver qué hacer si no está en la cola
-}
-
-void liberarPcb(pcb * pcb){
-	free(pcb->indiceCodigo);
-	free(pcb->indiceEtiquetas);
-	free(pcb->indiceStack->posicionesArgumentos);
-	free(pcb->indiceStack->variables);
-	free(pcb->indiceStack);
-
-	free(pcb);
-	pcb = NULL;
 }
 
 void liberarCPU(cpu * cpu){ free(cpu); cpu = NULL; }
