@@ -6,8 +6,12 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 	 y retorna el offset total respecto al inicio del stack. */
 
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
-	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
+	//VER COMO CONVERTIR D t_list* a registroStack//
+	/*t_list* indStack= (pcbActual->indiceStack);
+	registroStack registroActual =list_get(indStack,var_indiceStack_posicion);*/
+
+	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 	char * var_id = strdup(charAString(var_nombre));
 
 	direccion * var_direccion = malloc(sizeof(direccion));
@@ -22,7 +26,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 
 	// pcbActual->stackPointer: offset total de la última posición disponible en el stack de memoria
 
-	dictionary_put(registroActual.variables, var_id, var_direccion);
+	dictionary_put(registroActual.vars, var_id, var_direccion);
 	free (var_id);
 	free(var_direccion);
 
@@ -43,7 +47,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	char* var_id = strdup(charAString(var_nombre));
 
 	direccion * var_direccion = malloc(sizeof(direccion));
-	var_direccion = (direccion*)dictionary_get(registroActual.variables, var_id);
+	var_direccion = (direccion*)dictionary_get(registroActual.vars, var_id);
 	free(var_id);
 
 	if(var_direccion == NULL){
@@ -168,7 +172,7 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
 	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
-	registroActual.posicionIndiceCodigo = donde_retornar;
+	registroActual.retPos = donde_retornar;
 	pcbActual->pc = metadata_buscar_etiqueta(etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
 
 }
