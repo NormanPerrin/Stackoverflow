@@ -26,7 +26,6 @@ void bloquearProcesoPorIO(hiloIO* dispositivoIO, proceso_bloqueadoIO* unPcb);
 void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
 void* entradaSalidaThread(void* dataHilo);
 hiloIO* crearHiloIO(int index);
-void lanzarIOThreads();
 proceso_bloqueadoIO* esperarPorProceso(dataDispositivo* datos);
 
 #endif /* LIB_ENTRADASALIDA_H_ */

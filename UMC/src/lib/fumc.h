@@ -41,6 +41,7 @@
 		int pid;
 		int puntero;
 		int paginas;
+		int *marcos_reservados;
 		subtp_t tabla[MAX_PAGINAS];
 	} tp_t;
 
@@ -95,6 +96,7 @@
 	sem_t mutex;
 	pid_activo pids[MAX_CONEXIONES];
 	int *bitmap;
+	t_log *logger;
 
 	// Cabeceras
 
@@ -121,7 +123,7 @@
 	void compararProtocolos(int protocolo1, int protocolo2);
 	subtp_t aplicar_algoritmo(subtp_t *paginas, int puntero);
 	void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid);
-	void generarInformePos(int pid, int paginas, int puntero, subtp_t *tabla);
+	char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla);
 	char *obtenerArgumento(char *mensaje);
 	char *obtenerNombre(char *mensaje);
 	void *direccionarConsola(char *mensaje);
@@ -150,6 +152,7 @@
 	void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modificacion, int b_uso);
 	void iniciar_principales(int pid, int paginas);
 	int buscarEntradaLibre();
+	int verificarMarcoLibre(int pid, int marco);
 	// </TABLA_PAGINA>
 
 	// <PID_FUNCS>
@@ -171,7 +174,8 @@
 
 	// <MEMORIA_FUNCS>
 	void borrarMarco(int marco);
-	int buscarMarcoLibre();
+	int buscarMarcoLibre(int pid);
+	int asignarMarcos(int pid);
 	// </MEMORIA_FUNCS>
 
 	// <ALGORITMOS>

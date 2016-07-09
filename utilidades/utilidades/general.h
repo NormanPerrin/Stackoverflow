@@ -8,6 +8,7 @@
 	#include <unistd.h>
 	#include <string.h>
 	#include <time.h>
+	#include "comunicaciones.h"
 
 	#define ERROR -1
 	#define INT (sizeof(int))
@@ -28,5 +29,8 @@
 	void recibirYAsignarPaquete(int fdEmisor, int protocolo, void * dondeLoQuieraAsignar);
 	void dormir(float miliseconds); // Duerme el hilo del que se está ejecutando milisegundos (más preciso y consistente que sleep y usleep)
 	char* charAString(char caracter);
+	void liberarVariable(variable * var);
+	void liberarRegistroStack(registroStack * reg);
+	void liberarPcb(pcb * pcb);
 
 #endif

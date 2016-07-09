@@ -22,7 +22,6 @@ void semaforo_signal(t_semaforo* semaforo){
       pcb* procesoBloqueado = queue_pop(semaforo->bloqueados);
       if (procesoBloqueado != NULL){
 
-          procesoBloqueado->estado = READY;
           encolarPcbAListos(procesoBloqueado);
           free(procesoBloqueado);
         }

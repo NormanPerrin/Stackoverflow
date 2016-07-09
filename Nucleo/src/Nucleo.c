@@ -6,19 +6,35 @@
 
 int main(void) {
 
-	abrirArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
-
+	// Acciones preliminares:
+	crearLoggerNucleo();
+	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
 	inicializarColecciones();
-
 	llenarDiccionarioSemaforos();
-
 	llenarDiccionarioVarCompartidas();
 
-	conectarConUMC();
+	// Hilos de E/S:
+	lanzarHilosIO();
 
-	esperar_y_PlanificarProgramas(); // Select de Consolas y CPUs
+	pthread_mutex_init(&mutex_planificarProceso, NULL);
+
+	// Conexiones con los módulos:
+	conectarConUMC();
+	activarConexionConConsolasYCPUs();
+
+	while(TRUE){
+		esperar_y_PlanificarProgramas(); // Select de Consolas y CPUs
+	 }
+
+	// Acciones finales:
+	pthread_mutex_destroy(&mutex_planificarProceso);
+
+	unirHilosIO();
 
 	liberarMemoriaUtilizada();
+	cerrarSocket(fd_UMC);
+	cerrarSocket(fdEscuchaConsola);
+	cerrarSocket(fdEscuchaCPU);
 
 	return EXIT_SUCCESS;
 }
