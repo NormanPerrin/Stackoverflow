@@ -96,6 +96,8 @@ void esperarMensajesDeNucleo() {
 			break;
 					}
 				} // fin del switch-case
+
+			mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
 			} // fin del while
 		}
 	}
