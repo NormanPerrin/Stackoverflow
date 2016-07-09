@@ -26,45 +26,47 @@
  * POST-CONDICIONES: las acciones necesarias después de la recepción del msj se realizan en el respectivo módulo
  */
 
-// PROTOCOLO (head/tipo de msj):
+// PROTOCOLO (head o tipo de msj):
 typedef enum {
 	// Mensajes Estáticos:
-		IMPRIMIR = 1, 				// CPU - Núcleo
-		RECHAZAR_PROGRAMA,			// Todos
-		PEDIDO_LECTURA_INSTRUCCION, // CPU - UMC
-		PEDIDO_LECTURA_VARIABLE,	 // CPU - UMC
-		PEDIDO_ESCRITURA, 			// CPU - UMC
-		FINALIZAR_PROGRAMA,			// Núcleo - UMC / UMC - SWAP
-		RESPUESTA_INICIO_PROGRAMA,	// UMC - Núcleo / Swap - UMC
-		INDICAR_PID, 				// CPU - UMC
-		QUANTUM_MODIFICADO,			// Núcleo - CPU
-		LEER_PAGINA, 				// UMC - Swap
-		ESCRIBIR_PAGINA, 			// UMC - Swap
-		DEVOLVER_VARIABLE, 			// UMC - CPU
-		RESPUESTA_PEDIDO, 			// UMC - CPU
-		DEVOLVER_PAGINA_VARIABLE,	// Swap - UMC
-		ABORTO_PROCESO,				// CPU - Núcleo
+	IMPRIMIR = 1, 					// CPU - Núcleo / Núcleo - Consola
+	RECHAZAR_PROGRAMA,				// Núcleo - Consola
+	PEDIDO_LECTURA_INSTRUCCION, 	// CPU - UMC
+	PEDIDO_LECTURA_VARIABLE, 		// CPU - UMC
+	INDICAR_PID, 					// CPU - UMC
+	PEDIDO_ESCRITURA,				// CPU - UMC
+	FINALIZAR_PROGRAMA,				// Núcleo - UMC / UMC - SWAP
+	RESPUESTA_INICIO_PROGRAMA,		// UMC - Núcleo / Swap - UMC
+	LEER_PAGINA, 					// UMC - Swap
+	ESCRIBIR_PAGINA,				// UMC - Swap
+	DEVOLVER_VARIABLE, 				// UMC - CPU
+	RESPUESTA_PEDIDO, 				// UMC - CPU
+	DEVOLVER_PAGINA_VARIABLE,		// Swap - UMC
+	ABORTO_PROCESO,					// CPU - Núcleo
+	WAIT_SIN_BLOQUEO, 				// Núcleo - CPU
+	WAIT_CON_BLOQUEO,				// Núcleo - CPU
+	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
+	QUANTUM_MODIFICADO, 			// Núcleo - CPU
 
-		OBTENER_VAR_COMPARTIDA,		// CPU - Núcleo
-		DEVOLVER_VAR_COMPARTIDA,	// Núcleo - CPU
-		WAIT_SIN_BLOQUEO,
-		WAIT_CON_BLOQUEO,
-		SIGUSR,
+	SIGUSR,							// CPU - Núcleo
 
-		// Mensajes Dinámicos;
-		INICIAR_PROGRAMA, 			// Núcleo - UMC / UMC - Swap
-		ENVIAR_SCRIPT, 				// Consola - Núcleo
-		PCB, // Núcleo - CPU
-		PCB_FIN_EJECUCION, PCB_FIN_QUANTUM, PCB_ENTRADA_SALIDA,	PCB_WAIT,// CPU - Núcleo
-		IMPRIMIR_TEXTO, 			// CPU - Núcleo / Núcleo - Consola
-		DEVOLVER_INSTRUCCION,			// UMC - CPU
-		DEVOLVER_PAGINA_INSTRUCCION,	// Swap - UMC
-		WAIT_REQUEST, SIGNAL_REQUEST, // CPU - Núcleo
-		ENTRADA_SALIDA,				// CPU - Núcleo
-		GRABAR_VAR_COMPARTIDA,		// CPU - Núcleo
+	// Mensajes Dinámicos;
+	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
+	ENVIAR_SCRIPT, 					// Consola - Núcleo
+	PCB, 							// Núcleo - CPU
+	PCB_FIN_EJECUCION,				// CPU - Núcleo
+	PCB_FIN_QUANTUM,				// CPU - Núcleo
+	PCB_ENTRADA_SALIDA,				// CPU - Núcleo
+	PCB_WAIT,						// CPU - Núcleo
+	OBTENER_VAR_COMPARTIDA,			// CPU - Núcleo
+	IMPRIMIR_TEXTO, 				// CPU - Núcleo / Núcleo - Consola
+	DEVOLVER_INSTRUCCION,			// UMC - CPU
+	DEVOLVER_PAGINA_INSTRUCCION,	// Swap - UMC
+	WAIT_REQUEST, SIGNAL_REQUEST,	// CPU - Núcleo
+	ENTRADA_SALIDA,					// CPU - Núcleo
+	GRABAR_VAR_COMPARTIDA,			// CPU - Núcleo
 
-		// hay que agregar las que falten...
-		FIN_DEL_PROTOCOLO
+	FIN_DEL_PROTOCOLO
 } protocolo;
 
 // TADS para uso general:
