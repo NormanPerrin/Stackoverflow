@@ -13,10 +13,10 @@ void llenarDiccionarioSemaforos();
 void llenarDiccionarioVarCompartidas();
 void lanzarHilosIO();
 void conectarConUMC();
-void activarConexionConConsolasYCPUs();
+void iniciarEscuchaConsolasYCPUs();
 void esperar_y_PlanificarProgramas();
 void unirHilosIO();
-void liberarMemoriaUtilizada();
+void liberarRecursosUtilizados();
 
 /*** INCLUÍDAS ***/
 void aceptarConexionEntranteDeConsola();

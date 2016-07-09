@@ -6,32 +6,34 @@
 
 int main(void) {
 
-	// Acciones preliminares:
+	// Acciones preliminares, configuración y setting:
 	crearLoggerNucleo();
 	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
 	inicializarColecciones();
 	llenarDiccionarioSemaforos();
 	llenarDiccionarioVarCompartidas();
 
-	// Hilos de E/S:
+	// Creo hilos para cada dispositivo de E/S:
 	lanzarHilosIO();
 
 	pthread_mutex_init(&mutex_planificarProceso, NULL);
 
 	// Conexiones con los módulos:
 	conectarConUMC();
-	activarConexionConConsolasYCPUs();
+	iniciarEscuchaConsolasYCPUs();
 
 	while(TRUE){
-		esperar_y_PlanificarProgramas(); // Select de Consolas y CPUs
+		// Select de Consolas y CPUs, planificación activa:
+		esperar_y_PlanificarProgramas();
 	 }
 
-	// Acciones finales:
+	// Acciones finales, salida del sistema:
 	pthread_mutex_destroy(&mutex_planificarProceso);
 
+	// Cierro hilos de los dispositivos de E/S:
 	unirHilosIO();
 
-	liberarMemoriaUtilizada();
+	liberarRecursosUtilizados();
 	cerrarSocket(fd_UMC);
 	cerrarSocket(fdEscuchaConsola);
 	cerrarSocket(fdEscuchaCPU);

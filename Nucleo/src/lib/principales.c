@@ -97,7 +97,7 @@ void conectarConUMC(){
 	free(tamPagina);
 }
 
-void activarConexionConConsolasYCPUs(){
+void iniciarEscuchaConsolasYCPUs(){
 	fdEscuchaConsola = nuevoSocket();
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
@@ -140,12 +140,13 @@ void esperar_y_PlanificarProgramas(){
 
 	    seleccionarSocket(max_fd, &readfds , NULL , NULL , NULL, NULL);
 
+	    // Si llega una nueva conexión de un cliente, la acepto:
 	if (FD_ISSET(fdEscuchaConsola, &readfds) || FD_ISSET(fdEscuchaCPU, &readfds)) {
 
 		if (FD_ISSET(fdEscuchaCPU, &readfds)) aceptarConexionEntranteDeCPU();
 
 		if (FD_ISSET(fdEscuchaConsola, &readfds)) aceptarConexionEntranteDeConsola();
-	}
+	} // Si no se trata de una nueva conexión, entonces es un msj de algún CPU, lo atiendo:
 	else{
 	    		atenderNuevoMensajeDeCPU();
 	    }
@@ -153,6 +154,7 @@ void esperar_y_PlanificarProgramas(){
 
 void aceptarConexionEntranteDeConsola(){
 
+	// Las Conosolas me mandan un único msj con el script ni bien se conectan:
 	 int fdNuevaConsola = aceptarConexionSocket(fdEscuchaConsola);
 
 		    int ret_handshake = handshake_servidor(fdNuevaConsola, "N");
@@ -161,13 +163,13 @@ void aceptarConexionEntranteDeConsola(){
 		    		cerrarSocket(fdNuevaConsola);
 		    	}
 		    	else{
-		    	// UNA NUEVA CONSOLA SE HA CONECTADO:
+	// UNA NUEVA CONSOLA SE HA CONECTADO:
 		    		consola * nuevaConsola = malloc(sizeof(consola));
 
 		    		nuevaConsola->id = fdNuevaConsola - fdEscuchaConsola;
 		    		nuevaConsola ->fd_consola = fdNuevaConsola;
 
-		    	// Recibo un nuevo programa desde la Consola:
+	// Recibo un nuevo programa desde la Consola:
 		    int protocolo;
 		    void * entrada = aplicar_protocolo_recibir(nuevaConsola->fd_consola, &protocolo);
 		  if(protocolo == ENVIAR_SCRIPT){
@@ -178,10 +180,10 @@ void aceptarConexionEntranteDeConsola(){
 		    	free(nuevoPrograma->cadena);
 		    	free(nuevoPrograma);
 
-		    	// Creo la PCB asociada a ese programa:
+	 // Creo la PCB del programa y pido espacio para los segmentos a UMC:
 		    pcb * nuevoPcb = crearPcb(nuevaConsola->programa.cadena);
 		    if(nuevoPcb == NULL){
-		    	//  UMC no pudo alocar los segmentos del programa, lo rachazo:
+	//  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
 		    	aplicar_protocolo_enviar(nuevaConsola->fd_consola, RECHAZAR_PROGRAMA, NULL);
 		    	liberarPcb(nuevoPcb);
 		    }
@@ -191,7 +193,7 @@ void aceptarConexionEntranteDeConsola(){
 		    list_add(listaConsolas, nuevaConsola );
 		    log_info(logger,"La Consola %i se ha conectado", nuevaConsola->id);
 
-		    	// Empiezo a correr el nuevo programa:
+	// Pongo al nuevo programa en la cola de Listos:
 		    list_add(listaProcesos, nuevoPcb);
 		   	queue_push(colaListos, nuevoPcb);
 
@@ -204,10 +206,40 @@ void aceptarConexionEntranteDeConsola(){
 		}
 	}
 
+void aceptarConexionEntranteDeCPU(){
+
+	int fdNuevoCPU = aceptarConexionSocket(fdEscuchaCPU);
+
+		  int ret_handshake = handshake_servidor(fdNuevoCPU, "N");
+		  	    if(ret_handshake == FALSE){
+		  	    		perror("[ERROR] Se espera conexión del proceso CPU\n");
+		  	    		cerrarSocket(fdNuevoCPU);
+		  	    	}
+		  	    	else{
+	// Nueva conexión de CPU:
+		    cpu * nuevoCPU = malloc(sizeof(cpu));
+
+		    		nuevoCPU->id = fdNuevoCPU - fdEscuchaCPU;
+		    		nuevoCPU->fd_cpu = fdNuevoCPU;
+		    		nuevoCPU->disponibilidad = LIBRE;
+
+		    		int* quantum = (int*)malloc(INT);
+		    		*quantum = config->quantum;
+		    		aplicar_protocolo_enviar(nuevoCPU->fd_cpu, QUANTUM_MODIFICADO, quantum);
+		    		free(quantum);
+	// Agrego al CPU a mi lista de CPUs:
+		    		list_add(listaCPU, nuevoCPU);
+		    		log_info(logger,"La CPU %i se ha conectado", nuevoCPU->id);
+
+	// El nuevo CPU está listo para ejecutar procesos.
+		    		planificarProceso();
+		    	}
+}
+
 void atenderNuevoMensajeDeCPU(){
 	int i, fd;
 
-	for ( i = 0 ; i < list_size(listaCPU) ; i++){
+	for (i = 0 ; i < list_size(listaCPU) ; i++){
 
 			  cpu * unCPU = (cpu *)list_get(listaCPU, i);
 			  fd = unCPU->fd_cpu;
@@ -347,12 +379,9 @@ void atenderNuevoMensajeDeCPU(){
 			int head;
 
 			void* entrada = aplicar_protocolo_recibir(fd, &head);
-			if(head == PCB_EN_ESPERA){
+			if(head == PCB_WAIT){
 				waitPcb = (pcb*)entrada;
 			}
-
-		// El proceso cambia de Ejecutando a Bloqueado:
-			// --> Lo hace CPU antes de mandar
 
 		semaforo_blockProcess(semaforo->bloqueados, waitPcb);
 			free(waitPcb);
@@ -402,37 +431,7 @@ void atenderNuevoMensajeDeCPU(){
 	}
 }
 
-void aceptarConexionEntranteDeCPU(){
-
-	int fdNuevoCPU = aceptarConexionSocket(fdEscuchaCPU);
-
-		  int ret_handshake = handshake_servidor(fdNuevoCPU, "N");
-		  	    if(ret_handshake == FALSE){
-		  	    		perror("[ERROR] Se espera conexión del proceso CPU\n");
-		  	    		cerrarSocket(fdNuevoCPU);
-		  	    	}
-		  	    	else{
-		    	// Nueva conexión de CPU:
-		    cpu * nuevoCPU = malloc(sizeof(cpu));
-
-		    		nuevoCPU->id = fdNuevoCPU - fdEscuchaCPU;
-		    		nuevoCPU->fd_cpu = fdNuevoCPU;
-		    		nuevoCPU->disponibilidad = LIBRE;
-
-		    		int* quantum = (int*)malloc(INT);
-		    		*quantum = config->quantum;
-		    		aplicar_protocolo_enviar(nuevoCPU->fd_cpu, QUANTUM_MODIFICADO, quantum);
-		    		free(quantum);
-
-		    		list_add(listaCPU, nuevoCPU);
-		    		log_info(logger,"La CPU %i se ha conectado", nuevoCPU->id);
-
-		    	// Pongo al nuevo CPU a ejecutar un proceso:
-		    		planificarProceso();
-		    	}
-}
-
-void liberarMemoriaUtilizada(){
+void liberarRecursosUtilizados(){
 	limpiarColecciones();
 	limpiarArchivoConfig();
 	log_destroy(logger);

@@ -9,6 +9,10 @@ void setearValores_config(t_config * archivoConfig){
 	config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
 }
 
+void liberarPcbActiva(){
+	liberarPcb(pcbActual);
+}
+
 void recibirYvalidarEstadoDelPedidoAUMC(){
 
 	int head;
@@ -36,17 +40,6 @@ void recibirYvalidarEstadoDelPedidoAUMC(){
 		 }
 	}
 		free(estadoDelPedido);
-}
-
-void liberarPcbActiva(){
-	free(pcbActual->indiceCodigo);
-	free(pcbActual->indiceEtiquetas);
-	free(pcbActual->indiceStack->posicionesArgumentos);
-	free(pcbActual->indiceStack->variables);
-	free(pcbActual->indiceStack);
-
-	free(pcbActual);
-	pcbActual = NULL;
 }
 
 int validar_servidor(char *id) {

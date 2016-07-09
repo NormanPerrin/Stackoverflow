@@ -65,34 +65,40 @@ void * serealizar(int protocolo, void * elemento){
 	void * buffer;
 
 	switch(protocolo){
+	// CASE 1: El mensaje es un texto (char*)
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
 		case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA:{
 			buffer = serealizarTexto(elemento);
 			break;
-		} // en todos los casos se envía un texto (char*)
+		}
+	// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
 		case ENTRADA_SALIDA: case GRABAR_VAR_COMPARTIDA:{
 			//buffer = serealizarOperacionPrivilegiada(elemento);
 			break;
 		}
-		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:{
+	// CASE 3: El mensaje es un pcb (pcb)
+		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:
+		case PCB_WAIT:{
 			buffer = serealizarPCB(elemento);
 			break;
 		}
+	// CASE 4: El mensaje es un texto (char*) más tres valores enteros (int)
 		case INICIAR_PROGRAMA: {
 			buffer = serealizarSolicitudInicioPrograma(elemento);
 			break;
 		}
+	// CASE 5: El mensaje es uno o varios elementos estáticos:
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
 		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:
 		case LEER_PAGINA: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
 		case PEDIDO_LECTURA_INSTRUCCION:{
-		// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(elemento);
 			buffer = malloc(tamanio);
 			memcpy(buffer, elemento, tamanio);
 			break;
 		}
+	// CASE 6: Ver
 		case DEVOLVER_PAGINA_INSTRUCCION:{
 			buffer = serealizarDevolverPagina(elemento);
 			break;
@@ -109,33 +115,38 @@ void * deserealizar(int protocolo, void * mensaje){
 	void * buffer;
 
 	switch(protocolo){
+	// CASE 1: El mensaje es un texto (char*)
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
 		case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA:{
 			buffer = deserealizarTexto(mensaje);
 				break;
-		} // en ambos casos se recibe un texto (char*)
-		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:{
-			buffer = deserealizarPCB(mensaje);
-			break;
 		}
+	// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
 		case ENTRADA_SALIDA: case GRABAR_VAR_COMPARTIDA:{
 			//buffer = deserealizarOperacionPrivilegiada(mensaje);
 			break;
 		}
+	// CASE 3: El mensaje es un pcb (pcb)
+		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:{
+			buffer = deserealizarPCB(mensaje);
+			break;
+		}
+	// CASE 4: El mensaje es un texto (char*) más tres valores enteros (int)
 		case INICIAR_PROGRAMA:{
 			buffer = deserealizarSolicitudInicioPrograma(mensaje);
 			break;
 		}
+	// CASE 5: El mensaje es uno o varios elementos estáticos:
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
 		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:
 		case LEER_PAGINA: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA: case PEDIDO_LECTURA_INSTRUCCION:{
-			// En estos casos se reciben elementos estáticos o estructuras con campos estáticos:
 			int tamanio = sizeof(mensaje);
 			buffer = reservarMemoria(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
 		}
+	// CASE 6: Ver
 		case DEVOLVER_PAGINA_INSTRUCCION:{
 			buffer = deserializarDevolverPagina(mensaje);
 			break;

@@ -154,7 +154,7 @@ void liberarVariable(variable * var){ free(var->nombre); free(var);}
 
 void liberarRegistroStack(registroStack * reg){ free(reg->args);
 dictionary_destroy_and_destroy_elements(reg->vars, (void *) liberarVariable);
-reg->vars = NULL;reg = NULL; }
+reg->vars = NULL; reg = NULL; }
 
 void liberarPcb(pcb * pcb){
 	free(pcb->indiceCodigo);
