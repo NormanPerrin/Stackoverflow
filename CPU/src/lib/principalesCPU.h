@@ -4,7 +4,7 @@
 #include "secundariasCPU.h"
 
 /** PROTOTIPO FUNCIONES PRINCIPALES **/
-void crearLogger();
+void crearLoggerCPU();
 void conectarConUMC();
 void obtenerTamanioDePagina();
 void conectarConNucleo();

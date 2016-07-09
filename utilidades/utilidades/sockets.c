@@ -128,7 +128,7 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 // Cierre de la conexión del file descriptor del socket
 void cerrarSocket(int fd_socket) {
 	int retornoClose = close(fd_socket);
-		if (retornoClose == ERROR) manejarError("Error: No se pudo cerrar el socket");
+		if (retornoClose == ERROR) manejarError("Error: No se pudo cerrar el socket.");
 }
 
 // ******************************************

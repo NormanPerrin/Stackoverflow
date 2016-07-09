@@ -26,7 +26,7 @@ int main(void) {
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU); // Abro archivo configuración
 												// Definida en el file 'general'
-	crearLogger();
+	crearLoggerCPU();
 
 	conectarConUMC(); // Conexión con UMC
 
@@ -34,9 +34,12 @@ int main(void) {
 
 	conectarConNucleo(); // Conexión con Núcleo
 
-	ejecutarProcesos();
+	ejecutarProcesos(); // Espera activa de PCBs para ejecutar.
 
 	liberarEstructuras(); // Libero memoria reservada para setear config
+
+	cerrarSocket(fdNucleo);
+	cerrarSocket(fdUMC);
 
 	return EXIT_SUCCESS;
 }
@@ -69,9 +72,6 @@ void ejecutarProcesos(){
 					free(entrada);
 					entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
 		}
-
-		cerrarSocket(fdNucleo);
-		cerrarSocket(fdUMC);
 }
 
 void ejecutarProcesoActivo(){

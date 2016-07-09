@@ -16,13 +16,18 @@ proceso_bloqueadoIO* esperarPorProceso(dataDispositivo* datos){
 	return proceso;
 }
 
-void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos){
+void realizarEntradaSalida(pcb* pcbEjecutada, pedidoIO* datos){
 
 	proceso_bloqueadoIO* pcbIO = malloc(sizeof *pcbIO);
 	hiloIO* dispositivoIO = dictionary_get(diccionarioIO, datos->nombreDispositivo);
 		pcbIO->espera = datos->tiempo;
-		pcbIO->proceso = copiarPcb(procesoEjecutando);
-	bloquearProcesoPorIO(dispositivoIO, pcbIO);
+		pcbIO->proceso = copiarPcb(pcbEjecutada);
+
+		// Bloqueo al proceso por IO:
+		pthread_mutex_lock(&dispositivoIO->dataHilo.mutex_io);
+		queue_push(dispositivoIO->dataHilo.bloqueados, pcbIO);
+		pthread_mutex_unlock(&dispositivoIO->dataHilo.mutex_io);
+		sem_post(&dispositivoIO->dataHilo.sem_io);
 }
 
 void* entradaSalidaThread(void* dataHilo){
@@ -54,17 +59,4 @@ hiloIO* crearHiloIO(int index){
   hilo->dataHilo.nombre = strdup(config->ioID[index]);
 
   return hilo;
-}
-
-void lanzarIOThreads(){
-  int i = 0;
-  while (config->ioID[i] != '\0'){
-
-      hiloIO *hilo = crearHiloIO(i);
-      pthread_create(&hilo->hiloID, NULL, &entradaSalidaThread, (void*) &hilo->dataHilo);
-      dictionary_put(diccionarioIO, config->ioID[i], hilo);
-      log_info(logger, "Lanzando hilo de IO %d que pertenece al dispositivo %s", i, hilo->dataHilo.nombre);
-
-      i++;
-    }
 }

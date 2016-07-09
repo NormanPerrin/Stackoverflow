@@ -74,7 +74,7 @@ void * serealizar(int protocolo, void * elemento){
 			//buffer = serealizarOperacionPrivilegiada(elemento);
 			break;
 		}
-		case PCB: {
+		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:{
 			buffer = serealizarPCB(elemento);
 			break;
 		}
@@ -114,7 +114,7 @@ void * deserealizar(int protocolo, void * mensaje){
 			buffer = deserealizarTexto(mensaje);
 				break;
 		} // en ambos casos se recibe un texto (char*)
-		case PCB:{
+		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:{
 			buffer = deserealizarPCB(mensaje);
 			break;
 		}
@@ -184,7 +184,7 @@ void *deserealizarTexto(void *buffer) {
 }
 
 void * serealizarPCB(void * estructura){
-	pcb * unPCB = (pcb *) estructura;
+	/*pcb * unPCB = (pcb *) estructura;
 	int tamanioTotal, desplazamiento = 0;
 
 	int codigoSize = (sizeof(t_intructions) * unPCB->tamanioIndiceCodigo);
@@ -196,7 +196,7 @@ void * serealizarPCB(void * estructura){
 
 	int etiquetasSize = (CHAR * unPCB->tamanioIndiceEtiquetas);
 
-	tamanioTotal = 10*INT + codigoSize + stackSize + etiquetasSize;
+	tamanioTotal = 9*INT + codigoSize + stackSize + etiquetasSize;
 
 	void * buffer = reservarMemoria(tamanioTotal);
 	memcpy(buffer + desplazamiento,&(unPCB->pid), INT);
@@ -210,10 +210,6 @@ void * serealizarPCB(void * estructura){
 	memcpy(buffer + desplazamiento, &(unPCB->ultimaPosicionIndiceStack), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPCB->stackPointer), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->estado), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->estado), INT);
 		desplazamiento += INT;
 
 	// Serealizo el índice de código:
@@ -243,11 +239,13 @@ void * serealizarPCB(void * estructura){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, unPCB->indiceStack->variables, tamListaVariables);
 
-	return buffer;
+	return buffer;*/
+	void* r = NULL;
+	return r;
 }
 
 pcb * deserealizarPCB(void * buffer){
-	int desplazamiento = 0;
+	/*int desplazamiento = 0;
 	pcb * unPcb = reservarMemoria(sizeof(pcb));
 
 	memcpy(&unPcb->pid, buffer + desplazamiento, INT );
@@ -257,8 +255,6 @@ pcb * deserealizarPCB(void * buffer){
 	memcpy(&unPcb->pc, buffer + desplazamiento, INT );
 		desplazamiento += INT;
 	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->estado, buffer + desplazamiento, INT );
 		desplazamiento += INT;
 	memcpy(&unPcb->ultimaPosicionIndiceStack, buffer + desplazamiento, INT );
 		desplazamiento += INT;
@@ -296,7 +292,9 @@ pcb * deserealizarPCB(void * buffer){
 	unPcb->indiceStack->variables = reservarMemoria(unPcb->indiceStack->tamanioVariables);
 	memcpy(unPcb->indiceStack->variables, buffer + desplazamiento, unPcb->indiceStack->tamanioVariables);
 
-	return unPcb;
+	return unPcb;*/
+	pcb* r = NULL;
+	return r;
 }
 
 // entra:	inicioPrograma *mensaje
