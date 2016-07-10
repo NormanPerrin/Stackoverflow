@@ -49,7 +49,7 @@ int setearValoresDeConfig(t_config * archivoConfig){
 			log_info(logger, "El archivo de configuracion no contiene la clave SEM_IDS.\n");
 			return FALSE;
 		}
-		if (config_has_property(config, "SEM_INIT")) {
+		if (config_has_property(archivoConfig, "SEM_INIT")) {
 			config->semaforosValInicial = config_get_array_value(archivoConfig, "SEM_INIT");
 		} else {
 			log_info(logger, "El archivo de configuracion no contiene la clave SEM_INIT.\n");
@@ -61,7 +61,7 @@ int setearValoresDeConfig(t_config * archivoConfig){
 			log_info(logger, "El archivo de configuracion no contiene la clave IO_IDS");
 			return FALSE;
 		}
-		if (config_has_property(config, "IO_SLEEP")) {
+		if (config_has_property(archivoConfig, "IO_SLEEP")) {
 			config->retardosIO = config_get_array_value(archivoConfig, "IO_SLEEP");
 		} else {
 			log_info(logger, "El archivo de configuracion no contiene la clave IO_SLEEP");
@@ -229,8 +229,8 @@ void salvarProcesoEnCPU(int id_cpu){
 
 void liberarCPU(cpu * cpu){ free(cpu); cpu = NULL; }
 
-void liberarConsola(consola * consola){ free(consola->programa.cadena);
-	consola->programa.cadena = NULL; free(consola); consola = NULL; }
+void liberarConsola(consola * consola){ free(consola->programa);
+	consola->programa = NULL; free(consola); consola = NULL; }
 
 void liberarSemaforo(t_semaforo * sem){
 	free(sem->nombre);

@@ -19,5 +19,5 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 void s_wait(t_nombre_semaforo identificador_semaforo);
 void s_signal(t_nombre_semaforo identificador_semaforo);
-void finalizar();
+
 #endif /* LIB_PRIMITIVASANSISOP_H_ */

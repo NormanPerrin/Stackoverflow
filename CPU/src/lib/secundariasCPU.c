@@ -42,6 +42,25 @@ void recibirYvalidarEstadoDelPedidoAUMC(){
 		free(estadoDelPedido);
 }
 
+void limpiarInstruccion(char * instruccion){
+	char *p2 = instruccion;
+	int a = 0;
+	while (*instruccion != '\0') {
+		if (*instruccion
+				!= '\t'&& *instruccion != '\n' && !iscntrl(*instruccion)) {
+			if (a == 0 && isdigit((int )*instruccion)) {
+				++instruccion;
+			} else {
+				*p2++ = *instruccion++;
+				a++;
+			}
+		} else {
+			++instruccion;
+		}
+	}
+	*p2 = '\0';
+}
+
 int validar_servidor(char *id) {
 	if( !strcmp(id, "U") || !strcmp(id, "N") ) {
 		printf("Servidor aceptado\n");

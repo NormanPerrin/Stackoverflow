@@ -6,7 +6,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 	 y retorna el offset total respecto al inicio del stack. */
 
 	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack;
-	t_list* indStack=pcbActual->indiceStack;
+	t_list* indStack = pcbActual->indiceStack->elements;
 	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
 
 
@@ -40,7 +40,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	 retorna el offset total respecto al inicio del stack. */
 
 	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack -1;
-	t_list* indStack=pcbActual->indiceStack;
+	t_list* indStack = pcbActual->indiceStack->elements;
 	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
 
 	char* var_id = strdup(charAString(var_nombre));
@@ -107,7 +107,6 @@ void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 	int offset = var_stack_offset - (num_pagina*tamanioPagina);
 		var_escritura->pagina = num_pagina;
 		var_escritura->offset = offset;
-		var_escritura->tamanio = INT;
 		var_escritura->contenido = valor;
 
 		aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
@@ -164,37 +163,80 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 	return next_pc;
 }
 
-//HACER
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
-	t_list* indStack=pcbActual->indiceStack;
 
-	//Agrego un registroStack vacio
-	registroStack* nuevoRegistroStack;
-	list_add(indStack,nuevoRegistroStack);
+	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
+	registroStack* nuevoRegistroStack = malloc(sizeof(tamRegistroStack));
+	direccion* varRetorno = malloc(sizeof(direccion));
+	int num_pagina =  donde_retornar / tamanioPagina;
+	int offset = donde_retornar % tamanioPagina;
 
-	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack;
-	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
+	varRetorno->pagina = num_pagina;
+	varRetorno->offset = offset;
+	varRetorno->size = INT;
 
-	registroActual->retPos=donde_retornar;
-	pcbActual->pc=metadata_buscar_etiqueta(etiqueta,pcbActual->indiceEtiquetas,pcbActual->tamanioIndiceEtiquetas);
+	nuevoRegistroStack->args = NULL;
+	nuevoRegistroStack->vars = dictionary_create();
+	nuevoRegistroStack->retVar = *varRetorno;
+	nuevoRegistroStack->retPos = pcbActual->pc;
+	stack_push(pcbActual->indiceStack, nuevoRegistroStack);
+
+	pcbActual->numeroContextoEjecucionActualStack++;
+
+	free(varRetorno);
+	free(nuevoRegistroStack->args);
+	free(nuevoRegistroStack->vars);
+	free(nuevoRegistroStack);
+
+	irAlLabel(etiqueta);
+
 }
 
-//REVISAR
 void retornar(t_valor_variable retorno){
-	t_list* indStack=pcbActual->indiceStack;
-	registroStack* ultimoRegistro=list_get(indStack,pcbActual->numeroContextoEjecucionActualStack);
 
-	t_puntero* direccion_de_retorno=(t_puntero*)(ultimoRegistro->retPos);
+	//Agarro contexto actual y anterior
+	int numeroEjecucionActual=pcbActual->numeroContextoEjecucionActualStack;
+	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
+	registroStack* contextoEjecucionActual = malloc(sizeof(tamRegistroStack));
 
-	asignar(*direccion_de_retorno,retorno);
-	pcbActual->ultimaPosicionIndiceStack-=sizeof(t_puntero);
-	finalizar();
+	//Limpio el contexto de ejecucion actual
+	int tamanioArgs = list_size(contextoEjecucionActual->args);//ARREGLAR
+	int i;
+	for (i=0; i < tamanioArgs; i++){
+		direccion* argumento = malloc(sizeof(direccion));
+		argumento = list_get(contextoEjecucionActual->args,i);//ARREGLAR
+		pcbActual->stackPointer = pcbActual->stackPointer-4;
+		free(argumento);
+	}
+	int tamanioVars = dictionary_size(contextoEjecucionActual->vars);
+	for(i=0; i < tamanioVars; i++){
+		t_dictionary * variable = malloc(sizeof(t_dictionary));
+		variable = dictionary_get(contextoEjecucionActual->vars,i); //ARREGLAR(NO LA POSICION SINO LA CLAVE)
+		pcbActual->stackPointer=pcbActual->stackPointer-4;
+		free(variable);
+			}
+
+		direccion* retVar = malloc(sizeof(direccion));
+		*retVar = contextoEjecucionActual->retVar;
+		t_puntero direcVariable = (retVar->pagina*tamanioPagina)+retVar->offset;
+		free(retVar);
+
+		//calculo la direccion a la que tengo que retornar mediante la direccion de pagina start y offset que esta en el campo retVar
+		asignar(direcVariable,retorno);
+
+		//Elimino el contexto actual del indice del stack
+		//Seteo el contexto de ejecucion actual en el anterior
+
+		pcbActual->pc = contextoEjecucionActual->retPos;
+		free(contextoEjecucionActual);
+		list_remove(pcbActual->indiceStack->elements,pcbActual->numeroContextoEjecucionActualStack);
+		pcbActual->numeroContextoEjecucionActualStack-=1;
+		t_stack * contextoEjecNuevo= list_get (pcbActual->indiceStack->elements,pcbActual->numeroContextoEjecucionActualStack);
+		log_debug(logger,"Llamada a retornar" );
+		return;
 }
-//HACER//ISSUE #339
-void finalizar(){
 
-}
 void imprimir(t_valor_variable valor_mostrar){
 
 	int * valor = malloc(INT);

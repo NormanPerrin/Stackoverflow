@@ -3,7 +3,7 @@
 
 #include "general.h"
 
-#define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
+ #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
 
 /* *** IMPORTANTE - LEER ***
  *
@@ -39,8 +39,9 @@ typedef enum {
 	WAIT_SIN_BLOQUEO, 				// Núcleo - CPU
 	WAIT_CON_BLOQUEO,				// Núcleo - CPU
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
+	TAMANIO_STACK,					// Núcleo - CPU
 
-	SIGUSR,							// CPU - Núcleo
+	SIGUSR,							// CPU - Núcleo // agregar al switch
 
 	// Mensajes Dinámicos;
 	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
@@ -72,7 +73,7 @@ int calcularTamanioPCB(void* mensaje);
 
 // -- Serealización y deserealización GENERAL:
 void * serealizar(int head, void * mensaje, int tamanio);
-void * deserealizar(int head, void * mensaje, int tamanio);
+void * deserealizar(int head, void * buffer, int tamanio);
 
 // -- Serealizaciones y deserealizaciones DINÁMICAS:
 void* serealizarPcb(void* mensaje, int tamanio);
@@ -87,5 +88,7 @@ void* serealizarTresInt(void* mensaje, int tamanio);
 direccion* deserealizarTresInt(void* buffer, int tamanio);
 void* serealizarCuatroInt(void* mensaje, int tamanio);
 solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
+int calcularTamanioIndiceStack(t_list* indice);
+void calcularTamanioRegistroStack(void* element);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

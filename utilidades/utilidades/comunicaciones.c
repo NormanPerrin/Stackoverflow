@@ -102,7 +102,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 5: El mensaje es un valor entero (int)
 			case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 			case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-			case DEVOLVER_VAR_COMPARTIDA:{
+			case DEVOLVER_VAR_COMPARTIDA: case TAMANIO_STACK:{
 				tamanio = 4;
 				break;
 				}
@@ -112,13 +112,8 @@ int calcularTamanioMensaje(int head, void* mensaje){
 				break;
 			}
 		// CASE 7: El mensaje son tres valores enteros (int)
-			case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
+			case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case PEDIDO_LECTURA_INSTRUCCION:{
 				tamanio = 12;
-				break;
-			}
-		// CASE 8: El mensaje son cuatro valores enteros (int)
-			case PEDIDO_ESCRITURA:{
-				tamanio = 16;
 				break;
 			}
 		}
@@ -126,8 +121,28 @@ int calcularTamanioMensaje(int head, void* mensaje){
 }
 
 int calcularTamanioPCB(void* mensaje){
-	//pcb* pcb = (pcb*)mensaje;
-	return TRUE;
+
+	pcb* unPcb = (pcb*)mensaje;
+
+	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
+
+	int tamanio = 60 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + tamanioIndiceStack;
+
+	return tamanio;
+}
+
+int calcularTamanioIndiceStack(t_list* indice){
+
+	int tamanio = 0;
+
+	void calcularTamanioRegistroStack(void* element){
+		registroStack* reg = (registroStack*) element;
+		int sum = 16 + (NUM_ELEM(reg->args)*12) + (dictionary_size(reg->vars)*14);
+		tamanio += sum;
+	}
+	list_iterate(indice, calcularTamanioRegistroStack);
+
+	return tamanio;
 }
 
 void * serealizar(int head, void * mensaje, int tamanio){
@@ -161,7 +176,7 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	// CASE 5: El mensaje es un valor entero (int)
 	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 	case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-	case DEVOLVER_VAR_COMPARTIDA:{
+	case DEVOLVER_VAR_COMPARTIDA: case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case TAMANIO_STACK:{
 		buffer = malloc(tamanio);
 		memcpy(buffer, mensaje, tamanio);
 			break;
@@ -172,22 +187,17 @@ void * serealizar(int head, void * mensaje, int tamanio){
 			break;
 		}
 	// CASE 7: El mensaje son tres valores enteros (int)
-	case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
+	case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION: case PEDIDO_ESCRITURA:{
 		buffer = serealizarTresInt(mensaje, tamanio);
-			break;
-		}
-	// CASE 8: El mensaje son cuatro valores enteros (int)
-	case PEDIDO_ESCRITURA:{
-		buffer = serealizarCuatroInt(mensaje, tamanio);
 			break;
 		}
 	}
 	return buffer;
 }
 
-void * deserealizar(int head, void * mensaje, int tamanio){
+void * deserealizar(int head, void * buffer, int tamanio){
 
-	void * buffer;
+	void * mensaje;
 
 	switch(head){
 
@@ -195,64 +205,59 @@ void * deserealizar(int head, void * mensaje, int tamanio){
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
 		case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA:{
 			char* msj = malloc(tamanio);
-			memcpy(msj, mensaje, tamanio);
-			buffer = msj;
+			memcpy(msj, buffer, tamanio);
+			mensaje = msj;
 				break;
 			}
 		// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
 		case ENTRADA_SALIDA:{
-				buffer = deserealizarTextoMasUnInt(mensaje, tamanio);
+			mensaje = deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 			}
 
 		case GRABAR_VAR_COMPARTIDA:{
-				buffer = (var_compartida*)deserealizarTextoMasUnInt(mensaje, tamanio);
+			mensaje = (var_compartida*)deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 		}
 		case DEVOLVER_PAGINA:{
-				buffer = (devolverPagina*)deserealizarTextoMasUnInt(mensaje, tamanio);
+			mensaje = (devolverPagina*)deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 			}
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 		case INICIAR_PROGRAMA: {
-			buffer = deserealizarTextoMasDosInt(mensaje, tamanio);
+			mensaje = deserealizarTextoMasDosInt(buffer, tamanio);
 				break;
 			}
 		case ESCRIBIR_PAGINA:{
-			buffer = (solicitudEscribirPagina*)deserealizarTextoMasDosInt(mensaje, tamanio);
+			mensaje = (solicitudEscribirPagina*)deserealizarTextoMasDosInt(buffer, tamanio);
 				break;
 			}
 		// CASE 4: El mensaje es un pcb (pcb)
 		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
-			buffer = deserealizarPcb(mensaje, tamanio);
+			mensaje = deserealizarPcb(buffer, tamanio);
 				break;
 			}
 		// CASE 5: El mensaje es un valor entero (int)
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-		case DEVOLVER_VAR_COMPARTIDA:{
+		case DEVOLVER_VAR_COMPARTIDA: case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO:{
 			int* msj = malloc(tamanio);
-			memcpy(msj, mensaje, tamanio);
-			buffer = msj;
+			memcpy(msj, buffer, tamanio);
+			mensaje = msj;
 				break;
 			}
 		// CASE 6: El mensaje son dos valores enteros (int)
 		case LEER_PAGINA:{
-			buffer = deserealizarDosInt(mensaje, tamanio);
+			mensaje = deserealizarDosInt(buffer, tamanio);
 				break;
 			}
 		// CASE 7: El mensaje son tres valores enteros (int)
-		case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
-			buffer = (solicitudLectura*)deserealizarTresInt(mensaje, tamanio);
-				break;
-			}
-		// CASE 8: El mensaje son cuatro valores enteros (int)
-		case PEDIDO_ESCRITURA:{
-			buffer = deserealizarCuatroInt(mensaje, tamanio);
+		case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION: case PEDIDO_ESCRITURA:{
+			mensaje = (solicitudLectura*)deserealizarTresInt(buffer, tamanio);
 				break;
 			}
 		}
-	return buffer;
+	return mensaje;
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
 /**** SEREALIZACIONES PARTICULARES ****/
@@ -368,150 +373,97 @@ direccion* deserealizarTresInt(void* buffer, int tamanio){
 		return msj;
 }
 
-void* serealizarCuatroInt(void* mensaje, int tamanio){
+void * serealizarPcb(void * mensaje, int tamanio){
 
-	solicitudEscritura* msj = (solicitudEscritura*) mensaje;
+	pcb* unPcb = (pcb*) mensaje;
 	int desplazamiento = 0;
+	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
 
 	void * buffer = malloc(tamanio);
-	memcpy(buffer + desplazamiento, &(msj->pagina), INT);
+	memcpy(buffer + desplazamiento, &(unPcb->cantidad_instrucciones), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(msj->offset), INT);
+	memcpy(buffer + desplazamiento, &(unPcb->id_cpu), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(msj->tamanio), INT);
+	memcpy(buffer + desplazamiento, &(unPcb->numeroContextoEjecucionActualStack), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(msj->contenido), INT);
+	memcpy(buffer + desplazamiento, &(unPcb->paginaActualCodigo), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->paginaActualStack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->paginas_codigo), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->paginas_stack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->pc), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->pid), INT);
+			desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->primerPaginaStack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->quantum), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->quantum_sleep), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->stackPointer), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceCodigo), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceEtiquetas), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->ultimaPosicionIndiceStack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, unPcb->indiceCodigo, unPcb->tamanioIndiceCodigo);
+		desplazamiento += unPcb->tamanioIndiceCodigo;
+	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
+		desplazamiento += unPcb->tamanioIndiceEtiquetas;
+	memcpy(buffer + desplazamiento, unPcb->indiceStack, tam_indiceStack);
 
 		return buffer;
 }
 
-solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio){
+pcb * deserealizarPcb(void * buffer, int tamanio){
 
 	int desplazamiento = 0;
-	solicitudEscritura * msj = malloc(tamanio);
+	pcb * unPcb = malloc(tamanio);
+	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
 
-	memcpy(&msj->pagina, buffer + desplazamiento, INT);
+	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&msj->offset, buffer + desplazamiento, INT);
+	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&msj->tamanio, buffer + desplazamiento, INT);
+	memcpy(&unPcb->numeroContextoEjecucionActualStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&msj->contenido, buffer + desplazamiento, INT);
-
-		return msj;
-}
-
-void * serealizarPcb(void * estructura, int tamanio){
-	/*pcb * unPCB = (pcb *) estructura;
-	int tamanioTotal, desplazamiento = 0;
-
-	int codigoSize = (sizeof(t_intructions) * unPCB->tamanioIndiceCodigo);
-
-	int tamListaArgumentos = sizeof(direccion) * unPCB->indiceStack->tamanioArgumentos;
-	int tamListaVariables = sizeof(t_dictionary) * unPCB->indiceStack->tamanioVariables;
-	int tamRegistroStack = 6*INT + tamListaArgumentos + tamListaVariables;
-	int stackSize = tamRegistroStack * unPCB->tamanioIndiceStack;
-
-	int etiquetasSize = (CHAR * unPCB->tamanioIndiceEtiquetas);
-
-	tamanioTotal = 9*INT + codigoSize + stackSize + etiquetasSize;
-
-	void * buffer = reservarMemoria(tamanioTotal);
-	memcpy(buffer + desplazamiento,&(unPCB->pid), INT);
+	memcpy(&unPcb->paginaActualCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->id_cpu), INT);
+	memcpy(&unPcb->paginaActualStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->pc), INT);
+	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->paginas_codigo), INT);
+	memcpy(&unPcb->paginas_stack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->ultimaPosicionIndiceStack), INT);
+	memcpy(&unPcb->pc, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->stackPointer), INT);
+	memcpy(&unPcb->pid, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-
-	// Serealizo el índice de código:
-	memcpy(buffer + desplazamiento, &(unPCB->tamanioIndiceCodigo), INT);
+	memcpy(&unPcb->primerPaginaStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceCodigo, codigoSize);
-		desplazamiento += codigoSize;
-
-	// Serealizo el índice de etiquetas:
-	memcpy(buffer + desplazamiento, &(unPCB->tamanioIndiceEtiquetas), INT);
+	memcpy(&unPcb->quantum, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceEtiquetas, etiquetasSize);
-		desplazamiento += etiquetasSize;
-
-	// Serealizo el índice de stack:
-	memcpy(buffer + desplazamiento, &(unPCB->tamanioIndiceStack), INT);
+	memcpy(&unPcb->quantum_sleep, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->posicionIndiceCodigo), INT);
+	memcpy(&unPcb->stackPointer, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->posicionResultado), sizeof(direccion));
-		desplazamiento += sizeof(direccion);
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioArgumentos), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceStack->posicionesArgumentos, tamListaArgumentos);
-		desplazamiento += tamListaArgumentos;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioVariables), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceStack->variables, tamListaVariables);
-
-	return buffer;*/
-	void* r = NULL;
-	return r;
-}
-
-pcb * deserealizarPcb(void * buffer, int tamanio){
-	/*int desplazamiento = 0;
-	pcb * unPcb = reservarMemoria(sizeof(pcb));
-
-	memcpy(&unPcb->pid, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->pc, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->ultimaPosicionIndiceStack, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->stackPointer, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-
-	// Deserealizo el índice de código:
 	memcpy(&unPcb->tamanioIndiceCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceCodigo = reservarMemoria(unPcb->tamanioIndiceCodigo);
-	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
-		desplazamiento += unPcb->tamanioIndiceCodigo;
-
-		// Deserealizo el índice de etiquetas:
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceEtiquetas = reservarMemoria(unPcb->tamanioIndiceEtiquetas);
+	memcpy(&unPcb->ultimaPosicionIndiceStack, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
+		desplazamiento += unPcb->tamanioIndiceCodigo;
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
+	memcpy(unPcb->indiceStack, buffer + desplazamiento, tam_indiceStack);
 
-	// Deserealizo el índice de stack:
-	memcpy(&unPcb->tamanioIndiceStack, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&unPcb->indiceStack->posicionIndiceCodigo, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&unPcb->indiceStack->posicionResultado, buffer + desplazamiento, sizeof(direccion));
-		desplazamiento += sizeof(direccion);
-	memcpy(&unPcb->indiceStack->tamanioArgumentos, buffer + desplazamiento, INT);
-			desplazamiento += INT;
-	unPcb->indiceStack->posicionesArgumentos = reservarMemoria(unPcb->indiceStack->tamanioArgumentos);
-	memcpy(unPcb->indiceStack->posicionesArgumentos, buffer + desplazamiento, unPcb->indiceStack->tamanioArgumentos);
-		desplazamiento += unPcb->indiceStack->tamanioArgumentos;
-	memcpy(&unPcb->indiceStack->tamanioVariables, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	unPcb->indiceStack->variables = reservarMemoria(unPcb->indiceStack->tamanioVariables);
-	memcpy(unPcb->indiceStack->variables, buffer + desplazamiento, unPcb->indiceStack->tamanioVariables);
-
-	return unPcb;*/
-	pcb* r = NULL;
-	return r;
+		return unPcb;
 }
-
