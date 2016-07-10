@@ -1,6 +1,6 @@
 #include "lib/principalesCPU.h"
 
-// Estructuras funcionesAnSISOP
+// Estructuras funciones AnSISOP:
 AnSISOP_funciones funcionesAnSISOP = {
 		.AnSISOP_definirVariable = definirVariable,
 		.AnSISOP_obtenerPosicionVariable = obtenerPosicionVariable,
@@ -22,109 +22,157 @@ AnSISOP_kernel funcionesKernel = {
 		.AnSISOP_signal = s_signal,
 };
 
+bool finalizarCPU = false;
+bool cpuOciosa = true;
+bool huboStackOverflow = false;
+
 int main(void) {
 
-	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU); // Abro archivo configuración
-												// Definida en el file 'general'
 	crearLoggerCPU();
+	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU);
+	fdUMC = nuevoSocket();
 
-	conectarConUMC(); // Conexión con UMC
+	// Manejo de la señal SIGUSR1:
+	signal(SIGUSR1, atenderSenialSIGUSR1);
 
-	obtenerTamanioDePagina(); //obtengo tamaño de pagina de UMC
+	if (fdUMC > 0){
+		if (conectarConUMC()){ // Conexión con UMC
 
-	conectarConNucleo(); // Conexión con Núcleo
+			handshake_cliente(fdUMC, "P");
+			obtenerTamanioDePagina();
 
-	ejecutarProcesos(); // Espera activa de PCBs para ejecutar.
+			conectarConNucleo(); // Conexión con Núcleo
 
-	liberarEstructuras(); // Libero memoria reservada para setear config
+			while (TRUE) {
+				log_info(logger, "Esperando mensajes de Núcleo.\n"); // Espera activa de mensajes
+					if (recibirMensajesDeNucleo() == 0) {
+					} else {
+						return EXIT_SUCCESS;
+					}
+				}
+				return EXIT_SUCCESS;
 
-	cerrarSocket(fdNucleo);
+			} else {
+				log_error(logger, "Error en en conexión inicial con UMC.\n");
+				return ERROR;
+			}
+		} else {
+			log_error(logger, "No se pudo abrir la conexion con UMC.\n");
+			return ERROR;
+		}
+	liberarRecursos(); // Libero memoria reservada
 	cerrarSocket(fdUMC);
-
-	return EXIT_SUCCESS;
 }
 
 // Funciones CPU:
-
-void ejecutarProcesos(){
-
-	int protocolo;
-	void * entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
-
-		while (entrada != NULL){
-			switch (protocolo){
-				case PCB:{
-					pcbActual = (pcb*)malloc(sizeof(pcb));
-					memcpy(pcbActual, entrada, sizeof(pcb));
-
-					ejecutarProcesoActivo(pcbActual);
-
-				break;
-			}
-				case QUANTUM_MODIFICADO:{
-					info_quantum* nuevoQuantum = (info_quantum*) entrada;
-					infoQuantum->quantum = nuevoQuantum->quantum;
-					infoQuantum->retardoQuantum = nuevoQuantum->retardoQuantum;
-					free(nuevoQuantum);
-				break;
-			}
-				}
-					free(entrada);
-					entrada = aplicar_protocolo_recibir(fdNucleo, &protocolo);
+void atenderSenialSIGUSR1(int value) {
+	if (value == SIGUSR1) {
+		log_info(logger, "Se recibió señal SIGUSR1. Notificando a Núcleo.");
+		if (cpuOciosa) {
+			cerrarSocket(fdNucleo);
+			return;
 		}
+		finalizarCPU = true;
+		aplicar_protocolo_enviar(fdNucleo, SIGUSR, NULL);
+		log_debug(logger, "El CPU se cerrará cuando finalce la ráfaga actual.");
+	}
+}
+
+int recibirMensajesDeNucleo(){
+
+	int head;
+	void *mensaje = aplicar_protocolo_recibir(fdNucleo, &head);
+
+	if (mensaje == NULL) {
+			log_info(logger, "Se recibió un mensaje NULL de Núcleo. Cerrando conexión.");
+			cerrarSocket(fdNucleo);
+			return FALSE;
+	} else {
+		switch (head) {
+			case PCB:{
+				// Seteo el pcb actual:
+				pcbActual = (pcb*)malloc(sizeof(pcb));
+				memcpy(pcbActual, mensaje, sizeof(pcb));
+				// Le informo a UMC el cambio de proceso activo:
+				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, &(pcbActual->pid));
+				// Comienzo la ejecución del proceso:
+				ejecutarProcesoActivo();
+
+				break;
+				}
+			case TAMANIO_STACK:{
+
+				tamanioStack = *((int*) mensaje);
+				break;
+			}
+		}
+	}
+	return TRUE;
 }
 
 void ejecutarProcesoActivo(){
-	int * pid = malloc(INT);
-	*pid = pcbActual->pid;
-	aplicar_protocolo_enviar(fdUMC, INDICAR_PID, pid);
-	free(pid);
 	printf("El Proceso #%d entró en ejecución.\n", pcbActual->pid);
+	int quantum = pcbActual->quantum;
 
-	int quantumActual = infoQuantum->quantum;
+	while (quantum <= pcbActual->quantum){
+		 // Obtengo la próxima instrucción a ejecutar:
+		char* proximaInstruccion = solicitarProximaInstruccionAUMC();
+		limpiarInstruccion(proximaInstruccion);
 
-		while(quantumActual > 0){
-			int pc = pcbActual->pc;
-			t_intructions instruccionActual = pcbActual->indiceCodigo[pc]; // Obtengo la próxima instrucción a ejecutar
-			ejecutarInstruccion(instruccionActual);
-			usleep(infoQuantum->retardoQuantum * 1000);
-			quantumActual--;
-		}
-		if(quantumActual == 0){
-			aplicar_protocolo_enviar(fdNucleo, PCB, pcbActual);
-			printf("El Proceso #%d finalizó ráfaga de ejecución.\n", pcbActual->pid);
-			printf("Esperando nuevo proceso.\n");
+		if (proximaInstruccion != NULL) {
+			// Llegó una instrucción, analizo si es o no 'end':
+			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones - 1) && (strcmp(proximaInstruccion, "end") == 0)){
+
+				// Es 'end'. Finalizo ejecución por EXIT:
+				log_info(logger, "El programa actual ha finalizado con éxito.");
+				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, pcbActual);
 				liberarPcbActiva();
-		}
+				revisarFinalizarCPU();
+					return;
+			}
+			// Ejecuto la próxima instrucción:
+			analizadorLinea(proximaInstruccion, &funcionesAnSISOP, &funcionesKernel);
+
+			if (huboStackOverflow){
+
+				log_info(logger, "Se ha producido Stack Overflow. Finalizando programa.");
+				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+				printf("Esperando nuevo proceso.\n");
+				liberarPcbActiva();
+				revisarFinalizarCPU();
+					return;
+				}
+
+			// Incremento Program Counter del PCB:
+			(pcbActual->pc)++;
+			usleep(pcbActual->quantum_sleep * 1000);
+			quantum--;
+
+		} // fin if not null
+		else {
+				log_info(logger, "UMC ha rechazado la solicitud de lectura de instrucción. Finalizando programa.");
+			aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+				printf("El Proceso #%d finalizó ráfaga de ejecución.\n", pcbActual->pid);
+				printf("Esperando nuevo proceso.\n");
+			liberarPcbActiva();
+			return;
+			} // fin else not null
+	} // fin while
+
+	// Finalizó ráfaga de ejecución:
+	aplicar_protocolo_enviar(fdNucleo, PCB, pcbActual);
+		printf("El Proceso #%d finalizó ráfaga de ejecución.\n", pcbActual->pid);
+		printf("Esperando nuevo proceso.\n");
+	liberarPcbActiva();
+	revisarFinalizarCPU(); // TODO
 }
 
-void ejecutarInstruccion(t_intructions instruccionActual){
-	solicitudLectura* direccionInstruccion = (solicitudLectura*)malloc(sizeof(solicitudLectura));
-	void* entrada = NULL;
-	int head;
-
-	// Obtengo la dirección lógica de la instrucción a partir del índice de código:
-	int num_pagina = instruccionActual.start / tamanioPagina;
-	int offset = instruccionActual.start - (tamanioPagina*num_pagina);
-
-	direccionInstruccion->pagina = num_pagina;
-	direccionInstruccion->offset = offset;
-	direccionInstruccion->tamanio = instruccionActual.offset;
-
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
-	free(direccionInstruccion);
-
-	recibirYvalidarEstadoDelPedidoAUMC();
-
-	char * instruccion = NULL;
-	entrada = aplicar_protocolo_recibir(fdUMC, &head);
-	if(head == DEVOLVER_INSTRUCCION){
-		instruccion = strdup( (char*)entrada );
-		free(entrada);
+void revisarFinalizarCPU() {
+	if (finalizarCPU) {
+		log_debug(logger, "El CPU está saliendo del sistema.");
+		cerrarSocket(fdNucleo);
+		cerrarSocket(fdUMC);
+		liberarRecursos();
+		return;
 	}
-
-	analizadorLinea((char * const)instruccion, &funcionesAnSISOP, &funcionesKernel);
-	(pcbActual->pc)++; // Incremento Program Counter del PCB
-
-	free(instruccion);
 }

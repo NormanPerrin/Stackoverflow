@@ -2,6 +2,7 @@
 #define LIB_GLOBALESCPU_H_
 
 #include <utilidades/comunicaciones.h>
+#include <signal.h>
 
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 #define RUTA_CONFIG_CPU "configCPU.txt"
@@ -14,11 +15,9 @@ typedef struct {
 	char *ipUMC;
 } t_configuracion;
 
-info_quantum * infoQuantum;
-
 // Variables Globales:
 t_configuracion *config;
-int fdNucleo, fdUMC, tamanioPagina;
+int fdNucleo, fdUMC, tamanioPagina, tamanioStack;
 t_log * logger;
 pcb * pcbActual;
 

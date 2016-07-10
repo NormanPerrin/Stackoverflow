@@ -5,12 +5,14 @@
 
 /** PROTOTIPO FUNCIONES PRINCIPALES **/
 void crearLoggerCPU();
-void conectarConUMC();
+void atenderSenialSIGUSR1(int value);
+int conectarConUMC();
 void obtenerTamanioDePagina();
 void conectarConNucleo();
-void ejecutarProcesos();
-void liberarEstructuras(); // Libera la memoria reservada en setear config
+char* solicitarProximaInstruccionAUMC();
+void liberarRecursos();
+// En el main:
+int recibirMensajesDeNucleo();
 void ejecutarProcesoActivo();
-void ejecutarInstruccion(t_intructions instruccionActual);
 
 #endif

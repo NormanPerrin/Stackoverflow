@@ -39,8 +39,9 @@ typedef enum {
 	WAIT_SIN_BLOQUEO, 				// Núcleo - CPU
 	WAIT_CON_BLOQUEO,				// Núcleo - CPU
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
+	TAMANIO_STACK,					// Núcleo - CPU
 
-	SIGUSR,							// CPU - Núcleo
+	SIGUSR,							// CPU - Núcleo // agregar al switch
 
 	// Mensajes Dinámicos;
 	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
@@ -72,7 +73,7 @@ int calcularTamanioPCB(void* mensaje);
 
 // -- Serealización y deserealización GENERAL:
 void * serealizar(int head, void * mensaje, int tamanio);
-void * deserealizar(int head, void * mensaje, int tamanio);
+void * deserealizar(int head, void * buffer, int tamanio);
 
 // -- Serealizaciones y deserealizaciones DINÁMICAS:
 void* serealizarPcb(void* mensaje, int tamanio);

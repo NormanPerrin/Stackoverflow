@@ -4,6 +4,7 @@
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <parser/metadata_program.h>
+#include "stack.h"
 
 // Dirección lógica:
 typedef struct {
@@ -76,7 +77,7 @@ typedef struct pcb{
 	int tamanioIndiceCodigo, tamanioIndiceStack, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;
-	t_list* indiceStack;
+	t_stack* indiceStack;
 } __attribute__((packed)) pcb;
 
 // Pedido de Lectura de CPU a UMC (dirección lógica):
@@ -86,7 +87,7 @@ typedef struct {
 
 // Pedido de Escritura de CPU a UMC (dirección lógica + variable):
 typedef struct {
-	int pagina, offset, tamanio, contenido;
+	int pagina, offset, contenido;
 } __attribute__((packed)) solicitudEscritura;
 
 // Valores que puede tomar la respuesta de UMC ante un pedido:

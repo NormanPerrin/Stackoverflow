@@ -33,7 +33,7 @@ typedef struct {
 
 typedef struct {
 	int id, fd_consola, pid;
-	string programa;
+	char* programa;
 } consola;
 
 typedef enum {

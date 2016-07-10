@@ -263,15 +263,14 @@ void aceptarConexionEntranteDeConsola(){
 		    int protocolo;
 		    void * entrada = aplicar_protocolo_recibir(nuevaConsola->fd_consola, &protocolo);
 		  if(protocolo == ENVIAR_SCRIPT){
-			  string * nuevoPrograma = (string*) entrada;
+			 char * nuevoPrograma = (char*) entrada;
 			  free(entrada);
-		    nuevaConsola->programa.cadena = strdup(nuevoPrograma->cadena);
-		    nuevaConsola->programa.tamanio = nuevoPrograma->tamanio;
-		    	free(nuevoPrograma->cadena);
-		    	free(nuevoPrograma);
+		    nuevaConsola->programa = strdup(nuevoPrograma);
 
 	 // Creo la PCB del programa y pido espacio para los segmentos a UMC:
-		    pcb * nuevoPcb = crearPcb(nuevaConsola->programa.cadena);
+		    pcb * nuevoPcb = crearPcb(nuevoPrograma);
+		    free(nuevoPrograma);
+
 		    if(nuevoPcb == NULL){
 	//  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
 		    	aplicar_protocolo_enviar(nuevaConsola->fd_consola, RECHAZAR_PROGRAMA, NULL);
@@ -349,9 +348,7 @@ void atenderNuevoMensajeDeCPU(){
 	case PCB_FIN_QUANTUM:{
 
 		pcb * pcbEjecutada = (pcb*) mensaje;
-
 		log_info(logger, "Programa AnSISOP %i fin de quantum en CPU %i.", pcbEjecutada->pid, unCPU->id);
-
 		actualizarPcbEjecutada(unCPU, pcbEjecutada, PCB_FIN_QUANTUM);
 
 		break;
@@ -359,9 +356,7 @@ void atenderNuevoMensajeDeCPU(){
 	case PCB_FIN_EJECUCION:{
 
 			pcb * pcbEjecutada = (pcb*) mensaje;
-
 			log_info(logger, "Programa AnSISOP %i fin de ejecución en CPU %i.", pcbEjecutada->pid, unCPU->id);
-
 			actualizarPcbEjecutada(unCPU, pcbEjecutada, PCB_FIN_EJECUCION);
 
 			break;
@@ -388,7 +383,6 @@ void atenderNuevoMensajeDeCPU(){
 			realizarEntradaSalida(pcbEjecutada, datos);
 
 			liberarPcb(pcbEjecutada);
-
 				free(entrada);
 				free(datos);
 
@@ -396,18 +390,10 @@ void atenderNuevoMensajeDeCPU(){
 						}
 	case IMPRIMIR:{
 
-		string* variable = (string*)malloc(sizeof(string));
-		variable->cadena = string_itoa(*((int*) mensaje));
-		variable->tamanio = CHAR * string_length(variable->cadena + 1);
-
 		bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == unCPU->pid;}
-
 		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
-
 		// Le mando el msj a la Consola asociada:
-		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, variable);
-			free(variable->cadena);
-			free(variable);
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, string_itoa(*((int*) mensaje)));
 
 		break;
 						}
@@ -415,7 +401,6 @@ void atenderNuevoMensajeDeCPU(){
 
 		bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == unCPU->pid;}
 		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPid);
-
 		// Le mando el msj a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
 
@@ -430,7 +415,6 @@ void atenderNuevoMensajeDeCPU(){
 
 		bool consolaTieneElPid(void* unaConsola){ return (((consola*) unaConsola)->pid) == *pid;}
 		consola * consolaAsociada = list_remove_by_condition(listaConsolas, consolaTieneElPid);
-
 		// Le informo a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, NULL);
 		liberarConsola(consolaAsociada);
@@ -443,36 +427,28 @@ void atenderNuevoMensajeDeCPU(){
 			            }
 	case SIGNAL_REQUEST:{
 
-		char* sem_id = (char*)mensaje;
-		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, sem_id);
+		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*)mensaje);
 		semaforo_signal(semaforo);
-		free(sem_id);
 
 		break;
 					  }
 	case WAIT_REQUEST:{
 
-		char* sem_id = (char*)mensaje;
-		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, sem_id);
-		free(sem_id);
+		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*)mensaje);
 
 		if (semaforo_wait(semaforo)){
 		// WAIT NO OK: El proceso se bloquea, etonces tomo su pcb.
-
 			aplicar_protocolo_enviar(fd, WAIT_CON_BLOQUEO, NULL);
 
 			pcb* waitPcb = NULL;
 			int head;
-
 			void* entrada = aplicar_protocolo_recibir(fd, &head);
 			if(head == PCB_WAIT){
 				waitPcb = (pcb*)entrada;
 			}
-
 		semaforo_blockProcess(semaforo->bloqueados, waitPcb);
 			free(waitPcb);
 			}
-
 		else{
 		// WAIT OK: El proceso no se bloquea, entonces puede seguir ejecutando.
 			aplicar_protocolo_enviar(fd, WAIT_SIN_BLOQUEO, NULL);
@@ -484,7 +460,6 @@ void atenderNuevoMensajeDeCPU(){
 
 		// Recibo un char* y devuelvo un int:
 		var_compartida* varPedida = dictionary_get(diccionarioVarCompartidas, (char*)mensaje);
-
 		aplicar_protocolo_enviar(fd, DEVOLVER_VAR_COMPARTIDA, &(varPedida->valor));
 
 		break;
@@ -492,11 +467,9 @@ void atenderNuevoMensajeDeCPU(){
 	case GRABAR_VAR_COMPARTIDA:{
 
 		var_compartida* var_aGrabar = (var_compartida*)mensaje;
-
 		// Actualizo el valor de la variable solicitada:
 		var_compartida* varBuscada = dictionary_get(diccionarioVarCompartidas, var_aGrabar->nombre);
 		varBuscada->valor = var_aGrabar->valor;
-
 			free(var_aGrabar->nombre);
 			free(var_aGrabar);
 
