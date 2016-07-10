@@ -20,10 +20,11 @@ void leerScript(char * rutaPrograma){
 	struct stat infoArchivo; // función de stat.h
 
 	descriptorArchivo = open(rutaPrograma, O_RDONLY); // Abre el archivo .asnsisop
+		if(descriptorArchivo == ERROR) perror("open");
 		fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
 		tamanio = infoArchivo.st_size;
-
-		read(descriptorArchivo, programa, tamanio); // Guardo el script en programa
+		programa = (char*)reservarMemoria(tamanio);
+		if(read(descriptorArchivo, programa, tamanio) == ERROR) perror("read"); // Guardo el script en programa
 		close(descriptorArchivo);
 } // El programa ya está listo para ser enviado a Núcleo
 
@@ -58,5 +59,4 @@ void crearLoggerConsola(){
 	char * archivoLogConsola = strdup("CONSOLA_LOG.log");
 	logger = log_create("CONSOLA_LOG.log", archivoLogConsola, true, LOG_LEVEL_INFO);
 	free(archivoLogConsola);
-	archivoLogConsola = NULL;
 }
