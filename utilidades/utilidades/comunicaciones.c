@@ -90,9 +90,8 @@ void * serealizar(int protocolo, void * elemento){
 	// CASE 5: El mensaje es uno o varios elementos estáticos:
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
-		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:
-		case LEER_PAGINA: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
-		case PEDIDO_LECTURA_INSTRUCCION:{
+		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case LEER_PAGINA: case INDICAR_PID:
+		case DEVOLVER_VAR_COMPARTIDA: case PEDIDO_LECTURA_INSTRUCCION:{
 			int tamanio = sizeof(elemento);
 			buffer = malloc(tamanio);
 			memcpy(buffer, elemento, tamanio);
@@ -139,8 +138,8 @@ void * deserealizar(int protocolo, void * mensaje){
 	// CASE 5: El mensaje es uno o varios elementos estáticos:
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case RECHAZAR_PROGRAMA: case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case ABORTO_PROCESO:
-		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case QUANTUM_MODIFICADO:
-		case LEER_PAGINA: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA: case PEDIDO_LECTURA_INSTRUCCION:{
+		case ESCRIBIR_PAGINA: case RESPUESTA_INICIO_PROGRAMA: case LEER_PAGINA: case INDICAR_PID:
+		case DEVOLVER_VAR_COMPARTIDA: case PEDIDO_LECTURA_INSTRUCCION:{
 			int tamanio = sizeof(mensaje);
 			buffer = reservarMemoria(tamanio);
 			memcpy(buffer, mensaje, tamanio);

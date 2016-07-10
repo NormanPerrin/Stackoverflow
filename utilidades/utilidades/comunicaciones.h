@@ -41,7 +41,6 @@ typedef enum {
 	WAIT_SIN_BLOQUEO, 				// Núcleo - CPU
 	WAIT_CON_BLOQUEO,				// Núcleo - CPU
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
-	QUANTUM_MODIFICADO, 			// Núcleo - CPU
 
 	SIGUSR,							// CPU - Núcleo
 
