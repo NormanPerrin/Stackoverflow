@@ -247,7 +247,7 @@ void mover(int posLibre , int arrancaProceso ,int cantidadDePaginasDelProceso){
     	mensaje->pid = tablaPaginas[arrancaProceso].pid;
     	mensaje->pagina = tablaPaginas[arrancaProceso].pagina;
     	char* contenido = (char*)reservarMemoria(config->tamanioPagina);
-    	contenido =leer_pagina((void*)mensaje);
+    	contenido = leer_pagina((void*)mensaje);
     	tablaPaginas[posLibre].pid= tablaPaginas[arrancaProceso].pid;
     	tablaPaginas[posLibre].pagina= tablaPaginas[arrancaProceso].pagina;
     	tablaPaginas[arrancaProceso].pid=-1;

@@ -1,11 +1,7 @@
 #ifndef LIB_FUMC_H_
 #define LIB_FUMC_H_
 
-	#include <utilidades/sockets.h>
-	#include <utilidades/general.h>
 	#include <utilidades/comunicaciones.h>
-	#include <commons/config.h>
-	#include <commons/log.h>
 	#include <pthread.h>
 	#include <semaphore.h>
 

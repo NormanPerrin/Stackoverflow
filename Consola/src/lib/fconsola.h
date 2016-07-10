@@ -1,14 +1,10 @@
 #ifndef LIB_FCONSOLA_H_
 #define LIB_FCONSOLA_H_
 
-#include <utilidades/general.h>
 #include <utilidades/comunicaciones.h>
-#include <utilidades/sockets.h>
-#include <commons/config.h>
-#include <commons/log.h>
 #include <sys/stat.h>
-#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 
+#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 #define RUTA_CONFIG_CONSOLA "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/configConsola.txt"
 
 // Variables globales

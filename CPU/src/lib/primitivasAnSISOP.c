@@ -11,7 +11,8 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 	/*t_list* indStack= (pcbActual->indiceStack);
 	registroStack registroActual =list_get(indStack,var_indiceStack_posicion);*/
 
-	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
+	//registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
+	registroStack registroActual; // por error
 	char * var_id = strdup(charAString(var_nombre));
 
 	direccion * var_direccion = malloc(sizeof(direccion));
@@ -42,8 +43,8 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	 retorna el offset total respecto al inicio del stack. */
 
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack -1;
-	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
-
+	//registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
+	registroStack registroActual; // por error
 	char* var_id = strdup(charAString(var_nombre));
 
 	direccion * var_direccion = malloc(sizeof(direccion));
@@ -167,25 +168,25 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
 //HACER
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
-
+/*
 	// Creo un nuevo registro en el índice stack:
 	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
-	registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
+	//registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
 	registroActual.retPos = donde_retornar;
 	pcbActual->pc = metadata_buscar_etiqueta(etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
-
+*/
 }
 
 //HACER//TERMINAR
 void retornar(t_valor_variable retorno){
-
-	t_puntero* direccion_de_retorno;/*= VER ESTO*/
+/*
+	//t_puntero* direccion_de_retorno; VER ESTO
 
 	asignar(direccion_de_retorno,retorno);
 	pcbActual->ultimaPosicionIndiceStack-=sizeof(t_puntero);
 	finalizar();
-
+*/
 }
 //HACER//ISSUE #339
 void finalizar(){

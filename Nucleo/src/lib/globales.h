@@ -1,18 +1,11 @@
 #ifndef LIB_GLOBALES_H_
 #define LIB_GLOBALES_H_
 
-#include <utilidades/sockets.h>
-#include <utilidades/general.h>
 #include <utilidades/comunicaciones.h>
 #include <pthread.h>
-#include <commons/config.h>
-#include <commons/string.h>
-#include <commons/log.h>
-#include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 #include <semaphore.h>
 #include <sys/inotify.h>
-#include <parser/metadata_program.h>
 
 //#define EVENT_SIZE (sizeof(struct inotify_event) + strlen(RUTA_CONFIG_NUCLEO) + 1)
 #define EVENT_SIZE (sizeof( struct inotify_event ))

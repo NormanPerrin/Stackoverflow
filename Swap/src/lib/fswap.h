@@ -1,10 +1,6 @@
 #ifndef FSWAP_H_
 #define FSWAP_H_
 
-	#include <utilidades/sockets.h>
-	#include <utilidades/general.h>
-	#include <commons/config.h>
-	#include <commons/log.h>
     #include <utilidades/comunicaciones.h>
 
 	#define RUTA_CONFIG_SWAP "configSwap.txt"
@@ -45,6 +41,7 @@
 	void inicializarTablaDePaginas();
 	void inicializarTablaBitMap();
 	int buscarPosLibresEnBitMap(int paginas);
+	char* leer_pagina(void *msj);
 	int buscarPosLibreEnBitMap();
 	int escribir_pagina(void *msj);
 	int buscarPaginaEnTablaDePaginas(int pid ,int pagina);
