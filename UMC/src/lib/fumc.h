@@ -48,24 +48,6 @@
 	} tlb_t;
 
 	// Interfaz
-	typedef struct {
-		int pid;
-		int paginas;
-		char *codigo;
-	}__attribute__((packed)) inciarPrograma_t;
-
-	typedef struct {
-		int pagina;
-		int offset;
-		int tamanio;
-	}__attribute__((packed)) leerBytes_t;
-
-	typedef struct {
-		int pagina;
-		int offset;
-		int tamanio;
-		char *contenido;
-	}__attribute__((packed)) escribirBytes_t;
 
 	typedef struct {
 		int pid;
@@ -127,7 +109,8 @@
 
 	// <PRINCIPAL>
 	void inciar_programa(int fd, void *msj);
-	void leer_bytes(int fd, void *msj);
+	void leer_variable(int fd, void *msj);
+	void leer_instruccion(int fd, void *msj);
 	void escribir_bytes(int fd, void *msj);
 	void finalizar_programa(int fd, void *msj);
 	void cambiarPid(int fd, void *mensaje);

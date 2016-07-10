@@ -122,7 +122,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	int marco = ERROR;
 
 	// pido página a Swap
-	pedidoPagina_t pedido;
+	solicitudLeerPagina pedido;
 	pedido.pid = pid;
 	pedido.pagina = pagina;
 	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, &pedido);
@@ -131,8 +131,9 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 
 	// espero respuesta válida o inválida de Swap
 	int *respuesta = NULL;
-	respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, RESPUESTA_PEDIDO, protocolo);
-	if(*respuesta == NO_PERMITIDO) {
+	respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
+	if(*respuesta == NO_PERMITIDO || *protocolo != RESPUESTA_PEDIDO) {
+		*respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 		free(respuesta);
 		return ERROR;
@@ -143,7 +144,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 
 	if(contenido_pagina == NULL || *protocolo != DEVOLVER_PAGINA) { // no encontró la página o hubo un fallo
 
-		int* estadoDelPedido = (int*)reservarMemoria(sizeof(int));
+		int* estadoDelPedido = (int*)reservarMemoria(INT);
 		*estadoDelPedido= NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, estadoDelPedido);
 		free(estadoDelPedido);
@@ -193,7 +194,7 @@ void inciar_programa(int fd, void *msj) {
 
 	dormir(config->retardo); // retardo por escritura en tabla páginas
 
-	inciarPrograma_t *mensaje = (inciarPrograma_t*)msj; // casteo
+	inicioPrograma *mensaje = (inicioPrograma*)msj; // casteo
 
 	// 1) Agrego a tabla de páginas
 	iniciar_principales(mensaje->pid, mensaje->paginas);
@@ -218,11 +219,11 @@ void inciar_programa(int fd, void *msj) {
 
 }
 
-void leer_bytes(int fd, void *msj) {
+void leer_instruccion(int fd, void *msj) {
 
 	dormir(config->retardo); // retardo por lectura en memoria
 
-	leerBytes_t *mensaje = (leerBytes_t*)msj; // casteo
+	solicitudLectura *mensaje = (solicitudLectura*)msj; // casteo
 
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
@@ -247,7 +248,42 @@ void leer_bytes(int fd, void *msj) {
 	free(respuesta);
 
 	// devuelvo el contenido solicitado
-	aplicar_protocolo_enviar(fd, DEVOLVER_CONTENIDO, contenido);
+	aplicar_protocolo_enviar(fd, DEVOLVER_INSTRUCCION, contenido);
+
+	free(contenido);
+
+}
+
+void leer_variable(int fd, void *msj) {
+
+	dormir(config->retardo); // retardo por lectura en memoria
+
+	solicitudLectura *mensaje = (solicitudLectura*)msj; // casteo
+
+	// veo cual es el pid activo de esta CPU
+	int pos = buscarPosPid(fd);
+	int pid = pids[pos].pid;
+
+	// busco el marco de la página en TLB TP y Swap
+	int marco = buscarPagina(fd, pid, mensaje->pagina);
+
+	// actualizo TLB y TP
+	buscar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
+	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
+
+	// busco el código que me piden
+	void *contenido = reservarMemoria(INT);
+	int pos_real = marco * (config->marco_size) + mensaje->offset;
+	memcpy(contenido, memoria + pos_real, INT);
+
+	// respondo que pedido fue válido
+	int *respuesta = (int*)reservarMemoria(INT);
+	*respuesta = PERMITIDO;
+	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+	free(respuesta);
+
+	// devuelvo el contenido solicitado
+	aplicar_protocolo_enviar(fd, DEVOLVER_VARIABLE, contenido);
 
 	free(contenido);
 
@@ -257,7 +293,7 @@ void escribir_bytes(int fd, void *msj) {
 
 	dormir(config->retardo); // retardo por lectura en memoria
 
-	escribirBytes_t *mensaje = (escribirBytes_t*)msj; // casteo
+	solicitudEscritura *mensaje = (solicitudEscritura*)msj; // casteo
 
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
@@ -272,7 +308,7 @@ void escribir_bytes(int fd, void *msj) {
 
 	// escribo contenido
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
-	memcpy(memoria + pos_real, mensaje->contenido, mensaje->tamanio);
+	memcpy(memoria + pos_real, &(mensaje->contenido), INT);
 
 	// respondo a CPU
 	int *respuesta = (int*)reservarMemoria(INT);
@@ -702,8 +738,11 @@ void *elegirFuncion(protocolo head) {
 		case INICIAR_PROGRAMA:
 			return inciar_programa;
 
-		case LEER_PAGINA:
-			return leer_bytes;
+		case PEDIDO_LECTURA_INSTRUCCION:
+			return leer_instruccion;
+
+		case PEDIDO_LECTURA_VARIABLE:
+			return leer_variable;
 
 		case ESCRIBIR_PAGINA:
 			return escribir_bytes;
