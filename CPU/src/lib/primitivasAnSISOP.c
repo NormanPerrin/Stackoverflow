@@ -163,20 +163,32 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 	return next_pc;
 }
 
-//HACER
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
-	t_list* indStack=pcbActual->indiceStack;
+	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
+	registroStack* nuevoRegistroStack = malloc(sizeof(tamRegistroStack));
+	direccion* varRetorno = malloc(sizeof(direccion));
+	int num_pagina =  donde_retornar / tamanioPagina;
+	int offset = donde_retornar % tamanioPagina;
 
-	//Agrego un registroStack vacio
-	registroStack* nuevoRegistroStack;
-	list_add(indStack,nuevoRegistroStack);
+	varRetorno->pagina = num_pagina;
+	varRetorno->offset = offset;
+	varRetorno->size = INT;
 
-	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack;
-	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
+	nuevoRegistroStack->args = list_create();
+	nuevoRegistroStack->vars = list_create();
+	nuevoRegistroStack->retVar = varRetorno;
+	nuevoRegistroStack->retPos = pcbActual->pc;
+	stack_push(pcbActual->indiceStack, nuevoRegistroStack);
 
-	registroActual->retPos=donde_retornar;
-	pcbActual->pc=metadata_buscar_etiqueta(etiqueta,pcbActual->indiceEtiquetas,pcbActual->tamanioIndiceEtiquetas);
+	pcbActual->numeroContextoEjecucionActualStack++;
+
+	free(varRetorno);
+	free(nuevoRegistroStack->args);
+	free(nuevoRegistroStack->vars);
+	free(nuevoRegistroStack);
+
+	irAlLabel(etiqueta);
 }
 
 //REVISAR
