@@ -191,7 +191,6 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 	irAlLabel(etiqueta);
 }
 
-//REVISAR
 void retornar(t_valor_variable retorno){
 	t_list* indStack=pcbActual->indiceStack;
 	registroStack* ultimoRegistro=list_get(indStack,pcbActual->numeroContextoEjecucionActualStack);
