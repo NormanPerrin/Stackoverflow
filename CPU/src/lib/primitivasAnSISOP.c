@@ -1,5 +1,5 @@
 #include "primitivasAnSISOP.h"
-
+#include "stack.h"
 t_puntero definirVariable(t_nombre_variable var_nombre){
 
 	/* Le asigna una posición en memoria a la variable,
@@ -166,52 +166,45 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 //HACER
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
-	t_list* indStack=pcbActual->indiceStack;
 
-	//Agrego un registroStack vacio
-	registroStack* nuevoRegistroStack;
-	list_add(indStack,nuevoRegistroStack);
-
-	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack;
-	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
-
-	registroActual->retPos=donde_retornar;
-	pcbActual->pc=metadata_buscar_etiqueta(etiqueta,pcbActual->indiceEtiquetas,pcbActual->tamanioIndiceEtiquetas);
 }
 
 //REVISAR
 void retornar(t_valor_variable retorno){
-	//agarro contexto actual y anterior
-	t_list* indStack=pcbActual->indiceStack;
-	registroStack* contextoEjecucionActual=list_get(indStack,pcbActual->numeroContextoEjecucionActualStack);
+	//Agarro contexto actual y anterior
+	int numeroEjecucionActual=pcbActual->numeroContextoEjecucionActualStack;
+	t_stack* contextoEjecucionActual=list_get((pcbActual->indiceStack),numeroEjecucionActual);
 
-	// limpio el contexto actual
+	//Limpio el contexto de ejecucion actual
 	int i;
-	for(i=0;i<list_size((t_list*)(contextoEjecucionActual->args));i++){
-		direccion* arg=list_get((t_list*)contextoEjecucionActual->args,i);
+	for (i=0;i< list_size(contextoEjecucionActual->elements); i++){
+		t_list* argumentos=list_get(contextoEjecucionActual,i);
+		direccion* arg=list_get(argumentos,i);
 		pcbActual->stackPointer=pcbActual->stackPointer-4;
 		free(arg);
 	}
-	for (i=0;i<list_size((t_list*)(contextoEjecucionActual->vars));i++){
-		direccion* var= list_get((t_list*)(contextoEjecucionActual->vars),i);
+	for(i = 0; i <list_size(contextoEjecucionActual->elements); i++){
+		t_list* variables=list_get(contextoEjecucionActual,i);
+		direccion* var = list_get(variables, i);
 		pcbActual->stackPointer=pcbActual->stackPointer-4;
 		free(var);
-	}
+			}
+		direccion* retVar=list_get(contextoEjecucionActual->elements);
+		t_puntero direcVariable = (retVar->pagina*tamanioPagina)+retVar->offset;
 
-	direccion retVar=(contextoEjecucionActual->retVar);
-	t_puntero direcVariable=(retVar.pagina*tamanioPagina)+retVar.offset;
+		//calculo la direccion a la que tengo que retornar mediante la direccion de pagina start y offset que esta en el campo retVar
+		asignar(direcVariable,retorno);
 
-	//calculo la direccion a la que tengo que retornar mediante la direccion de pagina start y offset que esta en el campo retvar
-	asignar(direcVariable,retorno);
+		//Elimino el contexto actual del indice del stack
+		//Seteo el contexto de ejecucion actual en el anterior
 
-	//elimino el contexto actual del indice del stack
-	//seteo el contexto de ejecucion actual en el anterior
-	pcbActual->pc=contextoEjecucionActual->retPos;
-	free(contextoEjecucionActual);
-	list_remove(pcbActual->indiceStack,pcbActual->numeroContextoEjecucionActualStack);
-	log_debug(logger,"Llamada a retornar");
-	return;
-
+		pcbActual->pc= ((registroStack*)list_get(contextoEjecucionActual,numeroEjecucionActual))->retVar;
+		free(contextoEjecucionActual);
+		list_remove(pcbActual->indiceStack,pcbActual->numeroContextoEjecucionActualStack);
+		pcbActual->numeroContextoEjecucionActualStack-=1;
+		t_stack* contextoEjecNuevo= list_get (pcbActual->indiceStack,pcbActual.numeroContextoEjecucionActualStack);
+		log_debug(logger,"Llamada a retornar" );
+		return;
 }
 void imprimir(t_valor_variable valor_mostrar){
 
