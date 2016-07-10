@@ -1,5 +1,5 @@
 #include "primitivasAnSISOP.h"
-#include "stack.h"
+
 t_puntero definirVariable(t_nombre_variable var_nombre){
 
 	/* Le asigna una posición en memoria a la variable,
@@ -163,14 +163,39 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 	return next_pc;
 }
 
-//HACER
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
+
+	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
+	registroStack* nuevoRegistroStack = malloc(sizeof(tamRegistroStack));
+	direccion* varRetorno = malloc(sizeof(direccion));
+	int num_pagina =  donde_retornar / tamanioPagina;
+	int offset = donde_retornar % tamanioPagina;
+
+	varRetorno->pagina = num_pagina;
+	varRetorno->offset = offset;
+	varRetorno->size = INT;
+
+	nuevoRegistroStack->args = list_create();
+	nuevoRegistroStack->vars = list_create();
+	nuevoRegistroStack->retVar = varRetorno;
+	nuevoRegistroStack->retPos = pcbActual->pc;
+	stack_push(pcbActual->indiceStack, nuevoRegistroStack);
+
+	pcbActual->numeroContextoEjecucionActualStack++;
+
+	free(varRetorno);
+	free(nuevoRegistroStack->args);
+	free(nuevoRegistroStack->vars);
+	free(nuevoRegistroStack);
+
+	irAlLabel(etiqueta);
 
 }
 
 //REVISAR
 void retornar(t_valor_variable retorno){
+
 	//Agarro contexto actual y anterior
 	int numeroEjecucionActual=pcbActual->numeroContextoEjecucionActualStack;
 	t_stack* contextoEjecucionActual=list_get((pcbActual->indiceStack),numeroEjecucionActual);
@@ -206,6 +231,7 @@ void retornar(t_valor_variable retorno){
 		log_debug(logger,"Llamada a retornar" );
 		return;
 }
+
 void imprimir(t_valor_variable valor_mostrar){
 
 	int * valor = malloc(INT);
