@@ -102,7 +102,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 5: El mensaje es un valor entero (int)
 			case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 			case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-			case DEVOLVER_VAR_COMPARTIDA:{
+			case DEVOLVER_VAR_COMPARTIDA: case TAMANIO_STACK:{
 				tamanio = 4;
 				break;
 				}
@@ -112,13 +112,8 @@ int calcularTamanioMensaje(int head, void* mensaje){
 				break;
 			}
 		// CASE 7: El mensaje son tres valores enteros (int)
-			case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
+			case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case PEDIDO_LECTURA_INSTRUCCION:{
 				tamanio = 12;
-				break;
-			}
-		// CASE 8: El mensaje son cuatro valores enteros (int)
-			case PEDIDO_ESCRITURA:{
-				tamanio = 16;
 				break;
 			}
 		}
@@ -161,7 +156,7 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	// CASE 5: El mensaje es un valor entero (int)
 	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 	case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-	case DEVOLVER_VAR_COMPARTIDA:{
+	case DEVOLVER_VAR_COMPARTIDA: case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case TAMANIO_STACK:{
 		buffer = malloc(tamanio);
 		memcpy(buffer, mensaje, tamanio);
 			break;
@@ -172,22 +167,17 @@ void * serealizar(int head, void * mensaje, int tamanio){
 			break;
 		}
 	// CASE 7: El mensaje son tres valores enteros (int)
-	case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
+	case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION: case PEDIDO_ESCRITURA:{
 		buffer = serealizarTresInt(mensaje, tamanio);
-			break;
-		}
-	// CASE 8: El mensaje son cuatro valores enteros (int)
-	case PEDIDO_ESCRITURA:{
-		buffer = serealizarCuatroInt(mensaje, tamanio);
 			break;
 		}
 	}
 	return buffer;
 }
 
-void * deserealizar(int head, void * mensaje, int tamanio){
+void * deserealizar(int head, void * buffer, int tamanio){
 
-	void * buffer;
+	void * mensaje;
 
 	switch(head){
 
@@ -195,64 +185,59 @@ void * deserealizar(int head, void * mensaje, int tamanio){
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
 		case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA:{
 			char* msj = malloc(tamanio);
-			memcpy(msj, mensaje, tamanio);
-			buffer = msj;
+			memcpy(msj, buffer, tamanio);
+			mensaje = msj;
 				break;
 			}
 		// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
 		case ENTRADA_SALIDA:{
-				buffer = deserealizarTextoMasUnInt(mensaje, tamanio);
+			mensaje = deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 			}
 
 		case GRABAR_VAR_COMPARTIDA:{
-				buffer = (var_compartida*)deserealizarTextoMasUnInt(mensaje, tamanio);
+			mensaje = (var_compartida*)deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 		}
 		case DEVOLVER_PAGINA:{
-				buffer = (devolverPagina*)deserealizarTextoMasUnInt(mensaje, tamanio);
+			mensaje = (devolverPagina*)deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 			}
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 		case INICIAR_PROGRAMA: {
-			buffer = deserealizarTextoMasDosInt(mensaje, tamanio);
+			mensaje = deserealizarTextoMasDosInt(buffer, tamanio);
 				break;
 			}
 		case ESCRIBIR_PAGINA:{
-			buffer = (solicitudEscribirPagina*)deserealizarTextoMasDosInt(mensaje, tamanio);
+			mensaje = (solicitudEscribirPagina*)deserealizarTextoMasDosInt(buffer, tamanio);
 				break;
 			}
 		// CASE 4: El mensaje es un pcb (pcb)
 		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
-			buffer = deserealizarPcb(mensaje, tamanio);
+			mensaje = deserealizarPcb(buffer, tamanio);
 				break;
 			}
 		// CASE 5: El mensaje es un valor entero (int)
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-		case DEVOLVER_VAR_COMPARTIDA:{
+		case DEVOLVER_VAR_COMPARTIDA: case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO:{
 			int* msj = malloc(tamanio);
-			memcpy(msj, mensaje, tamanio);
-			buffer = msj;
+			memcpy(msj, buffer, tamanio);
+			mensaje = msj;
 				break;
 			}
 		// CASE 6: El mensaje son dos valores enteros (int)
 		case LEER_PAGINA:{
-			buffer = deserealizarDosInt(mensaje, tamanio);
+			mensaje = deserealizarDosInt(buffer, tamanio);
 				break;
 			}
 		// CASE 7: El mensaje son tres valores enteros (int)
-		case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
-			buffer = (solicitudLectura*)deserealizarTresInt(mensaje, tamanio);
-				break;
-			}
-		// CASE 8: El mensaje son cuatro valores enteros (int)
-		case PEDIDO_ESCRITURA:{
-			buffer = deserealizarCuatroInt(mensaje, tamanio);
+		case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION: case PEDIDO_ESCRITURA:{
+			mensaje = (solicitudLectura*)deserealizarTresInt(buffer, tamanio);
 				break;
 			}
 		}
-	return buffer;
+	return mensaje;
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
 /**** SEREALIZACIONES PARTICULARES ****/
@@ -364,39 +349,6 @@ direccion* deserealizarTresInt(void* buffer, int tamanio){
 	memcpy(&msj->offset, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&msj->size, buffer + desplazamiento, INT);
-
-		return msj;
-}
-
-void* serealizarCuatroInt(void* mensaje, int tamanio){
-
-	solicitudEscritura* msj = (solicitudEscritura*) mensaje;
-	int desplazamiento = 0;
-
-	void * buffer = malloc(tamanio);
-	memcpy(buffer + desplazamiento, &(msj->pagina), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(msj->offset), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(msj->tamanio), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(msj->contenido), INT);
-
-		return buffer;
-}
-
-solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio){
-
-	int desplazamiento = 0;
-	solicitudEscritura * msj = malloc(tamanio);
-
-	memcpy(&msj->pagina, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&msj->offset, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&msj->tamanio, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&msj->contenido, buffer + desplazamiento, INT);
 
 		return msj;
 }

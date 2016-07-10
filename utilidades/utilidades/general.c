@@ -139,7 +139,7 @@ reg->vars = NULL; reg = NULL; }
 void liberarPcb(pcb * pcb){
 	free(pcb->indiceCodigo);
 	free(pcb->indiceEtiquetas);
-	list_destroy_and_destroy_elements(pcb->indiceStack, (void*) liberarRegistroStack);
+	stack_destroy_and_destroy_elements(pcb->indiceStack, (void*) liberarRegistroStack);
 
 	free(pcb);
 	pcb = NULL;

@@ -107,7 +107,6 @@ void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 	int offset = var_stack_offset - (num_pagina*tamanioPagina);
 		var_escritura->pagina = num_pagina;
 		var_escritura->offset = offset;
-		var_escritura->tamanio = INT;
 		var_escritura->contenido = valor;
 
 		aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);

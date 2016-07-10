@@ -8,11 +8,14 @@ void crearLoggerCPU(){
 	archivoLogCPU = NULL;
 }
 
-void conectarConUMC(){
-	fdUMC = nuevoSocket();
-	int ret = conectarSocket(fdUMC, config->ipUMC, config->puertoUMC);
-	validar_conexion(ret, 1);
-	handshake_cliente(fdUMC, "P");
+int conectarConUMC(){
+	int conexion = conectarSocket(fdUMC, config->ipUMC, config->puertoUMC);
+	if(conexion == ERROR){
+		return FALSE;
+	}
+	else{
+		return TRUE;
+	}
 }
 
 void obtenerTamanioDePagina(){
@@ -29,13 +32,45 @@ void conectarConNucleo() {
 	handshake_cliente(fdNucleo, "P");
 }
 
-void liberarEstructuras() {
+char* solicitarProximaInstruccionAUMC(){
+	int pc = pcbActual->pc;
+	t_intructions instruccionActual = pcbActual->indiceCodigo[pc];
+
+	solicitudLectura* direccionInstruccion = (solicitudLectura*)malloc(sizeof(solicitudLectura));
+		void* entrada = NULL;
+		int head;
+
+		// Obtengo la dirección lógica de la instrucción a partir del índice de código:
+		int num_pagina = instruccionActual.start / tamanioPagina;
+		int offset = instruccionActual.start - (tamanioPagina*num_pagina);
+
+		direccionInstruccion->pagina = num_pagina;
+		direccionInstruccion->offset = offset;
+		direccionInstruccion->tamanio = instruccionActual.offset;
+
+		aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
+		free(direccionInstruccion);
+
+		recibirYvalidarEstadoDelPedidoAUMC(); // validar
+
+		char * instruccion = NULL;
+		entrada = aplicar_protocolo_recibir(fdUMC, &head);
+
+		if(head == DEVOLVER_INSTRUCCION){
+			instruccion = strdup( (char*)entrada );
+			free(entrada);
+
+			return instruccion;
+		}
+		else {
+			return instruccion;
+		}
+}
+
+void liberarRecursos(){
 	free(config->ipUMC);
 	free(config);
-
 	log_destroy(logger);
 	logger = NULL;
-
 	liberarPcbActiva();
-	free(infoQuantum);
 }

@@ -11,7 +11,6 @@ void mostrar_protocolos() {
 				"RESPUESTA_PEDIDO = %d\n"
 				"LEER_PAGINA = %d\n"
 				"ESCRIBIR_PAGINA = %d\n"
-				"DEVOLVER_BYTES = %d\n"
 				"DEVOLVER_PAGINA = %d\n"
 				"ENVIAR_PCB = %d\n"
 				"RESPUESTA_INICIO_PROGRAMA = %d\n\n",
@@ -25,8 +24,7 @@ void mostrar_protocolos() {
 				RESPUESTA_PEDIDO,
 				LEER_PAGINA,
 				ESCRIBIR_PAGINA,
-				DEVOLVER_PAGINA_VARIABLE,
-				DEVOLVER_PAGINA_INSTRUCCION,
+				DEVOLVER_PAGINA,
 				PCB,
 				RESPUESTA_INICIO_PROGRAMA
 				);
