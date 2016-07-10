@@ -182,17 +182,36 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
 //REVISAR
 void retornar(t_valor_variable retorno){
+	//agarro contexto actual y anterior
 	t_list* indStack=pcbActual->indiceStack;
-	registroStack* ultimoRegistro=list_get(indStack,pcbActual->numeroContextoEjecucionActualStack);
+	registroStack* contextoEjecucionActual=list_get(indStack,pcbActual->numeroContextoEjecucionActualStack);
 
-	t_puntero* direccion_de_retorno=(t_puntero*)(ultimoRegistro->retPos);
+	// limpio el contexto actual
+	int i;
+	for(i=0;i<list_size((t_list*)(contextoEjecucionActual->args));i++){
+		direccion* arg=list_get((t_list*)contextoEjecucionActual->args,i);
+		pcbActual->stackPointer=pcbActual->stackPointer-4;
+		free(arg);
+	}
+	for (i=0;i<list_size((t_list*)(contextoEjecucionActual->vars));i++){
+		direccion* var= list_get((t_list*)(contextoEjecucionActual->vars),i);
+		pcbActual->stackPointer=pcbActual->stackPointer-4;
+		free(var);
+	}
 
-	asignar(*direccion_de_retorno,retorno);
-	pcbActual->ultimaPosicionIndiceStack-=sizeof(t_puntero);
-	finalizar();
-}
-//HACER//ISSUE #339
-void finalizar(){
+	direccion retVar=(contextoEjecucionActual->retVar);
+	t_puntero direcVariable=(retVar.pagina*tamanioPagina)+retVar.offset;
+
+	//calculo la direccion a la que tengo que retornar mediante la direccion de pagina start y offset que esta en el campo retvar
+	asignar(direcVariable,retorno);
+
+	//elimino el contexto actual del indice del stack
+	//seteo el contexto de ejecucion actual en el anterior
+	pcbActual->pc=contextoEjecucionActual->retPos;
+	free(contextoEjecucionActual);
+	list_remove(pcbActual->indiceStack,pcbActual->numeroContextoEjecucionActualStack);
+	log_debug(logger,"Llamada a retornar");
+	return;
 
 }
 void imprimir(t_valor_variable valor_mostrar){
