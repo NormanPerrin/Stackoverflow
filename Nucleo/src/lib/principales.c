@@ -97,7 +97,7 @@ void conectarConUMC(){
 	free(tamPagina);
 }
 
-void iniciarEscuchaConsolasYCPUs(){
+void iniciarEscuchaDeConsolasYCPUs(){
 	fdEscuchaConsola = nuevoSocket();
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
@@ -107,18 +107,33 @@ void iniciarEscuchaConsolasYCPUs(){
 	escucharSocket(fdEscuchaCPU, CONEXIONES_PERMITIDAS);
 }
 
+int obtenerSocketMaximoInicial(){
+	int max_fd_inicial = 0;
+
+	if (fdEscuchaCPU > fdEscuchaConsola) {
+		max_fd_inicial = fdEscuchaCPU;
+		} else  {
+			max_fd_inicial = fdEscuchaConsola;
+		}
+	if (max_fd_inicial < fd_inotify) {
+		max_fd_inicial = fd_inotify;
+	}
+	return max_fd_inicial;
+}
+
 void esperar_y_PlanificarProgramas(){
 
-		int i, fd, max_fd;
+		int i, max_fd;
 
 	    FD_ZERO(&readfds);
 	    FD_SET(fdEscuchaConsola, &readfds);
 	    FD_SET(fdEscuchaCPU, &readfds);
-	    max_fd = (fdEscuchaConsola > fdEscuchaCPU)?fdEscuchaConsola:fdEscuchaCPU;
+	    FD_SET(fd_inotify, &readfds);
+	    max_fd = obtenerSocketMaximoInicial();
 
 	    // Reviso si el fd de alguna Consola supera al max_fd actual:
 	    for ( i = 0 ; i < list_size(listaConsolas) ; i++){
-
+	    	int fd;
 	    	consola * unaConsola = (consola *)list_get(listaConsolas, i);
 	        fd = unaConsola->fd_consola;
 	        if(fd > 0)
@@ -129,23 +144,34 @@ void esperar_y_PlanificarProgramas(){
 
 	    // Reviso si el fd de algún CPU supera al max_fd actual:
 	    for ( i = 0 ; i < list_size(listaCPU) ; i++){
-
+	    	int fd;
 	    	cpu * unCPU = (cpu *)list_get(listaCPU, i);
 	    	fd = unCPU->fd_cpu;
 	    	if(fd > 0)
-	    	FD_SET( fd , &readfds);
+	    		FD_SET( fd , &readfds);
 	    	if(fd > max_fd)
-	    	max_fd = fd;
+	    		max_fd = fd;
 	     } // fin for cpu
 
 	    seleccionarSocket(max_fd, &readfds , NULL , NULL , NULL, NULL);
 
 	    // Si llega una nueva conexión de un cliente, la acepto:
-	if (FD_ISSET(fdEscuchaConsola, &readfds) || FD_ISSET(fdEscuchaCPU, &readfds)) {
+	if (FD_ISSET(fdEscuchaConsola, &readfds) ||
+			FD_ISSET(fdEscuchaCPU, &readfds) ||
+			FD_ISSET(fd_inotify, &readfds)) {
 
-		if (FD_ISSET(fdEscuchaCPU, &readfds)) aceptarConexionEntranteDeCPU();
+		if (FD_ISSET(fdEscuchaCPU, &readfds)){
 
-		if (FD_ISSET(fdEscuchaConsola, &readfds)) aceptarConexionEntranteDeConsola();
+			aceptarConexionEntranteDeCPU();
+
+		} else if(FD_ISSET(fdEscuchaConsola, &readfds)){
+
+			aceptarConexionEntranteDeConsola();
+
+		} else if(FD_ISSET(fd_inotify, &readfds)){
+
+			atenderCambiosEnArchivoConfig(max_fd);
+		}
 	} // Si no se trata de una nueva conexión, entonces es un msj de algún CPU, lo atiendo:
 	else{
 	    		atenderNuevoMensajeDeCPU();
@@ -429,6 +455,53 @@ void atenderNuevoMensajeDeCPU(){
 			}
 		}
 	}
+}
+
+void iniciarEscuchaDeInotify(){
+	if (watch_descriptor > 0 && fd_inotify > 0) {
+		inotify_rm_watch(fd_inotify, watch_descriptor);
+	}
+
+	fd_inotify = inotify_init();
+		if (fd_inotify > 0) {
+			watch_descriptor = inotify_add_watch(fd_inotify, RUTA_CONFIG_NUCLEO, IN_MODIFY);
+		}
+		else{
+			manejarError("Eror: inotify_init");
+		}
+}
+
+void atenderCambiosEnArchivoConfig(int socketMaximo){
+
+	int length, i = 0;
+	char buffer[EVENT_BUF_LEN];
+	length = read(fd_inotify, buffer, EVENT_BUF_LEN);
+
+	if (length < 0) {
+		log_info(logger, "inotify_read: Error al leer el archivo de configuración.");
+
+ } else if (length > 0) {
+		struct inotify_event *event = (struct inotify_event *) &buffer[i];
+		t_config * new_config = config_create(RUTA_CONFIG_NUCLEO);
+
+			if (new_config && config_has_property(new_config, "QUANTUM")
+					&& config_has_property(new_config, "QUANTUM_SLEEP")) {
+
+		config->quantum = config_get_int_value(new_config, "QUANTUM");
+		config->retardoQuantum = config_get_int_value(new_config, "QUANTUM_SLEEP");
+		log_info(logger, "Se ha modificado el archivo de configuración: Quantum: %d - Quantum Sleep: %d",
+				config->quantum, config->retardoQuantum);
+
+		i += EVENT_SIZE + event->len;
+		free(new_config);
+
+		FD_CLR(fd_inotify, &readfds);
+		iniciarEscuchaDeInotify();
+
+		socketMaximo = (socketMaximo < fd_inotify)? fd_inotify : socketMaximo;
+				FD_SET(fd_inotify, &readfds);
+			}
+		}
 }
 
 void liberarRecursosUtilizados(){

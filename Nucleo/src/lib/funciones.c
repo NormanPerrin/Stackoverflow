@@ -73,6 +73,8 @@ pcb * crearPcb(char* programa){
 	else{
 		// La UMC pudo alocar los segmentos del proceso, entonces sigo:
 			nuevoPcb->id_cpu = -1;
+			nuevoPcb->quantum = config->quantum;
+			nuevoPcb->quantum_sleep = config->retardoQuantum;
 
 		// Ahora, analizo con el parser el código del programa para obtener su metadata:
 			t_metadata_program* infoProg = metadata_desde_literal(programa);
@@ -297,58 +299,6 @@ void manejarES(){
 		}
 	}
 }*/
-
-void notificarCambioDelQuantumACPU(){
-
-	info_quantum * infoQuantum = (info_quantum*) malloc(sizeof(info_quantum));
-		infoQuantum->quantum = config->quantum;
-		infoQuantum->retardoQuantum = config->retardoQuantum;
-
-	void enviarNuevoQuantum(cpu * unCpu){aplicar_protocolo_enviar(unCpu->fd_cpu, QUANTUM_MODIFICADO, infoQuantum);}
-	list_iterate(listaCPU, (void *)enviarNuevoQuantum);
-
-	free(infoQuantum);
-}
-
-void detectarCambiosEnArchivoConfig(){
-	char buffer[EVENT_SIZE];
-
-		fd_inotify = inotify_init();
-		if (fd_inotify < 0) {
-			manejarError("inotify_init");
-		}
-
-		int watch_descriptor = inotify_add_watch(fd_inotify, RUTA_CONFIG_NUCLEO, IN_MODIFY);
-
-		int length = read(fd_inotify, buffer, EVENT_SIZE);
-		if (length < 0) {
-			manejarError("read");
-		}
-
-		int offset = 0;
-
-		while (offset < length) {
-
-			struct inotify_event *event = (struct inotify_event *) &buffer[offset];
-
-			if (event->len) {
-
-				if (event->mask & IN_MODIFY) {
-					if (event->mask & IN_ISDIR) {
-						printf("El directorio %s fue modificado.\n", event->name);
-					} else {
-						printf("EL archivo %s fue modificado.\n", event->name);
-
-						notificarCambioDelQuantumACPU();
-					}
-				}
-			}
-			offset += sizeof (struct inotify_event) + event->len;
-		}
-
-		inotify_rm_watch(fd_inotify, watch_descriptor);
-		close(fd_inotify);
-} // TODO: METER EN EL SELECT EL FD INOTIFY
 
 pcb* copiarPcb(pcb* proceso){
  pcb* copia = malloc(sizeof *copia);

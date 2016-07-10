@@ -124,6 +124,7 @@ typedef struct pcb{
 	int pc; // program counter
 	int id_cpu; // id del CPU que ejecuta al proceso actualmente
 	int cantidad_instrucciones;
+	int quantum, quantum_sleep;
 
 	int ultimaPosicionIndiceStack;
 	int stackPointer;

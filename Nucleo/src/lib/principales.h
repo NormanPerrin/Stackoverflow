@@ -13,15 +13,18 @@ void llenarDiccionarioSemaforos();
 void llenarDiccionarioVarCompartidas();
 void lanzarHilosIO();
 void conectarConUMC();
-void iniciarEscuchaConsolasYCPUs();
+int obtenerSocketMaximoInicial();
+void iniciarEscuchaDeConsolasYCPUs();
 void esperar_y_PlanificarProgramas();
 void unirHilosIO();
 void liberarRecursosUtilizados();
+void iniciarEscuchaDeInotify();
 
 /*** INCLUÍDAS ***/
 void aceptarConexionEntranteDeConsola();
 void aceptarConexionEntranteDeCPU();
 void atenderNuevoMensajeDeCPU();
+void atenderCambiosEnArchivoConfig(int socketMaximo);
 var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
 
 #endif /* LIB_PRINCIPALES_H_ */

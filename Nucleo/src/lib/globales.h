@@ -14,7 +14,9 @@
 #include <sys/inotify.h>
 #include <parser/metadata_program.h>
 
-#define EVENT_SIZE ( sizeof (struct inotify_event) + strlen(RUTA_CONFIG_NUCLEO) + 1 )
+//#define EVENT_SIZE (sizeof(struct inotify_event) + strlen(RUTA_CONFIG_NUCLEO) + 1)
+#define EVENT_SIZE (sizeof( struct inotify_event ))
+#define EVENT_BUF_LEN (1024 * (EVENT_SIZE + 16))
 #define CONEXIONES_PERMITIDAS 10
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 #define RUTA_CONFIG_NUCLEO "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Nucleo/configNucleo.txt"
@@ -52,9 +54,11 @@ typedef struct {
 // VARIABLES GLOBALES:
 
 t_configuracion * config;
-int fd_UMC, tamanioPagina, fdEscuchaConsola, fdEscuchaCPU, fd_inotify;
+int fd_UMC, tamanioPagina, fdEscuchaConsola, fdEscuchaCPU;
 t_log * logger;
 fd_set readfds;
+// Inotify:
+int fd_inotify, watch_descriptor;
 
 t_list * listaProcesos; // Lista de todos los procesos en el sistema
 t_list * listaCPU; // Lista de todos las CPU conectadas

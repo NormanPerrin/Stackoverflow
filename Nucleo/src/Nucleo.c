@@ -8,6 +8,7 @@ int main(void) {
 
 	// Acciones preliminares, configuración y setting:
 	crearLoggerNucleo();
+	iniciarEscuchaDeInotify();
 	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
 	inicializarColecciones();
 	llenarDiccionarioSemaforos();
@@ -20,10 +21,10 @@ int main(void) {
 
 	// Conexiones con los módulos:
 	conectarConUMC();
-	iniciarEscuchaConsolasYCPUs();
+	iniciarEscuchaDeConsolasYCPUs();
 
 	while(TRUE){
-		// Select de Consolas y CPUs, planificación activa:
+		// Select de Consolas, CPUs e Inotify, planificación activa:
 		esperar_y_PlanificarProgramas();
 	 }
 
@@ -34,9 +35,11 @@ int main(void) {
 	unirHilosIO();
 
 	liberarRecursosUtilizados();
-	cerrarSocket(fd_UMC);
 	cerrarSocket(fdEscuchaConsola);
 	cerrarSocket(fdEscuchaCPU);
+	cerrarSocket(fd_UMC);
+	inotify_rm_watch(fd_inotify, watch_descriptor);
+	cerrarSocket(fd_inotify);
 
 	return EXIT_SUCCESS;
 }
