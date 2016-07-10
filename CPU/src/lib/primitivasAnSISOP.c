@@ -166,25 +166,30 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
 //HACER
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
-/*
-	// Creo un nuevo registro en el índice stack:
-	int var_indiceStack_posicion = pcbActual->ultimaPosicionIndiceStack;
-	//registroStack registroActual = pcbActual->indiceStack[var_indiceStack_posicion];
 
-	registroActual.retPos = donde_retornar;
-	pcbActual->pc = metadata_buscar_etiqueta(etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
-*/
+	t_list* indStack=pcbActual->indiceStack;
+
+	//Agrego un registroStack vacio
+	registroStack* nuevoRegistroStack;
+	list_add(indStack,nuevoRegistroStack);
+
+	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack;
+	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
+
+	registroActual->retPos=donde_retornar;
+	pcbActual->pc=metadata_buscar_etiqueta(etiqueta,pcbActual->indiceEtiquetas,pcbActual->tamanioIndiceEtiquetas);
 }
 
-//HACER//TERMINAR
+//REVISAR
 void retornar(t_valor_variable retorno){
-/*
-	//t_puntero* direccion_de_retorno; VER ESTO
+	t_list* indStack=pcbActual->indiceStack;
+	registroStack* ultimoRegistro=list_get(indStack,pcbActual->numeroContextoEjecucionActualStack);
 
-	asignar(direccion_de_retorno,retorno);
+	t_puntero* direccion_de_retorno=(t_puntero*)(ultimoRegistro->retPos);
+
+	asignar(*direccion_de_retorno,retorno);
 	pcbActual->ultimaPosicionIndiceStack-=sizeof(t_puntero);
 	finalizar();
-*/
 }
 //HACER//ISSUE #339
 void finalizar(){
