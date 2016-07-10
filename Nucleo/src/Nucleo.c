@@ -5,41 +5,45 @@
 #include "lib/principales.h"
 
 int main(void) {
+	// Acciones preliminares:
+		inicializarColecciones();
 
-	// Acciones preliminares, configuración y setting:
-	crearLoggerNucleo();
-	iniciarEscuchaDeInotify();
-	leerArchivoDeConfiguracion(RUTA_CONFIG_NUCLEO);
-	inicializarColecciones();
-	llenarDiccionarioSemaforos();
-	llenarDiccionarioVarCompartidas();
+	int return_value = EXIT_SUCCESS;
 
-	// Creo hilos para cada dispositivo de E/S:
-	lanzarHilosIO();
+	if (init_ok()){ // Configuración y setting OK:
 
-	pthread_mutex_init(&mutex_planificarProceso, NULL);
+		llenarDiccionarioSemaforos();
+		llenarDiccionarioVarCompartidas();
+		// Creo hilos para cada dispositivo de E/S:
+			lanzarHilosIO();
 
-	// Conexiones con los módulos:
-	conectarConUMC();
-	iniciarEscuchaDeConsolasYCPUs();
+			if (conectarConUMC() && iniciarEscuchaDeConsolasYCPUs()) {
+				if (crearThreadPlanificacion()) {
 
-	while(TRUE){
-		// Select de Consolas, CPUs e Inotify, planificación activa:
-		esperar_y_PlanificarProgramas();
-	 }
+					while(TRUE){
+						// Select de Consolas, CPUs e Inotify, planificación activa:
+						esperar_y_PlanificarProgramas();
+						 }
+				} else {
+					return_value = EXIT_FAILURE;
+				}
+	// Cierro hilos de los dispositivos de E/S y el de Planificación:
+				pthread_mutex_destroy(&mutex_planificarProceso);
+				unirHilosIO();
+			} else {
+				return_value = EXIT_FAILURE;
+			}
+		} else {
+			log_info(logger, "El Núcleo no pudo inicializarse correctamente.");
+			return_value = EXIT_FAILURE;
+		}
+	// Libero memoria y cierro sockets:
+		liberarRecursosUtilizados();
+		cerrarSocket(fdEscuchaConsola);
+		cerrarSocket(fdEscuchaCPU);
+		cerrarSocket(fd_UMC);
+		inotify_rm_watch(fd_inotify, watch_descriptor);
+		cerrarSocket(fd_inotify);
 
-	// Acciones finales, salida del sistema:
-	pthread_mutex_destroy(&mutex_planificarProceso);
-
-	// Cierro hilos de los dispositivos de E/S:
-	unirHilosIO();
-
-	liberarRecursosUtilizados();
-	cerrarSocket(fdEscuchaConsola);
-	cerrarSocket(fdEscuchaCPU);
-	cerrarSocket(fd_UMC);
-	inotify_rm_watch(fd_inotify, watch_descriptor);
-	cerrarSocket(fd_inotify);
-
-	return EXIT_SUCCESS;
+		return return_value;
 }

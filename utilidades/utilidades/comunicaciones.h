@@ -1,9 +1,9 @@
 #ifndef UTILIDADES_COMUNICACIONES_H_
 #define UTILIDADES_COMUNICACIONES_H_
 
-	#include "general.h"
+#include "general.h"
 
-// TODO: pedidoIO, string, var_compartida y devolverPaginaInstruccion son el mismo mensaje. Generalizar.
+#define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
 
 /* *** IMPORTANTE - LEER ***
  *
@@ -33,10 +33,8 @@ typedef enum {
 	FINALIZAR_PROGRAMA,				// Núcleo - UMC / UMC - SWAP
 	RESPUESTA_INICIO_PROGRAMA,		// UMC - Núcleo / Swap - UMC
 	LEER_PAGINA, 					// UMC - Swap
-	ESCRIBIR_PAGINA,				// UMC - Swap
 	DEVOLVER_VARIABLE, 				// UMC - CPU
 	RESPUESTA_PEDIDO, 				// UMC - CPU
-	DEVOLVER_PAGINA_VARIABLE,		// Swap - UMC
 	ABORTO_PROCESO,					// CPU - Núcleo
 	WAIT_SIN_BLOQUEO, 				// Núcleo - CPU
 	WAIT_CON_BLOQUEO,				// Núcleo - CPU
@@ -55,37 +53,39 @@ typedef enum {
 	OBTENER_VAR_COMPARTIDA,			// CPU - Núcleo
 	IMPRIMIR_TEXTO, 				// CPU - Núcleo / Núcleo - Consola
 	DEVOLVER_INSTRUCCION,			// UMC - CPU
-	DEVOLVER_PAGINA_INSTRUCCION,	// Swap - UMC
+	DEVOLVER_PAGINA,				// Swap - UMC
 	WAIT_REQUEST, SIGNAL_REQUEST,	// CPU - Núcleo
 	ENTRADA_SALIDA,					// CPU - Núcleo
 	GRABAR_VAR_COMPARTIDA,			// CPU - Núcleo
+	ESCRIBIR_PAGINA,				// UMC - Swap
 
 	FIN_DEL_PROTOCOLO
 } protocolo;
 
 /*** PROTOTIPOS ***/
 // -- Funciones definitivas para enviar y recibir PAQUETES:
-void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void * mensaje);
-void* aplicar_protocolo_recibir(int fdEmisor, int * protocolo);
+void aplicar_protocolo_enviar(int fdReceptor, int head, void * mensaje);
+void* aplicar_protocolo_recibir(int fdEmisor, int* head);
 
-// -- Serialización y deserialización GENERAL:
-void * serealizar(int head, void * elemento);
-void * deserealizar(int head, void * mensaje);
+int calcularTamanioMensaje(int head, void* mensaje);
+int calcularTamanioPCB(void* mensaje);
 
-// -- Serializaciones y deserializaciones DINÁMICAS:
-void* serealizarPCB(void* elemento);
-pcb* deserealizarPCB(void* buffer);
-void* serealizarTexto(void* elemento);
-void* deserealizarTexto(void* buffer);
-void* serealizarSolicitudInicioPrograma(void* elemento);
-void* deserealizarSolicitudInicioPrograma(void* buffer);
-void* serealizarSolicitudEscritura(void * elemento);
-void * deserealizarSolicitudEscritura(void * buffer);
-void *deserializarDevolverPagina(void *buffer);
-void *serealizarDevolverPagina(void *elemento);
-void *deserializarEscribirPagina(void * buffer);
-void *serealizarEscribirPagina(void *elemento);
-void* serealizarOperacionPrivilegiada(void* elemento);
-void* deserealizarOperacionPrivilegiada(void* buffer);
+// -- Serealización y deserealización GENERAL:
+void * serealizar(int head, void * mensaje, int tamanio);
+void * deserealizar(int head, void * mensaje, int tamanio);
+
+// -- Serealizaciones y deserealizaciones DINÁMICAS:
+void* serealizarPcb(void* mensaje, int tamanio);
+pcb* deserealizarPcb(void* buffer, int tamanio);
+void* serealizarTextoMasUnInt(void* mensaje, int tamanio);
+pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio);
+void* serealizarTextoMasDosInt(void* buffer, int tamanio);
+inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio);
+void* serealizarDosInt(void* mensaje, int tamanio);
+solicitudLeerPagina* deserealizarDosInt(void* buffer, int tamanio);
+void* serealizarTresInt(void* mensaje, int tamanio);
+direccion* deserealizarTresInt(void* buffer, int tamanio);
+void* serealizarCuatroInt(void* mensaje, int tamanio);
+solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

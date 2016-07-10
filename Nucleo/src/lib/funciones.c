@@ -3,21 +3,87 @@
 /*******************************
  *    FUNCIONES SECUNDARIAS    *
  ******************************/
-void setearValores_config(t_config * archivoConfig){
+int setearValoresDeConfig(t_config * archivoConfig){
+
 	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
 
-	config->puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
-	config->puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
-	config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
-	config->ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
-	config->quantum = config_get_int_value(archivoConfig, "QUANTUM");
-	config->retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
-	config->semaforosID = config_get_array_value(archivoConfig, "SEM_IDS");
-	config->ioID = config_get_array_value(archivoConfig, "IO_IDS");
-	config->variablesCompartidas = config_get_array_value(archivoConfig, "SHARED_VARS");
-	config->semaforosValInicial = config_get_array_value(archivoConfig, "SEM_INIT");
-	config->retardosIO = config_get_array_value(archivoConfig, "IO_SLEEP");
-	config->cantidadPaginasStack = config_get_int_value(archivoConfig, "STACK_SIZE");
+		if (config_has_property(archivoConfig, "PUERTO_UMC")) {
+			config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_UMC.\n");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "IP_UMC")) {
+			config->ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave IP_UMC.\n");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "PUERTO_PROG")) {
+			config->puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_PROG.\n");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "PUERTO_CPU")) {
+			config->puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_CPU.\n");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "QUANTUM")) {
+			config->quantum = config_get_int_value(archivoConfig, "QUANTUM");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave QUANTUM.\n");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "QUANTUM_SLEEP")) {
+			config->retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave QUANTUM_SLEEP.\n");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "SEM_IDS")) {
+			config->semaforosID = config_get_array_value(archivoConfig, "SEM_IDS");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave SEM_IDS.\n");
+			return FALSE;
+		}
+		if (config_has_property(config, "SEM_INIT")) {
+			config->semaforosValInicial = config_get_array_value(archivoConfig, "SEM_INIT");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave SEM_INIT.\n");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "IO_IDS")) {
+			config->ioID = config_get_array_value(archivoConfig, "IO_IDS");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave IO_IDS");
+			return FALSE;
+		}
+		if (config_has_property(config, "IO_SLEEP")) {
+			config->retardosIO = config_get_array_value(archivoConfig, "IO_SLEEP");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave IO_SLEEP");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "SHARED_VARS")) {
+			config->variablesCompartidas = config_get_array_value(archivoConfig, "SHARED_VARS");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave SHARED_VARS.\n");
+			return FALSE;
+		}
+		if (config_has_property(archivoConfig, "STACK_SIZE")) {
+			config->cantidadPaginasStack = config_get_int_value(archivoConfig, "STACK_SIZE");
+		} else {
+			log_info(logger, "El archivo de configuracion no contiene la clave STACK_SIZE.\n");
+			return FALSE;
+		}
+
+		config_destroy(archivoConfig); // Libero la estructura archivoConfig
+		printf("El archivo de configuración ha sido leído correctamente\n");
+
+	return TRUE;
 }
 
 int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa){
@@ -40,13 +106,13 @@ int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa){
 		free(solicitudDeInicio->contenido);
 		free(solicitudDeInicio);
 
-		respuestaInicioPrograma* respuestaUMC = NULL;
+		int* respuestaUMC = NULL;
 		int head;
 		void * entrada = NULL;
 		entrada = aplicar_protocolo_recibir(fd_UMC, &head);
 
 			if(head == RESPUESTA_INICIO_PROGRAMA)
-				respuestaUMC = (respuestaInicioPrograma*)entrada;
+				respuestaUMC = (int*)entrada;
 
 				if(*respuestaUMC == CREADO){
 					printf("UMC pudo alocar todos los segmentos del Proceso #%d.\n", nuevoPcb->pid);

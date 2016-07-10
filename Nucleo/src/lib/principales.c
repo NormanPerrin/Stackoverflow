@@ -3,10 +3,53 @@
 /*******************************
  *    FUNCIONES PRINCIPALES    *
  ******************************/
-void crearLoggerNucleo(){
+
+int leerConfiguracionNucleo(){
+
+	t_config * archivoConfig;
+
+		if (comprobarQueExistaArchivo(RUTA_CONFIG_NUCLEO) == ERROR){
+			manejarError("Error: Archivo de configuración no encontrado\n");
+			return FALSE;
+		}else{
+
+		archivoConfig = config_create(RUTA_CONFIG_NUCLEO);
+
+		return setearValoresDeConfig(archivoConfig);
+	}
+}
+
+int init_ok(){
+
+	if (crearLoggerNucleo() && iniciarEscuchaDeInotify()) {
+			return leerConfiguracionNucleo();
+		} else {
+			return FALSE;
+		}
+}
+
+int crearLoggerNucleo(){
+
 	char * archivoLogNucleo = strdup("NUCLEO_LOG.log");
 	logger = log_create("NUCLEO_LOG.log", archivoLogNucleo, true, LOG_LEVEL_INFO);
-	free(archivoLogNucleo); archivoLogNucleo = NULL;
+		free(archivoLogNucleo); archivoLogNucleo = NULL;
+		if(logger) {
+			return TRUE;
+		} else {
+			return FALSE;
+		}
+}
+
+int iniciarEscuchaDeInotify(){
+
+	if (watch_descriptor > 0 && fd_inotify > 0) {
+		inotify_rm_watch(fd_inotify, watch_descriptor);
+	}
+	fd_inotify = inotify_init();
+		if (fd_inotify > 0) {
+			watch_descriptor = inotify_add_watch(fd_inotify, RUTA_CONFIG_NUCLEO, IN_MODIFY);
+		}
+	return fd_inotify > 0;
 }
 
 void inicializarColecciones(){
@@ -85,19 +128,25 @@ void unirHilosIO(){
 	    }
 }
 
-void conectarConUMC(){
+int conectarConUMC(){
+
 	fd_UMC = nuevoSocket();
-	int ret = conectarSocket(fd_UMC, config->ipUMC, config->puertoUMC);
-	validar_conexion(ret, 1); // al ser cliente es terminante
+	int conexion = conectarSocket(fd_UMC, config->ipUMC, config->puertoUMC);
+
+	if(conexion == ERROR){
+		return FALSE;
+	}
 	handshake_cliente(fd_UMC, "N");
 
 	int * tamPagina = (int*)malloc(INT);
 	recibirPorSocket(fd_UMC, tamPagina, INT);
-	tamanioPagina = *tamPagina; // Seteo el tamaño de pág. que recibo de UMC
+	tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
 	free(tamPagina);
+
+	return TRUE;
 }
 
-void iniciarEscuchaDeConsolasYCPUs(){
+int iniciarEscuchaDeConsolasYCPUs(){
 	fdEscuchaConsola = nuevoSocket();
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
@@ -105,6 +154,21 @@ void iniciarEscuchaDeConsolasYCPUs(){
 	fdEscuchaCPU = nuevoSocket();
 	asociarSocket(fdEscuchaCPU, config->puertoCPU);
 	escucharSocket(fdEscuchaCPU, CONEXIONES_PERMITIDAS);
+
+	if(fdEscuchaConsola < 0 || fdEscuchaCPU < 0){
+		return FALSE;
+	}
+	return TRUE;
+}
+
+int crearThreadPlanificacion(){
+	int trhead_value = pthread_mutex_init(&mutex_planificarProceso, NULL);
+	if(trhead_value == 0){
+		return TRUE;
+	}
+	else{
+		return FALSE;
+	}
 }
 
 int obtenerSocketMaximoInicial(){
@@ -249,10 +313,6 @@ void aceptarConexionEntranteDeCPU(){
 		    		nuevoCPU->fd_cpu = fdNuevoCPU;
 		    		nuevoCPU->disponibilidad = LIBRE;
 
-		    		int* quantum = (int*)malloc(INT);
-		    		*quantum = config->quantum;
-		    		aplicar_protocolo_enviar(nuevoCPU->fd_cpu, QUANTUM_MODIFICADO, quantum);
-		    		free(quantum);
 	// Agrego al CPU a mi lista de CPUs:
 		    		list_add(listaCPU, nuevoCPU);
 		    		log_info(logger,"La CPU %i se ha conectado", nuevoCPU->id);
@@ -455,20 +515,6 @@ void atenderNuevoMensajeDeCPU(){
 			}
 		}
 	}
-}
-
-void iniciarEscuchaDeInotify(){
-	if (watch_descriptor > 0 && fd_inotify > 0) {
-		inotify_rm_watch(fd_inotify, watch_descriptor);
-	}
-
-	fd_inotify = inotify_init();
-		if (fd_inotify > 0) {
-			watch_descriptor = inotify_add_watch(fd_inotify, RUTA_CONFIG_NUCLEO, IN_MODIFY);
-		}
-		else{
-			manejarError("Eror: inotify_init");
-		}
 }
 
 void atenderCambiosEnArchivoConfig(int socketMaximo){

@@ -4,7 +4,7 @@
 #include "globales.h"
 
 /**** FUNCIONES SECUNDARIAS ****/
-void setearValores_config(t_config * archivoConfig);
+int setearValoresDeConfig(t_config * archivoConfig);
 void actualizarPcbEjecutada(cpu * unCPU, pcb * pcbEjecutada, int estado);
 void inicializarIndices(pcb* pcb, t_metadata_program* metaData);
 int asignarPid(t_list * procesos);

@@ -7,18 +7,21 @@
 #include "semaforos.h"
 
 /*** FUNCIONES PRINCIPALES ***/
-void crearLoggerNucleo();
+int init_ok();
+int leerConfiguracionNucleo();
+int crearLoggerNucleo();
+int iniciarEscuchaDeInotify();
 void inicializarColecciones();
 void llenarDiccionarioSemaforos();
 void llenarDiccionarioVarCompartidas();
 void lanzarHilosIO();
-void conectarConUMC();
+int conectarConUMC();
 int obtenerSocketMaximoInicial();
-void iniciarEscuchaDeConsolasYCPUs();
+int iniciarEscuchaDeConsolasYCPUs();
+int crearThreadPlanificacion();
 void esperar_y_PlanificarProgramas();
 void unirHilosIO();
 void liberarRecursosUtilizados();
-void iniciarEscuchaDeInotify();
 
 /*** INCLUÍDAS ***/
 void aceptarConexionEntranteDeConsola();

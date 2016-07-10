@@ -2,7 +2,7 @@
 
 void validar_argumentos(int arg) {
 	if(arg != 2) {
-		printf("Debe ingresar el archivo a ejecutar como parámetro\n");
+		printf("Debe ingresar el archivo a ejecutar como parámetro.\n");
 		exit(1);
 	}
 }
@@ -13,20 +13,18 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void leerScript(char * rutaPrograma){
-	programa = (string*)malloc(sizeof(string));
 
-	int _tamanio, descriptorArchivo;
-	struct stat infoArchivo; // Ver función 'stat' en stat.h
+	rutaScript = strdup(rutaPrograma); // Guardo la ruta
+
+	int tamanio, descriptorArchivo;
+	struct stat infoArchivo; // función de stat.h
 
 	descriptorArchivo = open(rutaPrograma, O_RDONLY); // Abre el archivo .asnsisop
-		fstat(descriptorArchivo, &infoArchivo); // Obtiene su información
-		_tamanio = infoArchivo.st_size;
-		programa->tamanio = _tamanio;
+		fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
+		tamanio = infoArchivo.st_size;
 
-		read(descriptorArchivo, programa->cadena, programa->tamanio); // Guardo el script en programa
+		read(descriptorArchivo, programa, tamanio); // Guardo el script en programa
 		close(descriptorArchivo);
-
-		rutaScript = strdup(rutaPrograma); // Extra: se guarda la ruta en una variable global
 } // El programa ya está listo para ser enviado a Núcleo
 
 void conectarCon_Nucleo(){
@@ -34,14 +32,9 @@ void conectarCon_Nucleo(){
 	int ret = conectarSocket(fd_nucleo, ipNucleo, puertoNucleo);
 	validar_conexion(ret, 1); // Al ser cliente es terminante
 	handshake_cliente(fd_nucleo, "C");
-
-	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
-	free(programa->cadena);
-	free(programa);
 }
 
 void liberarRecursos() {
-	free(programa->cadena);
 	free(programa);
 	free(ipNucleo);
 	free(rutaScript);
@@ -51,62 +44,19 @@ void liberarRecursos() {
 
 int validar_servidor(char *id) {
 	if(!strcmp(id, "N")) {
-		printf("Servidor aceptado\n");
+		printf("Servidor aceptado.\n");
 		return TRUE;
 	} else {
-		printf("Servidor rechazado\n");
+		printf("Servidor rechazado.\n");
 		return FALSE;
 	}
 }
 int validar_cliente(char *id) {return 0;}
 
-void esperarMensajesDeNucleo() {
-	int head;
-	void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
-	if (mensaje == NULL) { // desconexión o error
-			cerrarSocket(fd_nucleo);
-			log_info(logger,"El Núcleo se ha desconectado.");
-			free(mensaje);
-	}
-	else{
-		if(head == RECHAZAR_PROGRAMA){
-			puts("La UMV no pudo alocar los segmentos pedidos. El programa ha sido rechazado.");
-			cerrarSocket(fd_nucleo);
-			// log_info(logger, "El sistema ha rechazado al programa %s. Desconectando.", rutaScript);
-			free(mensaje);
-						}
-		else { // se leyó correctamente el mensaje
-
-	while(TRUE) {
-
-		switch(head){
-
-			case IMPRIMIR_TEXTO:{
-				/* Incluye 'imprimir', ya que Núcleo le manda la variable "convertida a texto",
-				 * asi que ambos casos le llegan como string */
-				string* dataAImprimir = (string*)mensaje;
-				puts(dataAImprimir->cadena);
-				free(mensaje);
-			break;
-					}
-			case FINALIZAR_PROGRAMA:{
-				puts("Finalizando el programa.");
-					cerrarSocket(fd_nucleo);
-					free(mensaje);
-			break;
-					}
-				} // fin del switch-case
-
-			mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
-			} // fin del while
-		}
-	}
-}
-
 // --LOGGER--
 void crearLoggerConsola(){
 	char * archivoLogConsola = strdup("CONSOLA_LOG.log");
-	logger = log_create("CONSOLA_LOG.log", archivoLogConsola, TRUE, LOG_LEVEL_INFO);
+	logger = log_create("CONSOLA_LOG.log", archivoLogConsola, true, LOG_LEVEL_INFO);
 	free(archivoLogConsola);
 	archivoLogConsola = NULL;
 }

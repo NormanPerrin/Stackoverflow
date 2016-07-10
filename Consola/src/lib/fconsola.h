@@ -12,7 +12,7 @@ int puertoNucleo;
 char * ipNucleo;
 int fd_nucleo; // Socket Consola - Núcleo
 char * rutaScript;
-string* programa;
+char* programa; // Script AnSISOP asociado
 t_log * logger;
 
 // Cabeceras
@@ -23,7 +23,6 @@ void liberarRecursos(); // Libera memoria asignada
 void conectarCon_Nucleo();
 int validar_servidor(char *id); // Valida si la conexión es de Núcleo
 int validar_cliente(char *id); // Es para poner su definición y que no jodan errores
-void esperarMensajesDeNucleo(); // Espera mensajes de Núcleo: Fin, Imprimir, Imprimir_texto
 void crearLoggerConsola();
 
 #endif /* LIB_FCONSOLA_H_ */

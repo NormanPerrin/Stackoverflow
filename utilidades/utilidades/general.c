@@ -26,7 +26,7 @@ void leerArchivoDeConfiguracion(char * ruta) {
 
 	config_destroy(archivoConfig); // Libero la estructura archivoConfig
 
-	printf("El archivo de configuración ha sido leído correctamente\n"); // TODO: ver de loggear en cada módulo
+	printf("El archivo de configuración ha sido leído correctamente\n");
 	}
 }
 

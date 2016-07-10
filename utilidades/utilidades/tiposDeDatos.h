@@ -32,7 +32,7 @@ typedef struct {
 typedef struct {
 	char *nombre;
 	direccion direccion;
-} __attribute__((packed)) variable;
+} variable;
 
 // Pedido de Entrada/Salida:
 typedef struct {
@@ -40,10 +40,10 @@ typedef struct {
 	char* nombreDispositivo;
 } __attribute__((packed)) pedidoIO;
 
-// Para indicar si se pudo alocar los segmentos de un programa:
-typedef int respuestaInicioPrograma;
+// Respuesta ante el inicio de un programa de UMC a Núcleo:
+	/* MANDA DIRECTAMENTE UN INT */
 
-// Valores que puede tomar 'respuestaInicioPrograma':
+// Valores que puede tomar la respuesta ante el inicio de un programa:
 typedef enum {
 	CREADO, NO_CREADO
 } estadoDelHeap;
@@ -89,21 +89,22 @@ typedef struct {
 	int pagina, offset, tamanio, contenido;
 } __attribute__((packed)) solicitudEscritura;
 
-// Valores que puede tomar una respuesta ante un pedido a UMC:
+// Valores que puede tomar la respuesta de UMC ante un pedido:
 typedef enum{
 	PERMITIDO, NO_PERMITIDO
 } estadoPedido;
 
-// Respuesta a un pedido de Lectura de Instrucción:
+// Respuesta de Swap a un pedido de Lectura de UMC:
 typedef struct {
 	int pagina;
 	char *contenido;
-} __attribute__((packed))devolverPaginaInstruccion;
+} __attribute__((packed))devolverPagina;
 
-// Respuesta a un pedido de Lectura de Variable:
-typedef struct {
-	int pagina, contenido;
-} __attribute__((packed))devolverPaginaVariable;
+// Respuesta a un pedido de Lectura de Variable de UMC a CPU:
+	/* MANDA DIRECTAMENTE UN INT */
+
+// Respuesta a un pedido de Lectura de Instrucción de UMC a CPU:
+	/* MANDA DIRECTAMENTE UN CHAR* */
 
 // Pedido de Lectura de UMC a Swap:
 typedef struct {
@@ -112,7 +113,8 @@ typedef struct {
 
 // Pedido de Escritura de UMC a Swap (contenido = variable a escribir):
 typedef struct {
-	int pid, pagina, contenido;
+	int pid, pagina;
+	char* contenido;
 } __attribute__((packed))solicitudEscribirPagina;
 
 #endif /* UTILIDADES_TIPOSDEDATOS_H_ */
