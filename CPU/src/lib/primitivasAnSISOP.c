@@ -165,6 +165,7 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
+
 	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
 	registroStack* nuevoRegistroStack = malloc(sizeof(tamRegistroStack));
 	direccion* varRetorno = malloc(sizeof(direccion));
@@ -189,17 +190,45 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 	free(nuevoRegistroStack);
 
 	irAlLabel(etiqueta);
+
 }
 
 void retornar(t_valor_variable retorno){
-	t_list* indStack=pcbActual->indiceStack;
-	registroStack* ultimoRegistro=list_get(indStack,pcbActual->numeroContextoEjecucionActualStack);
 
-	t_puntero* direccion_de_retorno=(t_puntero*)(ultimoRegistro->retPos);
+	//Agarro contexto actual y anterior
+	int numeroEjecucionActual=pcbActual->numeroContextoEjecucionActualStack;
+	t_stack* contextoEjecucionActual=list_get((pcbActual->indiceStack),numeroEjecucionActual);
 
-	asignar(*direccion_de_retorno,retorno);
-	pcbActual->ultimaPosicionIndiceStack-=sizeof(t_puntero);
-	finalizar();
+	//Limpio el contexto de ejecucion actual
+	int i;
+	for (i=0;i< list_size(contextoEjecucionActual->elements); i++){
+		t_list* argumentos=list_get(contextoEjecucionActual,i);
+		direccion* arg=list_get(argumentos,i);
+		pcbActual->stackPointer=pcbActual->stackPointer-4;
+		free(arg);
+	}
+	for(i = 0; i <list_size(contextoEjecucionActual->elements); i++){
+		t_list* variables=list_get(contextoEjecucionActual,i);
+		direccion* var = list_get(variables, i);
+		pcbActual->stackPointer=pcbActual->stackPointer-4;
+		free(var);
+			}
+		direccion* retVar=list_get(contextoEjecucionActual->elements);
+		t_puntero direcVariable = (retVar->pagina*tamanioPagina)+retVar->offset;
+
+		//calculo la direccion a la que tengo que retornar mediante la direccion de pagina start y offset que esta en el campo retVar
+		asignar(direcVariable,retorno);
+
+		//Elimino el contexto actual del indice del stack
+		//Seteo el contexto de ejecucion actual en el anterior
+
+		pcbActual->pc= ((registroStack*)list_get(contextoEjecucionActual,numeroEjecucionActual))->retVar;
+		free(contextoEjecucionActual);
+		list_remove(pcbActual->indiceStack,pcbActual->numeroContextoEjecucionActualStack);
+		pcbActual->numeroContextoEjecucionActualStack-=1;
+		t_stack* contextoEjecNuevo= list_get (pcbActual->indiceStack,pcbActual.numeroContextoEjecucionActualStack);
+		log_debug(logger,"Llamada a retornar" );
+		return;
 }
 
 void imprimir(t_valor_variable valor_mostrar){

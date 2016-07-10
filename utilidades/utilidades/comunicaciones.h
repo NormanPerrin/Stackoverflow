@@ -3,7 +3,7 @@
 
 #include "general.h"
 
-#define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
+ #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
 
 /* *** IMPORTANTE - LEER ***
  *
@@ -88,5 +88,7 @@ void* serealizarTresInt(void* mensaje, int tamanio);
 direccion* deserealizarTresInt(void* buffer, int tamanio);
 void* serealizarCuatroInt(void* mensaje, int tamanio);
 solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
+int calcularTamanioIndiceStack(t_list* indice);
+void calcularTamanioRegistroStack(void* element);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */
