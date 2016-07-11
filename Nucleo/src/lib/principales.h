@@ -2,9 +2,6 @@
 #define LIB_PRINCIPALES_H_
 
 #include "funciones.h"
-#include "globales.h"
-#include "entradaSalida.h"
-#include "semaforos.h"
 
 /*** FUNCIONES PRINCIPALES ***/
 void inicializarColecciones();

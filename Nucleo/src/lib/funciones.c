@@ -393,3 +393,102 @@ void encolarPcbAListos(pcb* proceso){
   log_info(logger,"Moviendo proceso %d a la cola de Listos", proceso->pid);
   queue_push(colaListos, copia);
 }
+
+void bloquearProcesoPorIO(hiloIO* dispositivoIO, proceso_bloqueadoIO* unPcb){
+	pthread_mutex_lock(&dispositivoIO->dataHilo.mutex_io);
+	queue_push(dispositivoIO->dataHilo.bloqueados, unPcb);
+	pthread_mutex_unlock(&dispositivoIO->dataHilo.mutex_io);
+	sem_post(&dispositivoIO->dataHilo.sem_io);
+}
+
+proceso_bloqueadoIO* esperarPorProceso(dataDispositivo* datos){
+	sem_wait(&datos->sem_io);
+	pthread_mutex_lock(&datos->mutex_io);
+	proceso_bloqueadoIO* proceso = queue_pop(datos->bloqueados);
+	pthread_mutex_unlock(&datos->mutex_io);
+
+	return proceso;
+}
+
+void realizarEntradaSalida(pcb* pcbEjecutada, pedidoIO* datos){
+
+	proceso_bloqueadoIO* pcbIO = malloc(sizeof *pcbIO);
+	hiloIO* dispositivoIO = dictionary_get(diccionarioIO, datos->nombreDispositivo);
+		pcbIO->espera = datos->tiempo;
+		pcbIO->proceso = copiarPcb(pcbEjecutada);
+
+		// Bloqueo al proceso por IO:
+		pthread_mutex_lock(&dispositivoIO->dataHilo.mutex_io);
+		queue_push(dispositivoIO->dataHilo.bloqueados, pcbIO);
+		pthread_mutex_unlock(&dispositivoIO->dataHilo.mutex_io);
+		sem_post(&dispositivoIO->dataHilo.sem_io);
+}
+
+void* entradaSalidaThread(void* dataHilo){
+	int tiempoDeEspera;
+
+		dataDispositivo *datos = dataHilo;
+		proceso_bloqueadoIO* proceso;
+
+		while (TRUE){
+
+			proceso = esperarPorProceso(datos);
+			tiempoDeEspera = (datos->retardo * proceso->espera) * 1000;
+			usleep(tiempoDeEspera);
+			encolarPcbAListos(proceso->proceso);
+			free(proceso);
+		}
+		return NULL ;
+}
+
+hiloIO* crearHiloIO(int index){
+  hiloIO *hilo = malloc(sizeof(hiloIO));
+
+  hilo->dataHilo.retardo = atoi(config->retardosIO[index]);
+  sem_init(&hilo->dataHilo.sem_io, 0, 0);
+  pthread_mutex_init(&hilo->dataHilo.mutex_io, NULL );
+  hilo->dataHilo.bloqueados = queue_create();
+  hilo->dataHilo.nombre = strdup(config->ioID[index]);
+
+  return hilo;
+}
+
+void semaforo_blockProcess(t_queue* colaBloqueados, pcb* procesoEjecutando){
+  pcb* copia = malloc(sizeof *copia);
+  memcpy(copia, &(procesoEjecutando), sizeof *copia);
+  queue_push(colaBloqueados, copia);
+}
+
+t_semaforo* semaforo_create(char*nombre, int valor){
+
+  t_semaforo *semaforo = malloc(sizeof(t_semaforo));
+  semaforo->nombre = strdup(nombre);
+  semaforo->valor = valor;
+  semaforo->bloqueados = queue_create();
+
+  return semaforo;
+}
+
+void semaforo_signal(t_semaforo* semaforo){
+
+	semaforo->valor++;
+
+  if (semaforo->valor <= 0){
+      pcb* procesoBloqueado = queue_pop(semaforo->bloqueados);
+      if (procesoBloqueado != NULL){
+
+          encolarPcbAListos(procesoBloqueado);
+          free(procesoBloqueado);
+        }
+    }
+}
+
+int semaforo_wait(t_semaforo* semaforo){
+
+	semaforo->valor--;
+
+  if (semaforo->valor < 0){
+      return TRUE;
+    }
+  return FALSE;
+}

@@ -27,4 +27,18 @@ var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
 void registrarSemaforo(char* name, int value);
 void registrarVariableCompartida(char* name, int value);
 
+// IO y Semaforos:
+// IO:
+void bloquearProcesoPorIO(hiloIO* dispositivoIO, proceso_bloqueadoIO* unPcb);
+void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
+void* entradaSalidaThread(void* dataHilo);
+hiloIO* crearHiloIO(int index);
+proceso_bloqueadoIO* esperarPorProceso(dataDispositivo* datos);
+
+// TAD SEmáforo:
+t_semaforo* semaforo_create(char*nombre, int valor);
+void semaforo_signal(t_semaforo* semaforo);
+int semaforo_wait(t_semaforo* semaforo);
+void semaforo_blockProcess(t_queue* colaBloqueados, pcb* procesoEjecutando);
+
 #endif /* LIB_FUNCIONES_H_ */

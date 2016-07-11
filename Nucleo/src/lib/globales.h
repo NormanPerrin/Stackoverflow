@@ -26,12 +26,6 @@ typedef struct {
 } t_configuracion;
 
 typedef struct {
-	char *nombre;
-	int valor;
-	t_queue *bloqueados;
-} t_semaforo;
-
-typedef struct {
 	int id, fd_consola, pid;
 	char* programa;
 } consola;
@@ -43,6 +37,30 @@ typedef enum {
 typedef struct {
 	int id, fd_cpu, disponibilidad, pid;
 } cpu;
+
+typedef struct{
+	char* nombre;
+	pthread_mutex_t mutex_io;
+	sem_t sem_io;
+	int retardo;
+	t_queue *bloqueados;
+} dataDispositivo;
+
+typedef struct{
+	pthread_t hiloID;
+	dataDispositivo dataHilo;
+} hiloIO;
+
+typedef struct{
+	pcb* proceso;
+	int espera;
+} proceso_bloqueadoIO;
+
+typedef struct {
+	char *nombre;
+	int valor;
+	t_queue *bloqueados;
+} t_semaforo;
 
 // VARIABLES GLOBALES:
 
