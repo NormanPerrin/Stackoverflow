@@ -3,7 +3,8 @@
 
 #include "general.h"
 
- #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
+#define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
+#define MSJ_VACIO ((void *)1) // Para no poner NULL
 
 /* *** IMPORTANTE - LEER ***
  *

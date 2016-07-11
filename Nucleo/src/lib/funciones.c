@@ -174,8 +174,7 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
-			t_list * pcbStack = list_create();
-			nuevoPcb->indiceStack = pcbStack;
+			nuevoPcb->indiceStack = stack_create();
 			nuevoPcb->numeroContextoEjecucionActualStack = 0;
 
 		// Inicializo índice de etiquetas:

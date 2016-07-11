@@ -8,7 +8,6 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 
 	if (head < 1 || head > FIN_DEL_PROTOCOLO){
 		printf("Error al enviar paquete. No existe protocolo definido para %d\n", head);
-		abort(); // es abortivo
 		}
 	// Calculo el tamaño del mensaje:
 	tamanioMensaje = calcularTamanioMensaje(head, mensaje);
@@ -37,18 +36,14 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 
 	// Validar contra NULL al recibir en cada módulo (lanzar un mensaje de error notificando)
-	int recibido;
-
-//	if (*head < 1 || *head > FIN_DEL_PROTOCOLO){
-//		printf("Error al recibir paquete. No existe protocolo definido para %d\n", *head);
-//		abort(); // es abortivo
-//	}
-
 	// Recibo primero el head:
-	recibido = recibirPorSocket(fdEmisor, head, INT);
-		if (recibido <= 0){
-			return NULL;
-		}
+	int recibido = recibirPorSocket(fdEmisor, head, INT);
+
+	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){
+		printf("Error al recibir paquete. No existe protocolo definido para %d\n", *head);
+		return NULL;
+	}
+
 	// Recibo ahora el tamaño del mensaje:
 	int* tamanioMensaje = malloc(INT);
 	recibido = recibirPorSocket(fdEmisor, tamanioMensaje, INT);
