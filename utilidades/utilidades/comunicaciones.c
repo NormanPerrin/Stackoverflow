@@ -39,10 +39,11 @@ void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 	// Validar contra NULL al recibir en cada módulo (lanzar un mensaje de error notificando)
 	int recibido;
 
-	if (*head < 1 || *head > FIN_DEL_PROTOCOLO){
-		printf("Error al recibir paquete. No existe protocolo definido para %d\n", *head);
-		abort(); // es abortivo
-	}
+//	if (*head < 1 || *head > FIN_DEL_PROTOCOLO){
+//		printf("Error al recibir paquete. No existe protocolo definido para %d\n", *head);
+//		abort(); // es abortivo
+//	}
+
 	// Recibo primero el head:
 	recibido = recibirPorSocket(fdEmisor, head, INT);
 		if (recibido <= 0){

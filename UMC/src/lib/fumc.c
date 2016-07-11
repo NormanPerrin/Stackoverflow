@@ -48,7 +48,12 @@ void consola() {
 
 		void (*funcion)(char*) = direccionarConsola(mensaje); // elijo función a ejecutar según mensaje
 		char *argumento = obtenerArgumento(mensaje);
-		funcion(argumento); // ejecuto función
+		if(funcion == NULL) {
+			printf("Error: Comando no reconocido\n");
+			free(argumento);
+			continue;
+		}
+		funcion(argumento); // ejecuto función TODO corregir la separación de consola función con argumento
 		free(argumento);
 	}
 
@@ -100,10 +105,15 @@ void cliente(void* fdCliente) {
 	free(fdCliente);
 
 	int *head = (int*)reservarMemoria(INT);
-	int ret = 1;
 
-	while(ret > 0 && !exitFlag) {
+	while(!exitFlag) {
 		void *mensaje = aplicar_protocolo_recibir(sockCliente, head); // recibo mensaje
+		if(mensaje == NULL) {
+			printf("Conexión cerrada o error en mensaje de %d\n", sockCliente);
+			free(mensaje);
+			exitFlag = TRUE;
+			break;
+		}
 		void (*funcion)(int, void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
 		sem_wait(&mutex);
 		funcion(sockCliente, mensaje); // ejecuto función
@@ -779,6 +789,12 @@ void *direccionarConsola(char *mensaje) {
 	if(!strcmp(nombre, "flush")) {
 		free(nombre);
 		return flush;
+	}
+
+	if(!strcmp(nombre, "salir")) {
+		free(nombre);
+		exitFlag = TRUE;
+		return NULL;
 	}
 
 	return NULL;
