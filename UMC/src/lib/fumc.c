@@ -45,16 +45,20 @@ void consola() {
 	while(!exitFlag) {
 
 		scanf("%[^\n]%*c", mensaje);
+		funcion_t *mensaje_separado = separarMensaje(mensaje);
 
-		void (*funcion)(char*) = direccionarConsola(mensaje); // elijo función a ejecutar según mensaje
-		char *argumento = obtenerArgumento(mensaje);
+		void (*funcion)(char*) = direccionarConsola(mensaje_separado->cabeza); // elijo función a ejecutar según mensaje
 		if(funcion == NULL) {
-			printf("Error: Comando no reconocido\n");
-			free(argumento);
+			printf("Error: Comando no reconocido \"%s\"\n", mensaje_separado->cabeza);
+			free(mensaje_separado->cabeza);
+			free(mensaje_separado->argumento);
+			free(mensaje_separado);
 			continue;
 		}
-		funcion(argumento); // ejecuto función TODO corregir la separación de consola función con argumento
-		free(argumento);
+		funcion(mensaje_separado->argumento);
+		free(mensaje_separado->cabeza);
+		free(mensaje_separado->argumento);
+		free(mensaje_separado);
 	}
 
 	free(mensaje);
@@ -109,9 +113,7 @@ void cliente(void* fdCliente) {
 	while(!exitFlag) {
 		void *mensaje = aplicar_protocolo_recibir(sockCliente, head); // recibo mensaje
 		if(mensaje == NULL) {
-			printf("Conexión cerrada o error en mensaje de %d\n", sockCliente);
 			free(mensaje);
-			exitFlag = TRUE;
 			break;
 		}
 		void (*funcion)(int, void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
@@ -391,6 +393,7 @@ void cambiarPid(int fd, void *mensaje) {
 void iniciarTP() {
 	int i;
 	for(i = 0; i < MAX_PROCESOS; i++) {
+		tabla_paginas[i].pid = -1;
 		tabla_paginas[i].paginas = MAX_PAGINAS;
 		tabla_paginas[i].marcos_reservados = (int*)reservarMemoria(config->marco_x_proceso * INT);
 		int k = 0;
@@ -774,41 +777,29 @@ void *elegirFuncion(protocolo head) {
 
 void *direccionarConsola(char *mensaje) {
 
-	char *nombre = obtenerNombre(mensaje);
-
-	if(!strcmp(nombre, "retardo")) {
-		free(nombre);
+	if(!strcmp(mensaje, "retardo"))
 		return retardo;
-	}
 
-	if(!strcmp(nombre, "dump")) {
-		free(nombre);
+	if(!strcmp(mensaje, "dump"))
 		return dump;
-	}
 
-	if(!strcmp(nombre, "flush")) {
-		free(nombre);
+	if(!strcmp(mensaje, "flush"))
 		return flush;
-	}
 
-	if(!strcmp(nombre, "salir")) {
-		free(nombre);
+	if(!strcmp(mensaje, "salir"))
 		exitFlag = TRUE;
-		return NULL;
-	}
+		return salir;
 
 	return NULL;
 }
 
-char *obtenerNombre(char *mensaje) {
-	char *retorno = (char*)reservarMemoria(CHAR*10);
-	sscanf(mensaje, "%s ", retorno);
-	return retorno;
-}
-
-char *obtenerArgumento(char *mensaje) {
-	char *retorno = (char*)reservarMemoria(CHAR*15);
-	sscanf(mensaje, " %s", retorno);
+funcion_t *separarMensaje(char *mensaje) {
+	char *cabeza = (char*)reservarMemoria(CHAR*10);
+	char *argumento = (char*)reservarMemoria(CHAR*10);
+	sscanf(mensaje, "%s %s\n", cabeza, argumento);
+	funcion_t *retorno = (funcion_t*)reservarMemoria(sizeof(funcion_t));
+	retorno->cabeza = cabeza;
+	retorno->argumento = argumento;
 	return retorno;
 }
 
@@ -845,20 +836,30 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 
 char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla) {
 
-	char *mensaje = (char*)reservarMemoria(CHAR * 2000);
+	char *mensaje = (char*)reservarMemoria(CHAR * 10000);
+	char *linea = (char*)reservarMemoria(CHAR * 1000);
 	mensaje[0] = '\0';
 
-	sprintf(mensaje, "> #PID: %d; #Paginas: %d; #Puntero: %d;\n", pid, paginas, puntero);
+	sprintf(linea, "> #PID: %d;\t#Paginas: %d;\t#Puntero: %d;\n", pid, paginas, puntero);
+	strcat(mensaje, linea);
+	sprintf(linea, "#Pagina\t#Marco\t#Presencia\t#Uso\t#Modificado\n");
+	strcat(mensaje, linea);
 
 	int i = 0;
 	for(; i < paginas; i++) {
-		sprintf(mensaje, "#Pagina: %d; ", tabla[i].pagina);
-		sprintf(mensaje, "#Marco: %d; ", tabla[i].marco);
-		sprintf(mensaje, "#Bit Presencia: %d; ", tabla[i].bit_presencia);
-		sprintf(mensaje, "#Bit Uso: %d; ", tabla[i].bit_uso);
-		sprintf(mensaje, "#Bit Modificado: %d;", tabla[i].bit_modificado);
+		sprintf(linea, "\t%d\t ", tabla[i].pagina);
+		strcat(mensaje, linea);
+		sprintf(linea, "\t%d\t", tabla[i].marco);
+		strcat(mensaje, linea);
+		sprintf(linea, "\t%d\t", tabla[i].bit_presencia);
+		strcat(mensaje, linea);
+		sprintf(linea, "\t%d\t", tabla[i].bit_uso);
+		strcat(mensaje, linea);
+		sprintf(linea, "\t%d\n", tabla[i].bit_modificado);
+		strcat(mensaje, linea);
 	}
 
+	free(linea);
 	return mensaje;
 }
 
@@ -1090,17 +1091,7 @@ void actualizarPuntero(int pid, int pagina) {
 // <CONSOLA_FUNCS>
 
 void retardo(char *argumento) {
-
-	// 1) convierto la cadena a digito
-	int numero = 0, i = 0, digito = 1;
-
-	for(; i < (strlen(argumento)); i++) {
-		numero += (argumento[i] - '0') * digito;
-		digito *= 10;
-	}
-
-	// 2) Opero con argumento  transformado (numero)
-	config->retardo = numero;
+	config->retardo = atoi(argumento);
 }
 
 void dump(char *argumento) {
@@ -1109,35 +1100,56 @@ void dump(char *argumento) {
 
 	// 1) Generar reporte Tabla Paginas
 	int i = 0;
-	for(; i < MAX_PROCESOS; i++)
+	for(; i < MAX_PROCESOS; i++) {
+		if(tabla_paginas[i].pid == -1) continue; // me salteo las entradas sin procesos
 		mensaje = generarStringInforme(tabla_paginas[i].pid, tabla_paginas[i].paginas, tabla_paginas[i].puntero, tabla_paginas[i].tabla);
-	log_info(logger, "Tabla Paginas: %s", mensaje);
-
-	strcpy(mensaje, ""); // limpio para volverlo a setear
-
-	// 2) Generar reporte Memoria Principal
-	int mp_size = config->marco_size * config->marcos;
-	void *pagina = reservarMemoria(config->marco_size);
-	int j = 0;
-	for(; j < mp_size; j++) {
-		void *posicion_mp = memoria + (j * config->marco_size);
-		memcpy(pagina, posicion_mp, config->marco_size);
-		sprintf(mensaje, "- Contenido página #%d: %s\n", j, (char*)pagina);
+		log_info(logger, "Tabla Paginas:\n%s", mensaje);
+		free(mensaje);
 	}
 
-	free(pagina);
+	char *marco = (char*)reservarMemoria(CHAR * config->marco_size);
+	marco[0] = '\0';
+
+	// 2) Generar reporte Memoria Principal
+	int j = 0;
+	for(; j < config->marcos; j++) {
+		void *posicion_mp = memoria + (j * config->marco_size);
+		memcpy(marco, posicion_mp, config->marco_size);
+		log_info(logger, "Contenido pagina #%d:\n%s\n", j, marco);
+	}
+
+	free(marco);
 }
 
 void flush(char *argumento) {
-	if(!strcmp(argumento, "tlb")) limpiarTLB();
-	if(!strcmp(argumento, "memory")) cambiarModificado();
+
+	if(!strcmp(argumento, "tlb"))
+		limpiarTLB();
+
+	if(!strcmp(argumento, "memory"))
+		cambiarModificado();
+
+	if( strcmp(argumento, "tlb") && strcmp(argumento, "memory") )
+		fprintf(stderr, "Error: argumento \"%s\" invalido.\n- flush tlb\n- flush memory\n", argumento);
 }
 
 void limpiarTLB() {
+	if(config->entradas_tlb == 0) {
+		fprintf(stderr, "Error: no es posible ejecutar el comando. <tlb desactivada>\n");
+		return;
+	}
 	int i = 0;
 	for(; i < config->entradas_tlb; i++) {
 		tlb[i].pid = -1;
 	}
+}
+
+void salir() {
+	printf("Saliendo\n");
+	liberarRecusos();
+	close(sockClienteDeSwap);
+	close(sockServidor);
+	exit(1);
 }
 
 void cambiarModificado() {
