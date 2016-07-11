@@ -223,7 +223,7 @@ void retornar(t_valor_variable retorno){
 
 /* ¡¡¡¡¡  R E V I S A R  !!! */
 
-		variable = list_get((t_list)contextoEjecucionActual->vars->elements,i);
+		variable = list_get((t_list*)contextoEjecucionActual->vars->elements,i);
 //LA DE ARRIBA O LA DE ABAJO
 		variable = dictionary_get(contextoEjecucionActual->vars,(char*)i); //ARREGLAR(NO NECESITO LA POSICION, SINO LA CLAVE)
 
