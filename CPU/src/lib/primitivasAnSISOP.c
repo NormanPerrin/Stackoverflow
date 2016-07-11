@@ -220,7 +220,13 @@ void retornar(t_valor_variable retorno){
 	int tamanioVars = dictionary_size(contextoEjecucionActual->vars);
 	for(i=0; i < tamanioVars; i++){
 		t_dictionary * variable = malloc(sizeof(t_dictionary));
-		variable = dictionary_get(contextoEjecucionActual->vars,(char*)i); //ARREGLAR(NO LA POSICION SINO LA CLAVE)
+
+/* ¡¡¡¡¡  R E V I S A R  !!! */
+
+		variable = list_get((t_list)contextoEjecucionActual->vars->elements,i);
+//LA DE ARRIBA O LA DE ABAJO
+		variable = dictionary_get(contextoEjecucionActual->vars,(char*)i); //ARREGLAR(NO NECESITO LA POSICION, SINO LA CLAVE)
+
 		pcbActual->stackPointer=pcbActual->stackPointer-4;
 		free(variable);
 			}
