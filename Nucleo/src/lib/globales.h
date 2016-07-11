@@ -49,7 +49,7 @@ typedef struct {
 t_configuracion * config;
 int fd_UMC, tamanioPagina, fdEscuchaConsola, fdEscuchaCPU;
 t_log * logger;
-fd_set readfds;
+fd_set readfds; // conjunto maestro de descriptores de fichero para select()
 // Inotify:
 int fd_inotify, watch_descriptor;
 
@@ -64,5 +64,6 @@ t_dictionary * diccionarioSemaforos; // Diccionario de todos los semáforos
 t_dictionary * diccionarioVarCompartidas; // Diccionario de todos las variables compartidas
 
 pthread_mutex_t mutex_planificarProceso;
+pthread_t  p_threadEscuchaSockets;
 
 #endif /* LIB_GLOBALES_H_ */

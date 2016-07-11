@@ -241,7 +241,7 @@ int cuantasPaginasTieneElProceso(arrancaProceso){
 }
 
 void mover(int posLibre , int arrancaProceso ,int cantidadDePaginasDelProceso){
-	int i =0;
+	int i=0;
     for (; i<cantidadDePaginasDelProceso ; i++){
     	t_tablaDePaginas *mensaje;
     	mensaje->pid = tablaPaginas[arrancaProceso].pid;
