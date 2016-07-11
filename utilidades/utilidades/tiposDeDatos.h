@@ -67,7 +67,7 @@ typedef struct pcb{
 	int cantidad_instrucciones;
 	int quantum, quantum_sleep;
 
-	int ultimaPosicionIndiceStack;
+	int ultimaPosicionIndiceStack; // = numeroContextoEjecucionActualStack
 	int stackPointer;
 	int paginaActualCodigo;
 	int paginaActualStack;

@@ -33,5 +33,6 @@
 	void liberarVariable(variable * var);
 	void liberarRegistroStack(registroStack * reg);
 	void liberarPcb(pcb * pcb);
+	registroStack* reg_stack_create();
 
 #endif
