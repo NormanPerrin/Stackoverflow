@@ -5,7 +5,7 @@
  ******************************/
 int setearValoresDeConfig(t_config * archivoConfig){
 
-	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
+	config = (t_configuracion*)malloc(sizeof(t_configuracion));
 
 		if (config_has_property(archivoConfig, "PUERTO_UMC")) {
 			config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
@@ -79,11 +79,28 @@ int setearValoresDeConfig(t_config * archivoConfig){
 			log_info(logger, "El archivo de configuracion no contiene la clave STACK_SIZE.\n");
 			return FALSE;
 		}
-
 		config_destroy(archivoConfig); // Libero la estructura archivoConfig
-		printf("El archivo de configuración ha sido leído correctamente\n");
 
 	return TRUE;
+}
+
+var_compartida* crearVariableCompartida(char* nombre, int valorInicial){
+
+var_compartida* var = malloc(sizeof(var_compartida));
+  var->nombre = strdup(nombre);
+  var->valor = valorInicial;
+
+  return var;
+}
+
+void registrarSemaforo(char* name, int value){
+	t_semaforo* sem = semaforo_create(name, value);
+	dictionary_put(diccionarioSemaforos, sem->nombre, sem);
+}
+
+void registrarVariableCompartida(char* name, int value){
+	var_compartida* var = crearVariableCompartida(name, value);
+	dictionary_put(diccionarioVarCompartidas,var->nombre, var);
 }
 
 int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa){
@@ -157,8 +174,7 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
-			t_list * pcbStack = list_create();
-			nuevoPcb->indiceStack = pcbStack;
+			nuevoPcb->indiceStack = stack_create();
 			nuevoPcb->numeroContextoEjecucionActualStack = 0;
 
 		// Inicializo índice de etiquetas:

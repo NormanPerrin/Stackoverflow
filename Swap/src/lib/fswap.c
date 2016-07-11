@@ -271,12 +271,14 @@ int cuantasPaginasTieneElProceso(arrancaProceso) {
 	return (--arrancaProceso);
 }
 
+
 void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
 	int i = 0;
 	for(; i < cantidadDePaginasDelProceso ; i++) {
 
     	t_tablaDePaginas *mensaje = NULL;
+
     	mensaje->pid = tablaPaginas[arrancaProceso].pid;
     	mensaje->pagina = tablaPaginas[arrancaProceso].pagina;
 
@@ -437,9 +439,7 @@ void *elegirFuncion(int head) {
 		default:
 			fprintf(stderr, "No existe protocolo definido para %d\n", head);
 			break;
-
 	}
 
 	return NULL;
-
 }

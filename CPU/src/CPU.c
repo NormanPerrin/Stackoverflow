@@ -67,13 +67,16 @@ int main(void) {
 void atenderSenialSIGUSR1(int value) {
 	if (value == SIGUSR1) {
 		log_info(logger, "Se recibió señal SIGUSR1. Notificando a Núcleo.");
+		/*printf("Cerrando proceso...\n");
+		liberarRecursos();
+		exit(EXIT_FAILURE);*/
 		if (cpuOciosa) {
 			cerrarSocket(fdNucleo);
 			return;
 		}
 		finalizarCPU = true;
 		aplicar_protocolo_enviar(fdNucleo, SIGUSR, NULL);
-		log_debug(logger, "El CPU se cerrará cuando finalce la ráfaga actual.");
+		log_debug(logger, "El CPU se cerrará cuando finalice la ráfaga actual.");
 	}
 }
 
