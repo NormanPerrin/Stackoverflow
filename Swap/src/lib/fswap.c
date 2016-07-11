@@ -43,7 +43,6 @@ void escucharUMC() {
 	while(TRUE) {
 		void *mensaje = aplicar_protocolo_recibir(sockUMC, head);
 		if(mensaje == NULL) {
-			printf("Conexión cerrada o error de mensaje\n");
 			close(sockUMC);
 			close(sockServidor);
 			return;

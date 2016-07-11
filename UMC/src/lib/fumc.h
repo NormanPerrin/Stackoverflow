@@ -26,6 +26,11 @@
 	} t_configuracion;
 
 	typedef struct {
+		char *cabeza;
+		char *argumento;
+	} funcion_t;
+
+	typedef struct {
 		int pagina;
 		int marco;
 		int bit_presencia;
@@ -102,8 +107,7 @@
 	subtp_t aplicar_algoritmo(subtp_t *paginas, int puntero);
 	void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid);
 	char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla);
-	char *obtenerArgumento(char *mensaje);
-	char *obtenerNombre(char *mensaje);
+	funcion_t *separarMensaje(char *mensaje);
 	void *direccionarConsola(char *mensaje);
 	// </AUXILIARES>
 
@@ -168,6 +172,7 @@
 	void dump(char *argumento);
 	void flush(char *argumento);
 	void limpiarTLB();
+	void salir();
 	void cambiarModificado();
 	// </CONSOLA_FUNCS>
 
