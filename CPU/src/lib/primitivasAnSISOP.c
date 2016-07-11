@@ -56,21 +56,24 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	}
 	else{
 		int var_stack_offset = (var_direccion->pagina * tamanioPagina) + var_direccion->offset;
+		free(var_direccion);
 
 		return var_stack_offset;
 	}
 }
 
 t_valor_variable dereferenciar(t_puntero var_stack_offset){
-// Retorna el valor leído a partir de var_stack_offset.
+
+	/* Retorna el valor leído a partir de var_stack_offset. */
 
 	solicitudLectura * var_direccion = malloc(sizeof(solicitudLectura));
 
 	int num_pagina =  var_stack_offset / tamanioPagina;
 	int offset = var_stack_offset - (num_pagina*tamanioPagina);
-		var_direccion->pagina = num_pagina;
-		var_direccion->offset = offset;
-		var_direccion->tamanio = INT;
+
+	var_direccion->pagina = num_pagina;
+	var_direccion->offset = offset;
+	var_direccion->tamanio = INT;
 
 	int head;
 	void* entrada = NULL;
@@ -99,7 +102,7 @@ t_valor_variable dereferenciar(t_puntero var_stack_offset){
 
 void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 
-	// Escribe en memoria el valor en la posición dada.
+	/* Escribe en memoria el valor en la posición dada. */
 
 	solicitudEscritura * var_escritura = malloc(sizeof(solicitudEscritura));
 
@@ -116,6 +119,8 @@ void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 }
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
+
+	/* Solicita al Núcleo el valor de la variable compartida. */
 
 	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
 	void* entrada = NULL;
@@ -165,6 +170,8 @@ t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
+	/* Reserva espacio para un nuevo contexto vacio preservando el contexto
+	 *  de ejecución actual, para luego volver al mismo */
 
 	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
 	registroStack* nuevoRegistroStack = malloc(sizeof(tamRegistroStack));
@@ -196,28 +203,29 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 void retornar(t_valor_variable retorno){
 
 	//Agarro contexto actual y anterior
-	int numeroEjecucionActual=pcbActual->numeroContextoEjecucionActualStack;
+	int numeroEjecucionActual = pcbActual->numeroContextoEjecucionActualStack;
 	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
 	registroStack* contextoEjecucionActual = malloc(sizeof(tamRegistroStack));
+	contextoEjecucionActual = list_get(pcbActual->indiceStack->elements, numeroEjecucionActual);
 
 	//Limpio el contexto de ejecucion actual
-	int tamanioArgs = list_size(contextoEjecucionActual->args);//ARREGLAR
+	int tamanioArgs = list_size((t_list*)contextoEjecucionActual->args); //REVISAR CASTEO
 	int i;
 	for (i=0; i < tamanioArgs; i++){
 		direccion* argumento = malloc(sizeof(direccion));
-		argumento = list_get(contextoEjecucionActual->args,i);//ARREGLAR
+		argumento = list_get((t_list*)contextoEjecucionActual->args,i); //REVISAR CASTEO
 		pcbActual->stackPointer = pcbActual->stackPointer-4;
 		free(argumento);
 	}
 	int tamanioVars = dictionary_size(contextoEjecucionActual->vars);
 	for(i=0; i < tamanioVars; i++){
 		t_dictionary * variable = malloc(sizeof(t_dictionary));
-		variable = dictionary_get(contextoEjecucionActual->vars,i); //ARREGLAR(NO LA POSICION SINO LA CLAVE)
+		variable = dictionary_get(contextoEjecucionActual->vars,(char*)i); //ARREGLAR(NO LA POSICION SINO LA CLAVE)
 		pcbActual->stackPointer=pcbActual->stackPointer-4;
 		free(variable);
 			}
 
-		direccion* retVar = malloc(sizeof(direccion));
+		direccion * retVar = malloc(sizeof(direccion));
 		*retVar = contextoEjecucionActual->retVar;
 		t_puntero direcVariable = (retVar->pagina*tamanioPagina)+retVar->offset;
 		free(retVar);
@@ -232,9 +240,7 @@ void retornar(t_valor_variable retorno){
 		free(contextoEjecucionActual);
 		list_remove(pcbActual->indiceStack->elements,pcbActual->numeroContextoEjecucionActualStack);
 		pcbActual->numeroContextoEjecucionActualStack-=1;
-		t_stack * contextoEjecNuevo= list_get (pcbActual->indiceStack->elements,pcbActual->numeroContextoEjecucionActualStack);
 		log_debug(logger,"Llamada a retornar" );
-		return;
 }
 
 void imprimir(t_valor_variable valor_mostrar){
