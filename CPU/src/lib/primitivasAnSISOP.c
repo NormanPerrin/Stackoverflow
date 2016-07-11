@@ -25,11 +25,11 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			return ERROR;
 		}else{
 			// Agrego un nuevo registro al índice de stack:
-		registroStack* regStack = list_get(pcbActual->indiceStack->elements, pcbActual->numeroContextoEjecucionActualStack);
+		registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->numeroContextoEjecucionActualStack);
 
 			if(regStack == NULL){
 				regStack = reg_stack_create(); // TODO: Ver si pasar tamaño como argumento del creator
-				list_add(pcbActual->indiceStack->elements, regStack);
+				list_add(pcbActual->indiceStack, regStack);
 			}
 			// Guardo la nueva variable en el índice:
 			// stackPointer: desplazamiento desde la primer página del stack hasta donde arranca mi nueva variable
@@ -52,7 +52,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	log_debug(logger, "Obteneniendo posición de la variable: '%c'", var_nombre);
 	char* var_id = strdup(charAString(var_nombre));
 	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
-	registroStack* regStack = list_get(pcbActual->indiceStack->elements, pcbActual->numeroContextoEjecucionActualStack);
+	registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->numeroContextoEjecucionActualStack);
 	// Me posiciono al inicio de este registro y busco la variable del diccionario que coincida con el nombre solicitado:
 		if(dictionary_size(regStack->vars) > 0){
 
@@ -92,11 +92,9 @@ t_valor_variable dereferenciar(t_puntero var_stack_offset){
 
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_VARIABLE, var_direccion);
 
-	entrada = aplicar_protocolo_recibir(fdUMC, &head);
+	recibirYvalidarEstadoDelPedidoAUMC(); // valido el pedido de lectura a UMC
 
-	recibirYvalidarEstadoDelPedidoAUMC();
-
-	entrada = aplicar_protocolo_recibir(fdUMC, &head);
+	entrada = aplicar_protocolo_recibir(fdUMC, &head); // respuesta OK de UMC, recibo la variable leída
 
 	if(head == DEVOLVER_VARIABLE){
 		valor_variable = (int*)entrada;
@@ -113,7 +111,7 @@ t_valor_variable dereferenciar(t_puntero var_stack_offset){
 
 void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 
-	/* Escribe en memoria el valor en la posición dada. */
+	/* Escribe en el stack de memoria el valor en la posición dada. */
 
 	solicitudEscritura * var_escritura = malloc(sizeof(solicitudEscritura));
 
@@ -126,13 +124,13 @@ void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 		aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
 		free(var_escritura),
 
-		recibirYvalidarEstadoDelPedidoAUMC();
+		recibirYvalidarEstadoDelPedidoAUMC(); // valido el pedido de escritura a UMC
 }
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
 	/* Solicita al Núcleo el valor de la variable compartida. */
-
+	log_debug(logger, "Obteniendo el valor de la variable compartida: '%s'.", var_compartida_nombre);
 	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
 	void* entrada = NULL;
 	int* valor_variable = NULL;
@@ -148,7 +146,7 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 		valor_variable = (int*) entrada;
 	}
 	else{
-		printf("Error al obtener variable compartida del proceso #%d", pcbActual->pid);
+		printf("Error al obtener variable compartida del proceso #%d.", pcbActual->pid);
 	}
 
 	free(entrada);
@@ -160,7 +158,8 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 
 t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombre, t_valor_variable var_compartida_valor){
 
-	var_compartida * variableCompartida = malloc(sizeof(var_compartida));
+	log_debug(logger, "Asignando el valor %d a la variable compartida '%s'.", var_compartida_valor, var_compartida_nombre);
+	var_compartida * variableCompartida = malloc(strlen(var_compartida_nombre)+ 5);
 
 	variableCompartida->nombre = strdup((char*) var_compartida_nombre);
 	variableCompartida->valor = var_compartida_valor;
@@ -174,7 +173,10 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 
 t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
+	log_debug(logger, "Ir al Label: '%s'.", nombre_etiqueta);
 	t_puntero_instruccion next_pc = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
+
+	// pcbActual->pc = next_pc - 1; TODO: Ver esto
 
 	return next_pc;
 }
@@ -183,81 +185,48 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
 	/* Reserva espacio para un nuevo contexto vacio preservando el contexto
 	 *  de ejecución actual, para luego volver al mismo */
+	log_debug(logger, "Llamar con Retorno. Preservando el contexto de ejecución actual y la posición de retorno.");
 
-	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
-	registroStack* nuevoRegistroStack = malloc(sizeof(tamRegistroStack));
-	direccion* varRetorno = malloc(sizeof(direccion));
-	int num_pagina =  donde_retornar / tamanioPagina;
-	int offset = donde_retornar % tamanioPagina;
+	// Calculo la dirección de retorno:
 
-	varRetorno->pagina = num_pagina;
-	varRetorno->offset = offset;
-	varRetorno->size = INT;
+	registroStack * nuevoRegistroStackEjecucionActual = reg_stack_create();
+	nuevoRegistroStackEjecucionActual->retVar.pagina = donde_retornar/tamanioPagina;
+	nuevoRegistroStackEjecucionActual->retVar.offset = donde_retornar%tamanioPagina;
+	nuevoRegistroStackEjecucionActual->retVar.size = INT;
 
-	nuevoRegistroStack->args = NULL;
-	nuevoRegistroStack->vars = dictionary_create();
-	nuevoRegistroStack->retVar = *varRetorno;
-	nuevoRegistroStack->retPos = pcbActual->pc;
-	stack_push(pcbActual->indiceStack, nuevoRegistroStack);
+	nuevoRegistroStackEjecucionActual->retPos = pcbActual->pc;
+	list_add(pcbActual->indiceStack, nuevoRegistroStackEjecucionActual);
 
 	pcbActual->numeroContextoEjecucionActualStack++;
 
-	free(varRetorno);
-	free(nuevoRegistroStack->args);
-	free(nuevoRegistroStack->vars);
-	free(nuevoRegistroStack);
-
 	irAlLabel(etiqueta);
-
 }
 
-void retornar(t_valor_variable retorno){
+void retornar(t_valor_variable var_retorno){
 
-	//Agarro contexto actual y anterior
-	int numeroEjecucionActual = pcbActual->numeroContextoEjecucionActualStack;
-	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
-	registroStack* contextoEjecucionActual = malloc(sizeof(tamRegistroStack));
-	contextoEjecucionActual = list_get(pcbActual->indiceStack->elements, numeroEjecucionActual);
+	log_debug(logger, "Llamada a la función 'retornar'.");
+	// Tomo contexto actual y anterior:
+	int index = pcbActual->numeroContextoEjecucionActualStack;
+	registroStack* registroActual = list_get(pcbActual->indiceStack, index);
 
-	//Limpio el contexto de ejecucion actual
-	int tamanioArgs = list_size((t_list*)contextoEjecucionActual->args); //REVISAR CASTEO
-	int i;
-	for (i=0; i < tamanioArgs; i++){
-		direccion* argumento = malloc(sizeof(direccion));
-		argumento = list_get((t_list*)contextoEjecucionActual->args,i); //REVISAR CASTEO
-		pcbActual->stackPointer = pcbActual->stackPointer-4;
-		free(argumento);
-	}
-	int tamanioVars = dictionary_size(contextoEjecucionActual->vars);
-	for(i=0; i < tamanioVars; i++){
-		t_dictionary * variable = malloc(sizeof(t_dictionary));
+	// Limpio los argumentos del registro (descuento el espacio que ocupan en el stack en memoria):
+	pcbActual->stackPointer -= (4* NUM_ELEM(registroActual->args));
 
-/* ¡¡¡¡¡  R E V I S A R  !!! */
+	// Limpio las variables del registro  (descuento el espacio que ocupan en el stack en memoria):
+	pcbActual->stackPointer -= (4 * dictionary_size(registroActual->vars));
 
-		variable = list_get((t_list*)contextoEjecucionActual->vars->elements,i);
-//LA DE ARRIBA O LA DE ABAJO
-		variable = dictionary_get(contextoEjecucionActual->vars,(char*)i); //ARREGLAR(NO NECESITO LA POSICION, SINO LA CLAVE)
+	// Calculo la dirección de retorno a partir de retVar:
+	t_puntero var_stack_offset = (registroActual->retVar.pagina * tamanioPagina) + registroActual->retVar.offset;
+	asignar(var_stack_offset, var_retorno);
 
-		pcbActual->stackPointer=pcbActual->stackPointer-4;
-		free(variable);
-			}
+	// Elimino el contexto actual del índice de stack:
+	// Luego, seteo el contexto de ejecución actual en el anterior:
+	pcbActual->pc =  registroActual->retPos;
 
-		direccion * retVar = malloc(sizeof(direccion));
-		*retVar = contextoEjecucionActual->retVar;
-		t_puntero direcVariable = (retVar->pagina*tamanioPagina)+retVar->offset;
-		free(retVar);
+	liberarRegistroStack(registroActual); // libero la memoria del registro
 
-		//calculo la direccion a la que tengo que retornar mediante la direccion de pagina start y offset que esta en el campo retVar
-		asignar(direcVariable,retorno);
-
-		//Elimino el contexto actual del indice del stack
-		//Seteo el contexto de ejecucion actual en el anterior
-
-		pcbActual->pc = contextoEjecucionActual->retPos;
-		free(contextoEjecucionActual);
-		list_remove(pcbActual->indiceStack->elements,pcbActual->numeroContextoEjecucionActualStack);
-		pcbActual->numeroContextoEjecucionActualStack-=1;
-		log_debug(logger,"Llamada a retornar" );
+	list_remove(pcbActual->indiceStack, pcbActual->numeroContextoEjecucionActualStack);
+	pcbActual->numeroContextoEjecucionActualStack--;
 }
 
 void imprimir(t_valor_variable valor_mostrar){
@@ -272,13 +241,11 @@ void imprimir(t_valor_variable valor_mostrar){
 
 void imprimirTexto(char* texto){
 
-	string * txt = malloc(STRING);
-	txt->cadena = strdup(texto);
-	txt->tamanio = strlen(texto) + 1;
+	char * txt = malloc(strlen(texto)+1);
+	txt = strdup(texto);
 
 	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, txt);
 
-	free(txt->cadena);
 	free(txt);
 }
 

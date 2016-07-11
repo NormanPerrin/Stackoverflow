@@ -20,6 +20,6 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 void s_wait(t_nombre_semaforo identificador_semaforo);
 void s_signal(t_nombre_semaforo identificador_semaforo);
 
-extern bool huboStackOverflow;
+extern bool huboStackOverflow; // Variable global proveniente del main
 
 #endif /* LIB_PRIMITIVASANSISOP_H_ */

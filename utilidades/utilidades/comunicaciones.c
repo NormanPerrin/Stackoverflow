@@ -120,9 +120,9 @@ int calcularTamanioPCB(void* mensaje){
 
 	pcb* unPcb = (pcb*)mensaje;
 
-	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
+	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
 
-	int tamanio = 60 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + tamanioIndiceStack;
+	int tamanio = 56 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + tamanioIndiceStack;
 
 	return tamanio;
 }
@@ -373,7 +373,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 
 	pcb* unPcb = (pcb*) mensaje;
 	int desplazamiento = 0;
-	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
+	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
 
 	void * buffer = malloc(tamanio);
 	memcpy(buffer + desplazamiento, &(unPcb->cantidad_instrucciones), INT);
@@ -406,8 +406,6 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceEtiquetas), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPcb->ultimaPosicionIndiceStack), INT);
-		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, unPcb->indiceCodigo, unPcb->tamanioIndiceCodigo);
 		desplazamiento += unPcb->tamanioIndiceCodigo;
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
@@ -421,7 +419,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(tamanio);
-	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
+	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
 
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;
@@ -452,8 +450,6 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(&unPcb->tamanioIndiceCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&unPcb->ultimaPosicionIndiceStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
 		desplazamiento += unPcb->tamanioIndiceCodigo;
