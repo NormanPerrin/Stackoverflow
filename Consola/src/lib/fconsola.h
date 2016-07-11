@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
-#define RUTA_CONFIG_CONSOLA "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/configConsola.txt"
+#define RUTA_CONFIG_CONSOLA "configConsola.txt"
 
 // Variables globales
 int puertoNucleo;

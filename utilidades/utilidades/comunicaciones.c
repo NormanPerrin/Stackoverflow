@@ -8,7 +8,6 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 
 	if (head < 1 || head > FIN_DEL_PROTOCOLO){
 		printf("Error al enviar paquete. No existe protocolo definido para %d\n", head);
-		abort(); // es abortivo
 		}
 	// Calculo el tamaño del mensaje:
 	tamanioMensaje = calcularTamanioMensaje(head, mensaje);
@@ -37,17 +36,14 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 
 	// Validar contra NULL al recibir en cada módulo (lanzar un mensaje de error notificando)
-	int recibido;
-
-	if (*head < 1 || *head > FIN_DEL_PROTOCOLO){
-		printf("Error al recibir paquete. No existe protocolo definido para %d\n", *head);
-		abort(); // es abortivo
-	}
 	// Recibo primero el head:
-	recibido = recibirPorSocket(fdEmisor, head, INT);
-		if (recibido <= 0){
-			return NULL;
-		}
+	int recibido = recibirPorSocket(fdEmisor, head, INT);
+
+	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){
+		printf("Error al recibir paquete. No existe protocolo definido para %d\n", *head);
+		return NULL;
+	}
+
 	// Recibo ahora el tamaño del mensaje:
 	int* tamanioMensaje = malloc(INT);
 	recibido = recibirPorSocket(fdEmisor, tamanioMensaje, INT);
@@ -121,8 +117,28 @@ int calcularTamanioMensaje(int head, void* mensaje){
 }
 
 int calcularTamanioPCB(void* mensaje){
-	//pcb* pcb = (pcb*)mensaje;
-	return TRUE;
+
+	pcb* unPcb = (pcb*)mensaje;
+
+	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
+
+	int tamanio = 60 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + tamanioIndiceStack;
+
+	return tamanio;
+}
+
+int calcularTamanioIndiceStack(t_list* indice){
+
+	int tamanio = 0;
+
+	void calcularTamanioRegistroStack(void* element){
+		registroStack* reg = (registroStack*) element;
+		int sum = 16 + (NUM_ELEM(reg->args)*12) + (dictionary_size(reg->vars)*14);
+		tamanio += sum;
+	}
+	list_iterate(indice, calcularTamanioRegistroStack);
+
+	return tamanio;
 }
 
 void * serealizar(int head, void * mensaje, int tamanio){
@@ -353,117 +369,97 @@ direccion* deserealizarTresInt(void* buffer, int tamanio){
 		return msj;
 }
 
-void * serealizarPcb(void * estructura, int tamanio){
-	/*pcb * unPCB = (pcb *) estructura;
-	int tamanioTotal, desplazamiento = 0;
+void * serealizarPcb(void * mensaje, int tamanio){
 
-	int codigoSize = (sizeof(t_intructions) * unPCB->tamanioIndiceCodigo);
+	pcb* unPcb = (pcb*) mensaje;
+	int desplazamiento = 0;
+	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
 
-	int tamListaArgumentos = sizeof(direccion) * unPCB->indiceStack->tamanioArgumentos;
-	int tamListaVariables = sizeof(t_dictionary) * unPCB->indiceStack->tamanioVariables;
-	int tamRegistroStack = 6*INT + tamListaArgumentos + tamListaVariables;
-	int stackSize = tamRegistroStack * unPCB->tamanioIndiceStack;
+	void * buffer = malloc(tamanio);
+	memcpy(buffer + desplazamiento, &(unPcb->cantidad_instrucciones), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->id_cpu), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->numeroContextoEjecucionActualStack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->paginaActualCodigo), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->paginaActualStack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->paginas_codigo), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->paginas_stack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->pc), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->pid), INT);
+			desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->primerPaginaStack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->quantum), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->quantum_sleep), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->stackPointer), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceCodigo), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceEtiquetas), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(unPcb->ultimaPosicionIndiceStack), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, unPcb->indiceCodigo, unPcb->tamanioIndiceCodigo);
+		desplazamiento += unPcb->tamanioIndiceCodigo;
+	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
+		desplazamiento += unPcb->tamanioIndiceEtiquetas;
+	memcpy(buffer + desplazamiento, unPcb->indiceStack, tam_indiceStack);
 
-	int etiquetasSize = (CHAR * unPCB->tamanioIndiceEtiquetas);
-
-	tamanioTotal = 9*INT + codigoSize + stackSize + etiquetasSize;
-
-	void * buffer = reservarMemoria(tamanioTotal);
-	memcpy(buffer + desplazamiento,&(unPCB->pid), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->id_cpu), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->pc), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->paginas_codigo), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->ultimaPosicionIndiceStack), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->stackPointer), INT);
-		desplazamiento += INT;
-
-	// Serealizo el índice de código:
-	memcpy(buffer + desplazamiento, &(unPCB->tamanioIndiceCodigo), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceCodigo, codigoSize);
-		desplazamiento += codigoSize;
-
-	// Serealizo el índice de etiquetas:
-	memcpy(buffer + desplazamiento, &(unPCB->tamanioIndiceEtiquetas), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceEtiquetas, etiquetasSize);
-		desplazamiento += etiquetasSize;
-
-	// Serealizo el índice de stack:
-	memcpy(buffer + desplazamiento, &(unPCB->tamanioIndiceStack), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->posicionIndiceCodigo), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->posicionResultado), sizeof(direccion));
-		desplazamiento += sizeof(direccion);
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioArgumentos), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceStack->posicionesArgumentos, tamListaArgumentos);
-		desplazamiento += tamListaArgumentos;
-	memcpy(buffer + desplazamiento, &(unPCB->indiceStack->tamanioVariables), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, unPCB->indiceStack->variables, tamListaVariables);
-
-	return buffer;*/
-	void* r = NULL;
-	return r;
+		return buffer;
 }
 
 pcb * deserealizarPcb(void * buffer, int tamanio){
-	/*int desplazamiento = 0;
-	pcb * unPcb = reservarMemoria(sizeof(pcb));
 
-	memcpy(&unPcb->pid, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->pc, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->ultimaPosicionIndiceStack, buffer + desplazamiento, INT );
-		desplazamiento += INT;
-	memcpy(&unPcb->stackPointer, buffer + desplazamiento, INT );
-		desplazamiento += INT;
+	int desplazamiento = 0;
+	pcb * unPcb = malloc(tamanio);
+	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack->elements);
 
-	// Deserealizo el índice de código:
+	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->numeroContextoEjecucionActualStack, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->paginaActualCodigo, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->paginaActualStack, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->paginas_codigo, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->paginas_stack, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->pc, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->pid, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->primerPaginaStack, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->quantum, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->quantum_sleep, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&unPcb->stackPointer, buffer + desplazamiento, INT);
+		desplazamiento += INT;
 	memcpy(&unPcb->tamanioIndiceCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceCodigo = reservarMemoria(unPcb->tamanioIndiceCodigo);
-	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
-		desplazamiento += unPcb->tamanioIndiceCodigo;
-
-		// Deserealizo el índice de etiquetas:
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	unPcb->indiceEtiquetas = reservarMemoria(unPcb->tamanioIndiceEtiquetas);
+	memcpy(&unPcb->ultimaPosicionIndiceStack, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
+		desplazamiento += unPcb->tamanioIndiceCodigo;
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
+	memcpy(unPcb->indiceStack, buffer + desplazamiento, tam_indiceStack);
 
-	// Deserealizo el índice de stack:
-	memcpy(&unPcb->tamanioIndiceStack, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&unPcb->indiceStack->posicionIndiceCodigo, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&unPcb->indiceStack->posicionResultado, buffer + desplazamiento, sizeof(direccion));
-		desplazamiento += sizeof(direccion);
-	memcpy(&unPcb->indiceStack->tamanioArgumentos, buffer + desplazamiento, INT);
-			desplazamiento += INT;
-	unPcb->indiceStack->posicionesArgumentos = reservarMemoria(unPcb->indiceStack->tamanioArgumentos);
-	memcpy(unPcb->indiceStack->posicionesArgumentos, buffer + desplazamiento, unPcb->indiceStack->tamanioArgumentos);
-		desplazamiento += unPcb->indiceStack->tamanioArgumentos;
-	memcpy(&unPcb->indiceStack->tamanioVariables, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	unPcb->indiceStack->variables = reservarMemoria(unPcb->indiceStack->tamanioVariables);
-	memcpy(unPcb->indiceStack->variables, buffer + desplazamiento, unPcb->indiceStack->tamanioVariables);
-
-	return unPcb;*/
-	pcb* r = NULL;
-	return r;
+		return unPcb;
 }
-

@@ -23,5 +23,8 @@ int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa);
 pcb* copiarPcb(pcb* proceso);
 void encolarPcbAListos(pcb* proceso);
 int pcbListIndex(int pid);
+var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
+void registrarSemaforo(char* name, int value);
+void registrarVariableCompartida(char* name, int value);
 
 #endif /* LIB_FUNCIONES_H_ */

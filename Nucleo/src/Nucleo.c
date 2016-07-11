@@ -1,49 +1,41 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <utilidades/general.h>
-
 #include "lib/principales.h"
 
 int main(void) {
-	// Acciones preliminares:
-		inicializarColecciones();
 
-	int return_value = EXIT_SUCCESS;
+	// Acciones preliminares de configuración y setting:
+	inicializarColecciones();
+	crearLoggerNucleo();
+	iniciarEscuchaDeInotify();
+	leerConfiguracionNucleo();
+	llenarDiccionarioSemaforos();
+	llenarDiccionarioVarCompartidas();
 
-	if (init_ok()){ // Configuración y setting OK:
+	// Creo hilos para cada dispositivo de E/S:
+	lanzarHilosIO();
 
-		llenarDiccionarioSemaforos();
-		llenarDiccionarioVarCompartidas();
-		// Creo hilos para cada dispositivo de E/S:
-			lanzarHilosIO();
+	// Conexión con UMC:
+	conectarConUMC();
 
-			if (conectarConUMC() && iniciarEscuchaDeConsolasYCPUs()) {
-				if (crearThreadPlanificacion()) {
+	// Creo hilo de planificación:
+	pthread_mutex_init(&mutex_planificarProceso, NULL);
 
-					while(TRUE){
-						// Select de Consolas, CPUs e Inotify, planificación activa:
-						esperar_y_PlanificarProgramas();
-						 }
-				} else {
-					return_value = EXIT_FAILURE;
-				}
-	// Cierro hilos de los dispositivos de E/S y el de Planificación:
-				pthread_mutex_destroy(&mutex_planificarProceso);
-				unirHilosIO();
-			} else {
-				return_value = EXIT_FAILURE;
-			}
-		} else {
-			log_info(logger, "El Núcleo no pudo inicializarse correctamente.");
-			return_value = EXIT_FAILURE;
-		}
+	// Select de Consolas, CPUs e Inotify:
+	pthread_create(&p_threadEscuchaSockets, NULL, (void *) esperar_y_PlanificarProgramas, NULL);
+
+	// Cierro hilos abiertos
+	pthread_join(p_threadEscuchaSockets, NULL);
+	pthread_mutex_destroy(&mutex_planificarProceso);
+	unirHilosIO();
+
 	// Libero memoria y cierro sockets:
-		liberarRecursosUtilizados();
-		cerrarSocket(fdEscuchaConsola);
-		cerrarSocket(fdEscuchaCPU);
-		cerrarSocket(fd_UMC);
-		inotify_rm_watch(fd_inotify, watch_descriptor);
-		cerrarSocket(fd_inotify);
+	liberarRecursosUtilizados();
+	/*cerrarSocket(fdEscuchaConsola);
+	cerrarSocket(fdEscuchaCPU);
+	cerrarSocket(fd_UMC);
+	inotify_rm_watch(fd_inotify, watch_descriptor);
+	cerrarSocket(fd_inotify);*/
 
-		return return_value;
+	return EXIT_SUCCESS;
 }

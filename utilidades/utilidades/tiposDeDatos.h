@@ -67,14 +67,14 @@ typedef struct pcb{
 	int cantidad_instrucciones;
 	int quantum, quantum_sleep;
 
-	int ultimaPosicionIndiceStack;
+	int ultimaPosicionIndiceStack; // = numeroContextoEjecucionActualStack
 	int stackPointer;
 	int paginaActualCodigo;
 	int paginaActualStack;
 	int primerPaginaStack;
 	int numeroContextoEjecucionActualStack;
 
-	int tamanioIndiceCodigo, tamanioIndiceStack, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
+	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;
 	t_stack* indiceStack;

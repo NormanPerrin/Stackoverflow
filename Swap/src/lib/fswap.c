@@ -33,21 +33,20 @@ void escucharUMC() {
 
 	int ret_handshake = 0;
 	while(ret_handshake == 0) { // Mientras que el cliente adecuado no se conecte
-
 		sockUMC = aceptarConexionSocket(sockServidor);
-
-		if ( validar_conexion(sockUMC, 0) == FALSE )
-			continue;
-		else
-			ret_handshake = handshake_servidor(sockUMC, "S");
-
+		if ( validar_conexion(sockUMC, 0) == FALSE ) continue;
+		else ret_handshake = handshake_servidor(sockUMC, "S");
 	}
 
-	int status = 1;		// Estructura que manjea el status de los recieve.
-	int *head = (int*)reservarMemoria(INT);
 
-	while(status > 0) {
+	int *head = (int*)reservarMemoria(INT);
+	while(TRUE) {
 		void *mensaje = aplicar_protocolo_recibir(sockUMC, head);
+		if(mensaje == NULL) {
+			close(sockUMC);
+			close(sockServidor);
+			return;
+		}
 		void (*funcion)(void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
 		funcion(mensaje); // ejecuto función
 	}
@@ -241,8 +240,8 @@ int cuantasPaginasTieneElProceso(arrancaProceso){
 }
 
 void mover(int posLibre , int arrancaProceso ,int cantidadDePaginasDelProceso){
-	int i =0;
-    for (i ; i<cantidadDePaginasDelProceso ; i++){
+	int i=0;
+    for (; i<cantidadDePaginasDelProceso ; i++){
     	t_tablaDePaginas *mensaje;
     	mensaje->pid = tablaPaginas[arrancaProceso].pid;
     	mensaje->pagina = tablaPaginas[arrancaProceso].pagina;

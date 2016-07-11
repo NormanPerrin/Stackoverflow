@@ -7,27 +7,22 @@
 #include "semaforos.h"
 
 /*** FUNCIONES PRINCIPALES ***/
-int init_ok();
-int leerConfiguracionNucleo();
-int crearLoggerNucleo();
-int iniciarEscuchaDeInotify();
 void inicializarColecciones();
+void crearLoggerNucleo();
+void leerConfiguracionNucleo();
+void iniciarEscuchaDeInotify();
 void llenarDiccionarioSemaforos();
 void llenarDiccionarioVarCompartidas();
 void lanzarHilosIO();
 int conectarConUMC();
-int obtenerSocketMaximoInicial();
-int iniciarEscuchaDeConsolasYCPUs();
-int crearThreadPlanificacion();
 void esperar_y_PlanificarProgramas();
 void unirHilosIO();
 void liberarRecursosUtilizados();
-
 /*** INCLUÍDAS ***/
+int obtenerSocketMaximoInicial();
 void aceptarConexionEntranteDeConsola();
 void aceptarConexionEntranteDeCPU();
-void atenderNuevoMensajeDeCPU();
+void recorrerListaCPUsYAtenderNuevosMensajes();
 void atenderCambiosEnArchivoConfig(int socketMaximo);
-var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
 
 #endif /* LIB_PRINCIPALES_H_ */
