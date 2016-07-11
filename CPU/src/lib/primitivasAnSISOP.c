@@ -6,7 +6,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 	 y retorna el offset total respecto al inicio del stack. */
 
 	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack;
-	t_list* indStack=pcbActual->indiceStack;
+	t_list* indStack = pcbActual->indiceStack->elements;
 	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
 
 
@@ -40,7 +40,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	 retorna el offset total respecto al inicio del stack. */
 
 	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack -1;
-	t_list* indStack=pcbActual->indiceStack;
+	t_list* indStack = pcbActual->indiceStack->elements;
 	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
 
 	char* var_id = strdup(charAString(var_nombre));
@@ -176,9 +176,9 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 	varRetorno->offset = offset;
 	varRetorno->size = INT;
 
-	nuevoRegistroStack->args = list_create();
-	nuevoRegistroStack->vars = list_create();
-	nuevoRegistroStack->retVar = varRetorno;
+	nuevoRegistroStack->args = NULL;
+	nuevoRegistroStack->vars = dictionary_create();
+	nuevoRegistroStack->retVar = *varRetorno;
 	nuevoRegistroStack->retPos = pcbActual->pc;
 	stack_push(pcbActual->indiceStack, nuevoRegistroStack);
 
@@ -197,24 +197,30 @@ void retornar(t_valor_variable retorno){
 
 	//Agarro contexto actual y anterior
 	int numeroEjecucionActual=pcbActual->numeroContextoEjecucionActualStack;
-	t_stack* contextoEjecucionActual=list_get((pcbActual->indiceStack),numeroEjecucionActual);
+	uint32_t tamRegistroStack = 4*sizeof(uint32_t)+2*sizeof(t_list);
+	registroStack* contextoEjecucionActual = malloc(sizeof(tamRegistroStack));
 
 	//Limpio el contexto de ejecucion actual
+	int tamanioArgs = list_size(contextoEjecucionActual->args);//ARREGLAR
 	int i;
-	for (i=0;i< list_size(contextoEjecucionActual->elements); i++){
-		t_list* argumentos=list_get(contextoEjecucionActual,i);
-		direccion* arg=list_get(argumentos,i);
-		pcbActual->stackPointer=pcbActual->stackPointer-4;
-		free(arg);
+	for (i=0; i < tamanioArgs; i++){
+		direccion* argumento = malloc(sizeof(direccion));
+		argumento = list_get(contextoEjecucionActual->args,i);//ARREGLAR
+		pcbActual->stackPointer = pcbActual->stackPointer-4;
+		free(argumento);
 	}
-	for(i = 0; i <list_size(contextoEjecucionActual->elements); i++){
-		t_list* variables=list_get(contextoEjecucionActual,i);
-		direccion* var = list_get(variables, i);
+	int tamanioVars = dictionary_size(contextoEjecucionActual->vars);
+	for(i=0; i < tamanioVars; i++){
+		t_dictionary * variable = malloc(sizeof(t_dictionary));
+		variable = dictionary_get(contextoEjecucionActual->vars,i); //ARREGLAR(NO LA POSICION SINO LA CLAVE)
 		pcbActual->stackPointer=pcbActual->stackPointer-4;
-		free(var);
+		free(variable);
 			}
-		direccion* retVar=list_get(contextoEjecucionActual->elements);
+
+		direccion* retVar = malloc(sizeof(direccion));
+		*retVar = contextoEjecucionActual->retVar;
 		t_puntero direcVariable = (retVar->pagina*tamanioPagina)+retVar->offset;
+		free(retVar);
 
 		//calculo la direccion a la que tengo que retornar mediante la direccion de pagina start y offset que esta en el campo retVar
 		asignar(direcVariable,retorno);
@@ -222,11 +228,11 @@ void retornar(t_valor_variable retorno){
 		//Elimino el contexto actual del indice del stack
 		//Seteo el contexto de ejecucion actual en el anterior
 
-		pcbActual->pc= ((registroStack*)list_get(contextoEjecucionActual,numeroEjecucionActual))->retVar;
+		pcbActual->pc = contextoEjecucionActual->retPos;
 		free(contextoEjecucionActual);
-		list_remove(pcbActual->indiceStack,pcbActual->numeroContextoEjecucionActualStack);
+		list_remove(pcbActual->indiceStack->elements,pcbActual->numeroContextoEjecucionActualStack);
 		pcbActual->numeroContextoEjecucionActualStack-=1;
-		t_stack* contextoEjecNuevo= list_get (pcbActual->indiceStack,pcbActual.numeroContextoEjecucionActualStack);
+		t_stack * contextoEjecNuevo= list_get (pcbActual->indiceStack->elements,pcbActual->numeroContextoEjecucionActualStack);
 		log_debug(logger,"Llamada a retornar" );
 		return;
 }
