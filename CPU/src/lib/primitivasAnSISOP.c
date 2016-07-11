@@ -3,7 +3,7 @@
 t_puntero definirVariable(t_nombre_variable var_nombre){
 	/* Le asigna una posición en memoria a la variable,
 	 y retorna el offset total respecto al inicio del stack. */
-		log_info(logger, "Definiendo variable %c", var_nombre);
+		log_info(logger, "Definiendo nueva variable: %c", var_nombre);
 
 		char * var_id = strdup(charAString(var_nombre));
 
@@ -47,31 +47,30 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 }
 
 t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
-
 	/* En base a la posición de memoria de la variable,
 	 retorna el offset total respecto al inicio del stack. */
-
-	int ultima_posicion_indiceStack = pcbActual->ultimaPosicionIndiceStack -1;
-	t_list* indStack = pcbActual->indiceStack->elements;
-	registroStack* registroActual= list_get(indStack,ultima_posicion_indiceStack);
-
+	log_debug(logger, "Obteneniendo posición de la variable: '%c'", var_nombre);
 	char* var_id = strdup(charAString(var_nombre));
+	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
+	registroStack* regStack = list_get(pcbActual->indiceStack->elements, pcbActual->numeroContextoEjecucionActualStack);
+	// Me posiciono al inicio de este registro y busco la variable del diccionario que coincida con el nombre solicitado:
+		if(dictionary_size(regStack->vars) > 0){
 
-	direccion * var_direccion = malloc(sizeof(direccion));
-	var_direccion = (direccion*)dictionary_get(registroActual->vars, var_id);
-	free(var_id);
+				if(dictionary_has_key(regStack->vars, var_id)){
+					direccion * var_direccion = malloc(sizeof(direccion));
+					var_direccion = (direccion*)dictionary_get(regStack->vars, var_id);
+					free(var_id);
 
-	if(var_direccion == NULL){
-		free(var_direccion);
+					int var_stack_offset = (var_direccion->pagina * tamanioPagina) + var_direccion->offset;
+					free(var_direccion);
 
+					return var_stack_offset;
+				}
+			log_error(logger, "La variable buscada no se encuentra en el índice de stack.");
+			return ERROR;
+		}
+		log_error(logger, "El diccionario de variables en el índice de stack está vacío.");
 		return ERROR;
-	}
-	else{
-		int var_stack_offset = (var_direccion->pagina * tamanioPagina) + var_direccion->offset;
-		free(var_direccion);
-
-		return var_stack_offset;
-	}
 }
 
 t_valor_variable dereferenciar(t_puntero var_stack_offset){
