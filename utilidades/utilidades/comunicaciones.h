@@ -4,29 +4,16 @@
 #include "general.h"
 
 #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
-#define MSJ_VACIO ((void *)1) // Para no poner NULL
+#define MSJ_VACIO ((void *)1) // Para no enviar NULL
 
-/* *** IMPORTANTE - LEER ***
- *
- * PARA ENVIAR UN PAQUETE USAMOS:
- * void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void* mensaje);
- * PRE-CONDICIONES: asegurarse de que el mensaje contenga los valores que queremos antes de enviarlo,
- * esto implica completar TODOS los campos (incluyendo los NULL y aquellos que indiquen el tamaño para
- * elementos dinámicos).
- * POST-CONDICIONES: las acciones necesarias después del envío del msj se realizan en el respectivo módulo
- *
- * PARA RECIBIR UN PAQUETE USAMOS:
- * void * aplicar_protocolo_recibir(int fdEmisor, int * protocolo);
- * PRE-CONDICIONES: tener alguna variable (creada dinámicamente con malloc, global, pasada por parámetro, etc.)
- * para poder asignarle lo recibido, casteándole el tipo de dato correspondiente (depende el caso, usar también memcpy)
- * POST-CONDICIONES: las acciones necesarias después de la recepción del msj se realizan en el respectivo módulo
- */
+// ENVIAR UN PAQUETE: void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void* mensaje);
+// RECIBIR UN PAQUETE: void * aplicar_protocolo_recibir(int fdEmisor, int* protocolo);
 
 /*** PROTOCOLO ***/
 typedef enum {
 	// Mensajes Estáticos:
 	IMPRIMIR = 1, 					// CPU - Núcleo / Núcleo - Consola
-	RECHAZAR_PROGRAMA,				// Núcleo - Consola
+	RECHAZAR_PROGRAMA,				// Núcleo - Consola --> MSJ_VACIO
 	PEDIDO_LECTURA_INSTRUCCION, 	// CPU - UMC
 	PEDIDO_LECTURA_VARIABLE, 		// CPU - UMC
 	INDICAR_PID, 					// CPU - UMC
@@ -41,9 +28,7 @@ typedef enum {
 	WAIT_CON_BLOQUEO,				// Núcleo - CPU
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
 	TAMANIO_STACK,					// Núcleo - CPU
-
-	SIGUSR,							// CPU - Núcleo // agregar al switch
-
+	SIGUSR1,						// CPU - Núcleo --> MSJ_VACIO
 	// Mensajes Dinámicos;
 	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
 	ENVIAR_SCRIPT, 					// Consola - Núcleo
@@ -76,7 +61,7 @@ int calcularTamanioPCB(void* mensaje);
 void * serealizar(int head, void * mensaje, int tamanio);
 void * deserealizar(int head, void * buffer, int tamanio);
 
-// -- Serealizaciones y deserealizaciones DINÁMICAS:
+// -- Serealizaciones y deserealizaciones PARTICULARES:
 void* serealizarPcb(void* mensaje, int tamanio);
 pcb* deserealizarPcb(void* buffer, int tamanio);
 void* serealizarTextoMasUnInt(void* mensaje, int tamanio);

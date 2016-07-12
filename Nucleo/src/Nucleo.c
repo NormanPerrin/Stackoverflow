@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "lib/principales.h"
 
 int main(void) {
@@ -14,11 +12,9 @@ int main(void) {
 
 	// Creo hilos para cada dispositivo de E/S:
 	lanzarHilosIO();
-
 	// Conexión con UMC:
-	conectarConUMC();
-
-	// Creo hilo de planificación:
+	conexionConUMC();
+	// Inicializo hilo de planificación:
 	pthread_mutex_init(&mutex_planificarProceso, NULL);
 
 	// Select de Consolas, CPUs e Inotify:

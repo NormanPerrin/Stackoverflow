@@ -11,7 +11,6 @@
 #define EVENT_SIZE (sizeof( struct inotify_event ))
 #define EVENT_BUF_LEN (1024 * (EVENT_SIZE + 16))
 #define CONEXIONES_PERMITIDAS 10
-#define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 #define RUTA_CONFIG_NUCLEO "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Nucleo/configNucleo.txt"
 #define logearError(msg){log_error(logger, msg); return FALSE;}
 
@@ -27,7 +26,6 @@ typedef struct {
 
 typedef struct {
 	int id, fd_consola, pid;
-	char* programa;
 } consola;
 
 typedef enum {
@@ -74,6 +72,7 @@ int fd_inotify, watch_descriptor;
 t_list * listaProcesos; // Lista de todos los procesos en el sistema
 t_list * listaCPU; // Lista de todos las CPU conectadas
 t_list * listaConsolas;  // Lista de todos las Consolas conectadas
+t_list * listaCPU_SIGUSR1;  // Lista de CPUs que enviaron señal SIGUSR1
 
 t_queue * colaListos; // Lista de todos los procesos listos para ejecutar
 

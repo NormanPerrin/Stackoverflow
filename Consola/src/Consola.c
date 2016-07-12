@@ -54,6 +54,5 @@ int main(int argc, char **argv) {
 				}
 			} // fin del switch-case
 		} // fin del while
-
 	return EXIT_SUCCESS;
 }

@@ -21,7 +21,7 @@ int conectarConUMC(){
 void obtenerTamanioDePagina(){
 	int * tamPagina = (int*)malloc(INT);
 	recibirPorSocket(fdUMC, tamPagina, INT);
-	tamanioPagina = *tamPagina; // setea el tamaño de pág. que recibe de UMC
+	tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
 	free(tamPagina);
 }
 
@@ -30,6 +30,13 @@ void conectarConNucleo() {
 	int ret = conectarSocket(fdNucleo, config->ipNucleo, config->puertoNucleo);
 	validar_conexion(ret, 1); // Es terminante por ser cliente
 	handshake_cliente(fdNucleo, "P");
+
+	int head;
+	void* entrada = aplicar_protocolo_recibir(fdNucleo, &head);
+	if(head == TAMANIO_STACK){
+		tamanioStack = *((int*) entrada); // Seteo el tamaño de stack que recibo de Núcleo
+	}
+	free(entrada);
 }
 
 char* solicitarProximaInstruccionAUMC(){

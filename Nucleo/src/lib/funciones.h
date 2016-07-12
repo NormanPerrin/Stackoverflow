@@ -3,42 +3,43 @@
 
 #include "globales.h"
 
-/**** FUNCIONES SECUNDARIAS ****/
+// Configuración y setting:
 int setearValoresDeConfig(t_config * archivoConfig);
-void actualizarPcbEjecutada(cpu * unCPU, pcb * pcbEjecutada, int estado);
-void inicializarIndices(pcb* pcb, t_metadata_program* metaData);
-int asignarPid(t_list * procesos);
-pcb* buscarProcesoPorPid(int pid, int* index);
-pcb* crearPcb(char* programa);
-void salvarProcesoEnCPU(int cpuId);
-void planificarProceso();
-void finalizarPrograma(int pid, int index);
-void limpiarColecciones();
-void liberarSemaforo(t_semaforo * sem);
-void liberarVarCompartida(var_compartida * var);
-void liberarConsola(consola * consola);
-void liberarCPU(cpu * cpu);
-void limpiarArchivoConfig();
-int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa);
-pcb* copiarPcb(pcb* proceso);
-void encolarPcbAListos(pcb* proceso);
-int pcbListIndex(int pid);
-var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
-void registrarSemaforo(char* name, int value);
-void registrarVariableCompartida(char* name, int value);
-
-// IO y Semaforos:
-// IO:
-void bloquearProcesoPorIO(hiloIO* dispositivoIO, proceso_bloqueadoIO* unPcb);
-void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
-void* entradaSalidaThread(void* dataHilo);
-hiloIO* crearHiloIO(int index);
-proceso_bloqueadoIO* esperarPorProceso(dataDispositivo* datos);
-
-// TAD SEmáforo:
 t_semaforo* semaforo_create(char*nombre, int valor);
+void registrarSemaforo(char* name, int value);
+var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
+// Lanzar hilos IO:
+void registrarVariableCompartida(char* name, int value);
+hiloIO* crearHiloIO(int index);
+proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos);
+void encolarPcbAListos(pcb* proceso);
+void* entradaSalidaThread(void* dataHilo);
+// Función select - Planificación:
+int obtenerSocketMaximoInicial();
+void planificarProceso();
+pcb* buscarProcesoPorPid(int pid);
+int asignarPid();
+int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa);
+pcb* crearPcb(char* programa);
+void aceptarConexionEntranteDeConsola(); // --> planificarProceso
+void aceptarConexionEntranteDeCPU(); // --> planificarProceso
+void atenderCambiosEnArchivoConfig(int socketMaximo);
+void salvarProcesoEnCPU(int cpuId); // --> planificarProceso
+int envioSeñalSIGUSR1(int id_cpu);
+void finalizarPrograma(int pid, int index);
+int envioSeñalSIGUSR1(int id_cpu);
+int pcbListIndex(int pid);
+void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
 void semaforo_signal(t_semaforo* semaforo);
 int semaforo_wait(t_semaforo* semaforo);
-void semaforo_blockProcess(t_queue* colaBloqueados, pcb* procesoEjecutando);
+void semaforo_blockProcess(t_queue* colaBloqueados, pcb* proceso);
+void recorrerListaCPUsYAtenderNuevosMensajes(); // revisar
+// Liberar recursos:
+void liberarCPU(cpu * cpu);
+void liberarConsola(consola * consola);
+void liberarSemaforo(t_semaforo * sem);
+void liberarVarCompartida(var_compartida * var);
+void limpiarColecciones();
+void limpiarArchivoConfig();
 
 #endif /* LIB_FUNCIONES_H_ */

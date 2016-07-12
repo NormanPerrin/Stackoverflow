@@ -1,5 +1,12 @@
 #include "fconsola.h"
 
+// --LOGGER--
+void crearLoggerConsola(){
+	char * archivoLogConsola = strdup("CONSOLA_LOG.log");
+	logger = log_create("CONSOLA_LOG.log", archivoLogConsola, true, LOG_LEVEL_INFO);
+	free(archivoLogConsola);
+}
+
 void validar_argumentos(int arg) {
 	if(arg != 2) {
 		printf("Debe ingresar el archivo a ejecutar como parámetro.\n");
@@ -53,10 +60,3 @@ int validar_servidor(char *id) {
 	}
 }
 int validar_cliente(char *id) {return 0;}
-
-// --LOGGER--
-void crearLoggerConsola(){
-	char * archivoLogConsola = strdup("CONSOLA_LOG.log");
-	logger = log_create("CONSOLA_LOG.log", archivoLogConsola, true, LOG_LEVEL_INFO);
-	free(archivoLogConsola);
-}
