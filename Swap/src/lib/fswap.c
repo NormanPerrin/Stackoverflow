@@ -8,7 +8,6 @@ t_tablaDePaginas *tablaPaginas;
 t_bitMap *tablaDeBitMap;
 FILE *archivoSwap;
 int paginasLibresTotales;
-int fragmentacion; // TODO: ?
 
 
 // Funciones
@@ -83,7 +82,6 @@ FILE *inicializarSwap() {
 
 	int tamanioSwap = config->cantidadPaginas * config->tamanioPagina;
 	paginasLibresTotales = config->cantidadPaginas;
-	fragmentacion= 0;
 
 	inicializarTablaDePaginas();
 	inicializarTablaBitMap();
@@ -123,8 +121,6 @@ void iniciar_programa(void *msj) {
 	int pid = mensaje->pid;
 	int paginas = mensaje->pagina;
 
-	fragmentacion = calcularFragmentacion();
-
 	if(paginasLibresTotales > paginas) { // se puede alojar el proceso aunque sea compactando
 
 		int posLibre = buscarPosLibresEnBitMap(paginas);
@@ -137,7 +133,7 @@ void iniciar_programa(void *msj) {
 				tablaDeBitMap[posLibre].ocupada = 1;
 			}
 
-		} else if(fragmentacion > paginas) { // no se encontraron espacios contiguos para alojar proceso TODO: ver
+		} else { // no se encontraron espacios contiguos para alojar proceso
 
 			dormir(config->retardoCompactacion);
 			compactar();
@@ -145,21 +141,17 @@ void iniciar_programa(void *msj) {
 			actualizarBitMap();
 
 			int posLibre = buscarPosLibresEnBitMap(paginas);
-			if(posLibre != ERROR) { // despues de compactar se encontraron espacios contiguos para proceso
 
-				for(; posLibre<paginas ;posLibre++) {
-					tablaPaginas[posLibre].pid= pid;
-					tablaPaginas[posLibre].pagina = posLibre;
-					tablaDeBitMap[posLibre].ocupada=1;
-				}
+			for(; posLibre<paginas ;posLibre++) {
+				tablaPaginas[posLibre].pid= pid;
+				tablaPaginas[posLibre].pagina = posLibre;
+				tablaDeBitMap[posLibre].ocupada=1;
+			}
 
-				paginasLibresTotales -= paginas;
+			paginasLibresTotales -= paginas;
+		}
 
-			} else *respuesta = NO_PERMITIDO; // despues de compactar sigue sin poder alojarse proceso
-
-		} else *respuesta = NO_PERMITIDO; // no hay paginas disponibles para demanda
-
-	} else *respuesta = NO_PERMITIDO; // si cant paginas totales disponibles es menor a demandadas
+	} else *respuesta = NO_PERMITIDO; // no hay paginas disponibles para satisfacer la demanda
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 	free(respuesta);
@@ -219,13 +211,13 @@ void avanzarPaginas(int cantidad) {
 
 int buscarPosLibresEnBitMap(int paginas) {
 
-	int i =0;
-	int j=0;
-	while(i<config->cantidadPaginas) {
+	int i = 0;
+	int j = 0;
+	while(i < config->cantidadPaginas) {
 
-		if(tablaDeBitMap[i].ocupada ==0) {
+		if(tablaDeBitMap[i].ocupada == 0) {
 			while(j < paginas) {
-				if(tablaDeBitMap[i+j].ocupada==0) j++;
+				if(tablaDeBitMap[i+j].ocupada == 0) j++;
 				else break;
 			}
 		}
@@ -322,33 +314,50 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
 void eliminar_programa(void *msj) {
 
+	int *respuesta = (int*)reservarMemoria(INT);
+	*respuesta = PERMITIDO;
+
+	// casteo
 	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
-	int pid= mensaje->pid;
-	int i;
+	int pid = mensaje->pid;
+
+	// busco primer aparicion del pid en tp
 	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
-	int aPartirDeAux = buscarAPartirDeEnTablaDePaginas(pid);
-    int totalPaginas;
-	while(tablaPaginas[aPartirDe].pid==pid) {
-		aPartirDe++;
-	}
-	totalPaginas=aPartirDe;
-	char *contenido = reservarMemoria(CHAR);
-	contenido[0]='\0';
-	t_escribirPagina *arg;
-	for(i=0;i<totalPaginas;i++) {
-		arg->contenido = contenido;
-		arg->pagina = i;
-		arg->pid = pid;
-		escribir_pagina(arg);
-	}
-	free(contenido);
-	while(tablaPaginas[aPartirDeAux].pid==pid) {
-		tablaPaginas[aPartirDeAux].pid=-1;
-		tablaPaginas[aPartirDeAux].pagina=-1;
-		aPartirDeAux++;
+	if(aPartirDe == ERROR) {
+		*respuesta = NO_PERMITIDO; // no encontro pagina
+	} else {
+
+		// cuento total de paginas
+	    int totalPaginas = 0;
+		while(tablaPaginas[aPartirDe].pid == pid)
+			totalPaginas++;
+
+		// repito como cantidad de paginas tenga el proceso
+		int i = 0;
+		for(; i < totalPaginas; i++) {
+
+			// posiciono puntero en inicio de pagina
+			int pagina = i + aPartirDe;
+			avanzarPaginas(pagina);
+
+			// actualizo tabla paginas
+			tablaPaginas[pagina].pid = -1;
+
+			// actualizo bitmap
+			tablaDeBitMap[pagina].ocupada = 0;
+
+			// escribo '\0' en paginas del proceso
+			int k = 0;
+			for(; k < config->tamanioPagina; k++)
+				fputc('\0', archivoSwap);
+		}
+
+		// acutalizo contador global
+		paginasLibresTotales += totalPaginas;
 	}
 
-   paginasLibresTotales = paginasLibresTotales+totalPaginas;
+	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
+	free(respuesta);
 }
 
 void leer_pagina(void *msj) {
@@ -381,51 +390,70 @@ void leer_pagina(void *msj) {
 }
 
 int buscarAPartirDeEnTablaDePaginas(int pid) {
-	int i =0;
 
-		while(tablaPaginas[i].pid != pid ) {
-		   i++;
-			}
-		return i;
-}
-
-
-int calcularFragmentacion() {
-	int i=0;
-	int pagsLibres;
-	while (i< config->cantidadPaginas) {
-		if(tablaDeBitMap[i].ocupada==0) {
-			pagsLibres++;
-
-	 	}
-		i++;
+	int i = 0, encontro = FALSE ;
+	for(; i < config->cantidadPaginas; i++) {
+		if(tablaPaginas[i].pid == pid) {
+			encontro = TRUE;
+			break;
+		}
 	}
-	return pagsLibres;
+
+	if(encontro) return i;
+	return ERROR;
 }
 
 
+int hayFragmentacion() {
 
-void compactar() {
-	int posLibre=buscarPosLibreEnBitMap();
-	int arrancaProceso =buscarPosOcupadaDesdeLaUltimaLibreEnTablaDeBitMap(posLibre);
-	int cantidadDePaginasDelProceso=cuantasPaginasTieneElProceso(arrancaProceso);
-    mover(posLibre , arrancaProceso , cantidadDePaginasDelProceso);
+	int hayLibre = FALSE;
+
+	int i = 0;
+	for(; i < config->cantidadPaginas; i++) {
+
+		// si encuentra una posicion libre setea el flag hayLibre en TRUE
+		if(tablaDeBitMap[i].ocupada == 0)
+			hayLibre = TRUE;
+
+		// si encontro una posicion libre antes significa que hay huecos
+		if(tablaDeBitMap[i].ocupada == 1)
+			if(hayLibre) return TRUE;
+	}
+
+	return FALSE;
+}
 
 
+int compactar() {
 
+	while(hayFragmentacion()) {
 
+		// 1) busco primer posicion libre en bitmap
+		int posLibre = buscarPosLibreEnBitMap();
+		if(posLibre == ERROR) return ERROR; // no hay pagina libre
 
- }
+		// 2) busco primer posicion ocupada desde la libre en bitmap
+		int arrancaProceso = buscarPosOcupadaDesdeLaUltimaLibreEnTablaDeBitMap(posLibre);
+		if(arrancaProceso == ERROR) return ERROR; // no hay pagina ocupada desde la libre
+
+		// 3) cuento la cantidad de paginas del proceso del bitmap ocupado
+		int cantidadDePaginasDelProceso = cuantasPaginasTieneElProceso(arrancaProceso);
+
+		// 4) muevo todas las paginas del proceso
+	    mover(posLibre, arrancaProceso, cantidadDePaginasDelProceso);
+	}
+
+	return TRUE;
+}
 
 void actualizarBitMap() {
-	int i =0;
-	while(i< config->cantidadPaginas) {
-		if(tablaPaginas[i].pagina==-1) {
-			tablaDeBitMap[i].ocupada=0;
-		} else tablaDeBitMap[i].ocupada=1;
-		i++;
+	int i = 0;
+	for(; i < config->cantidadPaginas; i++) {
+		if(tablaPaginas[i].pagina == -1)
+			tablaDeBitMap[i].ocupada = 0;
+		else
+			tablaDeBitMap[i].ocupada = 1;
 	}
-
 }
 
 

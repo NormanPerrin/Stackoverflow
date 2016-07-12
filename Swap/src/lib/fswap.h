@@ -49,8 +49,8 @@
 	void eliminar_programa(void *msj);
 	void *elegirFuncion(int head);
 	int buscarAPartirDeEnTablaDePaginas(int pid);
-	int calcularFragmentacion();
-	void compactar();
+	int hayFragmentacion();
+	int compactar();
 	void actualizarBitMap();
 	int buscarPosOcupadaDesdeLaUltimaLibreEnTablaDeBitMap(int posLibre);
 	int cuantasPaginasTieneElProceso(int arrancaProceso);
