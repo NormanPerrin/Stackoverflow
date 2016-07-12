@@ -7,19 +7,14 @@
 void inicializarColecciones();
 void crearLoggerNucleo();
 void leerConfiguracionNucleo();
-void iniciarEscuchaDeInotify();
 void llenarDiccionarioSemaforos();
 void llenarDiccionarioVarCompartidas();
 void lanzarHilosIO();
-int conectarConUMC();
+int conexionConUMC();
 void esperar_y_PlanificarProgramas();
 void unirHilosIO();
 void liberarRecursosUtilizados();
-/*** INCLUÍDAS ***/
-int obtenerSocketMaximoInicial();
-void aceptarConexionEntranteDeConsola();
-void aceptarConexionEntranteDeCPU();
-void recorrerListaCPUsYAtenderNuevosMensajes();
-void atenderCambiosEnArchivoConfig(int socketMaximo);
+
+extern bool seDesconectoUMC; // Variable global proveniente del main
 
 #endif /* LIB_PRINCIPALES_H_ */
