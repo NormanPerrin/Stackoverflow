@@ -117,9 +117,9 @@ void iniciar_programa(void *msj) {
 	int *respuesta = (int*)reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 
-	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
+	inicioPrograma *mensaje = (inicioPrograma*)msj;
 	int pid = mensaje->pid;
-	int paginas = mensaje->pagina;
+	int paginas = mensaje->paginas;
 
 	if(paginasLibresTotales > paginas) { // se puede alojar el proceso aunque sea compactando
 
@@ -142,7 +142,7 @@ void iniciar_programa(void *msj) {
 
 			int posLibre = buscarPosLibresEnBitMap(paginas);
 
-			for(; posLibre<paginas ;posLibre++) {
+			for(; posLibre < paginas; posLibre++) {
 				tablaPaginas[posLibre].pid= pid;
 				tablaPaginas[posLibre].pagina = posLibre;
 				tablaDeBitMap[posLibre].ocupada=1;
@@ -152,6 +152,17 @@ void iniciar_programa(void *msj) {
 		}
 
 	} else *respuesta = NO_PERMITIDO; // no hay paginas disponibles para satisfacer la demanda
+
+	if(*respuesta == PERMITIDO) {
+		int pos = buscarPaginaEnTablaDePaginas(pid, 0);
+		avanzarPaginas(pos);
+		int tamanio = strlen(mensaje->contenido);
+		int k = 0;
+		for(; k < tamanio; k++) {
+			char c = mensaje->contenido[k];
+			fputc(c, archivoSwap);
+		}
+	}
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 	free(respuesta);
@@ -166,12 +177,17 @@ void escribir_pagina(void *msj) {
 	t_escribirPagina *mensaje = (t_escribirPagina*)msj;
 	int pid = mensaje->pid;
 	int pagina = mensaje->pagina;
-	void *contenido = mensaje->contenido;
+	char *contenido = mensaje->contenido;
 
 	int pos = buscarPaginaEnTablaDePaginas(pid, pagina);
 	if(pos != ERROR) {
 		avanzarPaginas(pos);
-		fprintf(archivoSwap, "%s", (char*)contenido);
+		int tamanio = strlen(contenido);
+		int k = 0;
+		for(; k < tamanio; k++) {
+			char c = contenido[k];
+			fputc(c, archivoSwap);
+		}
 	}
 	else *respuesta = NO_PERMITIDO; // no encontro pagina en tabla de paginas
 

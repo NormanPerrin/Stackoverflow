@@ -71,12 +71,12 @@ int calcularTamanioMensaje(int head, void* mensaje){
 
 		// CASE 1: El mensaje es un texto (char*)
 			case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
-			case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA:{
+			case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 				tamanio = strlen((char*)mensaje)+ 1;
 				break;
 			}
 		// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
-			case ENTRADA_SALIDA: case GRABAR_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+			case ENTRADA_SALIDA: case GRABAR_VAR_COMPARTIDA:{
 				pedidoIO* msj = (pedidoIO*)mensaje;
 				tamanio = strlen(msj->nombreDispositivo)+ 5;
 				break;
@@ -148,13 +148,13 @@ void * serealizar(int head, void * mensaje, int tamanio){
 
 	// CASE 1: El mensaje es un texto (char*)
 	case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
-	case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA:{
+	case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
 		}
 	// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
-	case ENTRADA_SALIDA: case GRABAR_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+	case ENTRADA_SALIDA: case GRABAR_VAR_COMPARTIDA:{
 			buffer = serealizarTextoMasUnInt(mensaje, tamanio);
 			break;
 		}
@@ -198,7 +198,7 @@ void * deserealizar(int head, void * buffer, int tamanio){
 
 		// CASE 1: El mensaje es un texto (char*)
 		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
-		case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA:{
+		case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 			char* msj = malloc(tamanio);
 			memcpy(msj, buffer, tamanio);
 			mensaje = msj;
@@ -214,10 +214,6 @@ void * deserealizar(int head, void * buffer, int tamanio){
 			mensaje = (var_compartida*)deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 		}
-		case DEVOLVER_PAGINA:{
-			mensaje = (devolverPagina*)deserealizarTextoMasUnInt(buffer, tamanio);
-				break;
-			}
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 		case INICIAR_PROGRAMA: {
 			mensaje = deserealizarTextoMasDosInt(buffer, tamanio);
@@ -332,9 +328,9 @@ solicitudLeerPagina* deserealizarDosInt(void* buffer, int tamanio){
 	int desplazamiento = 0;
 	solicitudLeerPagina * msj = malloc(tamanio);
 
-	memcpy(&msj->pagina, buffer + desplazamiento, INT);
-		desplazamiento += INT;
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&msj->pagina, buffer + desplazamiento, INT);
 
 		return msj;
 }
