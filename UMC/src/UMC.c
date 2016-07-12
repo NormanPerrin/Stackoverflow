@@ -21,7 +21,7 @@ int main(void) {
 
 	conectarConSwap(); // Conexión con Swap
 
-	crearHilos(); // Creo hilos Servidor y Consola
+//	crearHilos(); // Creo hilos Servidor y Consola
 
 	liberarRecusos();
 

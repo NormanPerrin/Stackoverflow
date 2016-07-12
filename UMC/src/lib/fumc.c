@@ -25,6 +25,35 @@ void conectarConSwap() {
 	int ret = conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
 	validar_conexion(ret, 1);
 	handshake_cliente(sockClienteDeSwap, "U");
+
+//	// TODO: prueba
+//	inicioPrograma *prueba_inicio = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
+//	prueba_inicio->paginas = 10;
+//	prueba_inicio->pid = 2;
+//	prueba_inicio->contenido = "hola";
+//
+//	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, prueba_inicio);
+//
+//	int *head = (int*)reservarMemoria(INT);
+//	aplicar_protocolo_recibir(sockClienteDeSwap, head);
+//
+//
+//	solicitudLeerPagina *prueba_lectura = (solicitudLeerPagina*)reservarMemoria(sizeof(solicitudLeerPagina));
+//	prueba_lectura->pid = 2;
+//	prueba_lectura->pagina = 0;
+//	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, prueba_lectura);
+//
+//	int *contenido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
+//	if(*contenido == PERMITIDO) printf("<lectura> PERMITIDO\n");
+//	else printf("<lectura> NO_PERMITIDO\n");
+//
+//	char *pagina = (char*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
+//	printf("<lectura> Head = %d\n", *head);
+//	printf("<lectura> Pagina = %s\n", pagina);
+//
+//
+//	printf("\nContenido:\t%s\n", contenido);
+
 }
 
 
