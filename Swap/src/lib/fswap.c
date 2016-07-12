@@ -272,37 +272,50 @@ int cuantasPaginasTieneElProceso(arrancaProceso) {
 }
 
 
+
+/* Funcionamiento:
+ * copia la pagina de arrancaProceso a posLibre
+ * posLibre++, arrancaProceso++
+ * repetir cantidadDePaginasDelProceso
+ * */
 void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
+
+	char *contenido = (char*)reservarMemoria(config->tamanioPagina), c;
 
 	int i = 0;
 	for(; i < cantidadDePaginasDelProceso ; i++) {
 
-    	t_tablaDePaginas *mensaje = NULL;
+    	int pid = tablaPaginas[arrancaProceso].pid;
+    	int pagina = tablaPaginas[arrancaProceso].pagina;
 
-    	mensaje->pid = tablaPaginas[arrancaProceso].pid;
-    	mensaje->pagina = tablaPaginas[arrancaProceso].pagina;
+    	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina); // busco posicion para leer pagina
+    	if(pagABuscar != ERROR) avanzarPaginas(pagABuscar); // avanzo puntero a inicio de pagina
+    	int k = 0;
+    	for(; k < config->tamanioPagina; i++) { // leo pagina en contenido
+    		c = fgetc(archivoSwap);
+    		contenido[k] = c;
+    	}
 
-    	char *contenido = (char*)reservarMemoria(config->tamanioPagina);
-//    	contenido = leer_pagina((void*)mensaje);
+    	// actualizo tablaPaginas
+    	tablaPaginas[posLibre].pid = pid;
+    	tablaPaginas[posLibre].pagina = pagina;
+    	tablaPaginas[arrancaProceso].pid= -1;
+    	tablaPaginas[arrancaProceso].pagina = -1;
 
-    	tablaPaginas[posLibre].pid= tablaPaginas[arrancaProceso].pid;
-    	tablaPaginas[posLibre].pagina= tablaPaginas[arrancaProceso].pagina;
-    	tablaPaginas[arrancaProceso].pid=-1;
-    	tablaPaginas[arrancaProceso].pagina=-1;
-    	tablaDeBitMap[posLibre].ocupada=1;
-    	tablaDeBitMap[arrancaProceso].ocupada=0;
-    	t_escribirPagina *msj;
-    	msj->pid= mensaje->pid;
-    	msj->pagina=mensaje->pagina;
-    	msj->contenido = (char*)reservarMemoria(config->tamanioPagina);
-    	strcpy(msj->contenido, contenido);
-    	free(contenido);
-    	escribir_pagina((void*)msj);
-    	free(msj->contenido);
+    	// actualizo bitmap
+    	tablaDeBitMap[posLibre].ocupada = 1;
+    	tablaDeBitMap[arrancaProceso].ocupada = 0;
+
+    	// escribo pagina de proceso en pagina libre
+    	avanzarPaginas(posLibre);
+    	fprintf(archivoSwap, "%s", contenido);
+
+    	//actualizo contadores
     	posLibre++;
     	arrancaProceso++;
-
 	}
+
+	free(contenido);
 }
 
 
