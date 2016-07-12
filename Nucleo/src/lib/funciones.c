@@ -241,8 +241,17 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 		int* respuestaUMC = NULL;
 		int head;
 		void * entrada = aplicar_protocolo_recibir(fd_UMC, &head);
+		if(entrada == NULL){ // UMC mandó un msj vacío, significa que se desconectó
+			seDesconectoUMC = true;
+
+			free(respuestaUMC);
+			free(entrada);
+
+			return FALSE;
+		}
 		if(head == RESPUESTA_INICIO_PROGRAMA){
 			respuestaUMC = (int*)entrada;
+			free(entrada);
 		}
 		// Verifico la respuesta de UMC:
 		if(*respuestaUMC == CREADO){
@@ -272,7 +281,7 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->id_cpu = -1; // CPU aún no asignado
 			nuevoPcb->quantum = config->quantum;
 			nuevoPcb->quantum_sleep = config->retardoQuantum;
-
+/*
 		// Analizo con el parser el código del programa para obtener su metadata:
 			t_metadata_program* infoProg = metadata_desde_literal(programa);
 
@@ -300,7 +309,7 @@ pcb * crearPcb(char* programa){
 				nuevoPcb->tamanioIndiceEtiquetas = 0;
 			}
 			metadata_destruir(infoProg);
-
+*/ // TODO descomentar
 			return nuevoPcb;
 	}
 }
@@ -379,7 +388,7 @@ void aceptarConexionEntranteDeCPU(){
 	planificarProceso();
 }
 
-void atenderCambiosEnArchivoConfig(int socketMaximo){
+void atenderCambiosEnArchivoConfig(int* socketMaximo){
 
 	int length, i = 0;
 	char buffer[EVENT_BUF_LEN];
@@ -405,7 +414,7 @@ void atenderCambiosEnArchivoConfig(int socketMaximo){
 		FD_CLR(fd_inotify, &readfds);
 		iniciarEscuchaDeInotify();
 
-		socketMaximo = (socketMaximo < fd_inotify)?fd_inotify:socketMaximo;
+		*socketMaximo = (*socketMaximo < fd_inotify)?fd_inotify:*socketMaximo;
 				FD_SET(fd_inotify, &readfds);
 			}
 		}

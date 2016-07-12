@@ -64,16 +64,24 @@ int conexionConUMC(){
 	int conexion = conectarSocket(fd_UMC, config->ipUMC, config->puertoUMC);
 
 	if(conexion == ERROR){
+		seDesconectoUMC = true;
+
 		return FALSE;
 	}
-	handshake_cliente(fd_UMC, "N");
+	handshake_cliente(fd_UMC, "N"); // es terminante por tratarse de UMC
 
 	int * tamPagina = (int*)malloc(INT);
-	recibirPorSocket(fd_UMC, tamPagina, INT);
-	tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
-	free(tamPagina);
+	int recibido = recibirPorSocket(fd_UMC, tamPagina, INT);
+	if(recibido <= 0){
+		seDesconectoUMC = true;
 
-	return TRUE;
+		return FALSE;
+	}else{
+		tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
+		free(tamPagina);
+
+		return TRUE;
+	}
 }
 
 void esperar_y_PlanificarProgramas(){
@@ -89,9 +97,7 @@ void esperar_y_PlanificarProgramas(){
 	// Bucle principal:
 	while(TRUE){
 
-		if(seDesconectoUMC){
-			return; // salgo del bucle si UMC se desconecta
-		}else{ // sino sigo en el sistema
+		if(seDesconectoUMC) break; // salgo del bucle si UMC se ha desconectado
 
 		int i, j, max_fd;
 
@@ -105,7 +111,7 @@ void esperar_y_PlanificarProgramas(){
 	    max_fd = obtenerSocketMaximoInicial();
 
 	    // Reviso si el fd de alguna Consola supera al max_fd actual:
-	    for ( j = 0 ; j < list_size(listaConsolas) ; j++){
+	    for ( j = 0 ; j < list_size(listaConsolas); j++){
 	    	int fd;
 	    	consola * unaConsola = (consola *)list_get(listaConsolas, j);
 	        fd = unaConsola->fd_consola;
@@ -138,14 +144,13 @@ void esperar_y_PlanificarProgramas(){
 
 	    } else if(FD_ISSET(fd_inotify, &readfds)){
 
-	    		atenderCambiosEnArchivoConfig(max_fd);
+	    		atenderCambiosEnArchivoConfig(&max_fd);
 
 	    }else{ // fin if nueva conexión
 
 	    	recorrerListaCPUsYAtenderNuevosMensajes();
 
 	    	} // fin else nuevo mensaje
-		} // fin else no se desconectó UMC
 	} // fin del while
 } // fin select
 

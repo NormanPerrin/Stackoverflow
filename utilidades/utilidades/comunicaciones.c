@@ -1,7 +1,5 @@
 #include "comunicaciones.h"
 
-// TODO: pedidoIO, string, var_compartida y devolverPaginaInstruccion son el mismo mensaje. Generalizar.
-
 void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 
 	int desplazamiento = 0, tamanioMensaje, tamanioTotalAEnviar;
@@ -129,17 +127,18 @@ int calcularTamanioPCB(void* mensaje){
 
 int calcularTamanioIndiceStack(t_list* indice){
 
-	int tamanio = 0;
+	int* tamanio;
+	*tamanio = 0;
 
 	void calcularTamanioRegistroStack(void* element){
 		registroStack* reg = (registroStack*) element;
 		int sum = 16 + (NUM_ELEM(reg->args)*12) + (dictionary_size(reg->vars)*14);
-		tamanio += sum;
+		*tamanio += sum;
 	}
 	list_iterate(indice, calcularTamanioRegistroStack);
 
-	return tamanio;
-}
+	return *tamanio;
+} // TODO: Ver otra forma de calcularlo
 
 void * serealizar(int head, void * mensaje, int tamanio){
 

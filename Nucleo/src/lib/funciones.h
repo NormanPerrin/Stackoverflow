@@ -24,7 +24,7 @@ int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa);
 pcb* crearPcb(char* programa);
 void aceptarConexionEntranteDeConsola(); // --> planificarProceso
 void aceptarConexionEntranteDeCPU(); // --> planificarProceso
-void atenderCambiosEnArchivoConfig(int socketMaximo);
+void atenderCambiosEnArchivoConfig(int* socketMaximo);
 void salvarProcesoEnCPU(int cpuId); // --> planificarProceso
 int envioSenialCPU(int id_cpu);
 void finalizarPrograma(int pid, int index);
@@ -33,7 +33,7 @@ void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
 void semaforo_signal(t_semaforo* semaforo);
 int semaforo_wait(t_semaforo* semaforo);
 void semaforo_blockProcess(t_queue* colaBloqueados, pcb* proceso);
-void recorrerListaCPUsYAtenderNuevosMensajes(); // revisar
+void recorrerListaCPUsYAtenderNuevosMensajes();
 // Liberar recursos:
 void liberarCPU(cpu * cpu);
 void liberarConsola(consola * consola);
@@ -41,5 +41,7 @@ void liberarSemaforo(t_semaforo * sem);
 void liberarVarCompartida(var_compartida * var);
 void limpiarColecciones();
 void limpiarArchivoConfig();
+
+extern bool seDesconectoUMC;
 
 #endif /* LIB_FUNCIONES_H_ */
