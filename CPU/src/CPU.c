@@ -34,7 +34,6 @@ int main(void) {
 	// Manejo de la señal SIGUSR1:
 	signal(SIGUSR1, atenderSenialSIGUSR1);
 
-	if (fdUMC > 0){
 		if (conectarConUMC()){ // Conexión con UMC
 
 			handshake_cliente(fdUMC, "P");
@@ -44,7 +43,7 @@ int main(void) {
 
 			while (TRUE) {
 				log_info(logger, "Esperando mensajes de Núcleo.\n"); // Espera activa de mensajes
-					if (recibirMensajesDeNucleo() == 0) {
+					if (recibirMensajesDeNucleo() == TRUE) {
 					} else {
 						return EXIT_SUCCESS;
 					}
@@ -52,13 +51,9 @@ int main(void) {
 				return EXIT_SUCCESS;
 
 			} else {
-				log_error(logger, "Error en en conexión inicial con UMC.\n");
+				log_error(logger, "Error en la conexión con UMC.\n");
 				return ERROR;
 			}
-		} else {
-			log_error(logger, "No se pudo abrir la conexion con UMC.\n");
-			return ERROR;
-		}
 	liberarRecursos(); // Libero memoria reservada
 	cerrarSocket(fdUMC);
 }

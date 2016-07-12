@@ -249,51 +249,50 @@ void imprimirTexto(char* texto){
 	free(txt);
 }
 
-void entradaSalida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
+void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
-	pedidoIO * pedidoEntradaSalida = malloc(strlen(nombre_dispositivo)+ 1+ INT);
-	pedidoEntradaSalida->nombreDispositivo = strdup((char*) nombre_dispositivo);
+	log_info(logger, "Entrada/Salida para el dispositivo: '%s' durante '%i' unidades de tiempo.",dispositivo,tiempo);
+	pedidoIO * pedidoEntradaSalida = malloc(strlen(dispositivo)+ 5);
+	pedidoEntradaSalida->nombreDispositivo = strdup((char*) dispositivo);
 	pedidoEntradaSalida->tiempo = tiempo;
 
 	aplicar_protocolo_enviar(fdNucleo,ENTRADA_SALIDA, pedidoEntradaSalida);
 
-	log_info(logger, "Proceso %i utiliza dispositivo I/O: %s durante %i unidades de tiempo.", pcbActual->pid,nombre_dispositivo,tiempo);
 	free(pedidoEntradaSalida->nombreDispositivo);
 	free(pedidoEntradaSalida);
 }
 
-void s_wait(t_nombre_semaforo identificador_semaforo){
+void s_wait(t_nombre_semaforo nombre_semaforo){
 
-	char* id_semaforo = malloc(strlen(identificador_semaforo)+1);
-	id_semaforo = strdup((char*)identificador_semaforo);
-	int head;
-	void* entrada = NULL;
+	char* id_semaforo = malloc(strlen(nombre_semaforo)+1);
+	id_semaforo = strdup((char*) nombre_semaforo);
 
-	aplicar_protocolo_enviar(fdNucleo,WAIT_REQUEST,id_semaforo);
+	aplicar_protocolo_enviar(fdNucleo, WAIT_REQUEST, id_semaforo);
 	free(id_semaforo);
 
+	int head;
+	void* entrada = NULL;
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 
 	if(head == WAIT_CON_BLOQUEO){
 		// Mando la pcb bloqueada y la saco de ejecución:
-		// TODO: Ver el tipo de mensaje
 		aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, pcbActual);
-		log_info(logger, "El proceso %i queda bloqueado al hacer WAIT", pcbActual->pid);
+		log_info(logger, "Proceso bloqueado al hacer WAIT del semáforo: '%s'", nombre_semaforo);
 		liberarPcbActiva();
 	}
 	else{
-		log_info(logger, "El proceso %i sigue ejecutando correctamente al hacer WAIT", pcbActual->pid);
+		log_info(logger, "Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'", nombre_semaforo);
 	}
 	free(entrada);
 }
 
-void s_signal(t_nombre_semaforo identificador_semaforo){
+void s_signal(t_nombre_semaforo nombre_semaforo){
 
-	char* id_semaforo = malloc(strlen(identificador_semaforo)+1);
-	id_semaforo = strdup((char*)identificador_semaforo);
+	char* id_semaforo = malloc(strlen(nombre_semaforo)+1);
+	id_semaforo = strdup((char*) nombre_semaforo);
 
-	aplicar_protocolo_enviar(fdNucleo,SIGNAL_REQUEST,id_semaforo);
+	aplicar_protocolo_enviar(fdNucleo, SIGNAL_REQUEST, id_semaforo);
 
-	log_info(logger, "SIGNAL en el proceso %i", pcbActual->pid);
+	log_info(logger, "SIGNAL del semáforo '%s'.", nombre_semaforo);
 	free(id_semaforo);
 }
