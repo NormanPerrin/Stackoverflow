@@ -6,7 +6,6 @@
 /*** FUNCIONES PRINCIPALES ***/
 void inicializarColecciones();
 void crearLoggerNucleo();
-void iniciarEscuchaDeInotify();
 void leerConfiguracionNucleo();
 void llenarDiccionarioSemaforos();
 void llenarDiccionarioVarCompartidas();
@@ -15,5 +14,7 @@ int conexionConUMC();
 void esperar_y_PlanificarProgramas();
 void unirHilosIO();
 void liberarRecursosUtilizados();
+
+extern bool seDesconectoUMC; // Variable global proveniente del main
 
 #endif /* LIB_PRINCIPALES_H_ */

@@ -70,7 +70,7 @@ void atenderSenialSIGUSR1(int value) {
 			return;
 		}
 		finalizarCPU = true;
-		aplicar_protocolo_enviar(fdNucleo, SIGUSR, NULL);
+		aplicar_protocolo_enviar(fdNucleo, SIGUSR1, NULL);
 		log_debug(logger, "El CPU se cerrará cuando finalice la ráfaga actual.");
 	}
 }

@@ -81,6 +81,5 @@ t_dictionary * diccionarioSemaforos; // Diccionario de todos los semáforos
 t_dictionary * diccionarioVarCompartidas; // Diccionario de todos las variables compartidas
 
 pthread_mutex_t mutex_planificarProceso;
-pthread_t  p_threadEscuchaSockets;
 
 #endif /* LIB_GLOBALES_H_ */

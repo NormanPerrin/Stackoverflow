@@ -1,5 +1,15 @@
 #include "funciones.h"
 
+void iniciarEscuchaDeInotify(){
+	if (watch_descriptor > 0 && fd_inotify > 0) {
+		inotify_rm_watch(fd_inotify, watch_descriptor);
+	}
+	fd_inotify = inotify_init();
+		if (fd_inotify > 0) {
+			watch_descriptor = inotify_add_watch(fd_inotify, RUTA_CONFIG_NUCLEO, IN_MODIFY);
+		}
+}
+
 int setearValoresDeConfig(t_config * archivoConfig){
 
 	config = (t_configuracion*)malloc(sizeof(t_configuracion));
@@ -414,7 +424,7 @@ void salvarProcesoEnCPU(int id_cpu){
 	}
 }
 
-int envioSeñalSIGUSR1(int id_cpu){
+int envioSenialCPU(int id_cpu){
 	int i;
 	for(i=0; i<list_size(listaCPU_SIGUSR1); i++){
 		int * cpu = list_get(listaCPU_SIGUSR1, i);
@@ -437,9 +447,9 @@ int pcbListIndex(int pid){
 			free(unPcb);
 			return i; // el proceso está en la posición 'i'
 		}
-		free(unPcb);
-		return ERROR; // no se encontró el proceso
+			free(unPcb);
 	}
+	return ERROR; // no se encontró el proceso
 }
 
 void finalizarPrograma(int pid, int index){
@@ -520,7 +530,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		pcb * pcbEjecutada = (pcb*) mensaje;
 		log_info(logger, "Proceso #%i fin de quantum en CPU %i.", pcbEjecutada->pid, unCPU->id);
-		if(envioSeñalSIGUSR1(unCPU->id)){
+		if(envioSenialCPU(unCPU->id)){
 			log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
@@ -542,7 +552,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		pcb * pcbEjecutada = (pcb*) mensaje;
 		log_info(logger, "Proceso #%i fin de ejecución en CPU %i.", pcbEjecutada->pid, unCPU->id);
-		if(envioSeñalSIGUSR1(unCPU->id)){
+		if(envioSenialCPU(unCPU->id)){
 			log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));

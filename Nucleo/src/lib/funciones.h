@@ -4,6 +4,7 @@
 #include "globales.h"
 
 // Configuración y setting:
+void iniciarEscuchaDeInotify();
 int setearValoresDeConfig(t_config * archivoConfig);
 t_semaforo* semaforo_create(char*nombre, int valor);
 void registrarSemaforo(char* name, int value);
@@ -25,9 +26,8 @@ void aceptarConexionEntranteDeConsola(); // --> planificarProceso
 void aceptarConexionEntranteDeCPU(); // --> planificarProceso
 void atenderCambiosEnArchivoConfig(int socketMaximo);
 void salvarProcesoEnCPU(int cpuId); // --> planificarProceso
-int envioSeñalSIGUSR1(int id_cpu);
+int envioSenialCPU(int id_cpu);
 void finalizarPrograma(int pid, int index);
-int envioSeñalSIGUSR1(int id_cpu);
 int pcbListIndex(int pid);
 void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
 void semaforo_signal(t_semaforo* semaforo);

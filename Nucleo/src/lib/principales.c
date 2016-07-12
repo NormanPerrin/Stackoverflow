@@ -17,16 +17,6 @@ void crearLoggerNucleo(){
 	free(archivoLogNucleo); archivoLogNucleo = NULL;
 }
 
-void iniciarEscuchaDeInotify(){
-	if (watch_descriptor > 0 && fd_inotify > 0) {
-		inotify_rm_watch(fd_inotify, watch_descriptor);
-	}
-	fd_inotify = inotify_init();
-		if (fd_inotify > 0) {
-			watch_descriptor = inotify_add_watch(fd_inotify, RUTA_CONFIG_NUCLEO, IN_MODIFY);
-		}
-}
-
 void leerConfiguracionNucleo(){
 	t_config * archivoConfig;
 		if (comprobarQueExistaArchivo(RUTA_CONFIG_NUCLEO) == ERROR){
@@ -99,6 +89,10 @@ void esperar_y_PlanificarProgramas(){
 	// Bucle principal:
 	while(TRUE){
 
+		if(seDesconectoUMC){
+			return; // salgo del bucle si UMC se desconecta
+		}else{ // sino sigo en el sistema
+
 		int i, j, max_fd;
 
 		// Borra el conjunto maestro:
@@ -150,7 +144,8 @@ void esperar_y_PlanificarProgramas(){
 
 	    	recorrerListaCPUsYAtenderNuevosMensajes();
 
-	    } // fin else nuevo mensaje
+	    	} // fin else nuevo mensaje
+		} // fin else no se desconectó UMC
 	} // fin del while
 } // fin select
 
