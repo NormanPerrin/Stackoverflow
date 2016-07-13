@@ -28,24 +28,14 @@ int main(void){
 		unirHilosIO();
 
 		// Libero memoria y cierro sockets:
-		liberarRecursosUtilizados();
-		cerrarSocket(fdEscuchaConsola);
-		cerrarSocket(fdEscuchaCPU);
-		cerrarSocket(fd_UMC);
-		inotify_rm_watch(fd_inotify, watch_descriptor);
-		cerrarSocket(fd_inotify);
+		exitNucleo();
 
 		return EXIT_SUCCESS;
 	} else{
 		unirHilosIO();
 
 		// Libero memoria y cierro sockets:
-		liberarRecursosUtilizados();
-		cerrarSocket(fdEscuchaConsola);
-		cerrarSocket(fdEscuchaCPU);
-		cerrarSocket(fd_UMC);
-		inotify_rm_watch(fd_inotify, watch_descriptor);
-		cerrarSocket(fd_inotify);
+		exitNucleo();
 
 		return EXIT_FAILURE;
 	}

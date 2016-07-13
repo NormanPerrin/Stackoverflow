@@ -1,5 +1,5 @@
-#ifndef LIB_PRINCIPALES_H_
-#define LIB_PRINCIPALES_H_
+#ifndef NUCLEOVIEJOMALDITO_SRC_LIB_PRINCIPALES_H_
+#define NUCLEOVIEJOMALDITO_SRC_LIB_PRINCIPALES_H_
 
 #include "funciones.h"
 
@@ -14,9 +14,6 @@ int conexionConUMC();
 void esperar_y_PlanificarProgramas();
 void unirHilosIO();
 void liberarRecursosUtilizados();
-int validar_cliente();
-int validar_servidor();
+void exitNucleo();
 
-extern bool seDesconectoUMC; // Variable global proveniente del main
-
-#endif /* LIB_PRINCIPALES_H_ */
+#endif /* NUCLEOVIEJOMALDITO_SRC_LIB_PRINCIPALES_H_ */

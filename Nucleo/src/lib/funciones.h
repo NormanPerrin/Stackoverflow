@@ -1,5 +1,5 @@
-#ifndef LIB_FUNCIONES_H_
-#define LIB_FUNCIONES_H_
+#ifndef NUCLEOVIEJOMALDITO_SRC_LIB_FUNCIONES_H_
+#define NUCLEOVIEJOMALDITO_SRC_LIB_FUNCIONES_H_
 
 #include "globales.h"
 
@@ -12,6 +12,8 @@ var_compartida* crearVariableCompartida(char* nombre, int valorInicial);
 // Lanzar hilos IO:
 void registrarVariableCompartida(char* name, int value);
 hiloIO* crearHiloIO(int index);
+int validar_cliente();
+int validar_servidor();
 proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos);
 void encolarPcbAListos(pcb* proceso);
 void* entradaSalidaThread(void* dataHilo);
@@ -44,4 +46,4 @@ void limpiarArchivoConfig();
 
 extern bool seDesconectoUMC;
 
-#endif /* LIB_FUNCIONES_H_ */
+#endif /* NUCLEOVIEJOMALDITO_SRC_LIB_FUNCIONES_H_ */

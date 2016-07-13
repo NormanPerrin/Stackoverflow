@@ -1,5 +1,5 @@
-#ifndef LIB_GLOBALES_H_
-#define LIB_GLOBALES_H_
+#ifndef NUCLEOVIEJOMALDITO_SRC_LIB_GLOBALES_H_
+#define NUCLEOVIEJOMALDITO_SRC_LIB_GLOBALES_H_
 
 #include <utilidades/comunicaciones.h>
 #include <pthread.h>
@@ -83,4 +83,4 @@ t_dictionary * diccionarioVarCompartidas; // Diccionario de todos las variables 
 
 pthread_mutex_t mutex_planificarProceso;
 
-#endif /* LIB_GLOBALES_H_ */
+#endif /* NUCLEOVIEJOMALDITO_SRC_LIB_GLOBALES_H_ */

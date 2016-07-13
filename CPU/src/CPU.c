@@ -116,7 +116,7 @@ void ejecutarProcesoActivo(){
 
 			switch (devolvioPcb) {
 			case POR_IO:{
-				log_debug(logger, "Expulsando porceso por pedido de I/O.");
+				log_debug(logger, "Expulsando proceso por pedido de I/O.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, &(pcbActual->pid));
 				exitProceso();
 				return;

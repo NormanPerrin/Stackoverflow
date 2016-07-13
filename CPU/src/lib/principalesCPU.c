@@ -1,6 +1,6 @@
 #include "principalesCPU.h"
 
-int validar_cliente(char *id) { return NULL; }
+int validar_cliente(char *id) { return 0; }
 
 int validar_servidor(char *id) {
 	if(!strcmp(id, "U") || !strcmp(id, "N")) {
