@@ -18,14 +18,13 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 		}
 		// Verifico si se desborda la pila en memoria:
 		if(pcbActual->stackPointer + 4 > (tamanioPagina*tamanioStack)){
-			if(!huboStackOverflow){
 				printf("Hubo stack overflow. Se finaliza el proceso actual #%d", pcbActual->pid);
 				huboStackOverflow = true;
-			}
+
 			return ERROR;
 		}else{
 			// Agrego un nuevo registro al índice de stack:
-		registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->numeroContextoEjecucionActualStack);
+		registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indexActualStack);
 
 			if(regStack == NULL){
 				regStack = reg_stack_create(); // TODO: Ver si pasar tamaño como argumento del creator
@@ -52,7 +51,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	log_debug(logger, "Obteneniendo posición de la variable: '%c'", var_nombre);
 	char* var_id = strdup(charAString(var_nombre));
 	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
-	registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->numeroContextoEjecucionActualStack);
+	registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indexActualStack);
 	// Me posiciono al inicio de este registro y busco la variable del diccionario que coincida con el nombre solicitado:
 		if(dictionary_size(regStack->vars) > 0){
 
@@ -197,7 +196,7 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 	nuevoRegistroStackEjecucionActual->retPos = pcbActual->pc;
 	list_add(pcbActual->indiceStack, nuevoRegistroStackEjecucionActual);
 
-	pcbActual->numeroContextoEjecucionActualStack++;
+	pcbActual->indexActualStack++;
 
 	irAlLabel(etiqueta);
 }
@@ -206,7 +205,7 @@ void retornar(t_valor_variable var_retorno){
 
 	log_debug(logger, "Llamada a la función 'retornar'.");
 	// Tomo contexto actual y anterior:
-	int index = pcbActual->numeroContextoEjecucionActualStack;
+	int index = pcbActual->indexActualStack;
 	registroStack* registroActual = list_get(pcbActual->indiceStack, index);
 
 	// Limpio los argumentos del registro (descuento el espacio que ocupan en el stack en memoria):
@@ -225,8 +224,8 @@ void retornar(t_valor_variable var_retorno){
 
 	liberarRegistroStack(registroActual); // libero la memoria del registro
 
-	list_remove(pcbActual->indiceStack, pcbActual->numeroContextoEjecucionActualStack);
-	pcbActual->numeroContextoEjecucionActualStack--;
+	list_remove(pcbActual->indiceStack, pcbActual->indexActualStack);
+	pcbActual->indexActualStack--;
 }
 
 void imprimir(t_valor_variable valor_mostrar){

@@ -375,7 +375,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->id_cpu), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPcb->numeroContextoEjecucionActualStack), INT);
+	memcpy(buffer + desplazamiento, &(unPcb->indexActualStack), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->paginaActualCodigo), INT);
 		desplazamiento += INT;
@@ -420,7 +420,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 		desplazamiento += INT;
 	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&unPcb->numeroContextoEjecucionActualStack, buffer + desplazamiento, INT);
+	memcpy(&unPcb->indexActualStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->paginaActualCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;

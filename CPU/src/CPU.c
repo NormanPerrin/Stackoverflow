@@ -67,6 +67,7 @@ int recibirMensajesDeNucleo(){
 	} else {
 		switch (head) {
 			case PCB:{
+				cpuOciosa = false;
 				int pcb_size = calcularTamanioPCB(mensaje);
 				// Seteo el pcb actual que recibo de Núcleo:
 				memcpy(pcbActual, (pcb*) mensaje, pcb_size);
@@ -96,6 +97,7 @@ void ejecutarProcesoActivo(){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, pcbActual);
+				cpuOciosa = true;
 				liberarPcbActiva();
 				revisarFinalizarCPU();
 				printf("Esperando nuevo proceso.\n");
@@ -107,6 +109,7 @@ void ejecutarProcesoActivo(){
 			if (huboStackOverflow){
 				log_info(logger, "Se ha producido Stack Overflow. Finalizando programa...");
 				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+				cpuOciosa = true;
 				liberarPcbActiva();
 				revisarFinalizarCPU();
 				printf("Esperando nuevo proceso...\n");
@@ -132,6 +135,7 @@ void ejecutarProcesoActivo(){
 			usleep(pcbActual->quantum_sleep * 1000); // Retardo de quantum
 		} // fin if not null
 		else {
+			cpuOciosa = true;
 			liberarPcbActiva();
 			revisarFinalizarCPU();
 			printf("Esperando nuevo proceso...\n");
@@ -141,6 +145,7 @@ void ejecutarProcesoActivo(){
 	// Finalizó ráfaga de ejecución:
 	aplicar_protocolo_enviar(fdNucleo, PCB_FIN_QUANTUM, pcbActual);
 	log_debug(logger, "El proceso ha finalizado ráfaga de ejecución.");
+	cpuOciosa = true;
 	liberarPcbActiva();
 	revisarFinalizarCPU();
 	printf("Esperando nuevo proceso...\n");

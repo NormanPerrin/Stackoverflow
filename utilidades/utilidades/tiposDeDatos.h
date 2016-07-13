@@ -63,7 +63,7 @@ typedef struct pcb{
 	int paginaActualCodigo;
 	int paginaActualStack;
 	int primerPaginaStack;
-	int numeroContextoEjecucionActualStack;
+	int indexActualStack;
 	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;

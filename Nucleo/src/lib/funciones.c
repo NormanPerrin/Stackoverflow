@@ -281,7 +281,7 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->id_cpu = -1; // CPU aún no asignado
 			nuevoPcb->quantum = config->quantum;
 			nuevoPcb->quantum_sleep = config->retardoQuantum;
-/*
+
 		// Analizo con el parser el código del programa para obtener su metadata:
 			t_metadata_program* infoProg = metadata_desde_literal(programa);
 
@@ -298,7 +298,7 @@ pcb * crearPcb(char* programa){
 
 		// Inicializo índice de stack:
 			nuevoPcb->indiceStack = list_create();
-			nuevoPcb->numeroContextoEjecucionActualStack = 0; // resgistro actual en uso; 0 porque aún está vacío
+			nuevoPcb->indexActualStack = 0; // resgistro actual en uso; 0 porque aún está vacío
 
 		// Inicializo índice de etiquetas:
 			if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0) {
@@ -309,7 +309,7 @@ pcb * crearPcb(char* programa){
 				nuevoPcb->tamanioIndiceEtiquetas = 0;
 			}
 			metadata_destruir(infoProg);
-*/ // TODO descomentar
+
 			return nuevoPcb;
 	}
 }
