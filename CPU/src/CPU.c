@@ -67,13 +67,15 @@ int recibirMensajesDeNucleo(){
 	} else {
 		switch (head) {
 			case PCB:{
-				cpuOciosa = false;
 				int pcb_size = calcularTamanioPCB(mensaje);
 				// Seteo el pcb actual que recibo de Núcleo:
 				memcpy(pcbActual, (pcb*) mensaje, pcb_size);
 				// Le informo a UMC el cambio de proceso activo:
 				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, &(pcbActual->pid));
 				// Comienzo la ejecución del proceso:
+				cpuOciosa = false;
+				huboStackOverflow = false;
+				devolvioPcb = DEFAULT;
 				ejecutarProcesoActivo();
 
 				break;
@@ -107,7 +109,7 @@ void ejecutarProcesoActivo(){
 			analizadorLinea(proximaInstruccion, &funcionesAnSISOP, &funcionesKernel);
 
 			if (huboStackOverflow){
-				log_info(logger, "Se ha producido Stack Overflow. Finalizando programa...");
+				log_info(logger, "Se ha producido Stack Overflow. Abortando programa...");
 				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
 				cpuOciosa = true;
 				liberarPcbActiva();
@@ -119,26 +121,31 @@ void ejecutarProcesoActivo(){
 			(pcbActual->pc)++; // Incremento Program Counter del PCB
 
 			switch (devolvioPcb) { // TODO: ver este switch
-			case POR_IO:
-				/*log_debug(ptrLog, "Finalizo ejecucion por operacion I/O");
-				finalizarEjecucionPorIO();
-				revisarFinalizarCPU();*/
+			case POR_IO:{
+				log_debug(logger, "Expulsando porceso por pedido de I/O.");
+				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, &(pcbActual->pid));
+				cpuOciosa = true;
+				liberarPcbActiva();
+				revisarFinalizarCPU();
+				printf("Esperando nuevo proceso...\n");
 				return;
-			case POR_WAIT:
-				/*log_debug(ptrLog, "Finalizo ejecucion por un Wait.");
-				finalizarEjecucionPorWait();
-				revisarFinalizarCPU();*/
+			}
+			case POR_WAIT:{
+				log_debug(logger, "Expulsando proceso por operación Wait.");
+				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, &(pcbActual->pid));
+				cpuOciosa = true;
+				liberarPcbActiva();
+				revisarFinalizarCPU();
+				printf("Esperando nuevo proceso...\n");
 				return;
+			}
 			default:
 				break;
-			}
+			} // fin switch devolvió PCB
 			usleep(pcbActual->quantum_sleep * 1000); // Retardo de quantum
 		} // fin if not null
 		else {
-			cpuOciosa = true;
-			liberarPcbActiva();
-			revisarFinalizarCPU();
-			printf("Esperando nuevo proceso...\n");
+			exitPorErrorUMC();
 			return;
 			} // fin else not null
 	} // fin while que descuenta quantum

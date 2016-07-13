@@ -149,11 +149,11 @@ void liberarPcb(pcb * pcb){
 registroStack* reg_stack_create(){
 	registroStack* reg = malloc(sizeof(registroStack));
 	  reg->vars = dictionary_create();
+	  reg->args = NULL;
 	  reg->retPos = 0;
 	  reg->retVar.offset = 0;
 	  reg->retVar.pagina = 0;
 	  reg->retVar.size = 0;
-	  reg->args = NULL;
 
 	  return reg;
 }

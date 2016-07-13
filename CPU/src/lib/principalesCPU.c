@@ -87,10 +87,8 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 		estadoDelPedido = (int*)entrada;
 		free(entrada);
 	 if(*estadoDelPedido == NO_PERMITIDO){ // retorno false por pedido rechazado
-		 printf("UMC ha rechazado un pedido de lectura/escritura del proceso #%d\n", pcbActual->pid);
+		 printf("UMC ha enviado una respuesta de rechazo.\n");
 		 free(estadoDelPedido);
-		 log_info(logger, "Abortando ejecución del proceso actual.");
-		 aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &pcbActual->pid);
 		 return FALSE;
 		 } // retorno true por pedido acpetado
 	 free(estadoDelPedido);
@@ -98,6 +96,23 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 	} // retorno false por error en el head
 	free(entrada);
 	return FALSE;
+}
+
+void exitPorErrorUMC(){
+	log_info(logger, "UMC ha rechazado pedido de lectura/escritura durante la ejecución. Abortando programa...");
+	aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+	cpuOciosa = true;
+	liberarPcbActiva();
+	revisarFinalizarCPU();
+	printf("Esperando nuevo proceso...\n");
+}
+
+void exitPorIO(){
+
+}
+
+void exitPorWait(){
+
 }
 
 char* solicitarProximaInstruccionAUMC(){
