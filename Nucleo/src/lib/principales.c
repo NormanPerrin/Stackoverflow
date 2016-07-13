@@ -31,6 +31,8 @@ void leerConfiguracionNucleo(){
 		}
 }
 
+void setearValores_config(t_config * archivoConfig) {NULL;}
+
 void llenarDiccionarioSemaforos(){
 	int i = 0;
 	while (config->semaforosID[i] != '\0'){
