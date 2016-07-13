@@ -167,7 +167,30 @@ void unirHilosIO(){
 
 void liberarRecursosUtilizados(){
 	limpiarColecciones();
-	limpiarArchivoConfig();
-	log_destroy(logger);
-	logger = NULL;
+		limpiarArchivoConfig();
+		log_destroy(logger);
+		logger = NULL;
+	}
+int validar_cliente(char *id){
+
+	if(!strcmp(id, "C") || !strcmp(id,"P" )) {
+				printf("Servidor aceptado.\n");
+				return TRUE;
+			}
+	else {
+				printf("Servidor rechazado.\n");
+				return FALSE;
+			}
 }
+
+int validar_servidor(char *id){
+	if(!strcmp(id, "U")) {
+			printf("Servidor aceptado.\n");
+			return TRUE;
+		}
+	else {
+			printf("Servidor rechazado.\n");
+			return FALSE;
+		}
+}
+
