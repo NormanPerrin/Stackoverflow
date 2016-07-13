@@ -276,7 +276,7 @@ pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio){
 
 	pedidoIO * msj = malloc(tamanio);
 	int desplazamiento = 0;
-	int string_size = strlen(msj->nombreDispositivo)+1;
+	int string_size = tamanio - INT;
 
 		memcpy(&msj->tiempo, buffer + desplazamiento, INT);
 			desplazamiento += INT;
@@ -305,7 +305,7 @@ inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
 	inicioPrograma * msj = malloc(tamanio);
-	int string_size = strlen(msj->contenido)+1;
+	int string_size = tamanio - 2 * INT;
 
 	memcpy(&msj->paginas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
