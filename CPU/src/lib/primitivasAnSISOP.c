@@ -1,5 +1,5 @@
 #include "primitivasAnSISOP.h"
-#include <commons/colecctions/list.h>
+
 t_puntero definirVariable(t_nombre_variable var_nombre){
 	/* Le asigna una posición en memoria a la variable,
 	 y retorna el offset total respecto al inicio del stack. */
