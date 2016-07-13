@@ -95,14 +95,11 @@ void ejecutarProcesoActivo(){
 
 		if (proximaInstruccion != NULL){ // Llegó una instrucción, analizo si es o no 'end':
 			limpiarInstruccion(proximaInstruccion);
-			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones - 1) && (strcmp(proximaInstruccion, "end") == 0)){
+			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && (strcmp(proximaInstruccion, "end") == 0)){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, pcbActual);
-				cpuOciosa = true;
-				liberarPcbActiva();
-				revisarFinalizarCPU();
-				printf("Esperando nuevo proceso.\n");
+				exitProceso();
 					return;
 			} // No es 'end'. Ejecuto la próxima instrucción:
 
@@ -111,32 +108,23 @@ void ejecutarProcesoActivo(){
 			if (huboStackOverflow){
 				log_info(logger, "Se ha producido Stack Overflow. Abortando programa...");
 				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
-				cpuOciosa = true;
-				liberarPcbActiva();
-				revisarFinalizarCPU();
-				printf("Esperando nuevo proceso...\n");
+				exitProceso();
 					return;
 				}
 			quantum--; // Decremento el quantum actual
 			(pcbActual->pc)++; // Incremento Program Counter del PCB
 
-			switch (devolvioPcb) { // TODO: ver este switch
+			switch (devolvioPcb) {
 			case POR_IO:{
 				log_debug(logger, "Expulsando porceso por pedido de I/O.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, &(pcbActual->pid));
-				cpuOciosa = true;
-				liberarPcbActiva();
-				revisarFinalizarCPU();
-				printf("Esperando nuevo proceso...\n");
+				exitProceso();
 				return;
 			}
 			case POR_WAIT:{
 				log_debug(logger, "Expulsando proceso por operación Wait.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, &(pcbActual->pid));
-				cpuOciosa = true;
-				liberarPcbActiva();
-				revisarFinalizarCPU();
-				printf("Esperando nuevo proceso...\n");
+				exitProceso();
 				return;
 			}
 			default:
@@ -152,8 +140,5 @@ void ejecutarProcesoActivo(){
 	// Finalizó ráfaga de ejecución:
 	aplicar_protocolo_enviar(fdNucleo, PCB_FIN_QUANTUM, pcbActual);
 	log_debug(logger, "El proceso ha finalizado ráfaga de ejecución.");
-	cpuOciosa = true;
-	liberarPcbActiva();
-	revisarFinalizarCPU();
-	printf("Esperando nuevo proceso...\n");
+	exitProceso();
 }

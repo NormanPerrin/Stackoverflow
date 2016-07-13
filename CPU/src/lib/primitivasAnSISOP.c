@@ -26,7 +26,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			// Agrego un nuevo registro al índice de stack:
 		registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indexActualStack);
 			if(regStack == NULL){
-				regStack = reg_stack_create(); // TODO: Ver si pasar tamaño como argumento del creator
+				regStack = reg_stack_create(); // TODO: Ver si pasar tamaño(s) como argumento del creator
 			}
 			//(stackPointer: desplazamiento desde la primer página del stack hasta donde arranca mi nueva variable)
 			dictionary_put(regStack->vars, var_id, var_direccion);
@@ -184,13 +184,11 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 	return var_compartida_valor;
 }
 
-t_puntero_instruccion irAlLabel(t_nombre_etiqueta nombre_etiqueta){
-
+void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 	log_debug(logger, "Ir al Label: '%s'.", nombre_etiqueta);
 	t_puntero_instruccion num_instruccion = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
-	/* pcbActual->pc = num_instruccion - 1;
-	 * return; */
-	return num_instruccion;
+	pcbActual->pc = num_instruccion - 1;
+	return;
 }
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){

@@ -127,18 +127,24 @@ int calcularTamanioPCB(void* mensaje){
 
 int calcularTamanioIndiceStack(t_list* indice){
 
-	int* tamanio;
-	*tamanio = 0;
-
-	void calcularTamanioRegistroStack(void* element){
-		registroStack* reg = (registroStack*) element;
-		int sum = 16 + (NUM_ELEM(reg->args)*12) + (dictionary_size(reg->vars)*14);
-		*tamanio += sum;
+	int tamanio;
+	/*int* tamanio;
+	*tamanio = 0;*/
+	int i;
+	for(i=0; i<list_size(indice); i++){
+		registroStack* reg = list_get(indice, i);
+		int size = 16 + (NUM_ELEM(reg->args)*12) + (dictionary_size(reg->vars)*14) + 12;
+		tamanio += size;
 	}
-	list_iterate(indice, calcularTamanioRegistroStack);
-
-	return *tamanio;
-} // TODO: Ver otra forma de calcularlo
+	/*void calcularTamanioRegistroStack(void* element){
+		registroStack* reg = (registroStack*) element;
+		int size = 16 + (NUM_ELEM(reg->args)*12) + (dictionary_size(reg->vars)*14);
+		*tamanio += size;
+	}
+	list_iterate(indice, calcularTamanioRegistroStack);*/
+	//return *tamanio;
+	return tamanio;
+}
 
 void * serealizar(int head, void * mensaje, int tamanio){
 
@@ -368,7 +374,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 
 	pcb* unPcb = (pcb*) mensaje;
 	int desplazamiento = 0;
-	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
+	int tam_elems_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack)-4;
 
 	void * buffer = malloc(tamanio);
 	memcpy(buffer + desplazamiento, &(unPcb->cantidad_instrucciones), INT);
@@ -405,7 +411,9 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += unPcb->tamanioIndiceCodigo;
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
-	memcpy(buffer + desplazamiento, unPcb->indiceStack, tam_indiceStack);
+	memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, unPcb->indiceStack->head, tam_elems_indiceStack);
 
 		return buffer;
 }
@@ -414,7 +422,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(tamanio);
-	int tam_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
+	int tam_elems_indiceStack = calcularTamanioIndiceStack(unPcb->indiceStack)-4;
 
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;
@@ -450,7 +458,9 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 		desplazamiento += unPcb->tamanioIndiceCodigo;
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
-	memcpy(unPcb->indiceStack, buffer + desplazamiento, tam_indiceStack);
+	memcpy(&unPcb->indiceStack->elements_count, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(unPcb->indiceStack->head, buffer + desplazamiento, tam_elems_indiceStack);
 
 		return unPcb;
 }

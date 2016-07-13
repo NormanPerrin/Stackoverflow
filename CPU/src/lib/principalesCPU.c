@@ -98,21 +98,17 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 	return FALSE;
 }
 
-void exitPorErrorUMC(){
-	log_info(logger, "UMC ha rechazado pedido de lectura/escritura durante la ejecución. Abortando programa...");
-	aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+void exitProceso(){
 	cpuOciosa = true;
 	liberarPcbActiva();
 	revisarFinalizarCPU();
 	printf("Esperando nuevo proceso...\n");
 }
 
-void exitPorIO(){
-
-}
-
-void exitPorWait(){
-
+void exitPorErrorUMC(){
+	log_info(logger, "UMC ha rechazado pedido de lectura/escritura durante la ejecución. Abortando programa...");
+	aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+	exitProceso();
 }
 
 char* solicitarProximaInstruccionAUMC(){
