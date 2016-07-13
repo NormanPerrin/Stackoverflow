@@ -26,7 +26,7 @@ void conectarConSwap() {
 	validar_conexion(ret, 1);
 	handshake_cliente(sockClienteDeSwap, "U");
 
-//	// TODO: prueba
+	// TODO: prueba
 //	inicioPrograma *prueba_inicio = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
 //	prueba_inicio->paginas = 10;
 //	prueba_inicio->pid = 2;
