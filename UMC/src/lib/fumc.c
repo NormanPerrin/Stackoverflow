@@ -27,28 +27,54 @@ void conectarConSwap() {
 	handshake_cliente(sockClienteDeSwap, "U");
 
 	// TODO: prueba
-	inicioPrograma *prueba_inicio = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
-	prueba_inicio->paginas = 1;
-	prueba_inicio->pid = 2;
-	prueba_inicio->contenido = strdup("hola");
 
-	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, prueba_inicio);
-
+	int *contenido = NULL;
 	int *head = (int*)reservarMemoria(INT);
-	aplicar_protocolo_recibir(sockClienteDeSwap, head);
+	char *pagina = NULL;
+
+	inicioPrograma *prueba_inicio = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
+		prueba_inicio->paginas = 1;
+		prueba_inicio->pid = 2;
+		prueba_inicio->contenido = strdup("hola");
+		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, prueba_inicio);
+		aplicar_protocolo_recibir(sockClienteDeSwap, head);
+
+	inicioPrograma *prueba_inicio2 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
+		prueba_inicio2->paginas = 3;
+		prueba_inicio2->pid = 4;
+		prueba_inicio2->contenido = strdup("chau");
+		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, prueba_inicio2);
+		aplicar_protocolo_recibir(sockClienteDeSwap, head);
 
 	solicitudLeerPagina *prueba_lectura = (solicitudLeerPagina*)reservarMemoria(sizeof(solicitudLeerPagina));
-	prueba_lectura->pid = 2;
-	prueba_lectura->pagina = 0;
-	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, prueba_lectura);
+		prueba_lectura->pid = 2;
+		prueba_lectura->pagina = 0;
+		aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, prueba_lectura);
+		contenido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
+		if(*contenido == PERMITIDO) printf("<lectura> PERMITIDO\n");
+		else printf("<lectura> NO_PERMITIDO\n");
+		pagina = (char*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
+		printf("<lectura> Head = %d\n", *head);
+		printf("<lectura> Pagina = %s\n", pagina);
 
-	int *contenido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
-	if(*contenido == PERMITIDO) printf("<lectura> PERMITIDO\n");
-	else printf("<lectura> NO_PERMITIDO\n");
+	solicitudLeerPagina *prueba_lectura2 = (solicitudLeerPagina*)reservarMemoria(sizeof(solicitudLeerPagina));
+		prueba_lectura2->pid = 4;
+		prueba_lectura2->pagina = 0;
+		aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, prueba_lectura2);
+		contenido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
+		if(*contenido == PERMITIDO) printf("<lectura> PERMITIDO\n");
+		else printf("<lectura> NO_PERMITIDO\n");
+		pagina = (char*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
+		printf("<lectura> Head = %d\n", *head);
+		printf("<lectura> Pagina = %s\n", pagina);
 
-	char *pagina = (char*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
-	printf("<lectura> Head = %d\n", *head);
-	printf("<lectura> Pagina = %s\n", pagina);
+
+	free(prueba_inicio);
+	free(prueba_inicio2);
+	free(prueba_lectura);
+	free(prueba_lectura2);
+	free(head);
+
 }
 
 

@@ -86,11 +86,13 @@ FILE *inicializarSwap() {
 	inicializarTablaDePaginas();
 	inicializarTablaBitMap();
 
-	archivoSwap = fopen(config->nombreSwap , "w");
+	archivoSwap = fopen(config->nombreSwap , "w+");
 	if(archivoSwap != NULL) {
-		int i = 0;
-		for (;i < tamanioSwap; i++)
-			fputc('\0', archivoSwap);
+		char *c = (char*)reservarMemoria(tamanioSwap);
+		int l = 0;
+		for(; l < tamanioSwap; l++) c[l] = '\0';
+		fwrite(c, CHAR, tamanioSwap, archivoSwap);
+		free(c);
 	}
 
 	return archivoSwap;
@@ -208,24 +210,34 @@ void avanzarPaginas(int cantidad) {
 
 int buscarPosLibresEnBitMap(int paginas) {
 
+	int encontro = FALSE;
 	int i = 0;
 	int j = 0;
-	while(i < config->cantidadPaginas) {
+	for(; i < config->cantidadPaginas; i++) {
 
 		if(tablaDeBitMap[i].ocupada == 0) {
+
 			while(j < paginas) {
-				if(tablaDeBitMap[i+j].ocupada == 0) j++;
-				else break;
-			}
-		}
+				if(tablaDeBitMap[i+j].ocupada == 0) {
+					j++;
+				} else {
+					i += j;
+					j = 0;
+					break;
+				}
 
-		if(j == paginas) return i;
-		else i += j;
+				if(j == paginas) {
+					encontro = TRUE;
+					break;
+				}
+			} //  (while) j < paginas
 
-		i++;
-	}
+		} // (if) bitmap[i] == 0
 
-    return ERROR;
+	} // (for) i < cantidad paginas
+
+	if(encontro) return i;
+	return ERROR;
 }
 
 int buscarPosLibreEnBitMap() {
