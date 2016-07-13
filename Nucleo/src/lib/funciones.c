@@ -526,7 +526,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			int protocolo;
 		    void * mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
-		    if (mensaje == NULL){ // Si el msj en NULL, quito al CPU del sistema y salvo la PCB:
+		    if (mensaje == NULL){ // Si el msj es NULL, quito al CPU del sistema y salvo la PCB:
 		    	salvarProcesoEnCPU(unCPU->id);
 		    	cerrarSocket(fd);
 		    	log_info(logger,"La CPU %i se ha desconectado. Salvando PCB en ejecución.", unCPU->id);
@@ -599,8 +599,15 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			pcbEjecutada = (pcb*)entrada;
 		}
 		log_info(logger, "Proceso #%i entrada salida en CPU %i.", pcbEjecutada->pid, unCPU->id);
-		// El CPU pasa de Ocupada a Libre:
-		unCPU->disponibilidad = LIBRE;
+		if(envioSenialCPU(unCPU->id)){
+			log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+			cerrarSocket(fd);
+			free(list_remove(listaCPU, i));
+		}
+		else{
+			// El CPU pasa de Ocupado a Libre:
+			unCPU->disponibilidad = LIBRE;
+		}
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
 		realizarEntradaSalida(pcbEjecutada, datos);
@@ -636,6 +643,15 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		int* pid = (int*)mensaje;
 		int index = pcbListIndex(*pid);
 		log_info(logger, "Proceso #%i abortando ejecución en CPU %i.", *pid, unCPU->id);
+		if(envioSenialCPU(unCPU->id)){
+			log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+			cerrarSocket(fd);
+			free(list_remove(listaCPU, i));
+		}
+		else{
+			// El CPU pasa de Ocupado a Libre:
+			unCPU->disponibilidad = LIBRE;
+		}
 		// Le informo a UMC que libere la memoria asignada al programa:
 		finalizarPrograma(*pid, index);
 		// Le informo a la Consola asociada:
@@ -673,6 +689,15 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 				waitPcb = (pcb*)entrada;
 			}
 			free(entrada);
+			if(envioSenialCPU(unCPU->id)){
+				log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+				cerrarSocket(fd);
+				free(list_remove(listaCPU, i));
+			}
+			else{
+				// El CPU pasa de Ocupado a Libre:
+				unCPU->disponibilidad = LIBRE;
+			}
 			semaforo_blockProcess(semaforo->bloqueados, waitPcb);
 			// free(waitPcb); ¿?
 		}
@@ -704,7 +729,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		break;
 	}
-	case SIGUSR1: {
+	case SENIAL_SIGUSR1: {
 
 		log_info(logger, "Señal SIGUSR1 del CPU %i. Será quitado del sistema al finalizar ráfaga de ejecución actual.", unCPU->id);
 		list_add(listaCPU_SIGUSR1, &(unCPU->id));

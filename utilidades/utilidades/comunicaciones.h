@@ -28,7 +28,7 @@ typedef enum {
 	WAIT_CON_BLOQUEO,				// Núcleo - CPU
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
 	TAMANIO_STACK,					// Núcleo - CPU
-	SIGUSR1,						// CPU - Núcleo --> MSJ_VACIO
+	SENIAL_SIGUSR1,						// CPU - Núcleo --> MSJ_VACIO
 	// Mensajes Dinámicos;
 	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
 	ENVIAR_SCRIPT, 					// Consola - Núcleo

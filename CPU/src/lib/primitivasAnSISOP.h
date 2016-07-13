@@ -2,7 +2,7 @@
 #define LIB_PRIMITIVASANSISOP_H_
 
 #include "globalesCPU.h"
-#include "secundariasCPU.h"
+#include "principalesCPU.h"
 
 /** PROTOTIPO PRIMITIVAS ANSISOP **/
 t_puntero definirVariable(t_nombre_variable identificador_variable);
@@ -20,6 +20,10 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 void s_wait(t_nombre_semaforo identificador_semaforo);
 void s_signal(t_nombre_semaforo identificador_semaforo);
 
-extern bool huboStackOverflow; // Variable global proveniente del main
+// Variable global provenientes del main:
+extern bool finalizarCPU;
+extern bool cpuOciosa;
+extern bool huboStackOverflow;
+extern int devolvioPcb;
 
 #endif /* LIB_PRIMITIVASANSISOP_H_ */
