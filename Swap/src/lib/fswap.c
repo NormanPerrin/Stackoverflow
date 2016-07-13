@@ -157,11 +157,7 @@ void iniciar_programa(void *msj) {
 		int pos = buscarPaginaEnTablaDePaginas(pid, 0);
 		avanzarPaginas(pos);
 		int tamanio = strlen(mensaje->contenido);
-		int k = 0;
-		for(; k < tamanio; k++) {
-			char c = mensaje->contenido[k];
-			fputc(c, archivoSwap);
-		}
+		fwrite(mensaje->contenido, CHAR, tamanio, archivoSwap);
 	}
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
@@ -183,11 +179,7 @@ void escribir_pagina(void *msj) {
 	if(pos != ERROR) {
 		avanzarPaginas(pos);
 		int tamanio = strlen(contenido);
-		int k = 0;
-		for(; k < tamanio; k++) {
-			char c = contenido[k];
-			fputc(c, archivoSwap);
-		}
+		fwrite(mensaje->contenido, CHAR, tamanio, archivoSwap);
 	}
 	else *respuesta = NO_PERMITIDO; // no encontro pagina en tabla de paginas
 
@@ -210,19 +202,9 @@ int buscarPaginaEnTablaDePaginas(int pid, int pagina) {
 }
 
 void avanzarPaginas(int cantidad) {
-
-	char *f = (char*)reservarMemoria(CHAR);
 	rewind(archivoSwap);
-
 	int avanceTotal = cantidad * config->tamanioPagina;
-
-	int i = 0;
-	while(i < avanceTotal) {
-		fscanf(archivoSwap, "%c", f);
-		i++;
-	}
-
-	free(f);
+	fseek(archivoSwap, avanceTotal, SEEK_SET);
 }
 
 int buscarPosLibresEnBitMap(int paginas) {
@@ -288,7 +270,7 @@ int cuantasPaginasTieneElProceso(arrancaProceso) {
  * */
 void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
-	char *contenido = (char*)reservarMemoria(config->tamanioPagina), c;
+	char *contenido = (char*)reservarMemoria(config->tamanioPagina);
 
 	int i = 0;
 	for(; i < cantidadDePaginasDelProceso ; i++) {
@@ -298,11 +280,7 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
     	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina); // busco posicion para leer pagina
     	if(pagABuscar != ERROR) avanzarPaginas(pagABuscar); // avanzo puntero a inicio de pagina
-    	int k = 0;
-    	for(; k < config->tamanioPagina; i++) { // leo pagina en contenido
-    		c = fgetc(archivoSwap);
-    		contenido[k] = c;
-    	}
+    	fread(contenido, CHAR, config->tamanioPagina, archivoSwap);
 
     	// actualizo tablaPaginas
     	tablaPaginas[posLibre].pid = pid;
@@ -316,7 +294,7 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
     	// escribo pagina de proceso en pagina libre
     	avanzarPaginas(posLibre);
-    	fprintf(archivoSwap, "%s", contenido);
+    	fwrite(contenido, CHAR, config->tamanioPagina, archivoSwap);
 
     	//actualizo contadores
     	posLibre++;
@@ -363,9 +341,10 @@ void eliminar_programa(void *msj) {
 			tablaDeBitMap[pagina].ocupada = 0;
 
 			// escribo '\0' en paginas del proceso
-			int k = 0;
-			for(; k < config->tamanioPagina; k++)
-				fputc('\0', archivoSwap);
+			char *c = (char*)reservarMemoria(config->tamanioPagina);
+			int l = 0;
+			for(; l < config->tamanioPagina; l++) c[l] = '\0';
+			fwrite(c, CHAR, config->tamanioPagina, archivoSwap);
 		}
 
 		// acutalizo contador global
@@ -390,12 +369,7 @@ void leer_pagina(void *msj) {
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
 	if(pagABuscar != ERROR) { // encontro pagina del proceso
 		avanzarPaginas(pagABuscar);
-		char c;
-		int i = 0;
-		for(; i < config->tamanioPagina; i++) {
-			c = fgetc(archivoSwap);
-			contenido[i] = c;
-		}
+		fread(contenido, CHAR, config->tamanioPagina, archivoSwap);
 	} else *respuesta = NO_PERMITIDO; // no encontro pagina solicitada del pid
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
