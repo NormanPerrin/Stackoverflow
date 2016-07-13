@@ -1,5 +1,12 @@
-#ifndef NUCLEOVIEJOMALDITO_SRC_LIB_GLOBALES_H_
-#define NUCLEOVIEJOMALDITO_SRC_LIB_GLOBALES_H_
+/*
+ * globales.h
+ *
+ *  Created on: 13/7/2016
+ *      Author: utnso
+ */
+
+#ifndef LIB_GLOBALES_H_
+#define LIB_GLOBALES_H_
 
 #include <utilidades/comunicaciones.h>
 #include <pthread.h>
@@ -83,4 +90,4 @@ t_dictionary * diccionarioVarCompartidas; // Diccionario de todos las variables 
 
 pthread_mutex_t mutex_planificarProceso;
 
-#endif /* NUCLEOVIEJOMALDITO_SRC_LIB_GLOBALES_H_ */
+#endif /* LIB_GLOBALES_H_ */

@@ -1,5 +1,12 @@
-#ifndef NUCLEOVIEJOMALDITO_SRC_LIB_FUNCIONES_H_
-#define NUCLEOVIEJOMALDITO_SRC_LIB_FUNCIONES_H_
+/*
+ * funciones.h
+ *
+ *  Created on: 13/7/2016
+ *      Author: utnso
+ */
+
+#ifndef LIB_FUNCIONES_H_
+#define LIB_FUNCIONES_H_
 
 #include "globales.h"
 
@@ -46,4 +53,4 @@ void limpiarArchivoConfig();
 
 extern bool seDesconectoUMC;
 
-#endif /* NUCLEOVIEJOMALDITO_SRC_LIB_FUNCIONES_H_ */
+#endif /* LIB_FUNCIONES_H_ */
