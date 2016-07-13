@@ -1,5 +1,8 @@
 #include "comunicaciones.h"
 
+// SEREALIZAR: Del mensaje listo para enviar, al buffer
+// DESEREAILZAR: Del buffer, al mensaje listo para recibir
+
 void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 
 	int desplazamiento = 0, tamanioMensaje, tamanioTotalAEnviar;
@@ -274,11 +277,11 @@ void* serealizarTextoMasUnInt(void* mensaje, int tamanio){
 
 pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio){
 
-	pedidoIO * msj = malloc(tamanio);
 	int desplazamiento = 0;
 	int string_size = tamanio - INT;
-	msj->nombreDispositivo = (char*)reservarMemoria(string_size);
+	// msj->nombreDispositivo = (char*)reservarMemoria(string_size); TODO: ver esto
 
+		pedidoIO * msj = malloc(tamanio);
 		memcpy(&msj->tiempo, buffer + desplazamiento, INT);
 			desplazamiento += INT;
 		memcpy(msj->nombreDispositivo, buffer + desplazamiento, string_size);
@@ -293,9 +296,9 @@ void* serealizarTextoMasDosInt(void* mensaje, int tamanio){
 	int string_size = strlen(msj->contenido) + 1;
 
 		void * buffer = malloc(tamanio);
-		memcpy(buffer + desplazamiento, &(msj->paginas), INT);
-			desplazamiento += INT;
 		memcpy(buffer + desplazamiento, &(msj->pid), INT);
+			desplazamiento += INT;
+		memcpy(buffer + desplazamiento, &(msj->paginas), INT);
 			desplazamiento += INT;
 		memcpy(buffer + desplazamiento, msj->contenido, string_size);
 
@@ -305,13 +308,13 @@ void* serealizarTextoMasDosInt(void* mensaje, int tamanio){
 inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
-	inicioPrograma *msj = (inicioPrograma*)reservarMemoria(tamanio);
-	int string_size = tamanio - 2 * INT;
-	msj->contenido = (char*)reservarMemoria(string_size);
+	int string_size = tamanio - 2*INT;
+	// msj->contenido = (char*)reservarMemoria(string_size); TODO: ver esto
 
-	memcpy(&msj->paginas, buffer + desplazamiento, INT);
-		desplazamiento += INT;
+	inicioPrograma *msj = (inicioPrograma*)reservarMemoria(tamanio);
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&msj->paginas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(msj->contenido, buffer + desplazamiento, string_size);
 
@@ -324,9 +327,9 @@ void* serealizarDosInt(void* mensaje, int tamanio){
 	int desplazamiento = 0;
 
 	void * buffer = malloc(tamanio);
-	memcpy(buffer + desplazamiento, &(msj->pagina), INT);
-		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(msj->pid), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(msj->pagina), INT);
 
 		return buffer;
 }
@@ -334,8 +337,8 @@ void* serealizarDosInt(void* mensaje, int tamanio){
 solicitudLeerPagina* deserealizarDosInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
-	solicitudLeerPagina * msj = malloc(tamanio);
 
+	solicitudLeerPagina* msj = malloc(tamanio);
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&msj->pagina, buffer + desplazamiento, INT);
@@ -361,8 +364,8 @@ void* serealizarTresInt(void* mensaje, int tamanio){
 direccion* deserealizarTresInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
-	direccion * msj = malloc(tamanio);
 
+	direccion * msj = malloc(tamanio);
 	memcpy(&msj->pagina, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&msj->offset, buffer + desplazamiento, INT);

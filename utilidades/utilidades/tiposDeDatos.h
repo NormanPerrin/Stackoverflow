@@ -52,18 +52,18 @@ typedef struct {
 
 // PCB de un proceso:
 typedef struct pcb{
-	int pid;
+	int cantidad_instrucciones;
+	int id_cpu; // id del CPU que ejecuta al proceso actualmente
+	int indexActualStack;
+	int paginaActualCodigo;
+	int paginaActualStack;
 	int paginas_codigo; // tamaño en páginas del segmento de código
 	int paginas_stack; // tamaño en páginas del segmento de stack
 	int pc; // program counter
-	int id_cpu; // id del CPU que ejecuta al proceso actualmente
-	int cantidad_instrucciones;
+	int pid;
+	int primerPaginaStack;
 	int quantum, quantum_sleep;
 	int stackPointer;
-	int paginaActualCodigo;
-	int paginaActualStack;
-	int primerPaginaStack;
-	int indexActualStack;
 	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;
