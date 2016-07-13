@@ -130,17 +130,18 @@ char* charAString(char caracter){
 		return caracterMasBarraCero;
 }
 
-void liberarVariable(variable * var){ free(var->nombre); free(var);}
-
-void liberarRegistroStack(registroStack * reg){ free(reg->args);
-dictionary_destroy_and_destroy_elements(reg->vars, (void *) liberarVariable);
-reg->vars = NULL; reg = NULL; }
+void liberarRegistroStack(registroStack* reg){
+	free(reg->args);
+	dictionary_clean(reg->vars);
+	dictionary_destroy(reg->vars);
+	free(reg);
+	reg = NULL;
+}
 
 void liberarPcb(pcb * pcb){
 	free(pcb->indiceCodigo);
 	free(pcb->indiceEtiquetas);
-	stack_destroy_and_destroy_elements(pcb->indiceStack, (void*) liberarRegistroStack);
-
+	list_destroy_and_destroy_elements(pcb->indiceStack, (void*) liberarRegistroStack);
 	free(pcb);
 	pcb = NULL;
 }
@@ -148,11 +149,11 @@ void liberarPcb(pcb * pcb){
 registroStack* reg_stack_create(){
 	registroStack* reg = malloc(sizeof(registroStack));
 	  reg->vars = dictionary_create();
+	  reg->args = NULL;
 	  reg->retPos = 0;
 	  reg->retVar.offset = 0;
 	  reg->retVar.pagina = 0;
 	  reg->retVar.size = 0;
-	  reg->args = NULL;
 
 	  return reg;
 }

@@ -3,9 +3,13 @@
 
 #include <utilidades/comunicaciones.h>
 #include <signal.h>
+#include <ctype.h>
 
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 #define RUTA_CONFIG_CPU "configCPU.txt"
+#define POR_WAIT 1
+#define POR_IO 2
+#define DEFAULT 3
 
 // Estructuras:
 typedef struct {

@@ -104,7 +104,7 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 	while (total < tamanioBytes){
 
 	bytes_recibidos = recv(fdServidor, buffer+total, tamanioBytes, MSG_WAITALL);
-	// MSG_WAITALL: el recv queda completamente bloqueado hasta que todo el paquete sea recibido
+	// MSG_WAITALL: el recv queda completamente bloqueado hasta que el paquete sea recibido completamente
 
 	if (bytes_recibidos == ERROR) { // Error al recibir mensaje
 		perror("Error: No se pudo recibir correctamente los datos.");

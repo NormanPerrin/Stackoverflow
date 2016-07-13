@@ -4,18 +4,11 @@
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <parser/metadata_program.h>
-#include "stack.h"
 
 // Dirección lógica:
 typedef struct {
 		int pagina, offset, size;
 } __attribute__((packed)) direccion;
-
-// Cadena de texto:
-typedef struct {
-		int tamanio;
-		char * cadena;
-} __attribute__((packed)) string;
 
 // Solicitud de inicio de un programa:
 typedef struct {
@@ -66,18 +59,15 @@ typedef struct pcb{
 	int id_cpu; // id del CPU que ejecuta al proceso actualmente
 	int cantidad_instrucciones;
 	int quantum, quantum_sleep;
-
-	int ultimaPosicionIndiceStack; // = numeroContextoEjecucionActualStack
 	int stackPointer;
 	int paginaActualCodigo;
 	int paginaActualStack;
 	int primerPaginaStack;
-	int numeroContextoEjecucionActualStack;
-
+	int indexActualStack;
 	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;
-	t_stack* indiceStack;
+	t_list* indiceStack;
 } __attribute__((packed)) pcb;
 
 // Pedido de Lectura de CPU a UMC (dirección lógica):

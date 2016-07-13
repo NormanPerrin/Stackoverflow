@@ -37,20 +37,20 @@
 	int validar_cliente(char *id); // Verifica que sea cliente UMC
 	int validar_servidor(char *id); // Para que no joda con error
 	FILE * inicializarSwap (); //inicializa particion swap y listas
-	int iniciar_programa(void *msj);
+	void iniciar_programa(void *msj);
 	void inicializarTablaDePaginas();
 	void inicializarTablaBitMap();
 	int buscarPosLibresEnBitMap(int paginas);
-	char* leer_pagina(void *msj);
+	void leer_pagina(void *msj);
 	int buscarPosLibreEnBitMap();
-	int escribir_pagina(void *msj);
+	void escribir_pagina(void *msj);
 	int buscarPaginaEnTablaDePaginas(int pid ,int pagina);
 	void avanzarPaginas(int cantidad);
-	int eliminar_programa(void *msj);
+	void eliminar_programa(void *msj);
 	void *elegirFuncion(int head);
 	int buscarAPartirDeEnTablaDePaginas(int pid);
-	int calcularFragmentacion();
-	void compactar();
+	int hayFragmentacion();
+	int compactar();
 	void actualizarBitMap();
 	int buscarPosOcupadaDesdeLaUltimaLibreEnTablaDeBitMap(int posLibre);
 	int cuantasPaginasTieneElProceso(int arrancaProceso);
