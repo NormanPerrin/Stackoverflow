@@ -1,5 +1,17 @@
 #include "principalesCPU.h"
 
+int validar_cliente(char *id) { return NULL; }
+
+int validar_servidor(char *id) {
+	if(!strcmp(id, "U") || !strcmp(id, "N")) {
+		printf("Servidor aceptado\n");
+		return TRUE;
+	} else {
+		printf("Servidor rechazado\n");
+		return FALSE;
+	}
+}
+
 void crearLoggerCPU(){
 	char * archivoLogCPU = strdup("CPU_LOG.log");
 	logger = log_create("CPU_LOG.log", archivoLogCPU, TRUE, LOG_LEVEL_INFO);
