@@ -3,8 +3,8 @@
 
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
+//#include <parser/parser.h>
 #include <parser/metadata_program.h>
-
 // Dirección lógica:
 typedef struct {
 		int pagina, offset, size;
