@@ -20,7 +20,6 @@
 #define ERROR -1 // Las system-calls de sockets retornan -1 en caso de error
 #define manejarError(msjError) {perror(msjError);} // Tratamiento de errores
 
-
 // *******************************************************************
 // *           FUNCIONES GENERALES PARA TRABAJAR CON SOCKETS		 *
 // *******************************************************************

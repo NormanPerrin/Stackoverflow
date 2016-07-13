@@ -130,6 +130,28 @@ hiloIO* crearHiloIO(int index){
   return hilo;
 }
 
+int validar_cliente(char *id){
+	if(!strcmp(id, "C") || !strcmp(id,"P")) {
+				printf("Servidor aceptado.\n");
+				return TRUE;
+			}
+	else {
+				printf("Servidor rechazado.\n");
+				return FALSE;
+			}
+}
+
+int validar_servidor(char *id){
+	if(!strcmp(id, "U")) {
+			printf("Servidor aceptado.\n");
+			return TRUE;
+		}
+	else {
+			printf("Servidor rechazado.\n");
+			return FALSE;
+		}
+}
+
 proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos){
 	sem_wait(&datos->sem_io);
 	pthread_mutex_lock(&datos->mutex_io);
@@ -159,7 +181,7 @@ void* entradaSalidaThread(void* dataHilo){
 }
 
 int obtenerSocketMaximoInicial(){
-	int max_fd_inicial = 0;
+	int i, j, max_fd_inicial = 0;
 
 	if (fdEscuchaCPU > fdEscuchaConsola) {
 		max_fd_inicial = fdEscuchaCPU;
@@ -169,6 +191,29 @@ int obtenerSocketMaximoInicial(){
 	if (max_fd_inicial < fd_inotify) {
 		max_fd_inicial = fd_inotify;
 	}
+
+	// Reviso si el fd de alguna Consola supera al max_fd actual:
+	for ( j = 0 ; j < list_size(listaConsolas); j++){
+		int fd;
+		consola * unaConsola = (consola *)list_get(listaConsolas, j);
+		fd = unaConsola->fd_consola;
+		if(fd > 0)
+			FD_SET(fd , &readfds);
+		if(fd > max_fd_inicial)
+			max_fd_inicial = fd;
+	} // fin for consola
+
+	// Reviso si el fd de algún CPU supera al max_fd actual:
+	for ( i = 0 ; i < list_size(listaCPU) ; i++){
+		int fd;
+		cpu * unCPU = (cpu *)list_get(listaCPU, i);
+		fd = unCPU->fd_cpu;
+		if(fd > 0)
+			FD_SET(fd , &readfds);
+		if(fd > max_fd_inicial)
+			max_fd_inicial = fd;
+	} // fin for cpu
+
 	return max_fd_inicial;
 }
 
@@ -242,7 +287,6 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 		int head;
 		void * entrada = aplicar_protocolo_recibir(fd_UMC, &head);
 		if(entrada == NULL){ // UMC mandó un msj vacío, significa que se desconectó
-			seDesconectoUMC = true;
 
 			free(respuestaUMC);
 			free(entrada);
@@ -323,6 +367,7 @@ void aceptarConexionEntranteDeConsola(){
 	if(ret_handshake == FALSE){ // Falló el handshake
 		printf("[ERROR] Conexión inicial fallida con la Consola fd #%d.\n", new_fd);
 		cerrarSocket(new_fd);
+		return;
 	}
 	// Se conectó una nueva Consola:
 	consola * nuevaConsola = malloc(sizeof(consola));
@@ -341,6 +386,8 @@ void aceptarConexionEntranteDeConsola(){
 
 		if(nuevoPcb == NULL){ //  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
 			aplicar_protocolo_enviar(new_fd, RECHAZAR_PROGRAMA, MSJ_VACIO);
+			cerrarSocket(new_fd);
+			return;
 		  }
 	// Sí se pudieron alocar los segmentos, entonces la Consola y el PCB ingresan al sistema:
 		nuevaConsola->pid = nuevoPcb->pid;
@@ -352,10 +399,11 @@ void aceptarConexionEntranteDeConsola(){
 		queue_push(colaListos, nuevoPcb);
 
 		planificarProceso();
-
+		return;
 		  }
 		  else{
 			  printf("Se espera script de la Consola #%d.", nuevaConsola->id);
+			  return;
 		  }
 }
 
@@ -367,6 +415,7 @@ void aceptarConexionEntranteDeCPU(){
 	if(ret_handshake == FALSE){ // Falló el handshake
 		printf("[ERROR] Conexión inicial fallida el CPU fd #%d.\n", new_fd);
 		cerrarSocket(new_fd);
+		return;
 	}
 	// Se conectó un nuevo CPU:
 	cpu * nuevoCPU = malloc(sizeof(cpu));
@@ -386,6 +435,7 @@ void aceptarConexionEntranteDeCPU(){
 
 	// El nuevo CPU está listo para ejecutar procesos
 	planificarProceso();
+	return;
 }
 
 void atenderCambiosEnArchivoConfig(int* socketMaximo){
@@ -394,8 +444,9 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 	char buffer[EVENT_BUF_LEN];
 	length = read(fd_inotify, buffer, EVENT_BUF_LEN);
 
-	if (length < 0){
+	if (length <= 0){
 		log_info(logger, "Error al leer el archivo de configuración (inotify_read).");
+		return;
 	} else if (length > 0) {
 		struct inotify_event *event = (struct inotify_event *) &buffer[i];
 		t_config * new_config = config_create(RUTA_CONFIG_NUCLEO);
@@ -416,8 +467,10 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 
 		*socketMaximo = (*socketMaximo < fd_inotify)?fd_inotify:*socketMaximo;
 				FD_SET(fd_inotify, &readfds);
-			}
-		}
+				return;
+			} // fin if tiene properties
+			return;
+		} // fin else-if
 }
 
 void salvarProcesoEnCPU(int id_cpu){
@@ -531,6 +584,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		    	cerrarSocket(fd);
 		    	log_info(logger,"La CPU %i se ha desconectado. Salvando PCB en ejecución.", unCPU->id);
 		    	free(list_remove(listaCPU, i));
+		    	return;
 		    }else{
 		    	// El mensaje no es NULL, entoces veo de qué se trata:
 	switch(protocolo){
@@ -742,8 +796,11 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	} // fin switch protocolo
 	free(mensaje); mensaje = NULL;
 		    } // fin else mensaje not null
+		    return;
 		} // fin if nuevo mensaje fd CPU
+		return;
 	} // fin for listaCPU
+	return;
 }
 
 void liberarCPU(cpu * cpu){ free(cpu); cpu = NULL; }
@@ -791,4 +848,8 @@ void limpiarArchivoConfig(){
 	free(config->variablesCompartidas);
 	free(config);
 	config = NULL;
+}
+
+void setearValores_config(t_config * archivoConfig){
+	return;
 }

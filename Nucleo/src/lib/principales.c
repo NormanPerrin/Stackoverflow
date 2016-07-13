@@ -99,7 +99,7 @@ void esperar_y_PlanificarProgramas(){
 
 		if(seDesconectoUMC) break; // salgo del bucle si UMC se ha desconectado
 
-		int i, j, max_fd;
+		int max_fd;
 
 		// Borra el conjunto maestro:
 	    FD_ZERO(&readfds);
@@ -109,28 +109,6 @@ void esperar_y_PlanificarProgramas(){
 	    FD_SET(fd_inotify, &readfds);
 	    // Obtengo el descriptor de fichero mayor entre los listeners:
 	    max_fd = obtenerSocketMaximoInicial();
-
-	    // Reviso si el fd de alguna Consola supera al max_fd actual:
-	    for ( j = 0 ; j < list_size(listaConsolas); j++){
-	    	int fd;
-	    	consola * unaConsola = (consola *)list_get(listaConsolas, j);
-	        fd = unaConsola->fd_consola;
-	        if(fd > 0)
-	            FD_SET(fd , &readfds);
-	        if(fd > max_fd)
-	            max_fd = fd;
-	    } // fin for consola
-
-	    // Reviso si el fd de algún CPU supera al max_fd actual:
-	    for ( i = 0 ; i < list_size(listaCPU) ; i++){
-	    	int fd;
-	    	cpu * unCPU = (cpu *)list_get(listaCPU, i);
-	    	fd = unCPU->fd_cpu;
-	    	if(fd > 0)
-	    		FD_SET(fd , &readfds);
-	    	if(fd > max_fd)
-	    		max_fd = fd;
-	     } // fin for cpu
 
 	    seleccionarSocket(max_fd, &readfds , NULL , NULL , NULL, NULL); // función select
 
@@ -146,7 +124,7 @@ void esperar_y_PlanificarProgramas(){
 
 	    		atenderCambiosEnArchivoConfig(&max_fd);
 
-	    }else{ // fin if nueva conexión
+	    }else{ // fin if nueva conexión --> nuevo msj
 
 	    	recorrerListaCPUsYAtenderNuevosMensajes();
 
@@ -171,26 +149,12 @@ void liberarRecursosUtilizados(){
 		log_destroy(logger);
 		logger = NULL;
 	}
-int validar_cliente(char *id){
 
-	if(!strcmp(id, "C") || !strcmp(id,"P" )) {
-				printf("Servidor aceptado.\n");
-				return TRUE;
-			}
-	else {
-				printf("Servidor rechazado.\n");
-				return FALSE;
-			}
+void exitNucleo(){
+	liberarRecursosUtilizados();
+	cerrarSocket(fdEscuchaConsola);
+	cerrarSocket(fdEscuchaCPU);
+	cerrarSocket(fd_UMC);
+	inotify_rm_watch(fd_inotify, watch_descriptor);
+	cerrarSocket(fd_inotify);
 }
-
-int validar_servidor(char *id){
-	if(!strcmp(id, "U")) {
-			printf("Servidor aceptado.\n");
-			return TRUE;
-		}
-	else {
-			printf("Servidor rechazado.\n");
-			return FALSE;
-		}
-}
-
