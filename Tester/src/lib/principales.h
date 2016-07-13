@@ -1,5 +1,12 @@
-#ifndef NUCLEOVIEJOMALDITO_SRC_LIB_PRINCIPALES_H_
-#define NUCLEOVIEJOMALDITO_SRC_LIB_PRINCIPALES_H_
+/*
+ * principales.h
+ *
+ *  Created on: 13/7/2016
+ *      Author: utnso
+ */
+
+#ifndef LIB_PRINCIPALES_H_
+#define LIB_PRINCIPALES_H_
 
 #include "funciones.h"
 
@@ -16,4 +23,4 @@ void unirHilosIO();
 void liberarRecursosUtilizados();
 void exitNucleo();
 
-#endif /* NUCLEOVIEJOMALDITO_SRC_LIB_PRINCIPALES_H_ */
+#endif /* LIB_PRINCIPALES_H_ */
