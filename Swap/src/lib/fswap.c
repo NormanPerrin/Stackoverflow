@@ -121,7 +121,7 @@ void iniciar_programa(void *msj) {
 	int pid = mensaje->pid;
 	int paginas = mensaje->paginas;
 
-	if(paginasLibresTotales > paginas) { // se puede alojar el proceso aunque sea compactando
+	if(paginasLibresTotales >= paginas) { // se puede alojar el proceso aunque sea compactando
 
 		int posLibre = buscarPosLibresEnBitMap(paginas);
 		if(posLibre != ERROR) { // se encontraron espacios contiguos para alojar proceso
@@ -202,7 +202,6 @@ int buscarPaginaEnTablaDePaginas(int pid, int pagina) {
 }
 
 void avanzarPaginas(int cantidad) {
-	rewind(archivoSwap);
 	int avanceTotal = cantidad * config->tamanioPagina;
 	fseek(archivoSwap, avanceTotal, SEEK_SET);
 }

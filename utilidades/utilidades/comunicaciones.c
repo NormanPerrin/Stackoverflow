@@ -84,7 +84,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 			case INICIAR_PROGRAMA: case ESCRIBIR_PAGINA:{
 				inicioPrograma* msj = (inicioPrograma*)mensaje;
-				tamanio = strlen(msj->contenido)+ 9;
+				tamanio = strlen(msj->contenido) + 2 * INT + 1;
 				break;
 			}
 		// CASE 4: El mensaje es un pcb (pcb)
@@ -277,6 +277,7 @@ pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio){
 	pedidoIO * msj = malloc(tamanio);
 	int desplazamiento = 0;
 	int string_size = tamanio - INT;
+	msj->nombreDispositivo = (char*)reservarMemoria(string_size);
 
 		memcpy(&msj->tiempo, buffer + desplazamiento, INT);
 			desplazamiento += INT;
@@ -289,7 +290,7 @@ void* serealizarTextoMasDosInt(void* mensaje, int tamanio){
 
 	inicioPrograma* msj = (inicioPrograma*) mensaje;
 	int desplazamiento = 0;
-	int string_size = strlen(msj->contenido)+1;
+	int string_size = strlen(msj->contenido) + 1;
 
 		void * buffer = malloc(tamanio);
 		memcpy(buffer + desplazamiento, &(msj->paginas), INT);
@@ -304,8 +305,9 @@ void* serealizarTextoMasDosInt(void* mensaje, int tamanio){
 inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
-	inicioPrograma * msj = malloc(tamanio);
+	inicioPrograma *msj = (inicioPrograma*)reservarMemoria(tamanio);
 	int string_size = tamanio - 2 * INT;
+	msj->contenido = (char*)reservarMemoria(string_size);
 
 	memcpy(&msj->paginas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
@@ -313,7 +315,7 @@ inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio){
 		desplazamiento += INT;
 	memcpy(msj->contenido, buffer + desplazamiento, string_size);
 
-		return msj;
+	return msj;
 }
 
 void* serealizarDosInt(void* mensaje, int tamanio){
@@ -418,7 +420,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		return buffer;
 }
 
-pcb * deserealizarPcb(void * buffer, int tamanio){
+pcb * deserealizarPcb(void * buffer, int tamanio){ // TODO: ver reservar memoria en punteros de estructura
 
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(tamanio);
