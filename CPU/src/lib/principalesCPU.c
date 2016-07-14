@@ -58,6 +58,7 @@ void obtenerTamanioDePagina(){
 	recibirPorSocket(fdUMC, tamPagina, INT);
 	tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
 	free(tamPagina);
+	printf("Recibí tamanio de página: %d.\n", tamanioPagina);
 }
 
 void conectarConNucleo() {
@@ -73,6 +74,7 @@ void conectarConNucleo() {
 		tamanioStack = *((int*) entrada); // Seteo el tamaño de stack que recibo de Núcleo
 	}
 	free(entrada);
+	printf("Recibí tamanio de stack: %d.\n", tamanioStack);
 }
 
 void revisarFinalizarCPU(){
