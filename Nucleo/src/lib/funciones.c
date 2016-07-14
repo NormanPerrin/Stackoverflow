@@ -132,11 +132,11 @@ hiloIO* crearHiloIO(int index){
 
 int validar_cliente(char *id){
 	if(!strcmp(id, "C") || !strcmp(id,"P")) {
-				printf("Servidor aceptado.\n");
+				printf("Cliente aceptado.\n");
 				return TRUE;
 			}
 	else {
-				printf("Servidor rechazado.\n");
+				printf("Cliente rechazado.\n");
 				return FALSE;
 			}
 }
@@ -384,14 +384,20 @@ void aceptarConexionEntranteDeConsola(){
 		pcb * nuevoPcb = crearPcb((char*) entrada);
 		free(entrada);
 
+		int* respuesta = malloc(INT);
 		if(nuevoPcb == NULL){ //  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
-			aplicar_protocolo_enviar(new_fd, RECHAZAR_PROGRAMA, MSJ_VACIO);
+			*respuesta = TRUE;
+			aplicar_protocolo_enviar(new_fd, RECHAZAR_PROGRAMA, respuesta);
 			cerrarSocket(new_fd);
+			free(respuesta);
 			return;
 		  }
 	// Sí se pudieron alocar los segmentos, entonces la Consola y el PCB ingresan al sistema:
-		nuevaConsola->pid = nuevoPcb->pid;
+		*respuesta = FALSE;
+		aplicar_protocolo_enviar(new_fd, RECHAZAR_PROGRAMA, respuesta);
+		free(respuesta);
 
+		nuevaConsola->pid = nuevoPcb->pid;
 		list_add(listaConsolas, nuevaConsola);
 
 	// Pongo al nuevo programa en la cola de Listos:
