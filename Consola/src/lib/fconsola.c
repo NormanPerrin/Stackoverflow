@@ -42,10 +42,6 @@ void conectarCon_Nucleo(){
 	handshake_cliente(fd_nucleo, "C");
 }
 
-void esperarNuevosMensajesDeNucleo(){
-
-}
-
 void liberarRecursos() {
 	free(programa);
 	free(ipNucleo);
