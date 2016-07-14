@@ -136,7 +136,7 @@ void unirHilosIO(){
 	int i = 0;
 	  while (config->ioID[i] != '\0'){
 	      hiloIO*hilo = (hiloIO*)dictionary_get(diccionarioIO, config->ioID[i]);
-	      log_info(logger, "Cerrando hilo de IO %d que pertenece al dispositivo %s", i, hilo->dataHilo.nombre);
+	      log_info(logger, "Cerrando hilo de IO %d que pertenece al dispositivo '%s'.", i, hilo->dataHilo.nombre);
 	      pthread_join(hilo->hiloID, NULL);
 	      free(hilo); hilo = NULL;
 	   i++;

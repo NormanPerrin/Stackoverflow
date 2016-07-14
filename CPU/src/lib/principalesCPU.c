@@ -4,10 +4,10 @@ int validar_cliente(char *id) { return 0; }
 
 int validar_servidor(char *id) {
 	if(!strcmp(id, "U") || !strcmp(id, "N")) {
-		printf("Servidor aceptado\n");
+		printf("Servidor aceptado.\n");
 		return TRUE;
 	} else {
-		printf("Servidor rechazado\n");
+		printf("Servidor rechazado.\n");
 		return FALSE;
 	}
 }

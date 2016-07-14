@@ -3,7 +3,7 @@
 t_puntero definirVariable(t_nombre_variable var_nombre){
 	/* Le asigna una posición en memoria a la variable,
 	 y retorna el offset total respecto al inicio del stack. */
-		log_info(logger, "Definiendo nueva variable: %c", var_nombre);
+		log_info(logger, "Definiendo nueva variable: %c.", var_nombre);
 
 		char * var_id = strdup(charAString(var_nombre));
 
@@ -18,7 +18,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 		}
 		// Verifico si se desborda la pila en memoria:
 		if(pcbActual->stackPointer + 4 > (tamanioPagina*tamanioStack)){
-				printf("Hubo stack overflow. Se finaliza el proceso actual #%d", pcbActual->pid);
+				printf("Hubo stack overflow. Se finalizará el proceso actual #%d.\n", pcbActual->pid);
 				huboStackOverflow = true;
 
 			return ERROR;
@@ -49,7 +49,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	/* En base a la posición de memoria de la variable,
 	 retorna el offset total respecto al inicio del stack. */
-	log_debug(logger, "Obteneniendo posición de la variable: '%c'", var_nombre);
+	log_debug(logger, "Obteneniendo posición de la variable: '%c'.", var_nombre);
 	char* var_id = strdup(charAString(var_nombre));
 	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
 	registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indexActualStack);
@@ -70,14 +70,14 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 			log_error(logger, "La variable buscada no se encuentra en el registro actual de stack.");
 			return ERROR;
 		}
-		log_error(logger, "El diccionario de variables en el registro actual de stack está vacío.");
+		log_error(logger, "Diccionario de variables vacío en el registro actual de stack.");
 		return ERROR;
 }
 
 t_valor_variable dereferenciar(t_puntero var_stack_offset){
 
 	/* Retorna el valor leído a partir de var_stack_offset. */
-	log_debug(logger, "Dereferenciando variable.");
+	printf("Dereferenciando variable.\n");
 	solicitudLectura * var_direccion = malloc(sizeof(solicitudLectura));
 
 	int num_pagina =  var_stack_offset / tamanioPagina;
@@ -106,7 +106,7 @@ t_valor_variable dereferenciar(t_puntero var_stack_offset){
 			valor_variable = (int*)entrada;
 		}
 		else{
-			printf("Error al leer variable del proceso #%d", pcbActual->pid);
+			printf("Error al leer variable del proceso #%d.\n", pcbActual->pid);
 		}
 		free(entrada);
 		int var_valor = *valor_variable;
@@ -159,7 +159,7 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 		free(entrada);
 	}
 	if(valor_variable == NULL){
-		printf("Error al obtener variable compartida del proceso #%d.", pcbActual->pid);
+		printf("Error al obtener variable compartida del proceso #%d.\n", pcbActual->pid);
 		return ERROR;
 	}
 	else{
@@ -239,6 +239,7 @@ void retornar(t_valor_variable var_retorno){
 }
 
 void imprimir(t_valor_variable valor_mostrar){
+	printf("Solicitando imprimir variable.\n");
 	int * valor = malloc(INT);
 	*valor = valor_mostrar;
 	aplicar_protocolo_enviar(fdNucleo,IMPRIMIR, valor);
@@ -246,6 +247,7 @@ void imprimir(t_valor_variable valor_mostrar){
 }
 
 void imprimirTexto(char* texto){
+	printf("Solicitando imprimir texto.\n");
 	char * txt = malloc(strlen(texto)+1);
 	txt = strdup(texto);
 	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, txt);
@@ -281,10 +283,10 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 	if(head == WAIT_CON_BLOQUEO){
 		// Mando la pcb bloqueada y la saco de ejecución:
 		devolvioPcb = POR_WAIT;
-		log_info(logger, "Proceso bloqueado al hacer WAIT del semáforo: '%s'", nombre_semaforo);
+		log_info(logger, "Proceso bloqueado al hacer WAIT del semáforo: '%s'.", nombre_semaforo);
 	}
 	else{
-		log_info(logger, "Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'", nombre_semaforo);
+		log_info(logger, "Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'.", nombre_semaforo);
 	}
 	free(entrada);
 }

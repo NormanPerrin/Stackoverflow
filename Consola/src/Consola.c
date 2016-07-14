@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 				break;
 				}
 			case FINALIZAR_PROGRAMA:{
-				puts("El programa ha finalizado con éxito. Cerrando el programa.\n");
+				puts("El programa ha finalizado con éxito. Cerrando proceso Consola.\n");
 				free(mensaje); mensaje = NULL;
 				cerrarSocket(fd_nucleo);
 				liberarRecursos(); // Libera memoria asignada
@@ -54,5 +54,6 @@ int main(int argc, char **argv) {
 				}
 			} // fin del switch-case
 		} // fin del while
+
 	return EXIT_SUCCESS;
 }

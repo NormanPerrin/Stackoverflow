@@ -27,11 +27,11 @@ void leerScript(char * rutaPrograma){
 	struct stat infoArchivo; // función de stat.h
 
 	descriptorArchivo = open(rutaPrograma, O_RDONLY); // Abre el archivo .asnsisop
-		if(descriptorArchivo == ERROR) perror("open");
+		if(descriptorArchivo == ERROR) perror("Error al abrir script.");
 		fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
 		tamanio = infoArchivo.st_size;
 		programa = (char*)reservarMemoria(tamanio);
-		if(read(descriptorArchivo, programa, tamanio) == ERROR) perror("read"); // Guardo el script en programa
+		if(read(descriptorArchivo, programa, tamanio) == ERROR) perror("Error al cerrar script."); // Guardo el script en programa
 		close(descriptorArchivo);
 } // El programa ya está listo para ser enviado a Núcleo
 

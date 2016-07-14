@@ -17,73 +17,73 @@ int setearValoresDeConfig(t_config * archivoConfig){
 		if (config_has_property(archivoConfig, "PUERTO_UMC")) {
 			config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_UMC.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_UMC.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "IP_UMC")) {
 			config->ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave IP_UMC.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave IP_UMC.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "PUERTO_PROG")) {
 			config->puertoPrograma = config_get_int_value(archivoConfig, "PUERTO_PROG");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_PROG.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_PROG.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "PUERTO_CPU")) {
 			config->puertoCPU = config_get_int_value(archivoConfig, "PUERTO_CPU");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_CPU.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave PUERTO_CPU.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "QUANTUM")) {
 			config->quantum = config_get_int_value(archivoConfig, "QUANTUM");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave QUANTUM.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave QUANTUM.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "QUANTUM_SLEEP")) {
 			config->retardoQuantum = config_get_int_value(archivoConfig, "QUANTUM_SLEEP");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave QUANTUM_SLEEP.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave QUANTUM_SLEEP.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "SEM_IDS")) {
 			config->semaforosID = config_get_array_value(archivoConfig, "SEM_IDS");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave SEM_IDS.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave SEM_IDS.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "SEM_INIT")) {
 			config->semaforosValInicial = config_get_array_value(archivoConfig, "SEM_INIT");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave SEM_INIT.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave SEM_INIT.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "IO_IDS")) {
 			config->ioID = config_get_array_value(archivoConfig, "IO_IDS");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave IO_IDS");
+			log_info(logger, "El archivo de configuracion no contiene la clave IO_IDS.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "IO_SLEEP")) {
 			config->retardosIO = config_get_array_value(archivoConfig, "IO_SLEEP");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave IO_SLEEP");
+			log_info(logger, "El archivo de configuracion no contiene la clave IO_SLEEP.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "SHARED_VARS")) {
 			config->variablesCompartidas = config_get_array_value(archivoConfig, "SHARED_VARS");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave SHARED_VARS.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave SHARED_VARS.");
 			return FALSE;
 		}
 		if (config_has_property(archivoConfig, "STACK_SIZE")) {
 			config->cantidadPaginasStack = config_get_int_value(archivoConfig, "STACK_SIZE");
 		} else {
-			log_info(logger, "El archivo de configuracion no contiene la clave STACK_SIZE.\n");
+			log_info(logger, "El archivo de configuracion no contiene la clave STACK_SIZE.");
 			return FALSE;
 		}
 		config_destroy(archivoConfig); // Libero la estructura archivoConfig
@@ -162,7 +162,7 @@ proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos){
 }
 
 void encolarPcbAListos(pcb* proceso){
-  	  log_info(logger,"Moviendo al proceso #%d a la cola de Listos", proceso->pid);
+  	  log_info(logger,"Moviendo al proceso #%d a la cola de Listos.", proceso->pid);
   queue_push(colaListos, proceso);
 }
 
@@ -402,7 +402,7 @@ void aceptarConexionEntranteDeConsola(){
 		return;
 		  }
 		  else{
-			  printf("Se espera script de la Consola #%d.", nuevaConsola->id);
+			  printf("Se espera script de la Consola #%d.\n", nuevaConsola->id);
 			  return;
 		  }
 }
