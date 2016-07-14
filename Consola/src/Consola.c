@@ -6,12 +6,13 @@ int main(int argc, char **argv) {
 	system("clear");
 	setvbuf(stdout, NULL, _IONBF, 0);
 
-	validar_argumentos(argc);
+//	validar_argumentos(argc);
 
 	crearLoggerConsola();
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CONSOLA);
 
-	leerScript(argv[1]);
+	//leerScript(argv[1]);
+	leerScript("/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/Debug/facil.ansisop");
 
 	conectarCon_Nucleo(); // Conexión con Núcleo
 
