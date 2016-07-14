@@ -12,7 +12,7 @@
 #define EVENT_BUF_LEN (1024 * (EVENT_SIZE + 16))
 #define CONEXIONES_PERMITIDAS 10
 #define DESCONEXION_UMC 2
-#define RUTA_CONFIG_NUCLEO "/home/utnso/tp-2016-1c-Cazadores-de-cucos/Nucleo/configNucleo.txt"
+#define RUTA_CONFIG_NUCLEO "configNucleo.txt"
 #define logearError(msg){log_error(logger, msg); return FALSE;}
 
 typedef struct {
