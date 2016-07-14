@@ -69,4 +69,5 @@ int main(int argc, char **argv) {
 	cerrarSocket(fd_nucleo);
 	liberarRecursos(); // Libera memoria asignada
 	printf("Cerrando proceso Consola.\n");
+	return EXIT_FAILURE;
 }
