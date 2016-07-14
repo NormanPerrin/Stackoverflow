@@ -300,6 +300,4 @@ void s_signal(t_nombre_semaforo nombre_semaforo){
 
 	log_info(logger, "SIGNAL del semáforo '%s'.", nombre_semaforo);
 	free(id_semaforo);
-	//Analizo con el parser el código del programa para obtener su metadata:
-				t_metadata_program* infoProg = metadata_desde_literal(nombre_semaforo);
 }
