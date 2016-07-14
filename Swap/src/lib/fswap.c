@@ -48,6 +48,7 @@ void escucharUMC() {
 		void (*funcion)(void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
 		if(funcion == NULL) continue;
 		funcion(mensaje); // ejecuto función
+		funcion = NULL;
 	}
 
 	close(sockUMC);
@@ -129,10 +130,12 @@ void iniciar_programa(void *msj) {
 		if(posLibre != ERROR) { // se encontraron espacios contiguos para alojar proceso
 
 			paginasLibresTotales -= paginas;
-			for(; posLibre < paginas ; posLibre++) {
+			int pagina = 0;
+			for(; pagina < paginas ; pagina++) {
 				tablaPaginas[posLibre].pid = pid;
-				tablaPaginas[posLibre].pagina = posLibre;
+				tablaPaginas[posLibre].pagina = pagina;
 				tablaDeBitMap[posLibre].ocupada = 1;
+				posLibre++;
 			}
 
 		} else { // no se encontraron espacios contiguos para alojar proceso
@@ -143,11 +146,12 @@ void iniciar_programa(void *msj) {
 			actualizarBitMap();
 
 			int posLibre = buscarPosLibresEnBitMap(paginas);
-
-			for(; posLibre < paginas; posLibre++) {
+			int pagina = 0;
+			for(; pagina < paginas; pagina++) {
 				tablaPaginas[posLibre].pid= pid;
 				tablaPaginas[posLibre].pagina = posLibre;
 				tablaDeBitMap[posLibre].ocupada=1;
+				posLibre++;
 			}
 
 			paginasLibresTotales -= paginas;
@@ -172,7 +176,7 @@ void escribir_pagina(void *msj) {
 	int *respuesta = (int*)reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 
-	t_escribirPagina *mensaje = (t_escribirPagina*)msj;
+	solicitudEscribirPagina *mensaje = (solicitudEscribirPagina*)msj;
 	int pid = mensaje->pid;
 	int pagina = mensaje->pagina;
 	char *contenido = mensaje->contenido;
@@ -216,23 +220,25 @@ int buscarPosLibresEnBitMap(int paginas) {
 	for(; i < config->cantidadPaginas; i++) {
 
 		if(tablaDeBitMap[i].ocupada == 0) {
-
 			while(j < paginas) {
 				if(tablaDeBitMap[i+j].ocupada == 0) {
+					if( (i+j) == config->cantidadPaginas ) {
+						i += j;
+						break;
+					}
 					j++;
 				} else {
 					i += j;
 					j = 0;
 					break;
 				}
-
-				if(j == paginas) {
-					encontro = TRUE;
-					break;
-				}
 			} //  (while) j < paginas
-
 		} // (if) bitmap[i] == 0
+
+		if(j == paginas) {
+			encontro = TRUE;
+			break;
+		}
 
 	} // (for) i < cantidad paginas
 
@@ -323,8 +329,7 @@ void eliminar_programa(void *msj) {
 	*respuesta = PERMITIDO;
 
 	// casteo
-	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
-	int pid = mensaje->pid;
+	int pid = *((int*)msj);
 
 	// busco primer aparicion del pid en tp
 	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
@@ -334,8 +339,11 @@ void eliminar_programa(void *msj) {
 
 		// cuento total de paginas
 	    int totalPaginas = 0;
-		while(tablaPaginas[aPartirDe].pid == pid)
+	    int posicion = aPartirDe;
+		while(tablaPaginas[posicion].pid == pid) {
 			totalPaginas++;
+			posicion++;
+		}
 
 		// repito como cantidad de paginas tenga el proceso
 		int i = 0;
@@ -373,7 +381,7 @@ void leer_pagina(void *msj) {
 
 	char *contenido = (char*)reservarMemoria(config->tamanioPagina);
 
-	t_tablaDePaginas *mensaje = (t_tablaDePaginas*)msj;
+	solicitudLeerPagina *mensaje = (solicitudLeerPagina*)msj;
 	int pid= mensaje->pid;
 	int pagina= mensaje->pagina;
 
@@ -386,7 +394,9 @@ void leer_pagina(void *msj) {
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 	free(respuesta);
 
-	aplicar_protocolo_enviar(sockUMC, DEVOLVER_PAGINA, contenido);
+	if(*respuesta == PERMITIDO)
+		aplicar_protocolo_enviar(sockUMC, DEVOLVER_PAGINA, contenido);
+
 	free(contenido);
 }
 
