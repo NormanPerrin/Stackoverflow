@@ -378,13 +378,13 @@ void aceptarConexionEntranteDeConsola(){
 	// Recibo el programa de la nueva Consola:
 	int head;
 	void * entrada = aplicar_protocolo_recibir(new_fd, &head);
+	int* respuesta = malloc(INT);
 	if(head == ENVIAR_SCRIPT){
 
 	 // Creo la PCB del programa y pido espacio para los segmentos a UMC:
 		pcb * nuevoPcb = crearPcb((char*) entrada);
 		free(entrada);
 
-		int* respuesta = malloc(INT);
 		if(nuevoPcb == NULL){ //  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
 			*respuesta = TRUE;
 			aplicar_protocolo_enviar(new_fd, RECHAZAR_PROGRAMA, respuesta);
@@ -408,7 +408,11 @@ void aceptarConexionEntranteDeConsola(){
 		return;
 		  }
 		  else{
+			  free(entrada);
 			  printf("Se espera script de la Consola #%d.\n", nuevaConsola->id);
+			  *respuesta = ERROR;
+			  aplicar_protocolo_enviar(new_fd, RECHAZAR_PROGRAMA, respuesta);
+			  free(respuesta);
 			  return;
 		  }
 }

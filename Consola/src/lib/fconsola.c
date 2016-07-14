@@ -30,7 +30,7 @@ void leerScript(char * rutaPrograma){
 		if(descriptorArchivo == ERROR) perror("Error al abrir script.");
 		fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
 		tamanio = infoArchivo.st_size;
-		programa = (char*)reservarMemoria(tamanio);
+		programa = malloc(tamanio);
 		if(read(descriptorArchivo, programa, tamanio) == ERROR) perror("Error al cerrar script."); // Guardo el script en programa
 		close(descriptorArchivo);
 } // El programa ya está listo para ser enviado a Núcleo
@@ -40,6 +40,10 @@ void conectarCon_Nucleo(){
 	int ret = conectarSocket(fd_nucleo, ipNucleo, puertoNucleo);
 	validar_conexion(ret, 1); // Al ser cliente es terminante
 	handshake_cliente(fd_nucleo, "C");
+}
+
+void esperarNuevosMensajesDeNucleo(){
+
 }
 
 void liberarRecursos() {

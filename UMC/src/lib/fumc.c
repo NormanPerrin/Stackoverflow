@@ -25,52 +25,6 @@ void conectarConSwap() {
 	int ret = conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
 	validar_conexion(ret, 1);
 	handshake_cliente(sockClienteDeSwap, "U");
-
-	// TODO: prueba
-
-	int *contenido = NULL;
-	int *head = (int*)reservarMemoria(INT);
-	char *pagina = NULL;
-
-	inicioPrograma *prueba_inicio = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
-		prueba_inicio->paginas = 1;
-		prueba_inicio->pid = 2;
-		prueba_inicio->contenido = strdup("hola");
-		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, prueba_inicio);
-		contenido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
-		if(*contenido == PERMITIDO) printf("<lectura> PERMITIDO\n");
-		else printf("<inicializar> NO_PERMITIDO\n");
-
-	solicitudEscribirPagina *prueba_escritura = (solicitudEscribirPagina*)reservarMemoria(sizeof(solicitudEscribirPagina));
-		prueba_escritura->pid = 2;
-		prueba_escritura->pagina = 0;
-		prueba_escritura->contenido = strdup("Un Mensaje distinto");
-		aplicar_protocolo_enviar(sockClienteDeSwap, ESCRIBIR_PAGINA, prueba_escritura);
-		contenido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
-		if(*contenido == PERMITIDO) printf("<lectura> PERMITIDO\n");
-		else printf("<escritura> NO_PERMITIDO\n");
-
-	int *prueba_finalizar = (int*)reservarMemoria(INT);
-		*prueba_finalizar = 2;
-		aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, prueba_finalizar);
-		contenido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
-		if(*contenido == PERMITIDO) printf("<lectura> PERMITIDO\n");
-		else printf("<finalizar> NO_PERMITIDO\n");
-
-	solicitudLeerPagina *prueba_lectura = (solicitudLeerPagina*)reservarMemoria(sizeof(solicitudLeerPagina));
-		prueba_lectura->pid = 2;
-		prueba_lectura->pagina = 0;
-		aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, prueba_lectura);
-		contenido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
-		if(*contenido == PERMITIDO) printf("<lectura> PERMITIDO\n");
-		else printf("<lectura> NO_PERMITIDO\n");
-		pagina = (char*)aplicar_protocolo_recibir(sockClienteDeSwap, head);
-		printf("<lectura> Pagina = %s\n", pagina);
-
-	free(prueba_inicio);
-	free(prueba_escritura);
-	free(prueba_lectura);
-	free(head);
 }
 
 
@@ -380,12 +334,10 @@ void finalizar_programa(int fd, void *msj) {
 
 	dormir(config->retardo * 2); // retardo por borrar entradas en tabla páginas y memoria
 
-	finalizarPrograma_t *mensaje = (finalizarPrograma_t*)msj;
+	int pid = *((int*)msj);
 
 	// aviso a Swap
-	int *pid = NULL;
-	*pid = mensaje->pid;
-	aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, pid);
+	aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, msj);
 
 	// recibo respuesta de Swap
 	int *protocolo = (int*)reservarMemoria(INT);
@@ -398,7 +350,7 @@ void finalizar_programa(int fd, void *msj) {
 	}
 
 	// recorro páginas de pid
-	int pos = pos_pid(*pid);
+	int pos = pos_pid(pid);
 	if(pos == ERROR) {
 		int *respuestaCPU = (int*)reservarMemoria(INT);
 		*respuestaCPU = NO_PERMITIDO;
@@ -416,10 +368,10 @@ void finalizar_programa(int fd, void *msj) {
 			borrarMarco(tabla_paginas[pos].tabla[i].marco);
 
 		// elimino página de TP
-		eliminar_pagina(*pid, i);
+		eliminar_pagina(pid, i);
 
 		// elimino página de TLB si está
-		borrar_tlb(*pid, i);
+		borrar_tlb(pid, i);
 
 	}
 
@@ -575,10 +527,10 @@ int buscarPagina(int fd, int pid, int pagina) {
 		}
 
 		// veo si está en MP y si no encuentro cargo desde Swap
-		if( tabla_paginas[pos_tp].tabla[pagina-1].bit_presencia == 0 ) // page fault
+		if( tabla_paginas[pos_tp].tabla[pagina].bit_presencia == 0 ) // page fault
 			marco = pedir_pagina_swap(fd, pid, pagina);
 		else // tp hit
-			marco = tabla_paginas[pos_tp].tabla[pagina-1].marco;
+			marco = tabla_paginas[pos_tp].tabla[pagina].marco;
 	}
 
 	return marco;
@@ -766,6 +718,32 @@ void iniciarEstructuras() {
 		pids[j].pid = -1;
 	}
 
+													// TODO: parte de la prueba
+//	// copio en pagina 0 "hola" del pid 2
+//	tabla_paginas[0].pid = 2;
+//	tabla_paginas[0].paginas = 5;
+//	tabla_paginas[0].marcos_reservados[0] = 2;
+//	tabla_paginas[0].marcos_reservados[1] = 5;
+//	tabla_paginas[0].puntero = 0;
+//	tabla_paginas[0].tabla[0].pagina = 0;
+//	tabla_paginas[0].tabla[0].bit_presencia = 1;
+//	tabla_paginas[0].tabla[0].bit_modificado = 0;
+//	tabla_paginas[0].tabla[0].bit_uso = 1;
+//	tabla_paginas[0].tabla[0].marco = 2;
+//	tabla_paginas[0].tabla[1].pagibna = 1;
+//	tabla_paginas[0].tabla[1].bit_presencia = 1;
+//	tabla_paginas[0].tabla[1].bit_modificado = 0;
+//	tabla_paginas[0].tabla[1].bit_uso = 1;
+//	tabla_paginas[0].tabla[1].marco = 5;
+//
+//	bitmap[2] = 1;
+//	bitmap[5] = 1;
+//
+//	char *contenido = (char*)reservarMemoria(CHAR * 5);
+//	strcpy(contenido, "hola");
+//	void *posicion_real = memoria + (2 * config->marco_size);
+//	memcpy(posicion_real, contenido, CHAR * 5);
+//	free(contenido);
 }
 
 void liberarConfig() {
@@ -803,7 +781,7 @@ void *elegirFuncion(protocolo head) {
 		case PEDIDO_LECTURA_VARIABLE:
 			return leer_variable;
 
-		case ESCRIBIR_PAGINA:
+		case PEDIDO_ESCRITURA:
 			return escribir_bytes;
 
 		case FINALIZAR_PROGRAMA:
@@ -929,7 +907,7 @@ void actualizarPid(int fd, int pid) {
 	int pos = buscarPosPid(fd);
 
 	if(pos == ERROR) { // no encontró fd
-		fprintf(stderr, "<actualizarPid> #%d no tiene un PID asignado\n", fd);
+		agregarPid(fd, pid);
 		return;
 	}
 

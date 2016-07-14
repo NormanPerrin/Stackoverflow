@@ -23,51 +23,64 @@ int main(int argc, char **argv) {
 	int* respuesta = malloc(INT);
 	void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
 
-		if (head == RECHAZAR_PROGRAMA){
-			respuesta = (int*) mensaje;
-			if(*respuesta == TRUE){ // programa acpetado
+	if (head == RECHAZAR_PROGRAMA){
+		respuesta = (int*) mensaje;
+
+		switch(*respuesta){
+
+		case TRUE:{ // programa acpetado
+
 				free(mensaje); mensaje = NULL;
+				puts("Escuchando nuevos mensajes de Núcleo.\n");
 
-						puts("Escuchando nuevos mensajes de Núcleo.\n");
-						while(TRUE) {
+				while(TRUE){
 
-							void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
-							switch(head){
+				void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
 
-							case IMPRIMIR_TEXTO:{
-								// Imprime lo que recibe, ya sea texto a variable (convertida a texto):
-								puts((char*)mensaje);
-								free(mensaje); mensaje = NULL;
-								break;
-								}
-							case FINALIZAR_PROGRAMA:{
-								puts("El programa ha finalizado con éxito. Cerrando proceso Consola.\n");
-								free(mensaje); mensaje = NULL;
-								cerrarSocket(fd_nucleo);
-								liberarRecursos(); // Libera memoria asignada
+			switch(head){
 
-								return EXIT_SUCCESS;
-								break;
-								}
-							} // fin del switch-case
-						} // fin del while
-
+			case IMPRIMIR_TEXTO:{
+					// Imprime lo que recibe, ya sea texto a variable (convertida a texto):
+					puts((char*)mensaje);
+					free(mensaje); mensaje = NULL;
+					break;
+				}
+			case FINALIZAR_PROGRAMA:{
+					puts("El programa ha finalizado con éxito. Cerrando proceso Consola.\n");
+					free(mensaje); mensaje = NULL;
+					cerrarSocket(fd_nucleo);
+					liberarRecursos(); // Libera memoria asignada
 					return EXIT_SUCCESS;
+					break;
+				}
+			} // fin switch-case nuevos mensajes
+		} // fin while espera mensajes
+				break;
 			}
-			else{ // programa rechazado
+		case FALSE:{ // programa rechazado
 				puts("La UMC no pudo alocar los segmentos pedidos. El programa ha sido rechazado.\n");
 				free(mensaje); mensaje = NULL;
 				cerrarSocket(fd_nucleo);
 				liberarRecursos(); // Libera memoria asignada
 				printf("Cerrando proceso Consola.\n");
-
 				return EXIT_FAILURE;
+				break;
 			}
-		} // fin if head válido
+		case ERROR:{
+				printf("Error al iniciar programa. Ingresar nuevamente el script...\n");
+				free(mensaje); mensaje = NULL;
+				cerrarSocket(fd_nucleo);
+				liberarRecursos(); // Libera memoria asignada
+				printf("Cerrando proceso Consola.\n");
+				return EXIT_FAILURE;
+				break;
+			}
+		} // fin switch respuesta inicio
+	} // fin if head válido
 	printf("Error: No se recibió respuesta de inicio de programa de Núcleo.\n");
 	free(mensaje); mensaje = NULL;
 	cerrarSocket(fd_nucleo);
 	liberarRecursos(); // Libera memoria asignada
 	printf("Cerrando proceso Consola.\n");
 	return EXIT_FAILURE;
-}
+} // fin main
