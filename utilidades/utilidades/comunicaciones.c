@@ -98,8 +98,8 @@ int calcularTamanioMensaje(int head, void* mensaje){
 			}
 		// CASE 5: El mensaje es un valor entero (int)
 			case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
-			case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-			case DEVOLVER_VAR_COMPARTIDA: case TAMANIO_STACK: case SENIAL_SIGUSR1:{
+			case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
+			case TAMANIO_STACK: case SENIAL_SIGUSR1:{
 				tamanio = 4;
 				break;
 				}
@@ -179,8 +179,8 @@ void * serealizar(int head, void * mensaje, int tamanio){
 		}
 	// CASE 5: El mensaje es un valor entero (int)
 	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case SENIAL_SIGUSR1:
-	case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-	case DEVOLVER_VAR_COMPARTIDA: case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case TAMANIO_STACK:{
+	case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
+	case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case TAMANIO_STACK:{
 		buffer = malloc(tamanio);
 		memcpy(buffer, mensaje, tamanio);
 			break;
@@ -239,8 +239,8 @@ void * deserealizar(int head, void * buffer, int tamanio){
 			}
 		// CASE 5: El mensaje es un valor entero (int)
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
-		case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case RESPUESTA_INICIO_PROGRAMA: case INDICAR_PID:
-		case DEVOLVER_VAR_COMPARTIDA: case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case SENIAL_SIGUSR1:{
+		case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
+		case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case SENIAL_SIGUSR1:{
 			int* msj = malloc(tamanio);
 			memcpy(msj, buffer, tamanio);
 			mensaje = msj;

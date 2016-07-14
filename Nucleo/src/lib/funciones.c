@@ -293,12 +293,12 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 
 			return FALSE;
 		}
-		if(head == RESPUESTA_INICIO_PROGRAMA){
+		if(head == RESPUESTA_PEDIDO){
 			respuestaUMC = (int*)entrada;
 			free(entrada);
 		}
 		// Verifico la respuesta de UMC:
-		if(*respuestaUMC == CREADO){
+		if(*respuestaUMC == PERMITIDO){
 			printf("UMC pudo alocar todos los segmentos del proceso #%d.\n", nuevoPcb->pid);
 			free(respuestaUMC);
 

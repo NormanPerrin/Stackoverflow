@@ -64,6 +64,7 @@ int conexionConUMC(){
 	int conexion = conectarSocket(fd_UMC, config->ipUMC, config->puertoUMC);
 
 	if(conexion == ERROR){
+		log_info(logger, "Falló conexión con UMC.");
 		seDesconectoUMC = true;
 
 		return FALSE;
@@ -133,14 +134,18 @@ void esperar_y_PlanificarProgramas(){
 } // fin select
 
 void unirHilosIO(){
-	int i = 0;
+	/*int i = 0;
 	  while (config->ioID[i] != '\0'){
 	      hiloIO*hilo = (hiloIO*)dictionary_get(diccionarioIO, config->ioID[i]);
-	      log_info(logger, "Cerrando hilo de IO %d que pertenece al dispositivo '%s'.", i, hilo->dataHilo.nombre);
 	      pthread_join(hilo->hiloID, NULL);
 	      free(hilo); hilo = NULL;
 	   i++;
-	}
+	}*/
+	void cerrarHiloIO(char* id, hiloIO* hilo){
+		log_info(logger, "Cerrando hilo de IO del dispositivo '%s'.", hilo->dataHilo.nombre);
+		pthread_join(hilo->hiloID, NULL); free(hilo); hilo = NULL; }
+
+	 dictionary_iterator(diccionarioIO, (void*) cerrarHiloIO);
 }
 
 void liberarRecursosUtilizados(){
@@ -151,10 +156,12 @@ void liberarRecursosUtilizados(){
 	}
 
 void exitNucleo(){
+	printf("Finalizando proceso Núcleo...\n");
 	liberarRecursosUtilizados();
 	cerrarSocket(fdEscuchaConsola);
 	cerrarSocket(fdEscuchaCPU);
 	cerrarSocket(fd_UMC);
 	inotify_rm_watch(fd_inotify, watch_descriptor);
 	cerrarSocket(fd_inotify);
+	printf("Núcleo ha salido del sistema.\n");
 }

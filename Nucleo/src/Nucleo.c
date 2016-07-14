@@ -26,14 +26,12 @@ int main(void){
 		pthread_mutex_destroy(&mutex_planificarProceso);
 
 		unirHilosIO();
-
 		// Libero memoria y cierro sockets:
 		exitNucleo();
 
 		return EXIT_SUCCESS;
 	} else{
 		unirHilosIO();
-
 		// Libero memoria y cierro sockets:
 		exitNucleo();
 

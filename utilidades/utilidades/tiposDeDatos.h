@@ -35,12 +35,7 @@ typedef struct {
 } __attribute__((packed)) pedidoIO;
 
 // Respuesta ante el inicio de un programa de UMC a Núcleo:
-	/* MANDA DIRECTAMENTE UN INT */
-
-// Valores que puede tomar la respuesta ante el inicio de un programa:
-typedef enum {
-	CREADO, NO_CREADO
-} estadoDelHeap;
+	/* MANDA DIRECTAMENTE UN INT --> RESPUESTA_PEDIDO: PERMITIDO ó NO_PERMITIDO */
 
 // Elemento del Índice de Stack:
 typedef struct {

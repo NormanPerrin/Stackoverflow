@@ -19,7 +19,6 @@ typedef enum {
 	INDICAR_PID, 					// CPU - UMC
 	PEDIDO_ESCRITURA,				// CPU - UMC
 	FINALIZAR_PROGRAMA,				// Núcleo - UMC / UMC - SWAP
-	RESPUESTA_INICIO_PROGRAMA,		// UMC - Núcleo / Swap - UMC
 	LEER_PAGINA, 					// UMC - Swap
 	DEVOLVER_VARIABLE, 				// UMC - CPU
 	RESPUESTA_PEDIDO, 				// UMC - CPU
