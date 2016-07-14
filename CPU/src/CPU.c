@@ -37,6 +37,64 @@ int main(void) {
 
 			handshake_cliente(fdUMC, "P");
 			obtenerTamanioDePagina();
+
+															// TODO: prueba
+//			// variables
+//			int *respuesta_solicitud = NULL;
+//			int *variable = NULL;
+//			char *contenido = NULL;
+//			int *head = (int*)reservarMemoria(INT);
+//
+//			// le indico a UMC el pid de esta CPU
+//			int *pid = (int*)reservarMemoria(INT);
+//			*pid = 2;
+//			aplicar_protocolo_enviar(fdUMC, INDICAR_PID, pid);
+//
+//			// pido de pid 2 la pagina 0 offset 0 tamanio 5
+//			solicitudLectura *prueba_lectura = (solicitudLectura*)reservarMemoria(sizeof(solicitudLectura));
+//				prueba_lectura->pagina = 0;
+//				prueba_lectura->offset = 0;
+//				prueba_lectura->tamanio = 5;
+//				aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, prueba_lectura);
+//				respuesta_solicitud = (int*)aplicar_protocolo_recibir(fdUMC, head);
+//				if(*respuesta_solicitud == PERMITIDO) {
+//					printf("<lectura> (pid:2 | pagina:0 | offset:0 | tamanio:5) PERMITIDO\n");
+//				} else {
+//					printf("<lectura> (pid:2 | pagina:0 | offset:0 | tamanio:5) NO_PERMITIDO\n");
+//				}
+//				if(*respuesta_solicitud == PERMITIDO) {
+//					contenido = (char*)aplicar_protocolo_recibir(fdUMC, head);
+//					printf("<lectura> Contenido: %s\n", contenido);
+//				}
+//
+//			solicitudEscritura *prueba_escritura = (solicitudEscritura*)reservarMemoria(sizeof(solicitudEscritura));
+//				prueba_escritura->contenido = 1;
+//				prueba_escritura->offset = 0;
+//				prueba_escritura->pagina = 1;
+//				aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, prueba_escritura);
+//				respuesta_solicitud = (int*)aplicar_protocolo_recibir(fdUMC, head);
+//				if(*respuesta_solicitud == PERMITIDO) {
+//					printf("<lectura> (pid:2 | pagina:0 | offset:0 | tamanio:5) PERMITIDO\n");
+//				} else {
+//					printf("<lectura> (pid:2 | pagina:0 | offset:0 | tamanio:5) NO_PERMITIDO\n");
+//				}
+//
+//			solicitudLectura *prueba_lectura_variable = (solicitudLectura*)reservarMemoria(sizeof(solicitudLectura));
+//				prueba_lectura_variable->pagina = 1;
+//				prueba_lectura_variable->offset = 0;
+//				aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_VARIABLE, prueba_lectura_variable);
+//				respuesta_solicitud = (int*)aplicar_protocolo_recibir(fdUMC, head);
+//				if(*respuesta_solicitud == PERMITIDO) {
+//					printf("<lectura> (pid:2 | pagina:1 | offset:0) PERMITIDO\n");
+//				} else {
+//					printf("<lectura> (pid:2 | pagina:1 | offset:0) NO_PERMITIDO\n");
+//				}
+//				if(*respuesta_solicitud == PERMITIDO) {
+//					variable = (int*)aplicar_protocolo_recibir(fdUMC, head);
+//					printf("<lectura> Variable: %d\n", *variable);
+//				}
+
+
 			conectarConNucleo(); // Conexión con Núcleo
 
 			while (TRUE) {
@@ -53,6 +111,8 @@ int main(void) {
 			}
 	liberarRecursos(); // Libero memoria reservada
 	cerrarSocket(fdUMC);
+
+	return EXIT_SUCCESS;
 }
 
 // Funciones CPU:
