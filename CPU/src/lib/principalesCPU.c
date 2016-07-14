@@ -45,6 +45,7 @@ void atenderSenialSIGUSR1() {
 int conectarConUMC(){
 	int conexion = conectarSocket(fdUMC, config->ipUMC, config->puertoUMC);
 	if(conexion == ERROR){
+		log_info(logger, "Falló conexión con UMC.");
 		return FALSE;
 	}
 	else{
