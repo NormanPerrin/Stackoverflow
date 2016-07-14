@@ -36,14 +36,14 @@ int main(int argc, char **argv){
 			while(TRUE){ // Espera activa de mensajes
 
 			int protocolo;
-			void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &protocolo);
+			void * entrada = aplicar_protocolo_recibir(fd_nucleo, &protocolo);
 
 			switch(protocolo){
 
 		case IMPRIMIR_TEXTO:{
 					// Imprime lo que recibe, ya sea texto a variable (convertida a texto):
-					puts((char*)mensaje);
-					free(mensaje); mensaje = NULL;
+					puts((char*)entrada);
+					free(entrada); entrada = NULL;
 					break;
 				}
 		case FINALIZAR_PROGRAMA:{
