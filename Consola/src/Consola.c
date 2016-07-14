@@ -20,11 +20,11 @@ int main(int argc, char **argv) {
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
 
 	// Espera activa de mensajes:
-	int head;
+	int* head = malloc(INT);
 	int* respuesta = malloc(INT);
-	void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
+	void * mensaje = aplicar_protocolo_recibir(fd_nucleo, head);
 
-		if (head == RECHAZAR_PROGRAMA){
+		if (*head == RECHAZAR_PROGRAMA){
 			respuesta = (int*) mensaje;
 			if(*respuesta == TRUE){ // programa acpetado
 				free(mensaje); mensaje = NULL;
@@ -32,8 +32,8 @@ int main(int argc, char **argv) {
 						puts("Escuchando nuevos mensajes del Núcleo.\n");
 						while(TRUE) {
 
-							void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);
-							switch(head){
+							void * mensaje = aplicar_protocolo_recibir(fd_nucleo, head);
+							switch(*head){
 
 							case IMPRIMIR_TEXTO:{
 								// Imprime lo que recibe, ya sea texto a variable (convertida a texto):
