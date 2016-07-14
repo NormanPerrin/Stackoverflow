@@ -4,10 +4,10 @@ int validar_cliente(char *id) { return 0; }
 
 int validar_servidor(char *id) {
 	if(!strcmp(id, "U") || !strcmp(id, "N")) {
-		printf("Servidor aceptado\n");
+		printf("Servidor aceptado.\n");
 		return TRUE;
 	} else {
-		printf("Servidor rechazado\n");
+		printf("Servidor rechazado.\n");
 		return FALSE;
 	}
 }
@@ -45,6 +45,7 @@ void atenderSenialSIGUSR1() {
 int conectarConUMC(){
 	int conexion = conectarSocket(fdUMC, config->ipUMC, config->puertoUMC);
 	if(conexion == ERROR){
+		log_info(logger, "Falló conexión con UMC.");
 		return FALSE;
 	}
 	else{
@@ -57,6 +58,7 @@ void obtenerTamanioDePagina(){
 	recibirPorSocket(fdUMC, tamPagina, INT);
 	tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
 	free(tamPagina);
+	printf("Recibí tamanio de página: %d.\n", tamanioPagina);
 }
 
 void conectarConNucleo() {
@@ -72,6 +74,7 @@ void conectarConNucleo() {
 		tamanioStack = *((int*) entrada); // Seteo el tamaño de stack que recibo de Núcleo
 	}
 	free(entrada);
+	printf("Recibí tamanio de stack: %d.\n", tamanioStack);
 }
 
 void revisarFinalizarCPU(){

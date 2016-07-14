@@ -33,11 +33,9 @@ int main(void) {
 	// Manejo de la señal SIGUSR1:
 	signal(SIGUSR1, atenderSenialSIGUSR1);
 
-		if (conectarConUMC()){ // Conexión con UMC
+		/*if (conectarConUMC()){ // Conexión con UMC
 
 			handshake_cliente(fdUMC, "P");
-			obtenerTamanioDePagina();
-
 															// TODO: prueba
 //			// variables
 //			int *respuesta_solicitud = NULL;
@@ -94,21 +92,28 @@ int main(void) {
 //					printf("<lectura> Variable: %d\n", *variable);
 //				}
 
-
+			obtenerTamanioDePagina();*/
+			tamanioPagina = 2; // TODO: Borrar
 			conectarConNucleo(); // Conexión con Núcleo
 
-			while (TRUE) {
-				log_info(logger, "Esperando mensajes de Núcleo.\n"); // Espera activa de mensajes
+			while (TRUE){
+				log_info(logger, "Esperando mensajes de Núcleo...\n"); // Espera activa de mensajes
 					if (recibirMensajesDeNucleo() == TRUE) {
 					} else {
+						exitCPU();
 						return EXIT_SUCCESS;
 					}
 				}
+				exitCPU();
 				return EXIT_SUCCESS;
-			} else {
+		/*}else { // fin else conexión UMC
 				log_error(logger, "Error en la conexión con UMC.\n");
+				exitCPU();
 				return ERROR;
-			}
+			}*/
+}
+
+void exitCPU(){
 	liberarRecursos(); // Libero memoria reservada
 	cerrarSocket(fdUMC);
 

@@ -15,7 +15,7 @@ int main(void){
 	// Creo hilos para cada dispositivo de E/S:
 	lanzarHilosIO();
 
-	if(conexionConUMC()){ // Conexión con UMC
+	//if(conexionConUMC()){ // Conexión con UMC
 		// Inicializo hilo de planificación:
 		pthread_mutex_init(&mutex_planificarProceso, NULL);
 
@@ -26,17 +26,15 @@ int main(void){
 		pthread_mutex_destroy(&mutex_planificarProceso);
 
 		unirHilosIO();
-
 		// Libero memoria y cierro sockets:
 		exitNucleo();
 
 		return EXIT_SUCCESS;
-	} else{
+	/*} else{ // fin else conexión UMC
 		unirHilosIO();
-
 		// Libero memoria y cierro sockets:
 		exitNucleo();
 
 		return EXIT_FAILURE;
-	}
+	}*/
 }
