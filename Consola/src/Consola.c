@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
 	conectarCon_Nucleo(); // Conexión con Núcleo
 
-	printf("Enviando script a Núcleo...\n");
+	printf("Script enviado a Núcleo. Esperando respuesta...\n");
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
 
 	// Espera activa de mensajes:
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 			if(*respuesta == TRUE){ // programa acpetado
 				free(mensaje); mensaje = NULL;
 
-						puts("Escuchando nuevos mensajes del Núcleo.\n");
+						puts("Escuchando nuevos mensajes de Núcleo.\n");
 						while(TRUE) {
 
 							void * mensaje = aplicar_protocolo_recibir(fd_nucleo, &head);

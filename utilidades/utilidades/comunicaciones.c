@@ -181,18 +181,18 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case SENIAL_SIGUSR1:
 	case RECHAZAR_PROGRAMA: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
 	case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case TAMANIO_STACK:{
-		buffer = malloc(tamanio);
-		memcpy(buffer, mensaje, tamanio);
+		buffer = malloc(4);
+		memcpy(buffer, mensaje, 4);
 			break;
 		}
 	// CASE 6: El mensaje son dos valores enteros (int)
 	case LEER_PAGINA:{
-		buffer = serealizarDosInt(mensaje, tamanio);
+		buffer = serealizarDosInt(mensaje, 8);
 			break;
 		}
 	// CASE 7: El mensaje son tres valores enteros (int)
 	case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION: case PEDIDO_ESCRITURA:{
-		buffer = serealizarTresInt(mensaje, tamanio);
+		buffer = serealizarTresInt(mensaje, 12);
 			break;
 		}
 	}

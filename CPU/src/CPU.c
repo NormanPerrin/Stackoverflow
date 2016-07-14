@@ -33,11 +33,10 @@ int main(void) {
 	// Manejo de la señal SIGUSR1:
 	signal(SIGUSR1, atenderSenialSIGUSR1);
 
-		/*if (conectarConUMC()){ // Conexión con UMC
+		if (conectarConUMC()){ // Conexión con UMC
 
 			handshake_cliente(fdUMC, "P");
-			obtenerTamanioDePagina();*/
-			tamanioPagina = 2; // TODO: Borrar
+			obtenerTamanioDePagina();
 			conectarConNucleo(); // Conexión con Núcleo
 
 			while (TRUE){
@@ -50,11 +49,11 @@ int main(void) {
 				}
 				exitCPU();
 				return EXIT_SUCCESS;
-		/*}else { // fin else conexión UMC
+		}else { // fin else conexión UMC
 				log_error(logger, "Error en la conexión con UMC.\n");
 				exitCPU();
 				return ERROR;
-			}*/
+			}
 }
 
 void exitCPU(){
@@ -72,8 +71,7 @@ int recibirMensajesDeNucleo(){
 			cerrarSocket(fdNucleo);
 			return FALSE;
 	} else {
-		switch (head) {
-			case PCB:{
+		if(head == PCB){
 				int pcb_size = calcularTamanioPCB(mensaje);
 				// Seteo el pcb actual que recibo de Núcleo:
 				memcpy(pcbActual, (pcb*) mensaje, pcb_size);
@@ -83,13 +81,12 @@ int recibirMensajesDeNucleo(){
 				cpuOciosa = false;
 				huboStackOverflow = false;
 				devolvioPcb = DEFAULT;
-				ejecutarProcesoActivo();
 
-				break;
-				}
-		} // fin switch head
+				ejecutarProcesoActivo();
+				return TRUE;
+		} // fin else head
+		return FALSE;
 	} // fin else msj not null
-	return TRUE;
 }
 
 void ejecutarProcesoActivo(){
