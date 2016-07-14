@@ -309,9 +309,10 @@ inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
 	int string_size = tamanio - 2*INT;
-	// msj->contenido = (char*)reservarMemoria(string_size); TODO: ver esto
 
 	inicioPrograma *msj = (inicioPrograma*)reservarMemoria(tamanio);
+	msj->contenido = (char*)reservarMemoria(string_size);
+
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&msj->paginas, buffer + desplazamiento, INT);
