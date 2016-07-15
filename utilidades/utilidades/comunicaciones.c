@@ -119,25 +119,16 @@ int calcularTamanioMensaje(int head, void* mensaje){
 	return tamanio;
 }
 
-int calcularTamanioPcb(pcb* unPcb){
-
-	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
-
-	int tamanio = 56 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + tamanioIndiceStack;
-
-	return tamanio;
-}
-
 int calcularTamanioIndiceStack(t_list* indice){
 
-	int tamanio;
+	int* tamanio = NULL;
 	/*int* tamanio;
 	*tamanio = 0;*/
 	int i;
 	for(i=0; i<list_size(indice); i++){
 		registroStack* reg = list_get(indice, i);
 		int size = 16 + (dictionary_size(reg->args)*14) + (dictionary_size(reg->vars)*14) + 12;
-		tamanio += size;
+		*tamanio += size;
 	}
 	/*void calcularTamanioRegistroStack(void* element){
 		registroStack* reg = (registroStack*) element;
@@ -146,6 +137,15 @@ int calcularTamanioIndiceStack(t_list* indice){
 	}
 	list_iterate(indice, calcularTamanioRegistroStack);*/
 	//return *tamanio;
+	return *tamanio;
+}
+
+int calcularTamanioPcb(pcb* unPcb){
+
+	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
+
+	int tamanio = 60 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + tamanioIndiceStack;
+
 	return tamanio;
 }
 

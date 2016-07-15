@@ -43,7 +43,7 @@ typedef struct {
 	t_dictionary* vars; // valores -> dirección
 	int retPos;
 	direccion retVar;
-} registroStack;
+}  __attribute__((packed)) registroStack;
 
 // PCB de un proceso:
 typedef struct pcb{
@@ -57,7 +57,8 @@ typedef struct pcb{
 	int pc; // program counter
 	int pid;
 	int primerPaginaStack;
-	int quantum, quantum_sleep;
+	int quantum;
+	int quantum_sleep;
 	int stackPointer;
 	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
@@ -77,13 +78,13 @@ typedef struct {
 
 // Valores que puede tomar la respuesta de UMC ante un pedido:
 typedef enum{
-	PERMITIDO, NO_PERMITIDO
-} estadoPedido;
+	PERMITIDO = 1, NO_PERMITIDO
+}  __attribute__((packed)) estadoPedido;
 
 // Valores que puede tomar la respuesta de Núcleo a Consola al iniciar programa:
 typedef enum{
-	ACEPTADO, RECHAZADO, ERROR_CONEXION
-} estadoInicio;
+	ACEPTADO = 1, RECHAZADO, ERROR_CONEXION
+}  __attribute__((packed)) estadoInicio;
 
 // Respuesta de Swap a un pedido de Lectura de UMC:
 typedef struct {
