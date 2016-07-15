@@ -31,8 +31,8 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			//(stackPointer: desplazamiento desde la primer página del stack hasta donde arranca mi nueva variable)
 			dictionary_put(regStack->vars, var_id, var_direccion);
 			log_debug(logger, "%c %i %i %i", var_id, var_direccion->pagina, var_direccion->offset,var_direccion->size);
-			free (var_id);
-			free(var_direccion);
+			free (var_id); var_id = NULL;
+			free(var_direccion); var_direccion = NULL;
 			// Guardo la nueva variable en el índice:
 			list_add(pcbActual->indiceStack, regStack);
 			// Valor a retornar:
@@ -59,11 +59,11 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 				if(dictionary_has_key(regStack->vars, var_id)){
 					direccion * var_direccion = malloc(sizeof(direccion));
 					var_direccion = (direccion*)dictionary_get(regStack->vars, var_id);
-					free(var_id);
+					free(var_id); var_id = NULL;
 
 					int var_stack_page = var_direccion->pagina - pcbActual->primerPaginaStack;
 					int var_stack_offset = (var_stack_page*tamanioPagina) + var_direccion->offset;
-					free(var_direccion);
+					free(var_direccion); var_direccion = NULL;
 
 					return var_stack_offset;
 				}
@@ -92,7 +92,7 @@ t_valor_variable dereferenciar(t_puntero var_stack_offset){
 	int* valor_variable = NULL;
 
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_VARIABLE, var_direccion);
-	free(var_direccion);
+	free(var_direccion); var_direccion = NULL;
 
 	// Valido el pedido de lectura a UMC:
 	if(!recibirYvalidarEstadoDelPedidoAUMC()){ // hubo error de lectura
@@ -108,11 +108,7 @@ t_valor_variable dereferenciar(t_puntero var_stack_offset){
 		else{
 			printf("Error al leer variable del proceso #%d.\n", pcbActual->pid);
 		}
-		free(entrada);
-		int var_valor = *valor_variable;
-		free(valor_variable);
-
-		return var_valor;
+		return *valor_variable;
 	}
 }
 
@@ -129,7 +125,7 @@ void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 		var_escritura->contenido = valor;
 
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
-	free(var_escritura);
+	free(var_escritura); var_escritura = NULL;
 
 	// Valido el pedido de lectura a UMC:
 	if(!recibirYvalidarEstadoDelPedidoAUMC()){
@@ -151,21 +147,18 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 	variableCompartida = strdup((char*) var_compartida_nombre);
 
 	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, variableCompartida);
-	free(variableCompartida);
+	free(variableCompartida); variableCompartida = NULL;
 
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 	if(head == DEVOLVER_VAR_COMPARTIDA){
 		valor_variable = (int*) entrada;
-		free(entrada);
 	}
 	if(valor_variable == NULL){
 		printf("Error al obtener variable compartida del proceso #%d.\n", pcbActual->pid);
 		return ERROR;
 	}
 	else{
-		int valor = *valor_variable;
-		free(valor_variable);
-		return valor;
+		return *valor_variable;
 	}
 }
 
@@ -178,8 +171,8 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 	variableCompartida->valor = var_compartida_valor;
 
 	aplicar_protocolo_enviar(fdNucleo, GRABAR_VAR_COMPARTIDA, variableCompartida);
-	free(variableCompartida->nombre);
-	free(variableCompartida);
+	free(variableCompartida->nombre); variableCompartida->nombre = NULL;
+	free(variableCompartida); variableCompartida = NULL;
 
 	return var_compartida_valor;
 }
@@ -233,7 +226,7 @@ void retornar(t_valor_variable var_retorno){
 	pcbActual->pc =  registroActual->retPos;
 
 	liberarRegistroStack(registroActual); // libero la memoria del registro
-	list_remove(pcbActual->indiceStack, pcbActual->indexActualStack);
+	free(list_remove(pcbActual->indiceStack, pcbActual->indexActualStack));
 	pcbActual->indexActualStack--;
 	return;
 }
@@ -243,7 +236,7 @@ void imprimir(t_valor_variable valor_mostrar){
 	int * valor = malloc(INT);
 	*valor = valor_mostrar;
 	aplicar_protocolo_enviar(fdNucleo,IMPRIMIR, valor);
-	free(valor);
+	free(valor); valor = NULL;
 }
 
 void imprimirTexto(char* texto){
@@ -263,8 +256,8 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 	aplicar_protocolo_enviar(fdNucleo,ENTRADA_SALIDA, pedidoEntradaSalida);
 
-	free(pedidoEntradaSalida->nombreDispositivo);
-	free(pedidoEntradaSalida);
+	free(pedidoEntradaSalida->nombreDispositivo); pedidoEntradaSalida->nombreDispositivo = NULL;
+	free(pedidoEntradaSalida); pedidoEntradaSalida = NULL;
 	devolvioPcb = POR_IO;
 }
 
@@ -274,7 +267,7 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 	id_semaforo = strdup((char*) nombre_semaforo);
 
 	aplicar_protocolo_enviar(fdNucleo, WAIT_REQUEST, id_semaforo);
-	free(id_semaforo);
+	free(id_semaforo); id_semaforo = NULL;
 
 	int head;
 	void* entrada = NULL;
@@ -288,7 +281,6 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 	else{
 		log_info(logger, "Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'.", nombre_semaforo);
 	}
-	free(entrada);
 }
 
 void s_signal(t_nombre_semaforo nombre_semaforo){
@@ -299,5 +291,5 @@ void s_signal(t_nombre_semaforo nombre_semaforo){
 	aplicar_protocolo_enviar(fdNucleo, SIGNAL_REQUEST, id_semaforo);
 
 	log_info(logger, "SIGNAL del semáforo '%s'.", nombre_semaforo);
-	free(id_semaforo);
+	free(id_semaforo); id_semaforo = NULL;
 }

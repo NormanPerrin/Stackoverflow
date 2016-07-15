@@ -4,7 +4,7 @@
 void crearLoggerConsola(){
 	char * archivoLogConsola = strdup("CONSOLA_LOG.log");
 	logger = log_create("CONSOLA_LOG.log", archivoLogConsola, true, LOG_LEVEL_INFO);
-	free(archivoLogConsola);
+	free(archivoLogConsola); archivoLogConsola = NULL;
 }
 
 void validar_argumentos(int arg) {
@@ -42,10 +42,16 @@ void conectarCon_Nucleo(){
 	handshake_cliente(fd_nucleo, "C");
 }
 
+void exitConsola(){
+	cerrarSocket(fd_nucleo);
+	liberarRecursos(); // Libera memoria asignada
+	printf("Cerrando proceso Consola.\n");
+}
+
 void liberarRecursos() {
-	free(programa);
-	free(ipNucleo);
-	free(rutaScript);
+	free(programa); programa = NULL;
+	free(ipNucleo); ipNucleo = NULL;
+	free(rutaScript); rutaScript = NULL;
 	log_destroy(logger);
 	logger = NULL;
 }

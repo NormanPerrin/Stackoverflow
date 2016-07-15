@@ -18,7 +18,7 @@ void crearLoggerNucleo(){
 }
 
 void leerConfiguracionNucleo(){
-	t_config * archivoConfig;
+	t_config * archivoConfig = NULL;
 		if (comprobarQueExistaArchivo(RUTA_CONFIG_NUCLEO) == ERROR){
 			manejarError("Error: Archivo de configuración no encontrado.\n");
 		}
@@ -78,9 +78,9 @@ int conexionConUMC(){
 
 		return FALSE;
 	}else{
-		tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
+		// Seteo el tamaño de página que recibo de UMC
+		printf("Recibí tamanio de página: %d.\n", *tamPagina);
 		free(tamPagina);
-		printf("Recibí tamanio de página: %d.\n", tamanioPagina);
 
 		return TRUE;
 	}
@@ -150,11 +150,10 @@ void unirHilosIO(){
 }
 
 void liberarRecursosUtilizados(){
-	limpiarColecciones();
+		limpiarColecciones();
 		limpiarArchivoConfig();
-		log_destroy(logger);
-		logger = NULL;
-	}
+		log_destroy(logger); logger = NULL;
+}
 
 void exitNucleo(){
 	printf("Finalizando proceso Núcleo...\n");

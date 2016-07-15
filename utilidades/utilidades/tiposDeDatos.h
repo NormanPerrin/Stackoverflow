@@ -80,6 +80,11 @@ typedef enum{
 	PERMITIDO, NO_PERMITIDO
 } estadoPedido;
 
+// Valores que puede tomar la respuesta de Núcleo a Consola al iniciar programa:
+typedef enum{
+	ACEPTADO, RECHAZADO, ERROR_CONEXION
+} estadoInicio;
+
 // Respuesta de Swap a un pedido de Lectura de UMC:
 typedef struct {
 	int pagina;

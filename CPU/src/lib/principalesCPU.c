@@ -69,11 +69,11 @@ void conectarConNucleo() {
 	handshake_cliente(fdNucleo, "P");
 
 	int head;
-	void* entrada = aplicar_protocolo_recibir(fdNucleo, &head);
+	void* entrada = NULL;
+	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 	if(head == TAMANIO_STACK){
 		tamanioStack = *((int*) entrada); // Seteo el tamaño de stack que recibo de Núcleo
 	}
-	free(entrada);
 	printf("Recibí tamanio de stack: %d.\n", tamanioStack);
 }
 
@@ -100,16 +100,12 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 
 	if(head == RESPUESTA_PEDIDO){
 		estadoDelPedido = (int*)entrada;
-		free(entrada);
 	 if(*estadoDelPedido == NO_PERMITIDO){ // retorno false por pedido rechazado
 		 printf("UMC ha enviado una respuesta de rechazo.\n");
-		 free(estadoDelPedido);
 		 return FALSE;
 		 } // retorno true por pedido acpetado
-	 free(estadoDelPedido);
 	 return TRUE;
 	} // retorno false por error en el head
-	free(entrada);
 	return FALSE;
 }
 
@@ -147,15 +143,14 @@ char* solicitarProximaInstruccionAUMC(){
 		if(recibirYvalidarEstadoDelPedidoAUMC()){
 			int head;
 			char * instruccion = NULL;
-			void* entrada = aplicar_protocolo_recibir(fdUMC, &head);
+			void* entrada = NULL;
+			entrada = aplicar_protocolo_recibir(fdUMC, &head);
 
 			if(head == DEVOLVER_INSTRUCCION){
 				instruccion = strdup((char*)entrada);
-				free(entrada);
 				return instruccion; // UMC aceptó el pedido y me devuelve la instrucción
 			}
 			else { // retorno null por error en el head
-				free(entrada);
 				return NULL;
 			}
 		} // retorno null porque UMC rechazó el pedido
@@ -183,7 +178,7 @@ void limpiarInstruccion(char * instruccion){
 
 void liberarRecursos(){
 	free(config->ipUMC);
-	free(config);
+	free(config); config = NULL;
 	log_destroy(logger); logger = NULL;
 	if(pcbActual != NULL) liberarPcbActiva();
 }

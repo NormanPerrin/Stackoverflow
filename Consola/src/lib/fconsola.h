@@ -20,6 +20,7 @@ void crearLoggerConsola();
 void validar_argumentos(int arg); // Valida argumentos de entrada
 void leerScript(char * rutaScript);
 void setearValores_config(t_config * archivoConfig);
+void exitConsola();
 void liberarRecursos(); // Libera memoria asignada
 void conectarCon_Nucleo();
 int validar_servidor(char *id); // Valida si la conexión es de Núcleo
