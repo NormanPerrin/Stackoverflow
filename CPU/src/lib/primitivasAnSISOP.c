@@ -1,9 +1,26 @@
 #include "primitivasAnSISOP.h"
 
+/* FUNCIONES EXTRA */
+
+bool esArgumento(t_nombre_variable identificador_variable){
+	if(isdigit(identificador_variable)){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/* --- PRIMITIVAS --- */
 t_puntero definirVariable(t_nombre_variable var_nombre){
 	/* Le asigna una posición en memoria a la variable,
 	 y retorna el offset total respecto al inicio del stack. */
+
+	if(!esArgumento(var_nombre)){
 		log_info(logger, "Definiendo nueva variable: %c.", var_nombre);
+	}
+	else{
+		log_info(logger, "Definiendo nuevo argumento: %c.", var_nombre);
+	}
 
 		char * var_id = strdup(charAString(var_nombre));
 
@@ -29,7 +46,12 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 				regStack = reg_stack_create(); // TODO: Ver si pasar tamaño(s) como argumento del creator
 			}
 			//(stackPointer: desplazamiento desde la primer página del stack hasta donde arranca mi nueva variable)
-			dictionary_put(regStack->vars, var_id, var_direccion);
+			if(!esArgumento(var_nombre)){
+				dictionary_put(regStack->vars, var_id, var_direccion);
+			}
+			else{
+				dictionary_put(regStack->args, var_id, var_direccion);
+			}
 			log_debug(logger, "%c %i %i %i", var_id, var_direccion->pagina, var_direccion->offset,var_direccion->size);
 			free (var_id); var_id = NULL;
 			free(var_direccion); var_direccion = NULL;
@@ -43,17 +65,25 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			pcbActual->paginaActualStack = total_heap_offset/tamanioPagina;
 
 		return var_stack_offset;
-	}
+		}
 }
 
 t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	/* En base a la posición de memoria de la variable,
 	 retorna el offset total respecto al inicio del stack. */
-	log_debug(logger, "Obteneniendo posición de la variable: '%c'.", var_nombre);
+
+	if(!esArgumento(var_nombre)){
+		log_debug(logger, "Obteneniendo posición de la variable: '%c'.", var_nombre);
+	}
+	else{
+		log_debug(logger, "Obteneniendo posición de la variable: '%c'.", var_nombre);
+	}
 	char* var_id = strdup(charAString(var_nombre));
 	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
 	registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indexActualStack);
 	// Me posiciono al inicio de este registro y busco la variable del diccionario que coincida con el nombre solicitado:
+
+	if(!esArgumento(var_nombre)){
 		if(dictionary_size(regStack->vars) > 0){
 
 				if(dictionary_has_key(regStack->vars, var_id)){
@@ -70,8 +100,29 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 			log_error(logger, "La variable buscada no se encuentra en el registro actual de stack.");
 			return ERROR;
 		}
-		log_error(logger, "Diccionario de variables vacío en el registro actual de stack.");
+		log_error(logger, "No hay variables en el registro actual de stack.");
 		return ERROR;
+	}
+	else{
+		if(NUM_ELEM(regStack->args) > 0){
+
+				if(dictionary_has_key(regStack->args, var_id)){
+					direccion * var_direccion = malloc(sizeof(direccion));
+					var_direccion = (direccion*)dictionary_get(regStack->args, var_id);
+					free(var_id); var_id = NULL;
+
+					int var_stack_page = var_direccion->pagina - pcbActual->primerPaginaStack;
+					int var_stack_offset = (var_stack_page*tamanioPagina) + var_direccion->offset;
+					free(var_direccion); var_direccion = NULL;
+
+					return var_stack_offset;
+				}
+			log_error(logger, "El argumento buscado no se encuentra en el registro actual de stack.");
+			return ERROR;
+		}
+		log_error(logger, "No hay argumentos en el registro actual de stack.");
+		return ERROR;
+	}
 }
 
 t_valor_variable dereferenciar(t_puntero var_stack_offset){
