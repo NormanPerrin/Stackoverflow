@@ -139,8 +139,8 @@ registroStack* reg_stack_create(){
 
 void liberarRegistroStack(registroStack* reg){
 	free(reg->args);
-	dictionary_clean(reg->vars);
-	dictionary_destroy(reg->vars);
+	list_clean(reg->vars);
+	list_destroy(reg->vars);
 	free(reg);
 	reg = NULL;
 }

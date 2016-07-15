@@ -24,9 +24,9 @@ typedef struct {
 
 // Variable AnSISOP:
 typedef struct {
-	char *nombre;
-	direccion direccion;
-} variable;
+	char *nombre; // char 'id' + '/0' --> 2 bytes
+	direccion direccion; // --> 12 bytes
+} variable; // o argumento, son lo mismo
 
 // Pedido de Entrada/Salida:
 typedef struct {
@@ -39,8 +39,8 @@ typedef struct {
 
 // Elemento del Índice de Stack:
 typedef struct {
-	t_dictionary* args; // valores -> dirección
-	t_dictionary* vars; // valores -> dirección
+	t_list* args; // valores -> dirección
+	t_list* vars; // valores -> dirección
 	int retPos;
 	direccion retVar;
 }  __attribute__((packed)) registroStack;
@@ -63,7 +63,7 @@ typedef struct pcb{
 	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;
-	t_list* indiceStack;
+	t_list* indiceStack; // valores -> registroStack
 } __attribute__((packed)) pcb;
 
 // Pedido de Lectura de CPU a UMC (dirección lógica):
