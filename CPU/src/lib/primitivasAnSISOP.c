@@ -270,8 +270,7 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 	free(id_semaforo); id_semaforo = NULL;
 
 	int head;
-	void* entrada = NULL;
-	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
+	aplicar_protocolo_recibir(fdNucleo, &head);
 
 	if(head == WAIT_CON_BLOQUEO){
 		// Mando la pcb bloqueada y la saco de ejecución:
