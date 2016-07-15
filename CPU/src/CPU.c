@@ -68,15 +68,15 @@ int recibirMensajesDeNucleo(){
 	int head;
 	void *mensaje = NULL;
 	mensaje = aplicar_protocolo_recibir(fdNucleo, &head);
-	if (mensaje == NULL) {
+	/*if (mensaje == NULL) {
 			log_info(logger, "El Núcleo se ha desconectado. Cerrando proceso CPU...");
 			cerrarSocket(fdNucleo);
 
 			return FALSE;
-	} else {
+	} else {*/
 		if(head == PCB){
-				int pcb_size = calcularTamanioPcb(mensaje);
-				// Seteo el pcb actual que recibo de Núcleo:
+				int pcb_size = calcularTamanioPcb((pcb*) mensaje);
+				// Me copio la pcb actual que recibo de Núcleo:
 				memcpy(pcbActual, (pcb*) mensaje, pcb_size);
 				// Le informo a UMC el cambio de proceso activo:
 				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, &(pcbActual->pid));
@@ -89,8 +89,10 @@ int recibirMensajesDeNucleo(){
 
 				return TRUE;
 		} // fin else head
-		return FALSE;
-	} // fin else msj not null
+		else{
+			return FALSE;
+		}
+	//} // fin else msj not null
 }
 
 void ejecutarProcesoActivo(){
