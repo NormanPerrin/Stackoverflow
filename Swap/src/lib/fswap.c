@@ -19,6 +19,7 @@ void setearValores_config(t_config * archivoConfig) {
 	config->cantidadPaginas = config_get_int_value(archivoConfig, "CANTIDAD_PAGINAS");
 	config->tamanioPagina = config_get_int_value(archivoConfig, "TAMANIO_PAGINA");
 	config->retardoCompactacion = config_get_int_value(archivoConfig, "RETARDO_COMPACTACION");
+	config->retardoAcceso = config_get_int_value(archivoConfig , "RETARDO_ACCESO");
 }
 
 
@@ -92,6 +93,7 @@ FILE *inicializarSwap() {
 		char *c = (char*)reservarMemoria(tamanioSwap);
 		int l = 0;
 		for(; l < tamanioSwap; l++) c[l] = '\0';
+		dormir(config->retardoAcceso);
 		fwrite(c, CHAR, tamanioSwap, archivoSwap);
 		free(c);
 	}
@@ -163,6 +165,7 @@ void iniciar_programa(void *msj) {
 		int pos = buscarPaginaEnTablaDePaginas(pid, 0);
 		avanzarPaginas(pos);
 		int tamanio = strlen(mensaje->contenido);
+		dormir(config->retardoAcceso);
 		fwrite(mensaje->contenido, CHAR, tamanio, archivoSwap);
 	}
 
@@ -185,6 +188,7 @@ void escribir_pagina(void *msj) {
 	if(pos != ERROR) {
 		avanzarPaginas(pos);
 		int tamanio = strlen(contenido);
+		dormir(config->retardoAcceso);
 		fwrite(mensaje->contenido, CHAR, tamanio, archivoSwap);
 	}
 	else *respuesta = NO_PERMITIDO; // no encontro pagina en tabla de paginas
@@ -312,6 +316,7 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
     	// escribo pagina de proceso en pagina libre
     	avanzarPaginas(posLibre);
+    	dormir(config->retardoAcceso);
     	fwrite(contenido, CHAR, config->tamanioPagina, archivoSwap);
 
 
@@ -320,6 +325,7 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 		int l = 0;
 		for(; l < config->tamanioPagina; l++) c[l] = '\0';
 		avanzarPaginas(arrancaProceso);
+		dormir(config->retardoAcceso);
 		fwrite(c, CHAR, config->tamanioPagina, archivoSwap);
 		free(c);
 
@@ -373,6 +379,7 @@ void eliminar_programa(void *msj) {
 			char *c = (char*)reservarMemoria(config->tamanioPagina);
 			int l = 0;
 			for(; l < config->tamanioPagina; l++) c[l] = '\0';
+			dormir(config->retardoAcceso);
 			fwrite(c, CHAR, config->tamanioPagina, archivoSwap);
 		}
 
@@ -398,6 +405,7 @@ void leer_pagina(void *msj) {
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
 	if(pagABuscar != ERROR) { // encontro pagina del proceso
 		avanzarPaginas(pagABuscar);
+		dormir(config->retardoAcceso);
 		fread(contenido, CHAR, config->tamanioPagina, archivoSwap);
 	} else *respuesta = NO_PERMITIDO; // no encontro pagina solicitada del pid
 
