@@ -137,7 +137,7 @@ int calcularTamanioIndiceStack(pcb* unPcb){
 
 int calcularTamanioPcb(pcb* unPcb){
 
-	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
+	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb);
 	// Sumo 60 bytes por los 15 int que tiene + los tamaños de los tres índices:
 	int tamanio = 60 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + tamanioIndiceStack;
 
