@@ -52,7 +52,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			else{
 				dictionary_put(regStack->args, var_id, var_direccion);
 			}
-			log_debug(logger, "%c %i %i %i", var_id, var_direccion->pagina, var_direccion->offset,var_direccion->size);
+			log_debug(logger, "'%c' -> Dirección lógica: %i, %i, %i", var_id, var_direccion->pagina, var_direccion->offset,var_direccion->size);
 			free (var_id); var_id = NULL;
 			free(var_direccion); var_direccion = NULL;
 			// Guardo la nueva variable en el índice:
@@ -65,7 +65,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			pcbActual->paginaActualStack = total_heap_offset/tamanioPagina;
 
 		return var_stack_offset;
-		}
+		} // fin else ERROR
 }
 
 t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
@@ -104,7 +104,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 		return ERROR;
 	}
 	else{
-		if(NUM_ELEM(regStack->args) > 0){
+		if(dictionary_size(regStack->args) > 0){
 
 				if(dictionary_has_key(regStack->args, var_id)){
 					direccion * var_direccion = malloc(sizeof(direccion));
@@ -263,7 +263,7 @@ void retornar(t_valor_variable var_retorno){
 	registroStack* registroActual = list_get(pcbActual->indiceStack, index);
 
 	// Limpio los argumentos del registro y descuento el espacio que ocupan en el stack en memoria:
-	pcbActual->stackPointer -= (4* NUM_ELEM(registroActual->args));
+	pcbActual->stackPointer -= (4* dictionary_size(registroActual->args));
 
 	// Limpio las variables del registro y descuento el espacio que ocupan en el stack en memoria:
 	pcbActual->stackPointer -= (4 * dictionary_size(registroActual->vars));

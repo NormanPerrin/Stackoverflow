@@ -39,8 +39,8 @@ typedef struct {
 
 // Elemento del Índice de Stack:
 typedef struct {
-	direccion* args;
-	t_dictionary* vars;
+	t_dictionary* args; // valores -> dirección
+	t_dictionary* vars; // valores -> dirección
 	int retPos;
 	direccion retVar;
 } registroStack;

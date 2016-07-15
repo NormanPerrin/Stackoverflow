@@ -95,7 +95,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 4: El mensaje es un pcb (pcb)
 			case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:
 			case PCB_WAIT:{
-				tamanio = calcularTamanioPCB(mensaje);
+				tamanio = calcularTamanioPcb((pcb*) mensaje);
 				break;
 			}
 		// CASE 5: El mensaje es un valor entero (int)
@@ -119,9 +119,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 	return tamanio;
 }
 
-int calcularTamanioPCB(void* mensaje){
-
-	pcb* unPcb = (pcb*)mensaje;
+int calcularTamanioPcb(pcb* unPcb){
 
 	int tamanioIndiceStack = calcularTamanioIndiceStack(unPcb->indiceStack);
 
@@ -138,7 +136,7 @@ int calcularTamanioIndiceStack(t_list* indice){
 	int i;
 	for(i=0; i<list_size(indice); i++){
 		registroStack* reg = list_get(indice, i);
-		int size = 16 + (NUM_ELEM(reg->args)*12) + (dictionary_size(reg->vars)*14) + 12;
+		int size = 16 + (dictionary_size(reg->args)*14) + (dictionary_size(reg->vars)*14) + 12;
 		tamanio += size;
 	}
 	/*void calcularTamanioRegistroStack(void* element){

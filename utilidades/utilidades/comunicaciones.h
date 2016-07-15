@@ -54,7 +54,7 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void * mensaje);
 void* aplicar_protocolo_recibir(int fdEmisor, int* head);
 
 int calcularTamanioMensaje(int head, void* mensaje);
-int calcularTamanioPCB(void* mensaje);
+int calcularTamanioPcb(pcb* mensaje);
 
 // -- Serealización y deserealización GENERAL:
 void * serealizar(int head, void * mensaje, int tamanio);
@@ -74,6 +74,5 @@ direccion* deserealizarTresInt(void* buffer, int tamanio);
 void* serealizarCuatroInt(void* mensaje, int tamanio);
 solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
 int calcularTamanioIndiceStack(t_list* indice);
-void calcularTamanioRegistroStack(void* element);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

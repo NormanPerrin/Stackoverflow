@@ -75,7 +75,7 @@ int recibirMensajesDeNucleo(){
 			return FALSE;
 	} else {
 		if(head == PCB){
-				int pcb_size = calcularTamanioPCB(mensaje);
+				int pcb_size = calcularTamanioPcb(mensaje);
 				// Seteo el pcb actual que recibo de Núcleo:
 				memcpy(pcbActual, (pcb*) mensaje, pcb_size);
 				// Le informo a UMC el cambio de proceso activo:
@@ -84,7 +84,8 @@ int recibirMensajesDeNucleo(){
 				cpuOciosa = false;
 				huboStackOverflow = false;
 				devolvioPcb = DEFAULT;
-				ejecutarProcesoActivo();
+
+				ejecutarProcesoActivo(); // Ejecuto ráfaga del proceso actual
 
 				return TRUE;
 		} // fin else head

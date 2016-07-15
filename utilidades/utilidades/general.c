@@ -130,22 +130,6 @@ char* charAString(char caracter){
 		return caracterMasBarraCero;
 }
 
-void liberarRegistroStack(registroStack* reg){
-	free(reg->args);
-	dictionary_clean(reg->vars);
-	dictionary_destroy(reg->vars);
-	free(reg);
-	reg = NULL;
-}
-
-void liberarPcb(pcb * pcb){
-	free(pcb->indiceCodigo);
-	free(pcb->indiceEtiquetas);
-	list_destroy_and_destroy_elements(pcb->indiceStack, (void*) liberarRegistroStack);
-	free(pcb);
-	pcb = NULL;
-}
-
 registroStack* reg_stack_create(){
 	registroStack* reg = malloc(sizeof(registroStack));
 	  reg->vars = dictionary_create();
@@ -156,4 +140,20 @@ registroStack* reg_stack_create(){
 	  reg->retVar.size = 0;
 
 	  return reg;
+}
+
+void liberarRegistroStack(registroStack* reg){
+	free(reg->args);
+	dictionary_clean(reg->vars);
+	dictionary_destroy(reg->vars);
+	free(reg);
+	reg = NULL;
+}
+
+void liberarPcb(pcb * unPcb){
+	free(unPcb->indiceCodigo);
+	free(unPcb->indiceEtiquetas);
+	list_destroy_and_destroy_elements(unPcb->indiceStack, (void*) liberarRegistroStack);
+	free(unPcb);
+	unPcb = NULL;
 }
