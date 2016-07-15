@@ -53,7 +53,6 @@ typedef enum {
 void aplicar_protocolo_enviar(int fdReceptor, int head, void * mensaje);
 void* aplicar_protocolo_recibir(int fdEmisor, int* head);
 
-int calcularTamanioListVars(t_list* args);
 int calcularTamanioIndiceStack(t_list* indice);
 int calcularTamanioMensaje(int head, void* mensaje);
 int calcularTamanioPcb(pcb* mensaje);

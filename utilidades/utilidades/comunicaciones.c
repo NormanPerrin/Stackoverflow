@@ -125,8 +125,8 @@ int calcularTamanioIndiceStack(t_list* indice){
 	int i;
 	for(i=0; i<list_size(indice); i++){
 		registroStack* reg = list_get(indice, i);
-		int tam_args = calcularTamanioListVars(reg->args);
-		int tam_vars = calcularTamanioListVars(reg->vars);
+		int tam_args = 4 + (list_size(reg->args)*14);
+		int tam_vars = 4 + (list_size(reg->vars)*14);
 		tamanio += (16 + tam_args + tam_vars); // Sumo además 12 bytes de retVar + 4 de retPos
 	}
 	// Sumo 4 de elemnts_count (propia del índice):
@@ -134,38 +134,6 @@ int calcularTamanioIndiceStack(t_list* indice){
 
 	return tamanio;
 }
-
-int calcularTamanioListVars(t_list* args){
-	/*int* tamanio = NULL;
-		*tamanio = 0;
-		int i;
-		for(i=0; i<list_size(args); i++){
-			// Sumo 12 bytes de dirección + 2 de nombre por la cantidad de elementos:
-			*tamanio += 14;
-		}
-		// Sumo 4 bytes de elemnts_count (propia args):
-		*tamanio += 4;
-
-		return *tamanio;*/
-	int tamanio = 4 + (list_size(args)*14);
-	return tamanio;
-}
-
-/* typedef struct {
-		t_link_element *head; -->
-		int elements_count; --> 4 bytes
-	} t_list;
-
-	list->head = NULL;
-	list->elements_count = 0;
-
-struct link_element{
-		void *data; --> 14 bytes
-		struct link_element *next; -->
-	};
-
-	typedef struct link_element t_link_element;
-}*/
 
 int calcularTamanioPcb(pcb* unPcb){
 
