@@ -23,7 +23,7 @@ int main(int argc, char **argv){
 	void * mensaje = NULL;
 	mensaje = aplicar_protocolo_recibir(fd_nucleo, &head); // Recibo respuesta de incio programa
 
-	if (head == INICIO_PROGRAMA){
+	if (head == PROGRAMA_NEW){
 		respuesta = (int*) mensaje;
 
 		switch(*respuesta){

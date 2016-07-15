@@ -385,14 +385,14 @@ void aceptarConexionEntranteDeConsola(){
 
 		if(nuevoPcb == NULL){ //  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
 			*respuesta = RECHAZADO;
-			aplicar_protocolo_enviar(new_fd, INICIO_PROGRAMA, respuesta);
+			aplicar_protocolo_enviar(new_fd, PROGRAMA_NEW, respuesta);
 			cerrarSocket(new_fd);
 			free(respuesta); respuesta = NULL;
 			return;
 		  }
 	// Sí se pudieron alocar los segmentos, entonces la Consola y el PCB ingresan al sistema:
 		*respuesta = ACEPTADO;
-		aplicar_protocolo_enviar(new_fd, INICIO_PROGRAMA, respuesta);
+		aplicar_protocolo_enviar(new_fd, PROGRAMA_NEW, respuesta);
 		free(respuesta); respuesta = NULL;
 
 		nuevaConsola->pid = nuevoPcb->pid;
@@ -409,7 +409,7 @@ void aceptarConexionEntranteDeConsola(){
 
 			  printf("Se espera script de la Consola #%d.\n", nuevaConsola->id);
 			  *respuesta = ERROR_CONEXION;
-			  aplicar_protocolo_enviar(new_fd, INICIO_PROGRAMA, respuesta);
+			  aplicar_protocolo_enviar(new_fd, PROGRAMA_NEW, respuesta);
 			  free(respuesta); respuesta = NULL;
 			  return;
 		  }
