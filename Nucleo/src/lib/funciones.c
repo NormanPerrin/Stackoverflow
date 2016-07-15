@@ -336,12 +336,25 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->stackPointer = 0; // offset total en memoria; 0 porque aún está vacío
 			nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
+			/*
+		//Cargo Indice de Codigo
+		t_list * listaIndCodigo = llenarLista(datos->instrucciones_serializado,
+				datos->instrucciones_size);
+		pcb->ind_codigo = listaIndCodigo;
+		*/
+
 		// Inicializo índice de código:
-			nuevoPcb->tamanioIndiceCodigo = sizeof(t_intructions) * infoProg->instrucciones_size;
-			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
+			nuevoPcb->tamanioIndiceCodigo = sizeof(t_intructions)*infoProg->instrucciones_size;
+			nuevoPcb->indiceCodigo = malloc(nuevoPcb->tamanioIndiceCodigo);
+			int k;
+			for(k=0; k<infoProg->instrucciones_size; k++){
+				nuevoPcb->indiceCodigo[k].offset = infoProg->instrucciones_serializado[k].offset;
+				nuevoPcb->indiceCodigo[k].start = infoProg->instrucciones_serializado[k].start;
+			}
 
 		// Inicializo índice de stack:
-			nuevoPcb->indiceStack = list_create();
+			t_list* listaStack = list_create();
+			nuevoPcb->indiceStack = listaStack;
 			nuevoPcb->indexActualStack = 0; // resgistro actual en uso; 0 porque aún está vacío
 
 		// Inicializo índice de etiquetas:
