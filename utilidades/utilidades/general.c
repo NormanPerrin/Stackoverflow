@@ -115,12 +115,7 @@ int validar_recive(int status, int modo) {
 
 // -- FUNCIONES EXTRA --
 void dormir(float miliseconds) {
-
-	struct timespec tim;
-	tim.tv_sec = (int)(miliseconds / 1000);
-	tim.tv_nsec = ((tim.tv_sec * 1000) - miliseconds) * 1000000;
-
-	nanosleep(&tim, NULL);
+	usleep(miliseconds * 1000);
 }
 
 char* charAString(char caracter){
