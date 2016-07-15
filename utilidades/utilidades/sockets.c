@@ -112,7 +112,7 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 			}
 
 	if (bytes_recibidos == 0) { // Conexión cerrada
-		printf("La conexión #%d se ha cerrado\n", fdServidor);
+		printf("La conexión #%d se ha cerrado.\n", fdServidor);
 		break;
 			}
 	total += bytes_recibidos;

@@ -13,7 +13,7 @@
 typedef enum {
 	// Mensajes Estáticos:
 	IMPRIMIR = 1, 					// CPU - Núcleo / Núcleo - Consola
-	RECHAZAR_PROGRAMA,				// Núcleo - Consola --> MSJ_VACIO
+	PROGRAMA_NEW,				// Núcleo - Consola --> MSJ_VACIO
 	PEDIDO_LECTURA_INSTRUCCION, 	// CPU - UMC
 	PEDIDO_LECTURA_VARIABLE, 		// CPU - UMC
 	INDICAR_PID, 					// CPU - UMC
