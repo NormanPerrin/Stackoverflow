@@ -77,12 +77,12 @@ typedef struct {
 
 // Valores que puede tomar la respuesta de UMC ante un pedido:
 typedef enum{
-	PERMITIDO, NO_PERMITIDO
+	PERMITIDO = 1, NO_PERMITIDO
 } estadoPedido;
 
 // Valores que puede tomar la respuesta de Núcleo a Consola al iniciar programa:
 typedef enum{
-	ACEPTADO, RECHAZADO, ERROR_CONEXION
+	ACEPTADO = 1, RECHAZADO, ERROR_CONEXION
 } estadoInicio;
 
 // Respuesta de Swap a un pedido de Lectura de UMC:
