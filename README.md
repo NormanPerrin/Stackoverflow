@@ -71,5 +71,11 @@ Conjunto de elementos:
 - `pwd` Muestra el directorio completo del lugar actual
 - `rm file` Elimina archivo (remove)
 - `rm -fr dir` Eliminar todo el directorio dir
-- ``
+- `make all` Compilar módulo
 
+## Pasos para deploy
+- En caso de instalar con pendrive: descompilar con  `tar -xvf commons_ultimo.tar`
+- En caso de instalar con internet: `git clone http://github.com/sisoputnfrba/tp-2016-1c-Cazadores-de-cucos.git`
+- Abrir terminal y ejecutar el export
+- Ir a la carpeta cada módulo y ejecutar el makefile (`make all`)
+- Mover configs de cada módulo a la carpeta Debug correspondiente (`mv modulo/Debug`)
