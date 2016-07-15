@@ -127,8 +127,8 @@ char* charAString(char caracter){
 
 registroStack* reg_stack_create(){
 	registroStack* reg = malloc(sizeof(registroStack));
-	  reg->vars = dictionary_create();
-	  reg->args = NULL;
+	  reg->vars = list_create();
+	  reg->args = list_create();
 	  reg->retPos = 0;
 	  reg->retVar.offset = 0;
 	  reg->retVar.pagina = 0;
@@ -139,8 +139,8 @@ registroStack* reg_stack_create(){
 
 void liberarRegistroStack(registroStack* reg){
 	free(reg->args);
-	dictionary_clean(reg->vars);
-	dictionary_destroy(reg->vars);
+	list_clean(reg->vars);
+	list_destroy(reg->vars);
 	free(reg);
 	reg = NULL;
 }

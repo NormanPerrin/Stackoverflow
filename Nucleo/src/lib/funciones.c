@@ -270,6 +270,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 	int tam_prog = strlen(programa)+1;
 	int aux_div = tam_prog / tamanioPagina;
 	int resto_div = tam_prog % tamanioPagina;
+
 	nuevoPcb->paginas_codigo = (resto_div==0)?aux_div:aux_div+1;
 	nuevoPcb->paginas_stack = config->cantidadPaginasStack;
 

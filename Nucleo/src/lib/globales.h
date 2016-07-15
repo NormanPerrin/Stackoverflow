@@ -30,7 +30,7 @@ typedef struct {
 } consola;
 
 typedef enum {
-	LIBRE, OCUPADO
+	LIBRE = 1, OCUPADO
 } disponibilidadCPU;
 
 typedef struct {
