@@ -50,6 +50,7 @@ int main(int argc, char **argv){
 				int protocolo;
 				void * entrada = NULL;
 				entrada = aplicar_protocolo_recibir(fd_nucleo, &protocolo);
+				if(entrada == NULL) break;
 
 			switch(protocolo){
 

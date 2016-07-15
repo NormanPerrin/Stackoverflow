@@ -12,6 +12,7 @@
 		int cantidadPaginas;
 		int tamanioPagina;
 		int retardoCompactacion;
+		int retardoAcceso;
 	} t_configuracion;
 
 	typedef struct {

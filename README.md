@@ -57,3 +57,19 @@ Conjunto de elementos:
 - [Tutorial básico GitHub](https://youtu.be/cEGIFZDyszA?list=PL6gx4Cwl9DGAKWClAD_iKpNC0bGHxGhcx)
 - [Direccionario UTN](http://faq.utn.so/)
 - [Git Difftool](https://youtu.be/iCGrKFH2oeo)
+
+## Comandos
+- `less config.txt` Muestra contenido del archivo. Se sale con q
+- `vim config.txt` Te deja modificar el archivo
+	- Para insertar: apretar "i" y moverse con flechas
+	- Para guardar: apretar Esc. ":" y va a aparecer una especie de consola abajo, escribir "wq" (write)(quit)
+- `cd dir` Para cambiar de directorio (chage directory)
+- `ls` Muestra los directorios disponibles
+- `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:directorio/utilidades/Debug`
+- `mkdir dirName` Crea un directorio (make directory)
+- `ln -s directorio nombre` Crea un acceso directo simbólico a directorio llamado nombre
+- `pwd` Muestra el directorio completo del lugar actual
+- `rm file` Elimina archivo (remove)
+- `rm -fr dir` Eliminar todo el directorio dir
+- ``
+
