@@ -82,6 +82,40 @@ int conexionConUMC(){
 		printf("Recibí tamanio de página: %d.\n", *tamPagina);
 		free(tamPagina);
 
+																		// TODO: PRUEBA CON NUCLEO
+
+//	#!/home/utnso/Escritorio/tp-2016-1c-Cazadores-de-cucos/Consola/Debug/Consola
+//	begin
+//		variables a, b
+//		a = 3
+//		b = 5
+//		a = b + 12
+//	end
+
+		// seteo un inicio
+//		inicioPrograma *prueba_inicio = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
+//			prueba_inicio->pid = 3;
+//			prueba_inicio->contenido = strdup("#!/home/utnso/Escritorio/tp-2016-1c-Cazadores-de-cucos/Consola/Debug/Consola\nbegin\n\tvariables a, b\n\ta = 3\n\tb = 5\n\ta = b + 12\nend");
+//
+//			int tamanio = strlen(prueba_inicio->contenido) + CHAR;
+//			int division = (int)(tamanio / tamanioPagina);
+//			int resto = tamanio % tamanioPagina;
+//
+//			prueba_inicio->paginas = division;
+//			if(resto == 0) prueba_inicio->paginas++;
+//
+//			aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, prueba_inicio);
+//			free(prueba_inicio->contenido);
+//			free(prueba_inicio);
+//
+//			int head;
+//			int *respuesta = (int*)aplicar_protocolo_recibir(fd_UMC, &head);
+//			if(*respuesta == PERMITIDO) printf("<prueba_inicio> PERMITIDO\n");
+//			else printf("<prueba_inicio> NO_PERMITIDO\n");
+//
+//			liberarRecursosUtilizados();
+//			exit(1);
+
 		return TRUE;
 	}
 }
