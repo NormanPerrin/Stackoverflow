@@ -121,19 +121,18 @@ int calcularTamanioMensaje(int head, void* mensaje){
 
 int calcularTamanioIndiceStack(t_list* indice){
 
-	int* tamanio = NULL;
-	*tamanio = 0;
+	int tamanio = 0;
 	int i;
 	for(i=0; i<list_size(indice); i++){
 		registroStack* reg = list_get(indice, i);
 		int tam_args = calcularTamanioListVars(reg->args);
 		int tam_vars = calcularTamanioListVars(reg->vars);
-		*tamanio += (16 + tam_args + tam_vars); // Sumo además 12 bytes de retVar + 4 de retPos
+		tamanio += (16 + tam_args + tam_vars); // Sumo además 12 bytes de retVar + 4 de retPos
 	}
 	// Sumo 4 de elemnts_count (propia del índice):
-	*tamanio += 4;
+	tamanio += 4;
 
-	return *tamanio;
+	return tamanio;
 }
 
 int calcularTamanioListVars(t_list* args){
@@ -441,16 +440,13 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceEtiquetas), INT);
 		desplazamiento += INT;
-
 	memcpy(buffer + desplazamiento, unPcb->indiceCodigo, unPcb->tamanioIndiceCodigo);
 		desplazamiento += unPcb->tamanioIndiceCodigo;
-
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
-
-	memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
-		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, unPcb->indiceStack->head, tam_elems_indiceStack);
+		desplazamiento += tam_elems_indiceStack;
+	memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
 
 		return buffer;
 }
@@ -491,16 +487,13 @@ pcb * deserealizarPcb(void * buffer, int tamanio){ // TODO: ver reservar memoria
 		desplazamiento += INT;
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-
 	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
 		desplazamiento += unPcb->tamanioIndiceCodigo;
-
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
-
-	memcpy(&unPcb->indiceStack->elements_count, buffer + desplazamiento, INT);
-		desplazamiento += INT;
 	memcpy(unPcb->indiceStack->head, buffer + desplazamiento, tam_elems_indiceStack);
+		desplazamiento += tam_elems_indiceStack;
+	memcpy(&unPcb->indiceStack->elements_count, buffer + desplazamiento, INT);
 
 		return unPcb;
 }

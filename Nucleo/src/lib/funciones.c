@@ -266,7 +266,6 @@ int asignarPid(){
 
 int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 
-	nuevoPcb->pid = asignarPid();
 	int tam_prog = strlen(programa)+1;
 	int aux_div = tam_prog / tamanioPagina;
 	int resto_div = tam_prog % tamanioPagina;
@@ -313,6 +312,8 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 pcb * crearPcb(char* programa){
 
 	pcb * nuevoPcb = malloc(sizeof(pcb));
+	nuevoPcb->pid = asignarPid();
+
 	int respuestaUMC = solicitarSegmentosAUMC(nuevoPcb, programa);
 	if(respuestaUMC == FALSE){ // el programa es rechazado del sistema
 		free(nuevoPcb); nuevoPcb = NULL;
