@@ -25,6 +25,51 @@ void conectarConSwap() {
 	int ret = conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
 	validar_conexion(ret, 1);
 	handshake_cliente(sockClienteDeSwap, "U");
+
+										// TODO: PRUEBA COMPACTAR
+//
+//	// variables
+//	int *respuesta = (int*)reservarMemoria(INT);
+//	int *permitido = NULL;
+//
+//	// iniciar estructuras
+//	inicioPrograma *inicio1 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
+//		inicio1->pid = 1;
+//		inicio1->paginas = 10;
+//		inicio1->contenido = strdup("inicio 1");
+//		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, inicio1);
+//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
+//		printf(">> %d\n", *permitido);
+//
+//	inicioPrograma *inicio2 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
+//		inicio2->pid = 2;
+//		inicio2->paginas = 10;
+//		inicio2->contenido = strdup("inicio 2");
+//		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, inicio2);
+//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
+//		printf(">> %d\n", *permitido);
+//
+//	inicioPrograma *inicio3 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
+//		inicio3->pid = 3;
+//		inicio3->paginas = 10;
+//		inicio3->contenido = strdup("inicio 3");
+//		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, inicio3);
+//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
+//		printf(">> %d\n", *permitido);
+//
+//	int *finalizar = (int*)reservarMemoria(INT);
+//		*finalizar = 2;
+//		aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, finalizar);
+//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
+//		printf(">> %d\n", *permitido);
+//
+//	inicioPrograma *inicio4 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
+//		inicio4->pid = 4;
+//		inicio4->paginas = 12;
+//		inicio4->contenido = strdup("inicio 4");
+//		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, inicio4);
+//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
+//		printf(">> %d\n", *permitido);
 }
 
 

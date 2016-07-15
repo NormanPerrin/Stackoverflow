@@ -271,11 +271,12 @@ int buscarPosOcupadaDesdeLaUltimaLibreEnTablaDeBitMap(int posLibre) {
 int cuantasPaginasTieneElProceso(arrancaProceso) {
 
 	int pidDelProceso = tablaPaginas[arrancaProceso].pid;
+	int i = 0;
 
-	for(; arrancaProceso < config->cantidadPaginas; arrancaProceso++)
-		if(tablaPaginas[arrancaProceso].pid != pidDelProceso) break;
+	for(; i + arrancaProceso < config->cantidadPaginas; i++)
+		if(tablaPaginas[i + arrancaProceso].pid != pidDelProceso) break;
 
-	return (--arrancaProceso);
+	return(i);
 }
 
 
@@ -312,6 +313,15 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
     	// escribo pagina de proceso en pagina libre
     	avanzarPaginas(posLibre);
     	fwrite(contenido, CHAR, config->tamanioPagina, archivoSwap);
+
+
+    	// escribo \0 en la pagina arrancaProceso
+		char *c = (char*)reservarMemoria(config->tamanioPagina);
+		int l = 0;
+		for(; l < config->tamanioPagina; l++) c[l] = '\0';
+		avanzarPaginas(arrancaProceso);
+		fwrite(c, CHAR, config->tamanioPagina, archivoSwap);
+		free(c);
 
     	//actualizo contadores
     	posLibre++;
