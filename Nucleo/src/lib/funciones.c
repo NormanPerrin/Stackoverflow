@@ -337,7 +337,7 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
 		// Inicializo índice de código:
-			nuevoPcb->tamanioIndiceCodigo = 8*infoProg->instrucciones_size;
+			nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size*sizeof(t_intructions);
 			nuevoPcb->indiceCodigo = malloc(nuevoPcb->tamanioIndiceCodigo);
 			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
