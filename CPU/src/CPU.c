@@ -28,7 +28,6 @@ int main(void) {
 
 	crearLoggerCPU();
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU);
-	pcbActual = (pcb*)malloc(sizeof(pcb));
 	fdUMC = nuevoSocket();
 	// Manejo de la señal SIGUSR1:
 	signal(SIGUSR1, atenderSenialSIGUSR1);
@@ -77,7 +76,9 @@ int recibirMensajesDeNucleo(){
 		if(head == PCB){
 				int pcb_size = calcularTamanioPcb((pcb*) mensaje);
 				// Me copio la pcb actual que recibo de Núcleo:
-				memcpy(pcbActual, (pcb*) mensaje, pcb_size);
+				pcbActual = malloc(pcb_size);
+				pcbActual = (pcb*) mensaje;
+				//memcpy(pcbActual, (pcb*) mensaje, pcb_size);
 				// Le informo a UMC el cambio de proceso activo:
 				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, &(pcbActual->pid));
 				// Comienzo la ejecución del proceso:
