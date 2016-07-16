@@ -418,8 +418,27 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
-		(buffer + desplazamiento) = list_create();
-	list_add_all((buffer + desplazamiento), (t_list*) unPcb->indiceStack);
+		// Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
+				void moverVariablesSer(variable* var){
+					memcpy(buffer + desplazamiento, var->nombre, 2);
+						desplazamiento +=  2;
+					memcpy(buffer + desplazamiento, &var->direccion, 12);
+						desplazamiento += 12;
+				}
+				int i;
+				for(i=0; i<list_size(unPcb->indiceStack); i++){
+						registroStack* reg = list_get(unPcb->indiceStack, i);
+						list_iterate(reg->args, (void*) moverVariablesSer);
+						list_iterate(reg->vars, (void*) moverVariablesSer);
+						memcpy(buffer + desplazamiento, &reg->retPos, 4);
+							desplazamiento += 4;
+						memcpy(buffer + desplazamiento, &reg->retVar, 12);
+							desplazamiento += 12;
+					}
+			// Por úlltimo, muevo este int campo de la lista:
+			memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
+
+	//list_add_all((t_list*)(buffer + desplazamiento), (t_list*) unPcb->indiceStack);
 
 	return buffer;
 }
@@ -475,7 +494,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 		tengo que castear el buffer como t_list donde comienza la vieja lista
 		y pasarla a la nueva lista. */
 
-		unPcb->indiceStack = list_create;
+		unPcb->indiceStack = list_create();
 		list_add_all(unPcb->indiceStack, (t_list*) (buffer + desplazamiento));
 
 		return unPcb;
