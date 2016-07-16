@@ -337,13 +337,10 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
 		// Inicializo índice de código:
-			nuevoPcb->tamanioIndiceCodigo = sizeof(t_intructions)*infoProg->instrucciones_size;
+			nuevoPcb->tamanioIndiceCodigo = sizeof(infoProg->instrucciones_serializado);
 			nuevoPcb->indiceCodigo = malloc(nuevoPcb->tamanioIndiceCodigo);
-			int k;
-			for(k=0; k<infoProg->instrucciones_size; k++){
-				nuevoPcb->indiceCodigo[k].offset = infoProg->instrucciones_serializado[k].offset;
-				nuevoPcb->indiceCodigo[k].start = infoProg->instrucciones_serializado[k].start;
-			}
+
+			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
 			t_list* listaStack = list_create();
