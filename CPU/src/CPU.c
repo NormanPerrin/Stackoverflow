@@ -28,7 +28,6 @@ int main(void) {
 
 	crearLoggerCPU();
 	leerArchivoDeConfiguracion(RUTA_CONFIG_CPU);
-	pcbActual = (pcb*)malloc(sizeof(pcb));
 	fdUMC = nuevoSocket();
 	// Manejo de la señal SIGUSR1:
 	signal(SIGUSR1, atenderSenialSIGUSR1);
