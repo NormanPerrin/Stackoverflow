@@ -60,8 +60,7 @@ typedef struct pcb{
 	int quantum;
 	int quantum_sleep;
 	int stackPointer;
-	int tamanioIndiceCodigo;
-	int tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
+	int tamanioIndiceCodigo, tamanioIndiceEtiquetas, tamanioIndiceStack; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;
 	t_list* indiceStack; // valores -> registroStack
