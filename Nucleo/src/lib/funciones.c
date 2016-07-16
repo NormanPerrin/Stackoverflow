@@ -343,6 +343,7 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
+			nuevoPcb->tamanioIndiceStack = 0;
 			t_list* listaStack = list_create();
 			nuevoPcb->indiceStack = listaStack;
 			nuevoPcb->indexActualStack = 0; // resgistro actual en uso; 0 porque aún está vacío
