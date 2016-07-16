@@ -416,30 +416,23 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
-		/*void list_iterate(t_list* self, void(*closure)(void*)) {
-			t_link_element *element = self->head;
-			while (element != NULL) {
-				closure(element->data);
-				element = element->next;
-			}
-		}*/
 // Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
-	void moverRegistrosSer(registroStack* reg){
-
 		void moverVariablesSer(variable* var){
 			memcpy(buffer + desplazamiento, var->nombre, 2);
 				desplazamiento +=  2;
 			memcpy(buffer + desplazamiento, &var->direccion, 12);
-				desplazamiento += 12; }
-
-		list_iterate(reg->args, (void*) moverVariablesSer);
-		list_iterate(reg->vars, (void*) moverVariablesSer);
-		memcpy(buffer + desplazamiento, &reg->retPos, 4);
-			desplazamiento += 4;
-		memcpy(buffer + desplazamiento, &reg->retVar, 12);
-			desplazamiento += 12; }
-
-	list_iterate(unPcb->indiceStack, (void*) moverRegistrosSer);
+				desplazamiento += 12;
+		}
+		int i;
+		for(i=0; i<list_size(unPcb->indiceStack); i++){
+				registroStack* reg = list_get(unPcb->indiceStack, i);
+				list_iterate(reg->args, (void*) moverVariablesSer);
+				list_iterate(reg->vars, (void*) moverVariablesSer);
+				memcpy(buffer + desplazamiento, &reg->retPos, 4);
+					desplazamiento += 4;
+				memcpy(buffer + desplazamiento, &reg->retVar, 12);
+					desplazamiento += 12;
+			}
 	// Por úlltimo, muevo este int campo de la lista:
 	memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
 
@@ -490,22 +483,22 @@ pcb * deserealizarPcb(void * buffer, int tamanio){ // TODO: ver reservar memoria
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
 // Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
-	void moverRegistrosDes(registroStack* reg){
-
 		void moverVariablesDes(variable* var){
 			memcpy(var->nombre, buffer + desplazamiento, 2);
 				desplazamiento +=  2;
 			memcpy(&var->direccion, buffer + desplazamiento, 12);
-				desplazamiento += 12; }
-
-		list_iterate(reg->args, (void*) moverVariablesDes);
-		list_iterate(reg->vars, (void*) moverVariablesDes);
-		memcpy(&reg->retPos, buffer + desplazamiento, 4);
-			desplazamiento += 4;
-		memcpy(&reg->retVar, buffer + desplazamiento, 12);
-			desplazamiento += 12; }
-
-	list_iterate(unPcb->indiceStack, (void*) moverRegistrosDes);
+				desplazamiento += 12;
+		}
+		int i;
+		for(i=0; i<list_size(unPcb->indiceStack); i++){
+			registroStack* reg = list_get(unPcb->indiceStack, i);
+			list_iterate(reg->args, (void*) moverVariablesDes);
+			list_iterate(reg->vars, (void*) moverVariablesDes);
+			memcpy(&reg->retPos, buffer + desplazamiento, 4);
+				desplazamiento += 4;
+			memcpy(&reg->retVar, buffer + desplazamiento, 12);
+				desplazamiento += 12;
+		}
 	// Por úlltimo, muevo este int campo de la lista:
 	memcpy(&(unPcb->indiceStack->elements_count), buffer + desplazamiento, INT);
 
