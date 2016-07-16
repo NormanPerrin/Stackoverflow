@@ -394,7 +394,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	memcpy(buffer + desplazamiento, &(unPcb->pc), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->pid), INT);
-			desplazamiento += INT;
+		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->primerPaginaStack), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->quantum), INT);
@@ -418,25 +418,8 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
-// Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
-		void moverVariablesSer(variable* var){
-			memcpy(buffer + desplazamiento, var->nombre, 2);
-				desplazamiento +=  2;
-			memcpy(buffer + desplazamiento, &var->direccion, 12);
-				desplazamiento += 12;
-		}
-		int i;
-		for(i=0; i<list_size(unPcb->indiceStack); i++){
-				registroStack* reg = list_get(unPcb->indiceStack, i);
-				list_iterate(reg->args, (void*) moverVariablesSer);
-				list_iterate(reg->vars, (void*) moverVariablesSer);
-				memcpy(buffer + desplazamiento, &reg->retPos, 4);
-					desplazamiento += 4;
-				memcpy(buffer + desplazamiento, &reg->retVar, 12);
-					desplazamiento += 12;
-			}
-	// Por úlltimo, muevo este int campo de la lista:
-	memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
+		(buffer + desplazamiento) = list_create();
+	list_add_all((buffer + desplazamiento), (t_list*) unPcb->indiceStack);
 
 	return buffer;
 }
@@ -487,28 +470,13 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
-		//unPcb->indiceStack = malloc(unPcb->tamanioIndiceStack);
-		unPcb->indiceStack = malloc(sizeof(t_list));
-// Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
-		void moverVariablesDes(variable* var){
-				var->nombre = malloc(2);
-			memcpy(var->nombre, buffer + desplazamiento, 2);
-				desplazamiento +=  2;
-			memcpy(&var->direccion, buffer + desplazamiento, 12);
-				desplazamiento += 12;
-		}
-		int i;
-		for(i=0; i<list_size(unPcb->indiceStack); i++){
-			registroStack* reg = list_get(unPcb->indiceStack, i);
-			list_iterate(reg->args, (void*) moverVariablesDes);
-			list_iterate(reg->vars, (void*) moverVariablesDes);
-			memcpy(&reg->retPos, buffer + desplazamiento, 4);
-				desplazamiento += 4;
-			memcpy(&reg->retVar, buffer + desplazamiento, 12);
-				desplazamiento += 12;
-		}
-	// Por úlltimo, muevo este int campo de la lista:
-	memcpy(&(unPcb->indiceStack->elements_count), buffer + desplazamiento, INT);
+	/* 	Cuando serealiza el índice de stack es una lista --> OK
+		Cuando deserealiza el índice de stack está en un buffer void*,
+		tengo que castear el buffer como t_list donde comienza la vieja lista
+		y pasarla a la nueva lista. */
+
+		unPcb->indiceStack = list_create;
+		list_add_all(unPcb->indiceStack, (t_list*) (buffer + desplazamiento));
 
 		return unPcb;
 }
