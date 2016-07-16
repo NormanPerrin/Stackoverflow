@@ -121,10 +121,10 @@ int calcularTamanioMensaje(int head, void* mensaje){
 
 int calcularTamanioIndiceStack(pcb* unPcb){
 	int i, tamanio = 0;
-	if(list_is_empty(unPcb->indiceStack)){ // el índice está vacío
+	/*if(list_is_empty(unPcb->indiceStack)){ // el índice está vacío
 			return tamanio + 4; // Sumo 4 de elemnts_count (propia del índice)
 			}
-			else{ // hay ago en el índice
+			else{ // hay ago en el índice*/
 				for(i=0; i<list_size(unPcb->indiceStack); i++){
 					registroStack* reg = list_get(unPcb->indiceStack, i);
 					int tam_args = 4 + (list_size(reg->args)*14);
@@ -132,7 +132,7 @@ int calcularTamanioIndiceStack(pcb* unPcb){
 					tamanio += (16 + tam_args + tam_vars); // Sumo además 12 bytes de retVar + 4 de retPos
 				}
 				return tamanio + 4;
-			}
+			//}
 }
 
 int calcularTamanioPcb(pcb* unPcb){
@@ -376,7 +376,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 
 	pcb* unPcb = (pcb*) mensaje;
 	int desplazamiento = 0;
-	int tam_elems_indiceStack = calcularTamanioIndiceStack(unPcb)-4; // Menos elements_count
+	//int tam_elems_indiceStack = calcularTamanioIndiceStack(unPcb)-4; // Menos elements_count
 
 	void * buffer = malloc(tamanio);
 	memcpy(buffer + desplazamiento, &(unPcb->cantidad_instrucciones), INT);
@@ -409,22 +409,48 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceEtiquetas), INT);
 		desplazamiento += INT;
+
 	memcpy(buffer + desplazamiento, unPcb->indiceCodigo, unPcb->tamanioIndiceCodigo);
 		desplazamiento += unPcb->tamanioIndiceCodigo;
+
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
-	memcpy(buffer + desplazamiento, unPcb->indiceStack->head, tam_elems_indiceStack);
-		desplazamiento += tam_elems_indiceStack;
+
+		/*void list_iterate(t_list* self, void(*closure)(void*)) {
+			t_link_element *element = self->head;
+			while (element != NULL) {
+				closure(element->data);
+				element = element->next;
+			}
+		}*/
+// Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
+	void moverRegistrosSer(registroStack* reg){
+
+		void moverVariablesSer(variable* var){
+			memcpy(buffer + desplazamiento, var->nombre, 2);
+				desplazamiento +=  2;
+			memcpy(buffer + desplazamiento, &var->direccion, 12);
+				desplazamiento += 12; }
+
+		list_iterate(reg->args, (void*) moverVariablesSer);
+		list_iterate(reg->vars, (void*) moverVariablesSer);
+		memcpy(buffer + desplazamiento, &reg->retPos, 4);
+			desplazamiento += 4;
+		memcpy(buffer + desplazamiento, &reg->retVar, 12);
+			desplazamiento += 12; }
+
+	list_iterate(unPcb->indiceStack, (void*) moverRegistrosSer);
+	// Por úlltimo, muevo este int campo de la lista:
 	memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
 
-		return buffer;
+	return buffer;
 }
 
 pcb * deserealizarPcb(void * buffer, int tamanio){ // TODO: ver reservar memoria en punteros de estructura
 
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(tamanio);
-	int tam_elems_indiceStack = calcularTamanioIndiceStack((pcb*)buffer)-4;
+	//int tam_elems_indiceStack = calcularTamanioIndiceStack((pcb*)buffer)-4;
 
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;
@@ -456,13 +482,32 @@ pcb * deserealizarPcb(void * buffer, int tamanio){ // TODO: ver reservar memoria
 		desplazamiento += INT;
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
+
 	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
 		desplazamiento += unPcb->tamanioIndiceCodigo;
+
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
-	memcpy(unPcb->indiceStack->head, buffer + desplazamiento, tam_elems_indiceStack);
-		desplazamiento += tam_elems_indiceStack;
-	memcpy(&unPcb->indiceStack->elements_count, buffer + desplazamiento, INT);
+
+// Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
+	void moverRegistrosDes(registroStack* reg){
+
+		void moverVariablesDes(variable* var){
+			memcpy(var->nombre, buffer + desplazamiento, 2);
+				desplazamiento +=  2;
+			memcpy(&var->direccion, buffer + desplazamiento, 12);
+				desplazamiento += 12; }
+
+		list_iterate(reg->args, (void*) moverVariablesDes);
+		list_iterate(reg->vars, (void*) moverVariablesDes);
+		memcpy(&reg->retPos, buffer + desplazamiento, 4);
+			desplazamiento += 4;
+		memcpy(&reg->retVar, buffer + desplazamiento, 12);
+			desplazamiento += 12; }
+
+	list_iterate(unPcb->indiceStack, (void*) moverRegistrosDes);
+	// Por úlltimo, muevo este int campo de la lista:
+	memcpy(&(unPcb->indiceStack->elements_count), buffer + desplazamiento, INT);
 
 		return unPcb;
 }

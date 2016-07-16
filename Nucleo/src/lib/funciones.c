@@ -336,13 +336,6 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->stackPointer = 0; // offset total en memoria; 0 porque aún está vacío
 			nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
-			/*
-		//Cargo Indice de Codigo
-		t_list * listaIndCodigo = llenarLista(datos->instrucciones_serializado,
-				datos->instrucciones_size);
-		pcb->ind_codigo = listaIndCodigo;
-		*/
-
 		// Inicializo índice de código:
 			nuevoPcb->tamanioIndiceCodigo = sizeof(t_intructions)*infoProg->instrucciones_size;
 			nuevoPcb->indiceCodigo = malloc(nuevoPcb->tamanioIndiceCodigo);
