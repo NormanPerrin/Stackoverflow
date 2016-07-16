@@ -344,8 +344,7 @@ pcb * crearPcb(char* programa){
 
 		// Inicializo índice de stack:
 			nuevoPcb->tamanioIndiceStack = 0;
-			t_list* listaStack = list_create();
-			nuevoPcb->indiceStack = listaStack;
+			nuevoPcb->indiceStack = list_create();
 			nuevoPcb->indexActualStack = 0; // resgistro actual en uso; 0 porque aún está vacío
 
 		// Inicializo índice de etiquetas:

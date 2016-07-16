@@ -487,7 +487,8 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
-		unPcb->indiceStack = malloc(unPcb->tamanioIndiceStack);
+		//unPcb->indiceStack = malloc(unPcb->tamanioIndiceStack);
+		unPcb->indiceStack = malloc(sizeof(t_list));
 // Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
 		void moverVariablesDes(variable* var){
 				var->nombre = malloc(2);
