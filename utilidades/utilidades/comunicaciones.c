@@ -438,11 +438,11 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	return buffer;
 }
 
-pcb * deserealizarPcb(void * buffer, int tamanio){ // TODO: ver reservar memoria en punteros de estructura
+pcb * deserealizarPcb(void * buffer, int tamanio){
 
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(tamanio);
-//	int tam_elems_indiceStack = calcularTamanioIndiceStack((pcb*)buffer)-4;
+	//int tam_elems_indiceStack = calcularTamanioIndiceStack((pcb*)buffer)-4;
 
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;

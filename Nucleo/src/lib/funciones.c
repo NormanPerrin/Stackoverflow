@@ -312,6 +312,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 pcb * crearPcb(char* programa){
 
 	pcb * nuevoPcb = malloc(sizeof(pcb));
+	// pcb size: 64 + tam indicies etiquetas y codigo --> indice stack vacio
 	nuevoPcb->pid = asignarPid();
 
 	int respuestaUMC = solicitarSegmentosAUMC(nuevoPcb, programa);
@@ -337,17 +338,9 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
 		// Inicializo índice de código:
-			/*nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size*sizeof(t_intructions);
+			nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size*sizeof(t_intructions);
 			nuevoPcb->indiceCodigo = malloc(nuevoPcb->tamanioIndiceCodigo);
-			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;*/
-			nuevoPcb->indiceCodigo = malloc(sizeof(t_intructions));
-			nuevoPcb->tamanioIndiceCodigo = 0;
-			int i;
-			for(i=0; i<infoProg->instrucciones_size; i++){
-				nuevoPcb->indiceCodigo[i].offset = infoProg->instrucciones_serializado[i].offset;
-				nuevoPcb->indiceCodigo[i].start = infoProg->instrucciones_serializado[i].start;
-				nuevoPcb->tamanioIndiceCodigo += 8;
-			}
+			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
 			t_list* listaStack = list_create();
