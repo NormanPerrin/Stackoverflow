@@ -1,6 +1,0 @@
-#ifndef UTILIDADES_LISTA_H_
-#define UTILIDADES_LISTA_H_
-
-
-
-#endif /* UTILIDADES_LISTA_H_ */
