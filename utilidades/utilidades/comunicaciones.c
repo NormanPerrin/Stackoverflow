@@ -119,24 +119,30 @@ int calcularTamanioMensaje(int head, void* mensaje){
 	return tamanio;
 }
 
+int calcularTamanioIndiceStack(pcb* unPcb){
+	int i, tamanio = 0;
+	if(list_is_empty(unPcb->indiceStack)){ // el índice está vacío
+			return tamanio + 4; // Sumo 4 de elemnts_count (propia del índice)
+			}
+			else{ // hay ago en el índice
+				for(i=0; i<list_size(unPcb->indiceStack); i++){
+					registroStack* reg = list_get(unPcb->indiceStack, i);
+					int tam_args = 4 + (list_size(reg->args)*14);
+					int tam_vars = 4 + (list_size(reg->vars)*14);
+					tamanio += (16 + tam_args + tam_vars); // Sumo además 12 bytes de retVar + 4 de retPos
+				}
+				return tamanio + 4;
+			}
+}
+
 int calcularTamanioPcb(pcb* unPcb){
 
-	int i, tamanioIndiceStack = 0;
+	int tamanio;
+	int stack_size = calcularTamanioIndiceStack(unPcb);
 	// Sumo 60 bytes por los 15 int que tiene + los tamaños de los tres índices:
-	int tamanio = 60 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo;
+	tamanio = 60 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + stack_size;
 
-	if(list_is_empty(unPcb->indiceStack)){ // el índice está vacío
-		return tamanio + 4; // Sumo 4 de elemnts_count (propia del índice)
-		}
-		else{ // hay ago en el índice
-			for(i=0; i<list_size(unPcb->indiceStack); i++){
-				registroStack* reg = list_get(unPcb->indiceStack, i);
-				int tam_args = 4 + (list_size(reg->args)*14);
-				int tam_vars = 4 + (list_size(reg->vars)*14);
-				tamanio += (16 + tam_args + tam_vars); // Sumo además 12 bytes de retVar + 4 de retPos
-			}
-			return tamanio + 4;
-		}
+	return tamanio;
 }
 
 void * serealizar(int head, void * mensaje, int tamanio){
