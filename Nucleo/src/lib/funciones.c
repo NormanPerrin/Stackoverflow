@@ -343,7 +343,7 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->indiceCodigo = malloc(sizeof(t_intructions));
 			nuevoPcb->tamanioIndiceCodigo = 0;
 			int i;
-			for(i=0; i<NUM_ELEM(infoProg->instrucciones_serializado); i++){
+			for(i=0; i<infoProg->instrucciones_size; i++){
 				nuevoPcb->indiceCodigo[i].offset = infoProg->instrucciones_serializado[i].offset;
 				nuevoPcb->indiceCodigo[i].start = infoProg->instrucciones_serializado[i].start;
 				nuevoPcb->tamanioIndiceCodigo += 8;

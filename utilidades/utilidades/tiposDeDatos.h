@@ -26,7 +26,7 @@ typedef struct {
 typedef struct {
 	char *nombre; // char 'id' + '/0' --> 2 bytes
 	direccion direccion; // --> 12 bytes
-} variable; // o argumento, son lo mismo
+} __attribute__((packed)) variable; // o argumento, son lo mismo
 
 // Pedido de Entrada/Salida:
 typedef struct {
@@ -60,7 +60,8 @@ typedef struct pcb{
 	int quantum;
 	int quantum_sleep;
 	int stackPointer;
-	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
+	int tamanioIndiceCodigo;
+	int tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;
 	t_list* indiceStack; // valores -> registroStack
