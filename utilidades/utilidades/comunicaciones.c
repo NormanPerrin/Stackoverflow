@@ -275,11 +275,11 @@ pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
 	int string_size = tamanio - INT;
-	// msj->nombreDispositivo = (char*)reservarMemoria(string_size); TODO: ver esto
 
 		pedidoIO * msj = malloc(tamanio);
 		memcpy(&msj->tiempo, buffer + desplazamiento, INT);
 			desplazamiento += INT;
+		msj->nombreDispositivo = (char*)reservarMemoria(string_size);
 		memcpy(msj->nombreDispositivo, buffer + desplazamiento, string_size);
 
 		return msj;
@@ -307,12 +307,11 @@ inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio){
 	int string_size = tamanio - 2*INT;
 
 	inicioPrograma *msj = (inicioPrograma*)reservarMemoria(tamanio);
-	msj->contenido = (char*)reservarMemoria(string_size);
-
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&msj->paginas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
+	msj->contenido = (char*)reservarMemoria(string_size);
 	memcpy(msj->contenido, buffer + desplazamiento, string_size);
 
 	return msj;
@@ -443,7 +442,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){ // TODO: ver reservar memoria
 
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(tamanio);
-	//int tam_elems_indiceStack = calcularTamanioIndiceStack((pcb*)buffer)-4;
+	int tam_elems_indiceStack = calcularTamanioIndiceStack((pcb*)buffer)-4;
 
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;
@@ -476,14 +475,17 @@ pcb * deserealizarPcb(void * buffer, int tamanio){ // TODO: ver reservar memoria
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 
+		unPcb->indiceCodigo = malloc(unPcb->tamanioIndiceCodigo);
 	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
 		desplazamiento += unPcb->tamanioIndiceCodigo;
 
+		unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
 // Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
 		void moverVariablesDes(variable* var){
+				var->nombre = malloc(2);
 			memcpy(var->nombre, buffer + desplazamiento, 2);
 				desplazamiento +=  2;
 			memcpy(&var->direccion, buffer + desplazamiento, 12);
