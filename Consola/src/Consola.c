@@ -15,8 +15,14 @@ int main(int argc, char **argv){
 
 	conectarCon_Nucleo(); // Conexión con Núcleo
 
+	string* script = malloc(tamanioPrograma + 4);
+	script->cadena = malloc(tamanioPrograma);
+	script->tamanio = tamanioPrograma;
+	script->cadena = programa;
+	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, script);
 	printf("Script enviado a Núcleo. Esperando respuesta...\n");
-	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
+	free(script->cadena);
+	free(script);
 
 	int head;
 	int* respuesta = malloc(INT);
@@ -29,21 +35,21 @@ int main(int argc, char **argv){
 		switch(*respuesta){
 
 	case RECHAZADO:{ // programa rechazado
-				puts("La UMC no pudo alocar los segmentos pedidos. El programa ha sido rechazado.\n");
+				puts("La UMC no pudo alocar los segmentos pedidos. Programa rechazado.\n");
 				exitConsola();
 				return EXIT_FAILURE;
 				break;
 			} // fin case rechazado
 
 	case ERROR_CONEXION:{
-				printf("Error al iniciar programa. Script no recibido.\n");
+				printf("Error al iniciar programa. Script no enviado.\n");
 				exitConsola();
 				return EXIT_FAILURE;
 				break;
 			} // fin case error conexión
 
 	case ACEPTADO:{ // programa aceptado
-				puts("Escuchando nuevos mensajes de Núcleo...\n");
+				puts("Programa aceptado. Escuchando nuevos mensajes de Núcleo...\n");
 
 		while(TRUE){ // Espera activa de mensajes
 
@@ -56,11 +62,11 @@ int main(int argc, char **argv){
 
 			case IMPRIMIR_TEXTO:{
 						// Imprime lo que recibe, ya sea texto a variable (convertida a texto):
-						printf("Imprimir: '%s.", (char*)entrada);
+						printf("IMPRIMIR: %s.", (char*)entrada);
 						break;
 					}
 			case FINALIZAR_PROGRAMA:{
-						puts("El programa ha finalizado con éxito. Cerrando proceso Consola.\n");
+						puts("El programa ha finalizado con éxito.\n");
 						exitConsola();
 						return EXIT_SUCCESS;
 						break;
@@ -71,8 +77,8 @@ int main(int argc, char **argv){
 				} // fin switch-case nuevos mensajes
 			} // fin while espera mensajes
 					break;
-	}
-		} // fin switch respuesta inicio
+		} // fin case aceptado
+	} // fin switch respuesta inicio
 		free(respuesta); respuesta = NULL;
 	} // fin if head válido
 

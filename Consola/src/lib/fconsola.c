@@ -31,7 +31,8 @@ void leerScript(char * rutaPrograma){
 		fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
 		tamanio = infoArchivo.st_size;
 		programa = malloc(tamanio);
-		if(read(descriptorArchivo, programa, tamanio) == ERROR) perror("Error al cerrar script."); // Guardo el script en programa
+		tamanioPrograma = read(descriptorArchivo, programa, tamanio); // Guardo el script en programa
+		if(tamanioPrograma == ERROR) perror("Error al cerrar script.");
 		close(descriptorArchivo);
 } // El programa ya está listo para ser enviado a Núcleo
 
@@ -52,8 +53,7 @@ void liberarRecursos() {
 	free(programa); programa = NULL;
 	free(ipNucleo); ipNucleo = NULL;
 	free(rutaScript); rutaScript = NULL;
-	log_destroy(logger);
-	logger = NULL;
+	log_destroy(logger); logger = NULL;
 }
 
 int validar_servidor(char *id) {

@@ -53,6 +53,8 @@ typedef enum {
 void aplicar_protocolo_enviar(int fdReceptor, int head, void * mensaje);
 void* aplicar_protocolo_recibir(int fdEmisor, int* head);
 
+int getPrimeraInstruccion(t_intructions instruccion);
+int getOffsetInstruccion (t_intructions instruccion);
 int calcularTamanioIndiceStack(pcb* unPcb);
 int calcularTamanioMensaje(int head, void* mensaje);
 int calcularTamanioPcb(pcb* mensaje);
@@ -64,6 +66,8 @@ void * deserealizar(int head, void * buffer, int tamanio);
 // -- Serealizaciones y deserealizaciones PARTICULARES:
 void* serealizarPcb(void* mensaje, int tamanio);
 pcb* deserealizarPcb(void* buffer, int tamanio);
+void* serealizarString(void* mensaje, int tamanio);
+string* deserealizarString(void* buffer, int tamanio);
 void* serealizarTextoMasUnInt(void* mensaje, int tamanio);
 pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio);
 void* serealizarTextoMasDosInt(void* buffer, int tamanio);

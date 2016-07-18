@@ -264,24 +264,25 @@ int asignarPid(){
 	return randomPid;
 }
 
-int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
+int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 
-	int tam_prog = strlen(programa)+1;
-	int aux_div = tam_prog / tamanioPagina;
+	int tam_prog = programa->tamanio;
+	int div = tam_prog / tamanioPagina;
 	int resto_div = tam_prog % tamanioPagina;
 
-	nuevoPcb->paginas_codigo = (resto_div==0)?aux_div:aux_div+1;
+	nuevoPcb->paginas_codigo = (resto_div==0)?div:div+1;
 	nuevoPcb->paginas_stack = config->cantidadPaginasStack;
 
 	// Le solicito a UMC espacio para el heap del programa y verifico su respuesta:
-		inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(tam_prog+8);
+		inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(tam_prog+12);
 		solicitudDeInicio->paginas = nuevoPcb->paginas_stack + nuevoPcb->paginas_codigo;
 		solicitudDeInicio->pid = nuevoPcb->pid;
-		solicitudDeInicio->contenido = strdup(programa);
+		solicitudDeInicio->contenido.cadena = malloc(programa->tamanio);
+		solicitudDeInicio->contenido.cadena = programa->cadena;
 		printf("Solicitando segmentos de código y de stack a UMC para el proceso #%d.\n", nuevoPcb->pid);
 
 		aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
-		free(solicitudDeInicio->contenido);
+		free(solicitudDeInicio->contenido.cadena);
 		free(solicitudDeInicio);
 
 		int* respuestaUMC = NULL;
@@ -309,7 +310,21 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 		}
 }
 
-pcb * crearPcb(char* programa){
+int sizeof_instrucciones(t_intructions *instrucciones){
+	int sizeof_puntero_primera_instruccion = sizeof(instrucciones->start);
+	int sizeof_offset = sizeof(instrucciones->offset);
+
+	return (sizeof_puntero_primera_instruccion+sizeof_offset);
+}
+
+t_puntero_instruccion obtiene_primera_instruccion(t_intructions instruccion){
+
+	t_puntero_instruccion una_instruccion = instruccion.start;
+
+	return una_instruccion;
+}
+
+pcb * crearPcb(string* programa){
 
 	pcb * nuevoPcb = malloc(sizeof(pcb));
 	// pcb size: 64 + tam indicies etiquetas y codigo --> indice stack vacio
@@ -328,7 +343,7 @@ pcb * crearPcb(char* programa){
 
 		// Analizo con el parser el código del programa para obtener su metadata:
 			t_metadata_program* infoProg = NULL;
-			infoProg = metadata_desde_literal(programa);
+			infoProg = metadata_desde_literal(programa->cadena);
 
 			nuevoPcb->paginaActualCodigo = 0; // el código empieza en la página # 0
 			nuevoPcb->primerPaginaStack = nuevoPcb->paginas_codigo;
@@ -337,23 +352,26 @@ pcb * crearPcb(char* programa){
 			nuevoPcb->stackPointer = 0; // offset total en memoria; 0 porque aún está vacío
 			nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
+		// Inicializo los tamaños de los índices:
+			nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size * sizeof_instrucciones(infoProg->instrucciones_serializado);
+			nuevoPcb->tamanioIndiceStack = 0;
+			nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
+
 		// Inicializo índice de código:
-			nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size*sizeof(t_intructions);
 			nuevoPcb->indiceCodigo = malloc(nuevoPcb->tamanioIndiceCodigo);
 			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
-			nuevoPcb->tamanioIndiceStack = 0;
 			nuevoPcb->indiceStack = list_create();
+			nuevoPcb->cantidad_registros_stack = 0;
 			nuevoPcb->indexActualStack = 0; // resgistro actual en uso; 0 porque aún está vacío
 
 		// Inicializo índice de etiquetas:
-			if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0) {
-				nuevoPcb->indiceEtiquetas = strdup(infoProg->etiquetas);
-				nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
+			if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0){
+				nuevoPcb->indiceEtiquetas = malloc(infoProg->etiquetas_size);
+				nuevoPcb->indiceEtiquetas = infoProg->etiquetas;
 			} else {
 				nuevoPcb->indiceEtiquetas = NULL;
-				nuevoPcb->tamanioIndiceEtiquetas = 0;
 			}
 			metadata_destruir(infoProg); infoProg = NULL;
 
@@ -386,7 +404,7 @@ void aceptarConexionEntranteDeConsola(){
 
 	if(head == ENVIAR_SCRIPT){
 	 // Creo la PCB del programa y pido espacio para los segmentos a UMC:
-		pcb * nuevoPcb = crearPcb((char*) entrada);
+		pcb * nuevoPcb = crearPcb((string*) entrada);
 
 		if(nuevoPcb == NULL){ //  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
 			*respuesta = RECHAZADO;

@@ -5,15 +5,21 @@
 #include <commons/collections/dictionary.h>
 //#include <parser/parser.h>
 #include <parser/metadata_program.h>
+
+typedef struct {
+	int tamanio;
+	char* cadena;
+} __attribute__((packed)) string;
+
 // Dirección lógica:
 typedef struct {
-		int pagina, offset, size;
+	int pagina, offset, size;
 } __attribute__((packed)) direccion;
 
 // Solicitud de inicio de un programa:
 typedef struct {
 	int pid, paginas;
-	char *contenido;
+	string contenido;
 } __attribute__((packed)) inicioPrograma;
 
 // Variable compartida AnSISOP:
@@ -39,28 +45,23 @@ typedef struct {
 
 // Elemento del Índice de Stack:
 typedef struct {
-	t_list* args; // valores -> dirección
-	t_list* vars; // valores -> dirección
+	int cantidad_args;
+	t_list* args; // valores -> nombre + dirección
+	int cantidad_vars;
+	t_list* vars; // valores -> nombre + dirección
 	int retPos;
 	direccion retVar;
 }  __attribute__((packed)) registroStack;
 
 // PCB de un proceso:
 typedef struct pcb{
-	int cantidad_instrucciones;
-	int id_cpu; // id del CPU que ejecuta al proceso actualmente
-	int indexActualStack;
-	int paginaActualCodigo;
-	int paginaActualStack;
+	int cantidad_instrucciones, id_cpu, indexActualStack, paginaActualCodigo, paginaActualStack;
 	int paginas_codigo; // tamaño en páginas del segmento de código
 	int paginas_stack; // tamaño en páginas del segmento de stack
 	int pc; // program counter
-	int pid;
-	int primerPaginaStack;
-	int quantum;
-	int quantum_sleep;
-	int stackPointer;
+	int pid, primerPaginaStack, quantum, quantum_sleep, stackPointer;
 	int tamanioIndiceCodigo, tamanioIndiceEtiquetas, tamanioIndiceStack; // Tamaños en bytes de los índices
+	int cantidad_registros_stack; // Cantidad de elementos en el índice de stack
 	t_intructions* indiceCodigo;
 	char* indiceEtiquetas;
 	t_list* indiceStack; // valores -> registroStack

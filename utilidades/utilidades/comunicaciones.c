@@ -74,8 +74,13 @@ int calcularTamanioMensaje(int head, void* mensaje){
 
 	switch(head){
 
+			case ENVIAR_SCRIPT:{
+				string* script = (string*) mensaje;
+				tamanio = script->tamanio + 4;
+				break;
+			}
 		// CASE 1: El mensaje es un texto (char*)
-			case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
+			case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
 			case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 				tamanio = strlen((char*)mensaje)+ 1;
 				break;
@@ -89,7 +94,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 			case INICIAR_PROGRAMA: case ESCRIBIR_PAGINA:{
 				inicioPrograma* msj = (inicioPrograma*)mensaje;
-				tamanio = strlen(msj->contenido) + 2 * INT + 1;
+				tamanio = msj->contenido.tamanio + 12;
 				break;
 			}
 		// CASE 4: El mensaje es un pcb (pcb)
@@ -119,40 +124,18 @@ int calcularTamanioMensaje(int head, void* mensaje){
 	return tamanio;
 }
 
-int calcularTamanioIndiceStack(pcb* unPcb){
-	int i, tamanio = 0;
-	/*if(list_is_empty(unPcb->indiceStack)){ // el índice está vacío
-			return tamanio + 4; // Sumo 4 de elemnts_count (propia del índice)
-			}
-			else{ // hay ago en el índice*/
-				for(i=0; i<list_size(unPcb->indiceStack); i++){
-					registroStack* reg = list_get(unPcb->indiceStack, i);
-					int tam_args = 4 + (list_size(reg->args)*14);
-					int tam_vars = 4 + (list_size(reg->vars)*14);
-					tamanio += (16 + tam_args + tam_vars); // Sumo además 12 bytes de retVar + 4 de retPos
-				}
-				return tamanio + 4;
-			//}
-}
-
-int calcularTamanioPcb(pcb* unPcb){
-
-	int tamanio;
-	int stack_size = calcularTamanioIndiceStack(unPcb);
-	// Sumo 64 bytes por los 15 int que tiene + los tamaños de los tres índices:
-	tamanio = 64 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + stack_size;
-
-	return tamanio;
-}
-
 void * serealizar(int head, void * mensaje, int tamanio){
 
 	void * buffer;
 
 	switch(head){
 
+	case ENVIAR_SCRIPT:{
+		buffer = serealizarString(mensaje, tamanio);;
+		break;
+	}
 	// CASE 1: El mensaje es un texto (char*)
-	case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
+	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
 	case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
@@ -201,8 +184,12 @@ void * deserealizar(int head, void * buffer, int tamanio){
 
 	switch(head){
 
+		case ENVIAR_SCRIPT:{
+			mensaje = deserealizarString(buffer, tamanio);
+			break;
+		}
 		// CASE 1: El mensaje es un texto (char*)
-		case ENVIAR_SCRIPT: case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
+		case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
 		case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 			char* msj = malloc(tamanio);
 			memcpy(msj, buffer, tamanio);
@@ -257,6 +244,30 @@ void * deserealizar(int head, void * buffer, int tamanio){
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
 /**** SEREALIZACIONES PARTICULARES ****/
+void* serealizarString(void* mensaje, int tamanio){
+	string* msj = (string*) mensaje;
+	int desplazamiento = 0;
+
+	void * buffer = malloc(tamanio);
+	memcpy(buffer + desplazamiento, &(msj->tamanio), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, msj->cadena, msj->tamanio);
+
+	return buffer;
+}
+
+string* deserealizarString(void* buffer, int tamanio){
+	int desplazamiento = 0;
+
+	string * msj = malloc(tamanio);
+	memcpy(&msj->tamanio, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	msj->cadena = malloc(msj->tamanio);
+	memcpy(msj->cadena, buffer + desplazamiento, msj->tamanio);
+
+	return msj;
+}
+
 void* serealizarTextoMasUnInt(void* mensaje, int tamanio){
 
 		pedidoIO* msj = (pedidoIO*) mensaje;
@@ -279,7 +290,7 @@ pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio){
 		pedidoIO * msj = malloc(tamanio);
 		memcpy(&msj->tiempo, buffer + desplazamiento, INT);
 			desplazamiento += INT;
-		msj->nombreDispositivo = (char*)reservarMemoria(string_size);
+		msj->nombreDispositivo = malloc(string_size);
 		memcpy(msj->nombreDispositivo, buffer + desplazamiento, string_size);
 
 		return msj;
@@ -289,14 +300,15 @@ void* serealizarTextoMasDosInt(void* mensaje, int tamanio){
 
 	inicioPrograma* msj = (inicioPrograma*) mensaje;
 	int desplazamiento = 0;
-	int string_size = strlen(msj->contenido) + 1;
 
 		void * buffer = malloc(tamanio);
 		memcpy(buffer + desplazamiento, &(msj->pid), INT);
 			desplazamiento += INT;
 		memcpy(buffer + desplazamiento, &(msj->paginas), INT);
 			desplazamiento += INT;
-		memcpy(buffer + desplazamiento, msj->contenido, string_size);
+		memcpy(buffer + desplazamiento, &(msj->contenido.tamanio), INT);
+			desplazamiento += INT;
+		memcpy(buffer + desplazamiento, msj->contenido.cadena, msj->contenido.tamanio);
 
 		return buffer;
 }
@@ -304,15 +316,16 @@ void* serealizarTextoMasDosInt(void* mensaje, int tamanio){
 inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
-	int string_size = tamanio - 2*INT;
 
 	inicioPrograma *msj = (inicioPrograma*)reservarMemoria(tamanio);
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&msj->paginas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	msj->contenido = (char*)reservarMemoria(string_size);
-	memcpy(msj->contenido, buffer + desplazamiento, string_size);
+	memcpy(&msj->contenido.tamanio, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	msj->contenido.cadena = malloc(msj->contenido.tamanio);
+	memcpy(msj->contenido.cadena, buffer + desplazamiento, msj->contenido.tamanio);
 
 	return msj;
 }
@@ -371,11 +384,60 @@ direccion* deserealizarTresInt(void* buffer, int tamanio){
 		return msj;
 }
 
+int calcularTamanioIndiceStack(pcb* unPcb){
+	int tamanio_stack = 0;
+
+	void calcularTamanioRegistroStack(registroStack* reg){
+		// Por cada var y arg: 2 bytes nombre + 12 bytes dirección + 4 bytes elements_count:
+		int tam_args = 4 + (reg->args->elements_count * 14);
+		int tam_vars = 4 + (reg->vars->elements_count * 14);
+		// Sumo además 12 bytes de retVar + 4 de retPos + 8 de cantidad args y vars:
+		int tamanio_registro = tam_args + tam_vars + 24;
+
+		tamanio_stack += tamanio_registro;
+	}
+	list_iterate(unPcb->indiceStack, (void*)calcularTamanioRegistroStack);
+
+	return tamanio_stack + 4; // Sumo además 4 bytes de elements_count
+}
+
+int calcularTamanioPcb(pcb* unPcb){
+	int tamanio;
+	int stack_size = calcularTamanioIndiceStack(unPcb);
+	// Sumo 68 bytes por los 17 int que tiene + los tamaños de los tres índices:
+	tamanio = 68 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + stack_size;
+
+	return tamanio;
+}
+
+int getPrimeraInstruccion(t_intructions instruccion){
+	int unaInstruccion = instruccion.start;
+
+	return unaInstruccion;
+}
+
+int getOffsetInstruccion (t_intructions instruccion){
+	int offset = instruccion.offset;
+
+	return offset;
+}
+
+t_intructions cargarIndiceCodigo(int primera_instruccion, int offset_instrucciones){
+
+	t_intructions instrucciones;
+
+	instrucciones.start = primera_instruccion;
+	instrucciones.offset = offset_instrucciones;
+
+	return instrucciones;
+}
+
 void * serealizarPcb(void * mensaje, int tamanio){
 
 	pcb* unPcb = (pcb*) mensaje;
 	int desplazamiento = 0;
 
+	// Copio los campos enteros:
 	void * buffer = malloc(tamanio);
 	memcpy(buffer + desplazamiento, &(unPcb->cantidad_instrucciones), INT);
 		desplazamiento += INT;
@@ -403,42 +465,77 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->stackPointer), INT);
 		desplazamiento += INT;
+
+		// Copio los tamaños de los índices, calculando primero el tamaño del índice de stack:
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceCodigo), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceEtiquetas), INT);
 		desplazamiento += INT;
 
 		unPcb->tamanioIndiceStack = calcularTamanioIndiceStack(unPcb);
+
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceStack), INT);
 		desplazamiento += INT;
 
-	memcpy(buffer + desplazamiento, unPcb->indiceCodigo, unPcb->tamanioIndiceCodigo);
-		desplazamiento += unPcb->tamanioIndiceCodigo;
+		unPcb->cantidad_registros_stack = unPcb->indiceStack->elements_count;
+	memcpy(buffer + desplazamiento, &(unPcb->cantidad_registros_stack), INT);
+		desplazamiento += INT;
 
+		// Copio el índice de código:
+	int contador_instrucciones = 0;
+
+	while (contador_instrucciones < unPcb->cantidad_instrucciones){
+
+		int primera_instruccion = primera_instruccion((unPcb->indiceCodigo)[contador_instrucciones]);
+		memcpy(buffer + desplazamiento, &primera_instruccion, INT);
+			desplazamiento += INT;
+
+		int offset_instruccion = getOffsetInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
+		memcpy(buffer + desplazamiento, &offset_instruccion, INT);
+			desplazamiento += INT;
+
+		contador_instrucciones++;
+	} // fin carga índice de código
+
+		// Copio el índice de etiquetas:
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
-		// Itero la lista. Muevo registro por registro. Si la lista está vacía, no entra al while porque da NULL.
-				void moverVariablesSer(variable* var){
-					memcpy(buffer + desplazamiento, var->nombre, 2);
-						desplazamiento +=  2;
-					memcpy(buffer + desplazamiento, &var->direccion, 12);
-						desplazamiento += 12;
-				}
-				int i;
-				for(i=0; i<list_size(unPcb->indiceStack); i++){
-						registroStack* reg = list_get(unPcb->indiceStack, i);
-						list_iterate(reg->args, (void*) moverVariablesSer);
-						list_iterate(reg->vars, (void*) moverVariablesSer);
-						memcpy(buffer + desplazamiento, &reg->retPos, 4);
-							desplazamiento += 4;
-						memcpy(buffer + desplazamiento, &reg->retVar, 12);
-							desplazamiento += 12;
-					}
-			// Por úlltimo, muevo este int campo de la lista:
-			memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
+		// Copio el índice de stack:
 
-	//list_add_all((t_list*)(buffer + desplazamiento), (t_list*) unPcb->indiceStack);
+	void serealizarIndiceStack(registroStack* reg){
+
+		void serealizarListaVariables(variable* var){
+			memcpy(buffer + desplazamiento, var->nombre, 2);
+				desplazamiento +=  2;
+			memcpy(buffer + desplazamiento, &var->direccion, 12);
+				desplazamiento += 12;
+		}
+
+		reg->cantidad_args = reg->args->elements_count;
+		memcpy(buffer + desplazamiento, &(reg->cantidad_args), 4);
+			desplazamiento += 4;
+		list_iterate(reg->args, (void*) serealizarListaVariables);
+		memcpy(buffer + desplazamiento, &(reg->args->elements_count), 4);
+			desplazamiento += 4;
+
+		reg->cantidad_vars = reg->vars->elements_count;
+		memcpy(buffer + desplazamiento, &(reg->cantidad_vars), 4);
+			desplazamiento += 4;
+		list_iterate(reg->vars, (void*) serealizarListaVariables);
+		memcpy(buffer + desplazamiento, &(reg->vars->elements_count), 4);
+			desplazamiento += 4;
+
+		memcpy(buffer + desplazamiento, &reg->retPos, 4);
+			desplazamiento += 4;
+		memcpy(buffer + desplazamiento, &reg->retVar, 12);
+			desplazamiento += 12;
+	}
+
+	list_iterate(unPcb->indiceStack, (void*) serealizarIndiceStack);
+		// Copio el int 'elements_count' campo del índice de stack:
+	memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
+	// fin carga índice de stack
 
 	return buffer;
 }
@@ -448,6 +545,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	int desplazamiento = 0;
 	pcb * unPcb = malloc(tamanio);
 
+	// Copio los valores enteros:
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT);
@@ -474,28 +572,91 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 		desplazamiento += INT;
 	memcpy(&unPcb->stackPointer, buffer + desplazamiento, INT);
 		desplazamiento += INT;
+
+		// Copio los valores de los índices:
 	memcpy(&unPcb->tamanioIndiceCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
+		// El tamaño del índice de stack se calculó e inicializó durante la serealización:
 	memcpy(&unPcb->tamanioIndiceStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 
+	memcpy(&unPcb->cantidad_registros_stack, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+
+		/*// Copio el índice de código:
 		unPcb->indiceCodigo = malloc(unPcb->tamanioIndiceCodigo);
 	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
-		desplazamiento += unPcb->tamanioIndiceCodigo;
+		desplazamiento += unPcb->tamanioIndiceCodigo;*/
 
+		// Copio el índice de etiquetas:
 		unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
 	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
-	/* 	Cuando serealiza el índice de stack es una lista --> OK
-		Cuando deserealiza el índice de stack está en un buffer void*,
-		tengo que castear el buffer como t_list donde comienza la vieja lista
-		y pasarla a la nueva lista. */
+		// Copio el índice de stack:
+	unPcb->indiceStack = list_create();
 
-		unPcb->indiceStack = list_create();
-		list_add_all(unPcb->indiceStack, (t_list*) (buffer + desplazamiento));
+	int contador_registros_stack = 0;
 
-		return unPcb;
+	while(contador_registros_stack < unPcb->cantidad_registros_stack){
+
+		registroStack *reg = malloc(sizeof(registroStack));
+
+		memcpy(reg->cantidad_args, buffer + desplazamiento, 4);
+			desplazamiento += 4;
+
+		reg->args = list_create();
+
+		int contador_argumentos = 0;
+
+		while(contador_argumentos < reg->cantidad_args){
+
+			variable *arg = malloc(sizeof(variable));
+
+			arg->nombre = malloc(2);
+			memcpy(arg->nombre, buffer + desplazamiento, 2);
+				desplazamiento += 2;
+			memcpy(arg->direccion, buffer + desplazamiento, 12);
+				desplazamiento += 12;
+
+			list_add(reg->args, arg);
+
+			contador_argumentos++;
+		} // fin carga lista argumentos
+
+		memcpy(reg->cantidad_vars, buffer + desplazamiento, 4);
+			desplazamiento += 4;
+
+		reg->vars = list_create();
+
+		int contador_variables = 0;
+
+		while(contador_variables < reg->cantidad_vars){
+
+			variable *var = malloc(sizeof(variable));
+
+			var->nombre = malloc(2);
+			memcpy(var->nombre, buffer + desplazamiento, 2);
+				desplazamiento += 2;
+			memcpy(var->direccion, buffer + desplazamiento, 12);
+				desplazamiento += 12;
+
+			list_add(reg->args, var);
+
+			 contador_variables++;
+		} // fin carga lista variables
+
+		memcpy(reg->retPos, buffer + desplazamiento, 4);
+			desplazamiento += 4;
+		memcpy(reg->retVar, buffer + desplazamiento, 4);
+			desplazamiento += 4;
+
+		list_add(unPcb->indiceStack, reg); // agrego el registro cargado y avanzo al siguiente
+
+		contador_registros_stack++;
+	} // fin carga índice stack
+
+	return unPcb;
 }

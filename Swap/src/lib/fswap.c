@@ -164,9 +164,8 @@ void iniciar_programa(void *msj) {
 	if(*respuesta == PERMITIDO) {
 		int pos = buscarPaginaEnTablaDePaginas(pid, 0);
 		avanzarPaginas(pos);
-		int tamanio = strlen(mensaje->contenido);
 		dormir(config->retardoAcceso);
-		fwrite(mensaje->contenido, CHAR, tamanio, archivoSwap);
+		fwrite(mensaje->contenido.cadena, CHAR, mensaje->contenido.tamanio, archivoSwap);
 	}
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
