@@ -8,7 +8,7 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 	int desplazamiento = 0, tamanioMensaje, tamanioTotalAEnviar;
 
 	if (head < 1 || head > FIN_DEL_PROTOCOLO){
-		printf("Desconexión del socket #%d.\n", fdReceptor);
+		printf("Error al enviar mensaje.\n");
 		}
 	// Calculo el tamaño del mensaje:
 	tamanioMensaje = calcularTamanioMensaje(head, mensaje);
@@ -41,7 +41,7 @@ void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 	int recibido = recibirPorSocket(fdEmisor, head, INT);
 
 	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){
-		printf("Me he desconectado.\n");
+		printf("Error al recibir mensaje.\n");
 		return NULL;
 	}
 

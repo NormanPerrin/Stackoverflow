@@ -103,6 +103,7 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 		 } // retorno true por pedido acpetado
 	 return TRUE;
 	} // retorno false por error en el head
+	printf("Error durante pedido a UMC.\n");
 	return FALSE;
 }
 

@@ -63,14 +63,12 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			free (var_id); var_id = NULL;
 			// Guardo el nuevo registro en el índice:
 			list_add(pcbActual->indiceStack, regStack);
-			// Valor a retornar:
-			int var_stack_offset = pcbActual->stackPointer;
 			// Actualizo parámetros del PCB:
 			pcbActual->stackPointer += INT;
 			int total_heap_offset = (pcbActual->paginas_codigo * tamanioPagina) + pcbActual->stackPointer;
-			pcbActual->paginaActualStack = total_heap_offset/tamanioPagina;
+			pcbActual->paginaActualStack = total_heap_offset / tamanioPagina;
 
-		return var_stack_offset;
+		return total_heap_offset;
 		} // fin else ERROR
 }
 
@@ -99,10 +97,9 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 
 					free(var_id); var_id = NULL;
 
-					int var_stack_page = variable->direccion.pagina - pcbActual->primerPaginaStack;
-					int var_stack_offset = (var_stack_page*tamanioPagina) + variable->direccion.offset;
+					int var_offset_absoluto = (variable->direccion.pagina * tamanioPagina) + variable->direccion.offset;
 
-					return var_stack_offset;
+					return var_offset_absoluto;
 				} // fin if equals
 			} // fin for variables
 		}
@@ -121,10 +118,9 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 
 					free(var_id); var_id = NULL;
 
-					int arg_stack_page = argumento->direccion.pagina - pcbActual->primerPaginaStack;
-					int arg_stack_offset = (arg_stack_page*tamanioPagina) + argumento->direccion.offset;
+					int arg_offset_absoluto = (argumento->direccion.pagina * tamanioPagina) + argumento->direccion.offset;
 
-					return arg_stack_offset;
+					return arg_offset_absoluto;
 				} // fin if equals
 			} // fin for argumentos
 		}
