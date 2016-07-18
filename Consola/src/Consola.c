@@ -16,7 +16,6 @@ int main(int argc, char **argv){
 	conectarCon_Nucleo(); // Conexión con Núcleo
 
 	string* script = malloc(tamanioPrograma + 4);
-	script->cadena = malloc(tamanioPrograma);
 	script->tamanio = tamanioPrograma;
 	script->cadena = programa;
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, script);

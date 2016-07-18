@@ -320,7 +320,7 @@ int sizeof_instrucciones(t_intructions *instrucciones){
 pcb * crearPcb(string* programa){
 
 	pcb * nuevoPcb = malloc(sizeof(pcb));
-	// pcb size: 64 + tam indicies etiquetas y codigo --> indice stack vacio
+
 	nuevoPcb->pid = asignarPid();
 
 	int respuestaUMC = solicitarSegmentosAUMC(nuevoPcb, programa);
@@ -330,45 +330,42 @@ pcb * crearPcb(string* programa){
 	}
 	else{
 		// La UMC pudo alocar los segmentos del proceso, entonces sigo:
-			nuevoPcb->id_cpu = -1; // CPU aún no asignado
-			nuevoPcb->quantum = config->quantum;
-			nuevoPcb->quantum_sleep = config->retardoQuantum;
+		nuevoPcb->id_cpu = -1; // CPU aún no asignado
+		nuevoPcb->quantum = config->quantum;
+		nuevoPcb->quantum_sleep = config->retardoQuantum;
 
 		// Analizo con el parser el código del programa para obtener su metadata:
-			t_metadata_program* infoProg = NULL;
-			infoProg = metadata_desde_literal(programa->cadena);
+		t_metadata_program* infoProg = metadata_desde_literal(programa->cadena);
 
-			nuevoPcb->paginaActualCodigo = 0; // el código empieza en la página # 0
-			nuevoPcb->primerPaginaStack = nuevoPcb->paginas_codigo;
-			nuevoPcb->paginaActualStack = nuevoPcb->primerPaginaStack;
-			nuevoPcb->pc = infoProg->instruccion_inicio; // la siguiente al begin
-			nuevoPcb->stackPointer = 0; // offset total en memoria; 0 porque aún está vacío
-			nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
+		nuevoPcb->paginaActualCodigo = 0; // el código empieza en la página #0
+		nuevoPcb->primerPaginaStack = nuevoPcb->paginas_codigo; // el stack comienza luego del código
+		nuevoPcb->paginaActualStack = nuevoPcb->primerPaginaStack;
+		nuevoPcb->pc = infoProg->instruccion_inicio;
+		nuevoPcb->stackPointer = 0;
+		nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
 		// Inicializo los tamaños de los índices:
-			nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size * sizeof_instrucciones(infoProg->instrucciones_serializado);
-			nuevoPcb->tamanioIndiceStack = 0;
-			nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
+		nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size * sizeof_instrucciones(infoProg->instrucciones_serializado);
+		nuevoPcb->tamanioIndiceStack = 4;
+		nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
 
 		// Inicializo índice de código:
-			nuevoPcb->indiceCodigo = malloc(nuevoPcb->tamanioIndiceCodigo);
-			nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
+		nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
-			nuevoPcb->indiceStack = list_create();
-			nuevoPcb->cantidad_registros_stack = 0;
-			nuevoPcb->indexActualStack = 0; // resgistro actual en uso; 0 porque aún está vacío
+		nuevoPcb->indiceStack = list_create();
+		nuevoPcb->cantidad_registros_stack = 0;
+		nuevoPcb->indexActualStack = 0;
 
 		// Inicializo índice de etiquetas:
-			if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0){
-				nuevoPcb->indiceEtiquetas = malloc(infoProg->etiquetas_size);
-				nuevoPcb->indiceEtiquetas = infoProg->etiquetas;
-			} else {
-				nuevoPcb->indiceEtiquetas = NULL;
-			}
-			metadata_destruir(infoProg); infoProg = NULL;
+		if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0){
+			nuevoPcb->indiceEtiquetas = infoProg->etiquetas;
+		} else {
+			nuevoPcb->indiceEtiquetas = NULL;
+		}
+		metadata_destruir(infoProg); infoProg = NULL;
 
-			return nuevoPcb;
+		return nuevoPcb;
 	}
 }
 

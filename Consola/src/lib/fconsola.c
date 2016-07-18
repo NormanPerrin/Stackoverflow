@@ -21,19 +21,22 @@ void setearValores_config(t_config * archivoConfig){
 
 void leerScript(char * rutaPrograma){
 
-	rutaScript = strdup(rutaPrograma); // Guardo la ruta
-
 	int tamanio, descriptorArchivo;
 	struct stat infoArchivo; // función de stat.h
 
 	descriptorArchivo = open(rutaPrograma, O_RDONLY); // Abre el archivo .asnsisop
-		if(descriptorArchivo == ERROR) perror("Error al abrir script.");
-		fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
-		tamanio = infoArchivo.st_size;
-		programa = malloc(tamanio);
-		tamanioPrograma = read(descriptorArchivo, programa, tamanio); // Guardo el script en programa
-		if(tamanioPrograma == ERROR) perror("Error al cerrar script.");
-		close(descriptorArchivo);
+	if(descriptorArchivo == ERROR) perror("Error al abrir script.");
+
+	fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
+
+	tamanio = infoArchivo.st_size;
+	programa = malloc(tamanio);
+
+	tamanioPrograma = read(descriptorArchivo, programa, tamanio); // Guardo el script en programa
+	if(tamanioPrograma == ERROR) perror("Error al cerrar script.");
+	programa = realloc(programa, tamanioPrograma);
+
+	close(descriptorArchivo);
 } // El programa ya está listo para ser enviado a Núcleo
 
 void conectarCon_Nucleo(){
@@ -52,7 +55,6 @@ void exitConsola(){
 void liberarRecursos() {
 	free(programa); programa = NULL;
 	free(ipNucleo); ipNucleo = NULL;
-	free(rutaScript); rutaScript = NULL;
 	log_destroy(logger); logger = NULL;
 }
 

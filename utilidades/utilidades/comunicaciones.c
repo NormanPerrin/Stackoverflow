@@ -443,27 +443,22 @@ int calcularTamanioPcb(pcb* unPcb){
 	int stack_size = calcularTamanioIndiceStack(unPcb);
 	// Sumo 68 bytes por los 17 int que tiene + los tamaños de los tres índices:
 	// TamañoS índice etiquetas y código vienen de la creación del PCB.
-	tamanio = 68 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + stack_size;
+	tamanio = 68  + unPcb->tamanioIndiceCodigo + unPcb->tamanioIndiceEtiquetas + stack_size;
 
 	return tamanio;
 }
 
 int getStartInstruccion(t_intructions instruccion){
-	int comienzo = instruccion.start;
-
-	return comienzo;
+	return instruccion.start;
 }
 
 int getOffsetInstruccion (t_intructions instruccion){
-	int offset = instruccion.offset;
-
-	return offset;
+	return instruccion.offset;
 }
 
 t_intructions cargarIndiceCodigo(int comienzo_instruccion, int longitud_instruccion){
-	t_intructions instruccion;
-	instruccion.start = comienzo_instruccion;
-	instruccion.offset = longitud_instruccion;
+
+	t_intructions instruccion = { .start = comienzo_instruccion, .offset = longitud_instruccion };
 
 	return instruccion;
 }

@@ -11,7 +11,6 @@
 int puertoNucleo;
 char * ipNucleo;
 int fd_nucleo; // Socket Consola - Núcleo
-char * rutaScript;
 char* programa; // Script AnSISOP asociado
 int tamanioPrograma;
 t_log * logger;
