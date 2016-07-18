@@ -2,16 +2,6 @@
 #include <stdlib.h>
 #include "lib/fumc.h"
 
-/* - Consola
- * 		- "retardo" (cambia cantidad en ms del retardo)
- * 		- "dump" (reporte por pantalla y archivo de: [tabla páginas, contenido memoria])
- * 		- "flush tlb" (limpia la TLB)
- * 		- "flush memory" (marca todas las páginas de memoria como leídas)
- * - Señales
- * - Ver habilitación/deshabilitación TLB
- * - Verificar si no hay marcos globales (si no hay más marcos libres, tengo 4 marcos por proceso y 3 marcos asignados
- *   a un proceso entonces reemplazo entre esos 3 marcos)
- * */
 
 int main(void) {
 

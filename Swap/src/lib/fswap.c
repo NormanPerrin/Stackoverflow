@@ -80,7 +80,7 @@ int validar_servidor(char *id) {return 0;}
 
 
 
-FILE *inicializarSwap() {
+void inicializarSwap() {
 
 	int tamanioSwap = config->cantidadPaginas * config->tamanioPagina;
 	paginasLibresTotales = config->cantidadPaginas;
@@ -93,12 +93,9 @@ FILE *inicializarSwap() {
 		char *c = (char*)reservarMemoria(tamanioSwap);
 		int l = 0;
 		for(; l < tamanioSwap; l++) c[l] = '\0';
-		dormir(config->retardoAcceso);
 		fwrite(c, CHAR, tamanioSwap, archivoSwap);
 		free(c);
 	}
-
-	return archivoSwap;
 }
 
 void inicializarTablaDePaginas() {
@@ -125,6 +122,7 @@ void iniciar_programa(void *msj) {
 	inicioPrograma *mensaje = (inicioPrograma*)msj;
 	int pid = mensaje->pid;
 	int paginas = mensaje->paginas;
+	printf("> [INICIAR_PROGRAMA]: (#pid: %d) (#paginas: %d)\n", pid, paginas);
 
 	if(paginasLibresTotales >= paginas) { // se puede alojar el proceso aunque sea compactando
 
@@ -182,6 +180,7 @@ void escribir_pagina(void *msj) {
 	int pid = mensaje->pid;
 	int pagina = mensaje->pagina;
 	char *contenido = mensaje->contenido;
+	printf("> [ESCRIBIR_PAGINA]: (#pid: %d) (#pagina: %d)\n", pid, pagina);
 
 	int pos = buscarPaginaEnTablaDePaginas(pid, pagina);
 	if(pos != ERROR) {
@@ -343,6 +342,7 @@ void eliminar_programa(void *msj) {
 
 	// casteo
 	int pid = *((int*)msj);
+	printf("> [ELIMINAR_PROGRAMA]: (#pid: %d)\n", pid);
 
 	// busco primer aparicion del pid en tp
 	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
@@ -398,6 +398,7 @@ void leer_pagina(void *msj) {
 	solicitudLeerPagina *mensaje = (solicitudLeerPagina*)msj;
 	int pid= mensaje->pid;
 	int pagina= mensaje->pagina;
+	printf("> [LEER_PAGINA]: (#pid: %d) (#pagina: %d)\n", pid, pagina);
 
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
 	if(pagABuscar != ERROR) { // encontro pagina del proceso
@@ -407,11 +408,11 @@ void leer_pagina(void *msj) {
 	} else *respuesta = NO_PERMITIDO; // no encontro pagina solicitada del pid
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
-	free(respuesta);
 
 	if(*respuesta == PERMITIDO)
 		aplicar_protocolo_enviar(sockUMC, DEVOLVER_PAGINA, contenido);
 
+	free(respuesta);
 	free(contenido);
 }
 
@@ -451,6 +452,8 @@ int hayFragmentacion() {
 
 
 int compactar() {
+
+	printf("> [COMPACTAR]\n");
 
 	while(hayFragmentacion()) {
 
