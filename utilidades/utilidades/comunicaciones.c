@@ -8,8 +8,7 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 	int desplazamiento = 0, tamanioMensaje, tamanioTotalAEnviar;
 
 	if (head < 1 || head > FIN_DEL_PROTOCOLO){
-		//printf("Error al enviar paquete. No existe protocolo definido para %d\n", head);
-		printf("Error al enviar paquete.");
+		printf("Desconexión del socket #%d.\n", fdReceptor);
 		}
 	// Calculo el tamaño del mensaje:
 	tamanioMensaje = calcularTamanioMensaje(head, mensaje);
@@ -42,8 +41,7 @@ void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 	int recibido = recibirPorSocket(fdEmisor, head, INT);
 
 	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){
-		//printf("Error al recibir paquete. No existe protocolo definido para %d\n", *head);
-		printf("Error al recibir paquete.");
+		printf("Me he desconectado.\n");
 		return NULL;
 	}
 
