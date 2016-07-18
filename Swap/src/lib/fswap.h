@@ -37,7 +37,7 @@
 	void liberarRecusos();
 	int validar_cliente(char *id); // Verifica que sea cliente UMC
 	int validar_servidor(char *id); // Para que no joda con error
-	FILE * inicializarSwap (); //inicializa particion swap y listas
+	void inicializarSwap(); //inicializa particion swap y listas
 	void iniciar_programa(void *msj);
 	void inicializarTablaDePaginas();
 	void inicializarTablaBitMap();
