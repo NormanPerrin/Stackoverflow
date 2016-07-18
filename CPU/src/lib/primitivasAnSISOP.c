@@ -133,12 +133,11 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	} // fin else argumentos
 }
 
-t_valor_variable dereferenciar(t_puntero var_stack_offset){
+t_valor_variable dereferenciar(t_puntero total_heap_offset){
 
 	printf("Dereferenciando variable...\n");
 	solicitudLectura * var_direccion = malloc(sizeof(solicitudLectura));
 
-	int total_heap_offset = (pcbActual->paginas_codigo * tamanioPagina) + var_stack_offset;
 	int num_pagina =  total_heap_offset / tamanioPagina;
 	int offset = total_heap_offset % tamanioPagina;
 
@@ -176,12 +175,11 @@ t_valor_variable dereferenciar(t_puntero var_stack_offset){
 	} // fin else lectura ok
 }
 
-void asignar(t_puntero var_stack_offset, t_valor_variable valor){
+void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 
 	printf("Escribiendo variable...\n");
 	solicitudEscritura * var_escritura = malloc(sizeof(solicitudEscritura));
 
-	int total_heap_offset = (pcbActual->paginas_codigo * tamanioPagina) + var_stack_offset;
 	int num_pagina =  total_heap_offset / tamanioPagina;
 	int offset = total_heap_offset % tamanioPagina;
 
@@ -203,14 +201,13 @@ void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
-	/* Solicita al Núcleo el valor de la variable compartida. */
 	printf("Obteniendo el valor de la variable compartida: '%s'.\n", var_compartida_nombre);
 	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
 	void* entrada = NULL;
 	int* valor_variable = NULL;
 	int head;
 
-	variableCompartida = strdup((char*) var_compartida_nombre);
+	variableCompartida = (char*) var_compartida_nombre;
 
 	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, variableCompartida);
 	free(variableCompartida); variableCompartida = NULL;
@@ -233,8 +230,8 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 	printf("Asignando el valor %d a la variable compartida '%s'.\n", var_compartida_valor, var_compartida_nombre);
 	var_compartida * variableCompartida = malloc(strlen(var_compartida_nombre)+ 5);
 
-	variableCompartida->nombre = strdup((char*) var_compartida_nombre);
 	variableCompartida->valor = var_compartida_valor;
+	variableCompartida->nombre = (char*) var_compartida_nombre;
 
 	aplicar_protocolo_enviar(fdNucleo, GRABAR_VAR_COMPARTIDA, variableCompartida);
 	free(variableCompartida->nombre); variableCompartida->nombre = NULL;
@@ -244,27 +241,27 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 }
 
 void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
-	printf("Llendo a la etiqueta: '%s'.\n", nombre_etiqueta);
+	printf("Llendo a la etiqueta: '%s'...\n", nombre_etiqueta);
 	t_puntero_instruccion num_instruccion = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
 	pcbActual->pc = num_instruccion - 1;
 	return;
 }
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
-	/* Reserva espacio para un nuevo contexto vacío preservando el contexto
+	/* Reserva espacio para un nuevo contexto vacío donde guarda el contexto
 	 *  de ejecución actual, para luego volver al mismo. */
 	printf("Llamada con retorno. Preservando contexto de ejecución actual y posición de retorno.\n");
 
 	// Calculo la dirección de retorno y la guardo:
 	registroStack * nuevoRegistroStack = reg_stack_create();
-	nuevoRegistroStack->retVar.pagina = donde_retornar/tamanioPagina;
-	nuevoRegistroStack->retVar.offset = donde_retornar%tamanioPagina;
+	nuevoRegistroStack->retVar.pagina = donde_retornar / tamanioPagina;
+	nuevoRegistroStack->retVar.offset = donde_retornar % tamanioPagina;
 	nuevoRegistroStack->retVar.size = INT;
 
 	nuevoRegistroStack->retPos = pcbActual->pc; // Guardo el valor actual del program counter
 	list_add(pcbActual->indiceStack, nuevoRegistroStack);
 
-	pcbActual->indexActualStack++;
+	(pcbActual->indexActualStack)++;
 
 	irAlLabel(etiqueta);
 	return;
@@ -273,27 +270,25 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 void retornar(t_valor_variable var_retorno){
 
 	printf("Llamada a la función 'retornar'.\n");
-	// Tomo contexto actual y anterior:
+	// Tomo contexto actual:
 	int index = pcbActual->indexActualStack;
 	registroStack* registroActual = list_get(pcbActual->indiceStack, index);
 
 	// Limpio los argumentos del registro y descuento el espacio que ocupan en el stack en memoria:
-	pcbActual->stackPointer -= (4* list_size(registroActual->args));
+	pcbActual->stackPointer -= (4* registroActual->args->elements_count);
 
 	// Limpio las variables del registro y descuento el espacio que ocupan en el stack en memoria:
-	pcbActual->stackPointer -= (4 * list_size(registroActual->vars));
+	pcbActual->stackPointer -= (4 * registroActual->vars->elements_count);
 
 	// Calculo la dirección de retorno a partir de retVar:
-	t_puntero var_stack_offset = (registroActual->retVar.pagina * tamanioPagina) + registroActual->retVar.offset;
-	asignar(var_stack_offset, var_retorno);
+	t_puntero offset_absoluto = (registroActual->retVar.pagina * tamanioPagina) + registroActual->retVar.offset;
+	asignar(offset_absoluto, var_retorno);
 
 	// Elimino el contexto actual del índice de stack:
 	// Luego, seteo el contexto de ejecución actual en el index anterior:
-	pcbActual->pc =  registroActual->retPos;
-
-	liberarRegistroStack(registroActual); // libero la memoria del registro
-	free(list_remove(pcbActual->indiceStack, pcbActual->indexActualStack));
-	pcbActual->indexActualStack--;
+	pcbActual->pc = registroActual->retPos;
+	liberarRegistroStack(list_remove(pcbActual->indiceStack, pcbActual->indexActualStack));
+	(pcbActual->indexActualStack)--;
 	return;
 }
 
@@ -301,36 +296,39 @@ void imprimir(t_valor_variable valor_mostrar){
 	printf("Solicitando imprimir variable.\n");
 	int * valor = malloc(INT);
 	*valor = valor_mostrar;
-	aplicar_protocolo_enviar(fdNucleo,IMPRIMIR, valor);
+	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR, valor);
 	free(valor); valor = NULL;
+	return;
 }
 
 void imprimirTexto(char* texto){
 	printf("Solicitando imprimir texto.\n");
-	char * txt = malloc(strlen(texto)+1);
-	txt = strdup(texto);
-	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, txt);
-	free(txt);
+	char * print_txt = malloc(strlen(texto)+1);
+	print_txt = texto;
+	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, print_txt);
+	free(print_txt); print_txt = NULL;
+	return;
 }
 
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
-	printf("Entrada/Salida para el dispositivo: '%s' durante '%i' unidades de tiempo.\n",dispositivo,tiempo);
+	printf("Entrada/Salida en dispositivo: '%s' durante '%i' unidades de tiempo.\n",dispositivo,tiempo);
 	pedidoIO * pedidoEntradaSalida = malloc(strlen(dispositivo)+ 5);
-	pedidoEntradaSalida->nombreDispositivo = strdup((char*) dispositivo);
 	pedidoEntradaSalida->tiempo = tiempo;
+	pedidoEntradaSalida->nombreDispositivo = strdup((char*) dispositivo);
 
 	aplicar_protocolo_enviar(fdNucleo,ENTRADA_SALIDA, pedidoEntradaSalida);
 
 	free(pedidoEntradaSalida->nombreDispositivo); pedidoEntradaSalida->nombreDispositivo = NULL;
 	free(pedidoEntradaSalida); pedidoEntradaSalida = NULL;
 	devolvioPcb = POR_IO;
+	return;
 }
 
 void s_wait(t_nombre_semaforo nombre_semaforo){
 
 	char* id_semaforo = malloc(strlen(nombre_semaforo)+1);
-	id_semaforo = strdup((char*) nombre_semaforo);
+	id_semaforo = (char*) nombre_semaforo;
 
 	aplicar_protocolo_enviar(fdNucleo, WAIT_REQUEST, id_semaforo);
 	free(id_semaforo); id_semaforo = NULL;
@@ -346,15 +344,17 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 	else{
 		printf("Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'.\n", nombre_semaforo);
 	}
+	return;
 }
 
 void s_signal(t_nombre_semaforo nombre_semaforo){
 
 	char* id_semaforo = malloc(strlen(nombre_semaforo)+1);
-	id_semaforo = strdup((char*) nombre_semaforo);
+	id_semaforo = (char*) nombre_semaforo;
 
 	aplicar_protocolo_enviar(fdNucleo, SIGNAL_REQUEST, id_semaforo);
 
 	printf("SIGNAL del semáforo '%s'.\n", nombre_semaforo);
 	free(id_semaforo); id_semaforo = NULL;
+	return;
 }
