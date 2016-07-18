@@ -25,51 +25,6 @@ void conectarConSwap() {
 	int ret = conectarSocket(sockClienteDeSwap, config->ip_swap, config->puerto_swap);
 	validar_conexion(ret, 1);
 	handshake_cliente(sockClienteDeSwap, "U");
-
-										// TODO: PRUEBA COMPACTAR
-//
-//	// variables
-//	int *respuesta = (int*)reservarMemoria(INT);
-//	int *permitido = NULL;
-//
-//	// iniciar estructuras
-//	inicioPrograma *inicio1 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
-//		inicio1->pid = 1;
-//		inicio1->paginas = 10;
-//		inicio1->contenido = strdup("inicio 1");
-//		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, inicio1);
-//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
-//		printf(">> %d\n", *permitido);
-//
-//	inicioPrograma *inicio2 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
-//		inicio2->pid = 2;
-//		inicio2->paginas = 10;
-//		inicio2->contenido = strdup("inicio 2");
-//		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, inicio2);
-//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
-//		printf(">> %d\n", *permitido);
-//
-//	inicioPrograma *inicio3 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
-//		inicio3->pid = 3;
-//		inicio3->paginas = 10;
-//		inicio3->contenido = strdup("inicio 3");
-//		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, inicio3);
-//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
-//		printf(">> %d\n", *permitido);
-//
-//	int *finalizar = (int*)reservarMemoria(INT);
-//		*finalizar = 2;
-//		aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, finalizar);
-//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
-//		printf(">> %d\n", *permitido);
-//
-//	inicioPrograma *inicio4 = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
-//		inicio4->pid = 4;
-//		inicio4->paginas = 12;
-//		inicio4->contenido = strdup("inicio 4");
-//		aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, inicio4);
-//		permitido = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, respuesta);
-//		printf(">> %d\n", *permitido);
 }
 
 
@@ -197,7 +152,9 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	}
 
 	// espero respuesta de Swap
-	void *contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
+	void *contenido_pagina = NULL;
+	if(*respuesta == PERMITIDO)
+		contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
 
 	if(contenido_pagina == NULL || *protocolo != DEVOLVER_PAGINA) { // no encontró la página o hubo un fallo
 
@@ -252,6 +209,7 @@ void inciar_programa(int fd, void *msj) {
 	dormir(config->retardo); // retardo por escritura en tabla páginas
 
 	inicioPrograma *mensaje = (inicioPrograma*)msj; // casteo
+	printf("> [INICIAR_PROGRAMA]: (#fd: %d) (#pid: %d)\n", fd, mensaje->pid);
 
 	// 1) Agrego a tabla de páginas
 	iniciar_principales(mensaje->pid, mensaje->paginas);
@@ -285,6 +243,7 @@ void leer_instruccion(int fd, void *msj) {
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
 	int pid = pids[pos].pid;
+	printf("> [LEER_INSTRUCCION]: (#fd: %d) (#pid: %d)\n", fd, pid);
 
 	// busco el marco de la página en TLB TP y Swap
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
@@ -320,6 +279,7 @@ void leer_variable(int fd, void *msj) {
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
 	int pid = pids[pos].pid;
+	printf("> [LEER_VARIABLE]: (#fd: %d) (#pid: %d)\n", fd, pid);
 
 	// busco el marco de la página en TLB TP y Swap
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
@@ -355,6 +315,7 @@ void escribir_bytes(int fd, void *msj) {
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
 	int pid = pids[pos].pid;
+	printf("> [ESCRIBIR_BYTES]: (#fd: %d) (#pid: %d)\n", fd, pid);
 
 	// busco el marco de la página en TLB TP y Swap
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
@@ -380,6 +341,7 @@ void finalizar_programa(int fd, void *msj) {
 	dormir(config->retardo * 2); // retardo por borrar entradas en tabla páginas y memoria
 
 	int pid = *((int*)msj);
+	printf("> [FINALIZAR_PROGRAMA]: (#fd: %d) (#pid: %d)\n", fd, pid);
 
 	// aviso a Swap
 	aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, msj);
@@ -425,6 +387,7 @@ void finalizar_programa(int fd, void *msj) {
 // | int pid |
 void cambiarPid(int fd, void *mensaje) {
 	int *pid = (int*)mensaje;
+	printf("> [INDICAR_PID]: (#fd: %d) (#pid: %d)\n", fd, *pid);
 	actualizarPid(fd, *pid);
 }
 
@@ -762,33 +725,6 @@ void iniciarEstructuras() {
 		pids[j].fd = -1;
 		pids[j].pid = -1;
 	}
-
-													// TODO: parte de la prueba
-//	// copio en pagina 0 "hola" del pid 2
-//	tabla_paginas[0].pid = 2;
-//	tabla_paginas[0].paginas = 5;
-//	tabla_paginas[0].marcos_reservados[0] = 2;
-//	tabla_paginas[0].marcos_reservados[1] = 5;
-//	tabla_paginas[0].puntero = 0;
-//	tabla_paginas[0].tabla[0].pagina = 0;
-//	tabla_paginas[0].tabla[0].bit_presencia = 1;
-//	tabla_paginas[0].tabla[0].bit_modificado = 0;
-//	tabla_paginas[0].tabla[0].bit_uso = 1;
-//	tabla_paginas[0].tabla[0].marco = 2;
-//	tabla_paginas[0].tabla[1].pagibna = 1;
-//	tabla_paginas[0].tabla[1].bit_presencia = 1;
-//	tabla_paginas[0].tabla[1].bit_modificado = 0;
-//	tabla_paginas[0].tabla[1].bit_uso = 1;
-//	tabla_paginas[0].tabla[1].marco = 5;
-//
-//	bitmap[2] = 1;
-//	bitmap[5] = 1;
-//
-//	char *contenido = (char*)reservarMemoria(CHAR * 5);
-//	strcpy(contenido, "hola");
-//	void *posicion_real = memoria + (2 * config->marco_size);
-//	memcpy(posicion_real, contenido, CHAR * 5);
-//	free(contenido);
 }
 
 void liberarConfig() {
