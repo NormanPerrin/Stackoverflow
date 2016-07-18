@@ -6,6 +6,7 @@
 
 /** PROTOTIPO PRIMITIVAS ANSISOP **/
 bool esArgumento(t_nombre_variable identificador_variable);
+
 t_puntero definirVariable(t_nombre_variable identificador_variable);
 t_puntero obtenerPosicionVariable(t_nombre_variable identificador_variable);
 t_valor_variable dereferenciar(t_puntero direccion_variable);

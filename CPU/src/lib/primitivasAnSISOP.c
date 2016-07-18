@@ -17,19 +17,18 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 		printf("Definiendo nueva variable: '%c'.\n", var_nombre);
 	}
 	else{
-		log_info(logger, "Definiendo nuevo argumento: '%c'.", var_nombre);
+		printf("Definiendo nuevo argumento: '%c'.\n", var_nombre);
 	}
 
 		char * var_id = strdup(charAString(var_nombre));
 
-		direccion * var_direccion = malloc(sizeof(direccion));
-		var_direccion->pagina = pcbActual->primerPaginaStack;
-		var_direccion->offset = pcbActual->stackPointer;
-		var_direccion->size = INT;
+		int var_pagina = pcbActual->primerPaginaStack;
+		int var_offset = pcbActual->stackPointer;
+		int var_size = INT;
 
-		while(var_direccion->offset > tamanioPagina){
-			(var_direccion->pagina)++;
-			var_direccion->offset -= tamanioPagina;
+		while(var_offset > tamanioPagina){
+			(var_pagina)++;
+			var_offset -= tamanioPagina;
 		}
 		// Verifico si se desborda la pila en memoria:
 		if(pcbActual->stackPointer + 4 > (tamanioPagina*tamanioStack)){
@@ -46,30 +45,29 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			//(stackPointer: desplazamiento desde la primer página del stack hasta donde arranca mi nueva variable)
 			if(!esArgumento(var_nombre)){
 				variable* new_var = malloc(14);
-				new_var->direccion.offset = var_direccion->offset;
-				new_var->direccion.pagina = var_direccion->pagina;
-				new_var->direccion.size = var_direccion->size;
-				new_var->nombre = strdup(var_id);
+				new_var->direccion.offset = var_offset;
+				new_var->direccion.pagina = var_pagina;
+				new_var->direccion.size = var_size;
+				new_var->nombre = var_id;
 				list_add(regStack->vars, new_var);
 			}
 			else{
 				variable* new_arg = malloc(14);
-				new_arg->direccion.offset = var_direccion->offset;
-				new_arg->direccion.pagina = var_direccion->pagina;
-				new_arg->direccion.size = var_direccion->size;
-				new_arg->nombre = strdup(var_id);
+				new_arg->direccion.offset = var_offset;
+				new_arg->direccion.pagina = var_pagina;
+				new_arg->direccion.size = var_size;
+				new_arg->nombre = var_id;
 				list_add(regStack->args, new_arg);
 			}
-			printf("'%c' -> Dirección lógica: %i, %i, %i.\n", var_nombre, var_direccion->pagina, var_direccion->offset,var_direccion->size);
+			printf("'%c' -> Dirección lógica: %i, %i, %i.\n", var_nombre, var_pagina, var_offset, var_size);
 			free (var_id); var_id = NULL;
-			free(var_direccion); var_direccion = NULL;
-			// Guardo la nueva variable en el índice:
+			// Guardo el nuevo registro en el índice:
 			list_add(pcbActual->indiceStack, regStack);
 			// Valor a retornar:
 			int var_stack_offset = pcbActual->stackPointer;
 			// Actualizo parámetros del PCB:
 			pcbActual->stackPointer += INT;
-			int total_heap_offset = ((pcbActual->paginas_codigo*tamanioPagina)+pcbActual->stackPointer);
+			int total_heap_offset = (pcbActual->paginas_codigo * tamanioPagina) + pcbActual->stackPointer;
 			pcbActual->paginaActualStack = total_heap_offset/tamanioPagina;
 
 		return var_stack_offset;
@@ -90,21 +88,19 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	// Me posiciono al inicio de este registro y busco la variable del diccionario que coincida con el nombre solicitado:
 
 	if(!esArgumento(var_nombre)){ // Si entra acá es una variable:
-		if(list_size(regStack->vars) > 0){
+		if(regStack->vars->elements_count > 0){ // si hay variables en la lista:
 
-			direccion * var_direccion = malloc(sizeof(direccion));
 			// Obtengo la variable buscada:
 			int i;
-			for(i = 0; i<list_size(regStack->vars); i++){
+			for(i = 0; i<regStack->vars->elements_count; i++){
 
 				variable* variable = list_get(regStack->vars, i);
 				if(string_equals_ignore_case(variable->nombre, var_id)){
 
 					free(var_id); var_id = NULL;
 
-					int var_stack_page = var_direccion->pagina - pcbActual->primerPaginaStack;
-					int var_stack_offset = (var_stack_page*tamanioPagina) + var_direccion->offset;
-					free(var_direccion); var_direccion = NULL;
+					int var_stack_page = variable->direccion.pagina - pcbActual->primerPaginaStack;
+					int var_stack_offset = (var_stack_page*tamanioPagina) + variable->direccion.offset;
 
 					return var_stack_offset;
 				} // fin if equals
@@ -114,26 +110,23 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 		return ERROR;
 	} // Si entra acá es un argumento:
 	else{
-		if(list_size(regStack->args) > 0){
+		if(regStack->args->elements_count > 0){
 
-			direccion * var_direccion = malloc(sizeof(direccion));
-			// Obtengo la variable buscada:
+			// Obtengo el argumento buscado:
 			int j;
-			for(j = 0; j<list_size(regStack->args); j++){
+			for(j = 0; j<regStack->args->elements_count; j++){
 
 				variable* argumento = list_get(regStack->args, j);
 				if(string_equals_ignore_case(argumento->nombre, var_id)){
 
 					free(var_id); var_id = NULL;
 
-					int var_stack_page = var_direccion->pagina - pcbActual->primerPaginaStack;
-					int var_stack_offset = (var_stack_page*tamanioPagina) + var_direccion->offset;
-					free(var_direccion); var_direccion = NULL;
+					int arg_stack_page = argumento->direccion.pagina - pcbActual->primerPaginaStack;
+					int arg_stack_offset = (arg_stack_page*tamanioPagina) + argumento->direccion.offset;
 
-					return var_stack_offset;
+					return arg_stack_offset;
 				} // fin if equals
 			} // fin for argumentos
-
 		}
 		printf("Error: No hay argumentos en el registro actual de stack.\n");
 		return ERROR;
@@ -142,12 +135,12 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 
 t_valor_variable dereferenciar(t_puntero var_stack_offset){
 
-	/* Retorna el valor leído a partir de var_stack_offset. */
 	printf("Dereferenciando variable...\n");
 	solicitudLectura * var_direccion = malloc(sizeof(solicitudLectura));
 
-	int num_pagina =  var_stack_offset / tamanioPagina;
-	int offset = var_stack_offset - (num_pagina*tamanioPagina);
+	int total_heap_offset = (pcbActual->paginas_codigo * tamanioPagina) + var_stack_offset;
+	int num_pagina =  total_heap_offset / tamanioPagina;
+	int offset = total_heap_offset % tamanioPagina;
 
 	var_direccion->pagina = num_pagina;
 	var_direccion->offset = offset;
@@ -164,29 +157,34 @@ t_valor_variable dereferenciar(t_puntero var_stack_offset){
 	if(!recibirYvalidarEstadoDelPedidoAUMC()){ // hubo error de lectura
 		printf("Error: La variable no pudo dereferenciarse.\n");
 		exitPorErrorUMC();
-		return 0;
+
+		return ERROR;
 	}
 	else{ // no hubo error de lectura
 		entrada = aplicar_protocolo_recibir(fdUMC, &head); // respuesta OK de UMC, recibo la variable leída
 		if(head == DEVOLVER_VARIABLE){
 			valor_variable = (int*)entrada;
+
+			return *valor_variable;
 		}
 		else{
 			printf("Error al leer variable del proceso actual.\n");
+			exitPorErrorUMC();
+
+			return ERROR;
 		}
-		return *valor_variable;
-	}
+	} // fin else lectura ok
 }
 
 void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 
-	/* Escribe en el stack de memoria el valor en la posición dada. */
-
 	printf("Escribiendo variable...\n");
 	solicitudEscritura * var_escritura = malloc(sizeof(solicitudEscritura));
 
-	int num_pagina =  var_stack_offset / tamanioPagina;
-	int offset = var_stack_offset - (num_pagina*tamanioPagina);
+	int total_heap_offset = (pcbActual->paginas_codigo * tamanioPagina) + var_stack_offset;
+	int num_pagina =  total_heap_offset / tamanioPagina;
+	int offset = total_heap_offset % tamanioPagina;
+
 		var_escritura->pagina = num_pagina;
 		var_escritura->offset = offset;
 		var_escritura->contenido = valor;
@@ -199,6 +197,7 @@ void asignar(t_puntero var_stack_offset, t_valor_variable valor){
 		printf("Error: La variable no pudo asignarse.\n");
 		exitPorErrorUMC();
 	}
+	printf("La variable ha sido asignada.\n");
 	return;
 }
 
