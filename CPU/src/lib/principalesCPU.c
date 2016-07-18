@@ -136,8 +136,7 @@ char* solicitarProximaInstruccionAUMC(){
 		direccionInstruccion->offset = offset;
 		direccionInstruccion->tamanio = longitud;
 
-		log_info(logger, "Solicitando a UMC-> Pagina: %d - Offset: %d - Size: %d",
-				num_pagina, offset, longitud);
+		printf("Solicitando a UMC-> Pagina: %d - Offset: %d - Size: %d.\n", num_pagina, offset, longitud);
 		aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
 		free(direccionInstruccion);
 
