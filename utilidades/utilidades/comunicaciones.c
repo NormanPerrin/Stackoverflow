@@ -486,7 +486,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 
 	while (contador_instrucciones < unPcb->cantidad_instrucciones){
 
-		int primera_instruccion = primera_instruccion((unPcb->indiceCodigo)[contador_instrucciones]);
+		int primera_instruccion = getPrimeraInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
 		memcpy(buffer + desplazamiento, &primera_instruccion, INT);
 			desplazamiento += INT;
 
@@ -604,7 +604,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 		registroStack *reg = malloc(sizeof(registroStack));
 
-		memcpy(reg->cantidad_args, buffer + desplazamiento, 4);
+		memcpy(&reg->cantidad_args, buffer + desplazamiento, 4);
 			desplazamiento += 4;
 
 		reg->args = list_create();
@@ -618,7 +618,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 			arg->nombre = malloc(2);
 			memcpy(arg->nombre, buffer + desplazamiento, 2);
 				desplazamiento += 2;
-			memcpy(arg->direccion, buffer + desplazamiento, 12);
+			memcpy(&arg->direccion, buffer + desplazamiento, 12);
 				desplazamiento += 12;
 
 			list_add(reg->args, arg);
@@ -626,7 +626,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 			contador_argumentos++;
 		} // fin carga lista argumentos
 
-		memcpy(reg->cantidad_vars, buffer + desplazamiento, 4);
+		memcpy(&reg->cantidad_vars, buffer + desplazamiento, 4);
 			desplazamiento += 4;
 
 		reg->vars = list_create();
@@ -640,7 +640,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 			var->nombre = malloc(2);
 			memcpy(var->nombre, buffer + desplazamiento, 2);
 				desplazamiento += 2;
-			memcpy(var->direccion, buffer + desplazamiento, 12);
+			memcpy(&var->direccion, buffer + desplazamiento, 12);
 				desplazamiento += 12;
 
 			list_add(reg->args, var);
@@ -648,9 +648,9 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 			 contador_variables++;
 		} // fin carga lista variables
 
-		memcpy(reg->retPos, buffer + desplazamiento, 4);
+		memcpy(&reg->retPos, buffer + desplazamiento, 4);
 			desplazamiento += 4;
-		memcpy(reg->retVar, buffer + desplazamiento, 4);
+		memcpy(&reg->retVar, buffer + desplazamiento, 4);
 			desplazamiento += 4;
 
 		list_add(unPcb->indiceStack, reg); // agrego el registro cargado y avanzo al siguiente
