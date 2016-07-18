@@ -131,7 +131,7 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	switch(head){
 
 	case ENVIAR_SCRIPT:{
-		buffer = serealizarString(mensaje, tamanio);;
+		buffer = serealizarString(mensaje, tamanio);
 		break;
 	}
 	// CASE 1: El mensaje es un texto (char*)
@@ -147,8 +147,12 @@ void * serealizar(int head, void * mensaje, int tamanio){
 			break;
 		}
 	// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
-	case INICIAR_PROGRAMA: case ESCRIBIR_PAGINA:{
-		buffer = serealizarTextoMasDosInt(mensaje, tamanio);
+	case INICIAR_PROGRAMA:{
+		buffer = serealizarInicioPrograma(mensaje, tamanio);
+		break;
+	}
+	case ESCRIBIR_PAGINA:{
+		buffer = serealizarPedidoEscrituraPagina(mensaje, tamanio);
 			break;
 		}
 	// CASE 4: El mensaje es un pcb (pcb)
@@ -208,11 +212,11 @@ void * deserealizar(int head, void * buffer, int tamanio){
 		}
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 		case INICIAR_PROGRAMA: {
-			mensaje = deserealizarTextoMasDosInt(buffer, tamanio);
+			mensaje = deserealizarInicioPrograma(buffer, tamanio);
 				break;
 			}
 		case ESCRIBIR_PAGINA:{
-			mensaje = (solicitudEscribirPagina*)deserealizarTextoMasDosInt(buffer, tamanio);
+			mensaje = deserealizarPedidoEscrituraPagina(buffer, tamanio);
 				break;
 			}
 		// CASE 4: El mensaje es un pcb (pcb)
@@ -268,11 +272,43 @@ string* deserealizarString(void* buffer, int tamanio){
 	return msj;
 }
 
+void* serealizarInicioPrograma(void* mensaje, int tamanio){
+	inicioPrograma* msj = (inicioPrograma*) mensaje;
+	int desplazamiento = 0;
+
+	void * buffer = malloc(tamanio);
+	memcpy(buffer + desplazamiento, &(msj->pid), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(msj->paginas), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(msj->contenido.tamanio), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, msj->contenido.cadena, msj->contenido.tamanio);
+
+	return buffer;
+}
+
+inicioPrograma* deserealizarInicioPrograma(void* buffer, int tamanio){
+	int desplazamiento = 0;
+
+	inicioPrograma* msj = (inicioPrograma*)reservarMemoria(tamanio);
+	memcpy(&msj->pid, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&msj->paginas, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&msj->contenido.tamanio, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	msj->contenido.cadena = malloc(msj->contenido.tamanio);
+	memcpy(msj->contenido.cadena, buffer + desplazamiento, msj->contenido.tamanio);
+
+	return msj;
+}
+
 void* serealizarTextoMasUnInt(void* mensaje, int tamanio){
 
 		pedidoIO* msj = (pedidoIO*) mensaje;
 		int desplazamiento = 0;
-		int string_size = strlen(msj->nombreDispositivo)+1;
+		int string_size = tamanio-4;
 
 		void * buffer = malloc(tamanio);
 		memcpy(buffer + desplazamiento, &(msj->tiempo), INT);
@@ -285,7 +321,7 @@ void* serealizarTextoMasUnInt(void* mensaje, int tamanio){
 pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
-	int string_size = tamanio - INT;
+	int string_size = tamanio-4;
 
 		pedidoIO * msj = malloc(tamanio);
 		memcpy(&msj->tiempo, buffer + desplazamiento, INT);
@@ -296,36 +332,34 @@ pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio){
 		return msj;
 }
 
-void* serealizarTextoMasDosInt(void* mensaje, int tamanio){
+void*  serealizarPedidoEscrituraPagina(void* mensaje, int tamanio){
 
-	inicioPrograma* msj = (inicioPrograma*) mensaje;
+	solicitudEscribirPagina* msj = (solicitudEscribirPagina*) mensaje;
 	int desplazamiento = 0;
+	int contenido_size = tamanio-8;
 
 		void * buffer = malloc(tamanio);
 		memcpy(buffer + desplazamiento, &(msj->pid), INT);
 			desplazamiento += INT;
-		memcpy(buffer + desplazamiento, &(msj->paginas), INT);
+		memcpy(buffer + desplazamiento, &(msj->pagina), INT);
 			desplazamiento += INT;
-		memcpy(buffer + desplazamiento, &(msj->contenido.tamanio), INT);
-			desplazamiento += INT;
-		memcpy(buffer + desplazamiento, msj->contenido.cadena, msj->contenido.tamanio);
+		memcpy(buffer + desplazamiento, msj->contenido, contenido_size);
 
 		return buffer;
 }
 
-inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio){
+solicitudEscribirPagina*  deserealizarPedidoEscrituraPagina(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
+	int contenido_size = tamanio-8;
 
-	inicioPrograma *msj = (inicioPrograma*)reservarMemoria(tamanio);
+	solicitudEscribirPagina *msj = (solicitudEscribirPagina*)reservarMemoria(tamanio);
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&msj->paginas, buffer + desplazamiento, INT);
+	memcpy(&msj->pagina, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&msj->contenido.tamanio, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	msj->contenido.cadena = malloc(msj->contenido.tamanio);
-	memcpy(msj->contenido.cadena, buffer + desplazamiento, msj->contenido.tamanio);
+	msj->contenido = malloc(contenido_size);
+	memcpy(msj->contenido, buffer + desplazamiento, contenido_size);
 
 	return msj;
 }

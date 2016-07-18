@@ -68,10 +68,14 @@ void* serealizarPcb(void* mensaje, int tamanio);
 pcb* deserealizarPcb(void* buffer, int tamanio);
 void* serealizarString(void* mensaje, int tamanio);
 string* deserealizarString(void* buffer, int tamanio);
+
+void* serealizarInicioPrograma(void* mensaje, int tamanio);
+inicioPrograma* deserealizarInicioPrograma(void* buffer, int tamanio);
+
 void* serealizarTextoMasUnInt(void* mensaje, int tamanio);
 pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio);
-void* serealizarTextoMasDosInt(void* buffer, int tamanio);
-inicioPrograma* deserealizarTextoMasDosInt(void* buffer, int tamanio);
+void*  serealizarPedidoEscrituraPagina(void* buffer, int tamanio);
+solicitudEscribirPagina*  deserealizarPedidoEscrituraPagina(void* buffer, int tamanio);
 void* serealizarDosInt(void* mensaje, int tamanio);
 solicitudLeerPagina* deserealizarDosInt(void* buffer, int tamanio);
 void* serealizarTresInt(void* mensaje, int tamanio);
