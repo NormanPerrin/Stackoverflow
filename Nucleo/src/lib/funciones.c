@@ -276,6 +276,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 		inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(tam_prog+12);
 		solicitudDeInicio->paginas = nuevoPcb->paginas_stack + nuevoPcb->paginas_codigo;
 		solicitudDeInicio->pid = nuevoPcb->pid;
+		solicitudDeInicio->contenido.tamanio = programa->tamanio;
 		solicitudDeInicio->contenido.cadena = malloc(programa->tamanio);
 		solicitudDeInicio->contenido.cadena = programa->cadena;
 		printf("Solicitando segmentos de código y de stack a UMC para el proceso #%d.\n", nuevoPcb->pid);

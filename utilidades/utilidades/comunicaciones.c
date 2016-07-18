@@ -92,8 +92,13 @@ int calcularTamanioMensaje(int head, void* mensaje){
 				break;
 			}
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
-			case INICIAR_PROGRAMA: case ESCRIBIR_PAGINA:{
-				inicioPrograma* msj = (inicioPrograma*)mensaje;
+			case ESCRIBIR_PAGINA:{
+				solicitudEscribirPagina* msj = (solicitudEscribirPagina*) mensaje;
+				tamanio = strlen(msj->contenido) + 9;
+				break;
+			}
+			case INICIAR_PROGRAMA:{
+				inicioPrograma* msj = (inicioPrograma*) mensaje;
 				tamanio = msj->contenido.tamanio + 12;
 				break;
 			}
@@ -291,7 +296,7 @@ void* serealizarInicioPrograma(void* mensaje, int tamanio){
 inicioPrograma* deserealizarInicioPrograma(void* buffer, int tamanio){
 	int desplazamiento = 0;
 
-	inicioPrograma* msj = (inicioPrograma*)reservarMemoria(tamanio);
+	inicioPrograma* msj = malloc(tamanio);
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&msj->paginas, buffer + desplazamiento, INT);
