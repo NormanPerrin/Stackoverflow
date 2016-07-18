@@ -88,10 +88,7 @@ void revisarFinalizarCPU(){
 }
 
 int recibirYvalidarEstadoDelPedidoAUMC(){
-	 /*	Pasos a seguir tras validación:
-	  * liberarPcbActiva();
-		revisarFinalizarCPU();
-		printf("Esperando nuevo proceso...\n");	*/
+// Tras validación: liberarPcbActiva(); revisarFinalizarCPU(); printf("Esperando nuevo proceso...\n");
 	int head;
 	void* entrada = NULL;
 	int* estadoDelPedido = NULL;
@@ -123,35 +120,40 @@ void exitPorErrorUMC(){
 }
 
 char* solicitarProximaInstruccionAUMC(){
-	int index = pcbActual->pc;
+	t_intructions *index = pcbActual->indiceCodigo;
+	index += pcbActual->pc;
+	t_intructions *instruccion = index;
+	int comienzo = instruccion->start;
+	int longitud = instruccion->offset;
+	/*int index = pcbActual->pc;
 	int comienzo = pcbActual->indiceCodigo[index].start;
-	int longitud = pcbActual->indiceCodigo[index].offset;
+	int longitud = pcbActual->indiceCodigo[index].offset;*/
 
-		// Obtengo la dirección lógica de la instrucción a partir del índice de código:
-		int num_pagina = comienzo / tamanioPagina;
-		int offset = comienzo - (tamanioPagina*num_pagina);
+	// Obtengo la dirección lógica de la instrucción a partir del índice de código:
+	int num_pagina = comienzo / tamanioPagina;
+	int offset = comienzo - (tamanioPagina*num_pagina);
 
-		solicitudLectura* direccionInstruccion = (solicitudLectura*)malloc(sizeof(solicitudLectura));
-		direccionInstruccion->pagina = num_pagina;
-		direccionInstruccion->offset = offset;
-		direccionInstruccion->tamanio = longitud;
+	solicitudLectura* direccionInstruccion = (solicitudLectura*)malloc(sizeof(solicitudLectura));
+	direccionInstruccion->pagina = num_pagina;
+	direccionInstruccion->offset = offset;
+	direccionInstruccion->tamanio = longitud;
 
-		printf("Solicitando a UMC-> Pagina: %d - Offset: %d - Size: %d.\n", num_pagina, offset, longitud);
-		aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
-		free(direccionInstruccion);
+	printf("Solicitando a UMC-> Pagina: %d - Offset: %d - Size: %d.\n", num_pagina, offset, longitud);
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
+	free(direccionInstruccion);
 
-		if(recibirYvalidarEstadoDelPedidoAUMC()){
-			int head;
-			void* entrada = NULL;
-			entrada = aplicar_protocolo_recibir(fdUMC, &head);
+	if(recibirYvalidarEstadoDelPedidoAUMC()){
+		int head;
+		void* entrada = NULL;
+		entrada = aplicar_protocolo_recibir(fdUMC, &head);
 
-			if(head == DEVOLVER_INSTRUCCION){
-				return (char*)entrada; // UMC aceptó el pedido y me devuelve la instrucción
-			}
-			else { // retorno null por error en el head
-				return NULL;
-			}
-		} // retorno null porque UMC rechazó el pedido
+		if(head == DEVOLVER_INSTRUCCION){
+			return (char*)entrada; // UMC aceptó el pedido y me devuelve la instrucción
+		}
+		else { // retorno null por error en el head
+			return NULL;
+		}
+	} // retorno null porque UMC rechazó el pedido
 	return NULL;
 }
 
