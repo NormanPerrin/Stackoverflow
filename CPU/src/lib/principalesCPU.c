@@ -31,7 +31,7 @@ void liberarPcbActiva(){
 }
 
 void atenderSenialSIGUSR1() {
-		log_info(logger, "Se recibió señal SIGUSR1. Notificando a Núcleo.");
+		printf("Se recibió señal SIGUSR1. Notificando a Núcleo.\n");
 		aplicar_protocolo_enviar(fdNucleo, SENIAL_SIGUSR1, MSJ_VACIO);
 		if (cpuOciosa){
 			printf("Cerrando proceso CPU...\n");
@@ -39,13 +39,13 @@ void atenderSenialSIGUSR1() {
 			exit(EXIT_FAILURE);
 		}
 		finalizarCPU = true;
-		log_debug(logger, "El CPU se cerrará cuando finalice la ráfaga actual.");
+		printf("El CPU se cerrará cuando finalice la ráfaga actual.\n");
 }
 
 int conectarConUMC(){
 	int conexion = conectarSocket(fdUMC, config->ipUMC, config->puertoUMC);
 	if(conexion == ERROR){
-		log_info(logger, "Falló conexión con UMC.");
+		log_error(logger, "Falló conexión con UMC.");
 		return FALSE;
 	}
 	else{
@@ -101,7 +101,7 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 	if(head == RESPUESTA_PEDIDO){
 		estadoDelPedido = (int*)entrada;
 	 if(*estadoDelPedido == NO_PERMITIDO){ // retorno false por pedido rechazado
-		 printf("UMC ha enviado una respuesta de rechazo.\n");
+		 printf("UMC ha rechazado un pedido del proceso actual.\n");
 		 return FALSE;
 		 } // retorno true por pedido acpetado
 	 return TRUE;
@@ -117,7 +117,7 @@ void exitProceso(){
 }
 
 void exitPorErrorUMC(){
-	log_info(logger, "UMC ha rechazado pedido de lectura/escritura durante la ejecución. Abortando programa...");
+	log_debug(logger, "Abortando programa actual...");
 	aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
 	exitProceso();
 }

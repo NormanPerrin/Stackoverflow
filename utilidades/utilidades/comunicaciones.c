@@ -423,9 +423,7 @@ int getOffsetInstruccion (t_intructions instruccion){
 }
 
 t_intructions cargarIndiceCodigo(int primera_instruccion, int offset_instrucciones){
-
 	t_intructions instrucciones;
-
 	instrucciones.start = primera_instruccion;
 	instrucciones.offset = offset_instrucciones;
 
@@ -585,10 +583,26 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(&unPcb->cantidad_registros_stack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 
-		/*// Copio el índice de código:
-		unPcb->indiceCodigo = malloc(unPcb->tamanioIndiceCodigo);
-	memcpy(unPcb->indiceCodigo, buffer + desplazamiento, unPcb->tamanioIndiceCodigo);
-		desplazamiento += unPcb->tamanioIndiceCodigo;*/
+		// Copio índice de código:
+	int contador_instrucciones = 0;
+
+	unPcb->indiceCodigo = malloc(unPcb->tamanioIndiceCodigo);
+
+	while(contador_instrucciones < unPcb->cantidad_instrucciones){
+
+		int primera_instruccion = 0;
+		int offset_instrucciones = 0;
+
+		memcpy(&primera_instruccion, buffer + desplazamiento, INT);
+			desplazamiento += INT;
+
+		memcpy(&offset_instrucciones, buffer + desplazamiento, INT);
+			desplazamiento += INT;
+
+		(unPcb->indiceCodigo)[contador_instrucciones] = cargarIndiceCodigo(primera_instruccion, offset_instrucciones);
+
+		contador_instrucciones++;
+	} // fin carga índice código
 
 		// Copio el índice de etiquetas:
 		unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
@@ -650,13 +664,16 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 		memcpy(&reg->retPos, buffer + desplazamiento, 4);
 			desplazamiento += 4;
-		memcpy(&reg->retVar, buffer + desplazamiento, 4);
-			desplazamiento += 4;
+		memcpy(&reg->retVar, buffer + desplazamiento, 12);
+			desplazamiento += 12;
 
 		list_add(unPcb->indiceStack, reg); // agrego el registro cargado y avanzo al siguiente
 
 		contador_registros_stack++;
-	} // fin carga índice stack
+	}
+	// Copio el int 'elements_count' campo del índice de stack:
+	memcpy(&(unPcb->indiceStack->elements_count), buffer + desplazamiento, INT);
+	// fin carga índice stack
 
 	return unPcb;
 }

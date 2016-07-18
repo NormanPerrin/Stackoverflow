@@ -35,21 +35,21 @@ int main(int argc, char **argv){
 		switch(*respuesta){
 
 	case RECHAZADO:{ // programa rechazado
-				puts("La UMC no pudo alocar los segmentos pedidos. Programa rechazado.\n");
+				log_info(logger, "La UMC no pudo alocar los segmentos pedidos. Programa rechazado.");
 				exitConsola();
 				return EXIT_FAILURE;
 				break;
 			} // fin case rechazado
 
 	case ERROR_CONEXION:{
-				printf("Error al iniciar programa. Script no enviado.\n");
+				log_error(logger, "Error al iniciar programa. Script no enviado.");
 				exitConsola();
 				return EXIT_FAILURE;
 				break;
 			} // fin case error conexión
 
 	case ACEPTADO:{ // programa aceptado
-				puts("Programa aceptado. Escuchando nuevos mensajes de Núcleo...\n");
+				log_info(logger, "Programa aceptado. Escuchando nuevos mensajes de Núcleo...");
 
 		while(TRUE){ // Espera activa de mensajes
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv){
 		free(respuesta); respuesta = NULL;
 	} // fin if head válido
 
-	printf("Error: No se recibió respuesta de inicio de programa de Núcleo.\n");
+	log_error(logger, "No se recibió respuesta de inicio de programa de Núcleo.");
 	exitConsola();
 	return EXIT_FAILURE;
 

@@ -20,14 +20,14 @@ void crearLoggerNucleo(){
 void leerConfiguracionNucleo(){
 	t_config * archivoConfig = NULL;
 		if (comprobarQueExistaArchivo(RUTA_CONFIG_NUCLEO) == ERROR){
-			manejarError("Error: Archivo de configuración no encontrado.\n");
+			printf("Error: Archivo de configuración no encontrado.\n");
 		}
 		archivoConfig = config_create(RUTA_CONFIG_NUCLEO);
 
 		if(setearValoresDeConfig(archivoConfig)){
-			log_info(logger,"Archivo de configuracion leído correctamente.");
+			printf("Archivo de configuracion leído correctamente.\n");
 		}else{
-			log_info(logger,"Lectura incorrecta del archivo de configuración.");
+			printf("Lectura incorrecta del archivo de configuración.\n");
 		}
 }
 
@@ -53,7 +53,7 @@ void lanzarHilosIO(){
       hiloIO *hilo = crearHiloIO(i);
       pthread_create(&hilo->hiloID, NULL, &entradaSalidaThread, (void*) &hilo->dataHilo);
       dictionary_put(diccionarioIO, config->ioID[i], hilo);
-      log_info(logger, "Lanzando hilo de IO #%d perteneciente al dispositivo '%s'", i, hilo->dataHilo.nombre);
+      printf("Lanzando hilo de IO #%d perteneciente al dispositivo '%s'.\n", i, hilo->dataHilo.nombre);
     i++;
     }
 }
@@ -64,7 +64,7 @@ int conexionConUMC(){
 	int conexion = conectarSocket(fd_UMC, config->ipUMC, config->puertoUMC);
 
 	if(conexion == ERROR){
-		log_info(logger, "Falló conexión con UMC.");
+		log_error(logger, "Falló conexión con UMC.");
 		seDesconectoUMC = true;
 
 		return FALSE;
@@ -82,40 +82,6 @@ int conexionConUMC(){
 		tamanioPagina = *tamPagina;
 		printf("Recibí tamanio de página: %d.\n", *tamPagina);
 		free(tamPagina);
-
-																		// TODO: PRUEBA CON NUCLEO
-
-//	#!/home/utnso/Escritorio/tp-2016-1c-Cazadores-de-cucos/Consola/Debug/Consola
-//	begin
-//		variables a, b
-//		a = 3
-//		b = 5
-//		a = b + 12
-//	end
-
-		// seteo un inicio
-//		inicioPrograma *prueba_inicio = (inicioPrograma*)reservarMemoria(sizeof(inicioPrograma));
-//			prueba_inicio->pid = 3;
-//			prueba_inicio->contenido = strdup("#!/home/utnso/Escritorio/tp-2016-1c-Cazadores-de-cucos/Consola/Debug/Consola\nbegin\n\tvariables a, b\n\ta = 3\n\tb = 5\n\ta = b + 12\nend");
-//
-//			int tamanio = strlen(prueba_inicio->contenido) + CHAR;
-//			int division = (int)(tamanio / tamanioPagina);
-//			int resto = tamanio % tamanioPagina;
-//
-//			prueba_inicio->paginas = division;
-//			if(resto == 0) prueba_inicio->paginas++;
-//
-//			aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, prueba_inicio);
-//			free(prueba_inicio->contenido);
-//			free(prueba_inicio);
-//
-//			int head;
-//			int *respuesta = (int*)aplicar_protocolo_recibir(fd_UMC, &head);
-//			if(*respuesta == PERMITIDO) printf("<prueba_inicio> PERMITIDO\n");
-//			else printf("<prueba_inicio> NO_PERMITIDO\n");
-//
-//			liberarRecursosUtilizados();
-//			exit(1);
 
 		return TRUE;
 	}
@@ -178,20 +144,20 @@ void unirHilosIO(){
 	   i++;
 	}*/
 	void cerrarHiloIO(char* id, hiloIO* hilo){
-		log_info(logger, "Cerrando hilo de IO del dispositivo '%s'.", hilo->dataHilo.nombre);
+		printf("Cerrando hilo de IO del dispositivo '%s'.\n", hilo->dataHilo.nombre);
 		pthread_join(hilo->hiloID, NULL); free(hilo); hilo = NULL; }
 
 	 dictionary_iterator(diccionarioIO, (void*) cerrarHiloIO);
 }
 
 void liberarRecursosUtilizados(){
-		limpiarColecciones();
-		limpiarArchivoConfig();
-		log_destroy(logger); logger = NULL;
+	limpiarColecciones();
+	limpiarArchivoConfig();
+	log_destroy(logger); logger = NULL;
 }
 
 void exitNucleo(){
-	printf("Finalizando proceso Núcleo...\n");
+	log_info(logger, "Finalizando proceso Núcleo...");
 	liberarRecursosUtilizados();
 	cerrarSocket(fdEscuchaConsola);
 	cerrarSocket(fdEscuchaCPU);

@@ -40,7 +40,7 @@ int main(void) {
 			conectarConNucleo(); // Conexión con Núcleo
 
 			while (TRUE){
-				log_info(logger, "Esperando mensajes de Núcleo...\n"); // Espera activa de mensajes
+				printf("Esperando mensajes de Núcleo...\n"); // Espera activa de mensajes
 					if (recibirMensajesDeNucleo() == TRUE) {
 					} else {
 						exitCPU();
@@ -97,7 +97,7 @@ int recibirMensajesDeNucleo(){
 }
 
 void ejecutarProcesoActivo(){
-	printf("El proceso #%d entró en ejecución.\n", pcbActual->pid);
+	log_info(logger, "El proceso #%d entró en ejecución.\n", pcbActual->pid);
 	int quantum = pcbActual->quantum;
 
 	while (quantum > 0){
@@ -127,13 +127,13 @@ void ejecutarProcesoActivo(){
 
 			switch (devolvioPcb) {
 			case POR_IO:{
-				log_debug(logger, "Expulsando proceso por pedido de I/O.");
+				log_info(logger, "Expulsando proceso por pedido de I/O.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, &(pcbActual->pid));
 				exitProceso();
 				return;
 			}
 			case POR_WAIT:{
-				log_debug(logger, "Expulsando proceso por operación Wait.");
+				log_info(logger, "Expulsando proceso por operación Wait.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, &(pcbActual->pid));
 				exitProceso();
 				return;
@@ -150,6 +150,6 @@ void ejecutarProcesoActivo(){
 	} // fin while que descuenta quantum
 	// Finalizó ráfaga de ejecución:
 	aplicar_protocolo_enviar(fdNucleo, PCB_FIN_QUANTUM, pcbActual);
-	log_debug(logger, "El proceso ha finalizado ráfaga de ejecución.");
+	log_info(logger, "El proceso ha finalizado ráfaga de ejecución.");
 	exitProceso();
 }

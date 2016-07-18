@@ -122,19 +122,22 @@ char* charAString(char caracter){
 	char* caracterMasBarraCero = (char*)malloc(2);
 		*caracterMasBarraCero = caracter;
 		*(caracterMasBarraCero + 1) = '\0';
+
 		return caracterMasBarraCero;
 }
 
 registroStack* reg_stack_create(){
 	registroStack* reg = malloc(sizeof(registroStack));
-	  reg->vars = list_create();
-	  reg->args = list_create();
-	  reg->retPos = 0;
-	  reg->retVar.offset = 0;
-	  reg->retVar.pagina = 0;
-	  reg->retVar.size = 0;
+	reg->cantidad_args = 0;
+	reg->args = list_create();
+	reg->cantidad_vars = 0;
+	reg->vars = list_create();
+	reg->retPos = 0;
+	reg->retVar.offset = 0;
+	reg->retVar.pagina = 0;
+	reg->retVar.size = 0;
 
-	  return reg;
+	return reg;
 }
 
 void liberarRegistroStack(registroStack* reg){
@@ -142,14 +145,12 @@ void liberarRegistroStack(registroStack* reg){
 	list_destroy(reg->args);
 	list_clean(reg->vars);
 	list_destroy(reg->vars);
-	free(reg);
-	reg = NULL;
+	free(reg); reg = NULL;
 }
 
 void liberarPcb(pcb * unPcb){
 	free(unPcb->indiceCodigo);
 	free(unPcb->indiceEtiquetas);
 	list_destroy_and_destroy_elements(unPcb->indiceStack, (void*) liberarRegistroStack);
-	free(unPcb);
-	unPcb = NULL;
+	free(unPcb); unPcb = NULL;
 }

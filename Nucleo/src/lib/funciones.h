@@ -17,7 +17,7 @@ int validar_servidor();
 proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos);
 void encolarPcbAListos(pcb* proceso);
 void* entradaSalidaThread(void* dataHilo);
-// Función select - Planificación:
+// Función select + Planificación:
 int obtenerSocketMaximoInicial();
 void planificarProceso();
 pcb* buscarProcesoPorPid(int pid);

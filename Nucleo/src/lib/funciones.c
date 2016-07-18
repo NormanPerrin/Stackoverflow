@@ -92,7 +92,6 @@ int setearValoresDeConfig(t_config * archivoConfig){
 }
 
 t_semaforo* semaforo_create(char*nombre, int valor){
-
   t_semaforo *semaforo = malloc(sizeof(t_semaforo));
   semaforo->nombre = strdup(nombre);
   semaforo->valor = valor;
@@ -116,7 +115,7 @@ var_compartida* crearVariableCompartida(char* nombre, int valorInicial){
 
 void registrarVariableCompartida(char* name, int value){
 	var_compartida* var = crearVariableCompartida(name, value);
-		dictionary_put(diccionarioVarCompartidas,var->nombre, var);
+	dictionary_put(diccionarioVarCompartidas,var->nombre, var);
 }
 
 hiloIO* crearHiloIO(int index){
@@ -162,7 +161,7 @@ proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos){
 }
 
 void encolarPcbAListos(pcb* proceso){
-  	  log_info(logger,"Moviendo al proceso #%d a la cola de Listos.", proceso->pid);
+  	 printf("Moviendo al proceso #%d a la cola de Listos.\n", proceso->pid);
   	  queue_push(colaListos, proceso);
 }
 
@@ -304,7 +303,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 			return TRUE;
 		}
 		else{
-			printf("UMC no pudo alocar los segmentos del proceso #%d. Rechazando ingreso al sistema.\n", nuevoPcb->pid);
+			printf("UMC no pudo alocar los segmentos del proceso #%d. Rechazando ingreso al sistema...\n", nuevoPcb->pid);
 
 			return FALSE;
 		}
@@ -386,7 +385,7 @@ void aceptarConexionEntranteDeConsola(){
 	 int ret_handshake = handshake_servidor(new_fd, "N");
 
 	if(ret_handshake == FALSE){ // Falló el handshake
-		printf("[ERROR] Conexión inicial fallida con la Consola fd #%d.\n", new_fd);
+		log_error(logger, "Conexión inicial fallida con la Consola fd #%d.", new_fd);
 		cerrarSocket(new_fd);
 		return;
 	}
@@ -394,7 +393,7 @@ void aceptarConexionEntranteDeConsola(){
 	consola * nuevaConsola = malloc(sizeof(consola));
 	nuevaConsola->id = new_fd - fdEscuchaConsola;
 	nuevaConsola->fd_consola = new_fd;
-	log_info(logger,"La Consola id #%i se ha conectado.", nuevaConsola->id);
+	log_info(logger,"La Consola #%i se ha conectado.", nuevaConsola->id);
 
 	// Recibo el programa de la nueva Consola:
 	int head;
@@ -444,7 +443,7 @@ void aceptarConexionEntranteDeCPU(){
 
 	int ret_handshake = handshake_servidor(new_fd, "N");
 	if(ret_handshake == FALSE){ // Falló el handshake
-		printf("[ERROR] Conexión inicial fallida el CPU fd #%d.\n", new_fd);
+		log_error(logger, "Conexión inicial fallida el CPU fd #%d.", new_fd);
 		cerrarSocket(new_fd);
 		return;
 	}
@@ -476,7 +475,7 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 	length = read(fd_inotify, buffer, EVENT_BUF_LEN);
 
 	if (length <= 0){
-		log_info(logger, "Error al leer el archivo de configuración (inotify_read).");
+		log_error(logger, "Inotify no pudo leer archivo de configuración.");
 		return;
 	} else if (length > 0) {
 		struct inotify_event *event = (struct inotify_event *) &buffer[i];
@@ -547,7 +546,7 @@ int pcbListIndex(int pid){
 void finalizarPrograma(int pid, int index){
 
 	if (index != -1){
-		log_info(logger,"Liberarndo memoria asignada al proceso #%d.", pid);
+		printf("Liberarndo memoria asignada al proceso #%d.\n", pid);
 		// Aviso a UMC que libere la memoria asignada al proceso:
 		int* exit_pid = malloc(INT);
 		*exit_pid = pid;
@@ -613,7 +612,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		    if (mensaje == NULL){ // Si el msj es NULL, quito al CPU del sistema y salvo la PCB:
 		    	salvarProcesoEnCPU(unCPU->id);
 		    	cerrarSocket(fd);
-		    	log_info(logger,"La CPU %i se ha desconectado. Salvando PCB en ejecución.", unCPU->id);
+		    	log_info(logger,"La CPU #%i se ha desconectado. Salvando PCB en ejecución...", unCPU->id);
 		    	free(list_remove(listaCPU, i));
 		    	return;
 		    }else{
@@ -623,9 +622,9 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	case PCB_FIN_QUANTUM:{
 
 		pcb * pcbEjecutada = (pcb*) mensaje;
-		log_info(logger, "Proceso #%i fin de quantum en CPU %i.", pcbEjecutada->pid, unCPU->id);
+		log_info(logger, "Proceso #%i fin de quantum en CPU #%i.", pcbEjecutada->pid, unCPU->id);
 		if(envioSenialCPU(unCPU->id)){
-			log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
 		}
@@ -646,7 +645,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		pcb * pcbEjecutada = (pcb*) mensaje;
 		log_info(logger, "Proceso #%i fin de ejecución en CPU %i.", pcbEjecutada->pid, unCPU->id);
 		if(envioSenialCPU(unCPU->id)){
-			log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
 		}
@@ -682,9 +681,9 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		if(head == PCB_ENTRADA_SALIDA){
 			pcbEjecutada = (pcb*)entrada;
 		}
-		log_info(logger, "Proceso #%i entrada salida en CPU %i.", pcbEjecutada->pid, unCPU->id);
+		log_info(logger, "Proceso #%i entrada salida en CPU #%i.", pcbEjecutada->pid, unCPU->id);
 		if(envioSenialCPU(unCPU->id)){
-			log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
 		}
@@ -705,7 +704,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, string_itoa(*((int*) mensaje)));
-		log_info(logger, "Proceso #%i solicita imprimir variable en CPU %i.", unCPU->pid, unCPU->id);
+		printf("Proceso #%i solicita imprimir variable en CPU #%i.\n", unCPU->pid, unCPU->id);
 
 		break;
 	}
@@ -714,7 +713,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
-		log_info(logger, "Proceso #%i solicita imprimir texto en CPU %i.", unCPU->pid, unCPU->id);
+		printf("Proceso #%i solicita imprimir texto en CPU #%i.\n", unCPU->pid, unCPU->id);
 
 		break;
 	}
@@ -722,9 +721,9 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		int* pid = (int*)mensaje;
 		int index = pcbListIndex(*pid);
-		log_info(logger, "Proceso #%i abortando ejecución en CPU %i.", *pid, unCPU->id);
+		log_info(logger, "Proceso #%i abortando ejecución en CPU #%i.", *pid, unCPU->id);
 		if(envioSenialCPU(unCPU->id)){
-			log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
 		}
@@ -770,7 +769,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			}
 
 			if(envioSenialCPU(unCPU->id)){
-				log_info(logger, "El CPU %i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+				log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 				cerrarSocket(fd);
 				free(list_remove(listaCPU, i));
 			}
@@ -811,13 +810,13 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case SENIAL_SIGUSR1: {
 
-		log_info(logger, "Señal SIGUSR1 del CPU %i. Será quitado del sistema al finalizar ráfaga de ejecución actual.", unCPU->id);
+		printf("Señal SIGUSR1 del CPU #%i. Esperando su PCB en ejecución.\n", unCPU->id);
 		list_add(listaCPU_SIGUSR1, &(unCPU->id));
 
 		break;
 	}
 	default:
-		printf("El head #%d del mensaje no es reconocido por el Núcleo.\n", protocolo);
+		printf("Head #%d de mensaje recibido no reconocido.\n", protocolo);
 		break;
 	} // fin switch protocolo
 		    } // fin else mensaje not null
