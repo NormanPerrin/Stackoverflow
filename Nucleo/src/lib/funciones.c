@@ -311,17 +311,10 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 }
 
 int sizeof_instrucciones(t_intructions *instrucciones){
-	int sizeof_puntero_primera_instruccion = sizeof(instrucciones->start);
+	int sizeof_start = sizeof(instrucciones->start);
 	int sizeof_offset = sizeof(instrucciones->offset);
 
-	return (sizeof_puntero_primera_instruccion+sizeof_offset);
-}
-
-t_puntero_instruccion obtiene_primera_instruccion(t_intructions instruccion){
-
-	t_puntero_instruccion una_instruccion = instruccion.start;
-
-	return una_instruccion;
+	return (sizeof_start + sizeof_offset);
 }
 
 pcb * crearPcb(string* programa){
