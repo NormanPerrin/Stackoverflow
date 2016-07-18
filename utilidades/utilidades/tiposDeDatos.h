@@ -24,8 +24,8 @@ typedef struct {
 
 // Variable compartida AnSISOP:
 typedef struct {
-	char *nombre;
 	int valor;
+	char *nombre;
 } __attribute__((packed)) var_compartida;
 
 // Variable AnSISOP:

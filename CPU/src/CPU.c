@@ -74,9 +74,8 @@ int recibirMensajesDeNucleo(){
 			return FALSE;
 	} else {*/
 		if(head == PCB){
-				int pcb_size = calcularTamanioPcb((pcb*) mensaje);
-				// Me copio la pcb actual que recibo de Núcleo:
-				memcpy(pcbActual, (pcb*) mensaje, pcb_size);
+				// Seteo la pcb actual que recibo de Núcleo:
+				pcbActual = (pcb*) mensaje;
 				// Le informo a UMC el cambio de proceso activo:
 				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, &(pcbActual->pid));
 				// Comienzo la ejecución del proceso:
@@ -103,7 +102,9 @@ void ejecutarProcesoActivo(){
 		char* proximaInstruccion = solicitarProximaInstruccionAUMC();
 
 		if (proximaInstruccion != NULL){ // Llegó una instrucción, analizo si es o no 'end':
+
 			limpiarInstruccion(proximaInstruccion);
+
 			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && (strcmp(proximaInstruccion, "end") == 0)){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
@@ -120,6 +121,7 @@ void ejecutarProcesoActivo(){
 				exitProceso();
 					return;
 				}
+
 			quantum--; // Decremento el quantum actual
 			(pcbActual->pc)++; // Incremento Program Counter del PCB
 
@@ -136,12 +138,12 @@ void ejecutarProcesoActivo(){
 				exitProceso();
 				return;
 			}
-			default:
-				break;
-			} // fin switch devolvió PCB
+		} // fin switch devolvió PCB
+
 			usleep(pcbActual->quantum_sleep * 1000); // Retardo de quantum
+
 		} // fin if not null
-		else {
+		else { // Llegó instrucción null por error con UMC:
 			exitPorErrorUMC();
 			return;
 			} // fin else not null

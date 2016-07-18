@@ -53,11 +53,8 @@ typedef enum {
 void aplicar_protocolo_enviar(int fdReceptor, int head, void * mensaje);
 void* aplicar_protocolo_recibir(int fdEmisor, int* head);
 
-int getPrimeraInstruccion(t_intructions instruccion);
-int getOffsetInstruccion (t_intructions instruccion);
-int calcularTamanioIndiceStack(pcb* unPcb);
+// -- Calcula tamaño mensaje para serealización:
 int calcularTamanioMensaje(int head, void* mensaje);
-int calcularTamanioPcb(pcb* mensaje);
 
 // -- Serealización y deserealización GENERAL:
 void * serealizar(int head, void * mensaje, int tamanio);
@@ -68,10 +65,8 @@ void* serealizarPcb(void* mensaje, int tamanio);
 pcb* deserealizarPcb(void* buffer, int tamanio);
 void* serealizarString(void* mensaje, int tamanio);
 string* deserealizarString(void* buffer, int tamanio);
-
 void* serealizarInicioPrograma(void* mensaje, int tamanio);
 inicioPrograma* deserealizarInicioPrograma(void* buffer, int tamanio);
-
 void* serealizarTextoMasUnInt(void* mensaje, int tamanio);
 pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio);
 void*  serealizarPedidoEscrituraPagina(void* buffer, int tamanio);
@@ -82,5 +77,12 @@ void* serealizarTresInt(void* mensaje, int tamanio);
 direccion* deserealizarTresInt(void* buffer, int tamanio);
 void* serealizarCuatroInt(void* mensaje, int tamanio);
 solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
+
+// -- Auxiliares:
+int getStartInstruccion(t_intructions instruccion);
+int getOffsetInstruccion (t_intructions instruccion);
+t_intructions cargarIndiceCodigo(int primera_instruccion, int offset_instruccion);
+int calcularTamanioIndiceStack(pcb* unPcb);
+int calcularTamanioPcb(pcb* mensaje);
 
 #endif /* UTILIDADES_COMUNICACIONES_H_ */

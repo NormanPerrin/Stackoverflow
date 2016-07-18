@@ -265,15 +265,15 @@ int asignarPid(){
 
 int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 
-	int tam_prog = programa->tamanio;
-	int div = tam_prog / tamanioPagina;
-	int resto_div = tam_prog % tamanioPagina;
+	int tamanio_programa = programa->tamanio;
+	int cantidad_paginas = tamanio_programa / tamanioPagina;
+	int offset_restante = tamanio_programa % tamanioPagina;
 
-	nuevoPcb->paginas_codigo = (resto_div==0)?div:div+1;
+	nuevoPcb->paginas_codigo = (offset_restante==0)? cantidad_paginas : cantidad_paginas+1;
 	nuevoPcb->paginas_stack = config->cantidadPaginasStack;
 
 	// Le solicito a UMC espacio para el heap del programa y verifico su respuesta:
-		inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(tam_prog+12);
+		inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(tamanio_programa+12);
 		solicitudDeInicio->paginas = nuevoPcb->paginas_stack + nuevoPcb->paginas_codigo;
 		solicitudDeInicio->pid = nuevoPcb->pid;
 		solicitudDeInicio->contenido.tamanio = programa->tamanio;

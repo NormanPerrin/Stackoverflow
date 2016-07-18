@@ -36,7 +36,7 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 
 void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 
-	// Validar contra NULL al recibir en cada módulo (lanzar un mensaje de error notificando)
+	// Validar contra NULL al recibir en cada módulo.
 	// Recibo primero el head:
 	int recibido = recibirPorSocket(fdEmisor, head, INT);
 
@@ -71,7 +71,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 	int tamanio;
 
 	switch(head){
-
+		// CASE 0: El mensaje es un texto (string*)
 			case ENVIAR_SCRIPT:{
 				string* script = (string*) mensaje;
 				tamanio = script->tamanio + 4;
@@ -442,15 +442,16 @@ int calcularTamanioPcb(pcb* unPcb){
 	int tamanio;
 	int stack_size = calcularTamanioIndiceStack(unPcb);
 	// Sumo 68 bytes por los 17 int que tiene + los tamaños de los tres índices:
+	// TamañoS índice etiquetas y código vienen de la creación del PCB.
 	tamanio = 68 + unPcb->tamanioIndiceEtiquetas + unPcb->tamanioIndiceCodigo + stack_size;
 
 	return tamanio;
 }
 
-int getPrimeraInstruccion(t_intructions instruccion){
-	int unaInstruccion = instruccion.start;
+int getStartInstruccion(t_intructions instruccion){
+	int comienzo = instruccion.start;
 
-	return unaInstruccion;
+	return comienzo;
 }
 
 int getOffsetInstruccion (t_intructions instruccion){
@@ -459,12 +460,12 @@ int getOffsetInstruccion (t_intructions instruccion){
 	return offset;
 }
 
-t_intructions cargarIndiceCodigo(int primera_instruccion, int offset_instrucciones){
-	t_intructions instrucciones;
-	instrucciones.start = primera_instruccion;
-	instrucciones.offset = offset_instrucciones;
+t_intructions cargarIndiceCodigo(int comienzo_instruccion, int longitud_instruccion){
+	t_intructions instruccion;
+	instruccion.start = comienzo_instruccion;
+	instruccion.offset = longitud_instruccion;
 
-	return instrucciones;
+	return instruccion;
 }
 
 void * serealizarPcb(void * mensaje, int tamanio){
@@ -521,8 +522,8 @@ void * serealizarPcb(void * mensaje, int tamanio){
 
 	while (contador_instrucciones < unPcb->cantidad_instrucciones){
 
-		int primera_instruccion = getPrimeraInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
-		memcpy(buffer + desplazamiento, &primera_instruccion, INT);
+		int start_instruccion = getStartInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
+		memcpy(buffer + desplazamiento, &start_instruccion, INT);
 			desplazamiento += INT;
 
 		int offset_instruccion = getOffsetInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
@@ -565,7 +566,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 			desplazamiento += 4;
 		memcpy(buffer + desplazamiento, &reg->retVar, 12);
 			desplazamiento += 12;
-	}
+	} // fin función serealizadora índice de stack
 
 	list_iterate(unPcb->indiceStack, (void*) serealizarIndiceStack);
 		// Copio el int 'elements_count' campo del índice de stack:
@@ -627,16 +628,15 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 	while(contador_instrucciones < unPcb->cantidad_instrucciones){
 
-		int primera_instruccion = 0;
-		int offset_instrucciones = 0;
+		int start_instruccion = 0, offset_instruccion = 0;
 
-		memcpy(&primera_instruccion, buffer + desplazamiento, INT);
+		memcpy(&start_instruccion, buffer + desplazamiento, INT);
 			desplazamiento += INT;
 
-		memcpy(&offset_instrucciones, buffer + desplazamiento, INT);
+		memcpy(&offset_instruccion, buffer + desplazamiento, INT);
 			desplazamiento += INT;
 
-		(unPcb->indiceCodigo)[contador_instrucciones] = cargarIndiceCodigo(primera_instruccion, offset_instrucciones);
+		(unPcb->indiceCodigo)[contador_instrucciones] = cargarIndiceCodigo(start_instruccion, offset_instruccion);
 
 		contador_instrucciones++;
 	} // fin carga índice código
@@ -694,7 +694,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 			memcpy(&var->direccion, buffer + desplazamiento, 12);
 				desplazamiento += 12;
 
-			list_add(reg->args, var);
+			list_add(reg->vars, var);
 
 			 contador_variables++;
 		} // fin carga lista variables
@@ -707,7 +707,7 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 		list_add(unPcb->indiceStack, reg); // agrego el registro cargado y avanzo al siguiente
 
 		contador_registros_stack++;
-	}
+	} // fin while
 	// Copio el int 'elements_count' campo del índice de stack:
 	memcpy(&(unPcb->indiceStack->elements_count), buffer + desplazamiento, INT);
 	// fin carga índice stack
