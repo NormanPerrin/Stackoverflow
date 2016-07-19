@@ -265,7 +265,7 @@ void leer_instruccion(int fd, void *msj) {
 	free(respuesta);
 
 	// devuelvo el contenido solicitado
-	aplicar_protocolo_enviar(fd, DEVOLVER_INSTRUCCION, (char*)contenido);
+	aplicar_protocolo_enviar(fd, DEVOLVER_INSTRUCCION, contenido);
 
 	free(contenido);
 
@@ -321,19 +321,21 @@ void escribir_bytes(int fd, void *msj) {
 	// busco el marco de la página en TLB TP y Swap
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
 
-	// actualizo TLB y TP
-	buscar_tlb(pid, mensaje->pagina); // la fución buscar actualiza referencia también
-	actualizar_tp(pid, mensaje->pagina, marco, 1, 1, 1);
+	if(marco != ERROR) {
+		// actualizo TLB y TP
+		buscar_tlb(pid, mensaje->pagina); // la fución buscar actualiza referencia también
+		actualizar_tp(pid, mensaje->pagina, marco, 1, 1, 1);
 
-	// escribo contenido
-	int pos_real = marco * (config->marco_size) + mensaje->offset;
-	memcpy(memoria + pos_real, &(mensaje->contenido), INT);
+		// escribo contenido
+		int pos_real = marco * (config->marco_size) + mensaje->offset;
+		memcpy(memoria + pos_real, &(mensaje->contenido), INT);
 
-	// respondo a CPU
-	int *respuesta = (int*)reservarMemoria(INT);
-	*respuesta = PERMITIDO;
-	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-	free(respuesta);
+		// respondo a CPU
+		int *respuesta = (int*)reservarMemoria(INT);
+		*respuesta = PERMITIDO;
+		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+		free(respuesta);
+	}
 
 }
 
@@ -517,6 +519,14 @@ void eliminar_pagina(int pid, int pagina) {
 
 int buscarPagina(int fd, int pid, int pagina) {
 
+	if(validarPagina(pid, pagina) == FALSE) {
+		int *respuesta = (int*)reservarMemoria(INT);
+		*respuesta = NO_PERMITIDO;
+		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+		free(respuesta);
+		return ERROR;
+	}
+
 	int marco;
 
 	// 1) busco en TLB
@@ -697,6 +707,13 @@ int buscar_pos(int pid, int pagina) {
 
 
 // <AUXILIARES>
+
+int validarPagina(int pid, int pagina) {
+	int pos = pos_pid(pid);
+	int paginas = tabla_paginas[pos].paginas;
+	if( (pagina >= paginas) || (pagina < 0) ) return FALSE;
+	return TRUE;
+}
 
 void iniciarEstructuras() {
 
