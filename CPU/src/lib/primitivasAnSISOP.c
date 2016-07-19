@@ -23,7 +23,6 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 
 		int var_pagina = pcbActual->primerPaginaStack;
 		int var_offset = pcbActual->stackPointer;
-		int var_size = INT;
 
 		while(var_offset > tamanioPagina){
 			(var_pagina)++;
@@ -38,15 +37,13 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 		}else{
 			// Agrego la variable al registro actual del índice de stack:
 		registroStack* regStack = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
-			if(regStack == NULL){
-				regStack = reg_stack_create();
-			}
-			//(stackPointer: desplazamiento desde la primer página del stack hasta donde arranca mi nueva variable)
+			if(regStack == NULL) regStack = reg_stack_create();
+
 			if(!esArgumento(var_nombre)){
 				variable* new_var = malloc(14);
 				new_var->direccion.pagina = var_pagina;
 				new_var->direccion.offset = var_offset;
-				new_var->direccion.size = var_size;
+				new_var->direccion.size = INT;
 				new_var->nombre = var_id;
 				list_add(regStack->vars, new_var);
 			}
@@ -54,11 +51,11 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 				variable* new_arg = malloc(14);
 				new_arg->direccion.pagina = var_pagina;
 				new_arg->direccion.offset = var_offset;
-				new_arg->direccion.size = var_size;
+				new_arg->direccion.size = INT;
 				new_arg->nombre = var_id;
 				list_add(regStack->args, new_arg);
 			}
-			printf("'%c' -> Dirección lógica: %i, %i, %i.\n", var_nombre, var_pagina, var_offset, var_size);
+			printf("'%c' -> Dirección lógica: %i, %i, %i.\n", var_nombre, var_pagina, var_offset, INT);
 			free (var_id); var_id = NULL;
 			// Guardo el nuevo registro en el índice:
 			list_add(pcbActual->indiceStack, regStack);
