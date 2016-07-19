@@ -4,8 +4,6 @@
 #include <utilidades/comunicaciones.h>
 #include <signal.h>
 #include <ctype.h>
-#include "parserPrueba.h"
-#include "metadata_program_Prueba.h"
 
 #define PACKAGESIZE 1024 // Size máximo de paquete para sockets
 #define RUTA_CONFIG_CPU "configCPU.txt"
