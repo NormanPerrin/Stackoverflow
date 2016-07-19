@@ -131,15 +131,13 @@ char* solicitarProximaInstruccionAUMC(){
 	int longitud = pcbActual->indiceCodigo[index].offset;*/
 
 	// Obtengo la dirección lógica de la instrucción a partir del índice de código:
-	int num_pagina = comienzo / tamanioPagina;
-	int offset = comienzo - (tamanioPagina*num_pagina);
-
 	solicitudLectura* direccionInstruccion = (solicitudLectura*)malloc(sizeof(solicitudLectura));
-	direccionInstruccion->pagina = num_pagina;
-	direccionInstruccion->offset = offset;
+	direccionInstruccion->pagina = comienzo / tamanioPagina;
+	direccionInstruccion->offset = comienzo % tamanioPagina;
 	direccionInstruccion->tamanio = longitud;
 
-	printf("Solicitando a UMC-> Pagina: %d - Offset: %d - Size: %d.\n", num_pagina, offset, longitud);
+	printf("Solicitando a UMC-> Pagina: %d - Offset: %d - Size: %d.\n",
+			direccionInstruccion->pagina, direccionInstruccion->offset, longitud);
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
 	free(direccionInstruccion);
 

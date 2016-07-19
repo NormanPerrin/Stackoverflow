@@ -1,5 +1,5 @@
-#ifndef LIB_GLOBALESCPU_H_
-#define LIB_GLOBALESCPU_H_
+#ifndef CPU_SRC_LIB_GLOBALESCPU_H_
+#define CPU_SRC_LIB_GLOBALESCPU_H_
 
 #include <utilidades/comunicaciones.h>
 #include <signal.h>
@@ -25,4 +25,4 @@ int fdNucleo, fdUMC, tamanioPagina, tamanioStack;
 t_log * logger;
 pcb * pcbActual;
 
-#endif /* LIB_GLOBALESCPU_H_ */
+#endif /* CPU_SRC_LIB_GLOBALESCPU_H_ */

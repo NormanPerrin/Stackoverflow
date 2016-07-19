@@ -1,5 +1,5 @@
-#ifndef LIB_PRINCIPALESCPU_H_
-#define LIB_PRINCIPALESCPU_H_
+#ifndef CPU_SRC_LIB_PRINCIPALESCPU_H_
+#define CPU_SRC_LIB_PRINCIPALESCPU_H_
 
 #include "primitivasAnSISOP.h"
 
