@@ -973,8 +973,6 @@ int buscarMarcoLibre(int pid) {
 			int marco = tabla_paginas[pos].marcos_reservados[i];
 			if(verificarMarcoLibre(pid, marco))
 				return marco;
-			else
-				return ERROR;
 		}
 	}
 	return ERROR;
