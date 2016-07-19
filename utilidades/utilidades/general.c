@@ -133,7 +133,7 @@ registroStack* reg_stack_create(){
 }
 
 void liberarRegistroStack(registroStack* reg){
-	list_clean(reg->args);
+	list_clean(reg->args); reg->args = NULL;
 	list_destroy(reg->args);
 	list_clean(reg->vars);
 	list_destroy(reg->vars);
@@ -141,8 +141,8 @@ void liberarRegistroStack(registroStack* reg){
 }
 
 void liberarPcb(pcb * unPcb){
-	free(unPcb->indiceCodigo);
-	free(unPcb->indiceEtiquetas);
-	list_destroy_and_destroy_elements(unPcb->indiceStack, (void*) liberarRegistroStack);
+	free(unPcb->indiceCodigo); unPcb->indiceCodigo = NULL;
+	free(unPcb->indiceEtiquetas); unPcb->indiceEtiquetas = NULL;
+	list_destroy_and_destroy_elements(unPcb->indiceStack, (void*) liberarRegistroStack); unPcb->indiceStack = NULL;
 	free(unPcb); unPcb = NULL;
 }

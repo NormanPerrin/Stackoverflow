@@ -38,8 +38,8 @@ void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 	// Recibo primero el head:
 	int recibido = recibirPorSocket(fdEmisor, head, INT);
 
-	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){
-		printf("Error al recibir mensaje.\n");
+	if (*head < 1 || *head > FIN_DEL_PROTOCOLO || recibido <= 0){ // DESCONEXIÓN
+		//printf("Error al recibir mensaje.\n");
 		return NULL;
 	}
 
