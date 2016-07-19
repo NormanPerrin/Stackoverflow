@@ -250,7 +250,7 @@ void leer_instruccion(int fd, void *msj) {
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
 
 	// actualizo TLB y TP
-	buscar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
+	actualizar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
 	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
 
 	// busco el código que me piden
@@ -286,7 +286,7 @@ void leer_variable(int fd, void *msj) {
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
 
 	// actualizo TLB y TP
-	buscar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
+	actualizar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
 	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
 
 	// busco el código que me piden
@@ -323,7 +323,7 @@ void escribir_bytes(int fd, void *msj) {
 
 	if(marco != ERROR) {
 		// actualizo TLB y TP
-		buscar_tlb(pid, mensaje->pagina); // la fución buscar actualiza referencia también
+		actualizar_tlb(pid, mensaje->pagina); // la fución buscar actualiza referencia también
 		actualizar_tp(pid, mensaje->pagina, marco, 1, 1, 1);
 
 		// escribo contenido
@@ -381,7 +381,7 @@ void finalizar_programa(int fd, void *msj) {
 		eliminar_pagina(pid, i);
 
 		// elimino página de TLB si está
-		borrar_tlb(pid, i);
+		borrar_tlb(pid);
 
 	}
 
@@ -530,7 +530,10 @@ int buscarPagina(int fd, int pid, int pagina) {
 	int marco;
 
 	// 1) busco en TLB
-	marco = buscar_tlb(pid, pagina); // con TLB hit no entra al if
+	// con TLB hit no entra al if
+	registro_tlb *elem = buscar_tlb(pid, pagina);
+	if(elem == NULL) marco = ERROR;
+	else marco = elem->marco;
 
 	if( marco == ERROR ) { // TLB miss
 
@@ -653,54 +656,58 @@ void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modifi
 
 // <TLB_FUNCS>
 
-int buscar_tlb(int pid, int pagina) {
+int tlbListIndex(int pid, int pagina) {
+	int i = 0;
+	registro_tlb *aux = NULL;
+	for (; i < list_size(tlb); i++){
+		aux = (registro_tlb*)list_get(tlb, i);
+		if( (aux->pid == pid) && (aux->pagina == pagina) ) {
+			free(aux);
+			return i; // el proceso está en la posición 'i'
+		}
+			free(aux);
+	}
+	return ERROR; // no se encontró el proceso
+}
 
-	int pos = buscar_pos(pid, pagina);
+registro_tlb *buscar_tlb(int pid, int pagina) {
 
-	if(pos == ERROR) { // no encontró
+	bool esElementoTlb(registro_tlb *elemento){ return (elemento->pagina == pagina && elemento->pid == pid );}
+	registro_tlb* elemento = list_find(tlb, (void*) esElementoTlb);
+
+	return elemento;
+}
+
+int actualizar_tlb(int pid, int pagina) {
+
+	bool esElementoTlb(registro_tlb *elemento){ return (elemento->pagina == pagina && elemento->pid == pid );}
+	registro_tlb* elem_removido = list_remove_by_condition(tlb, (void*) esElementoTlb);
+	if(elem_removido == NULL){
 		return ERROR;
 	}
-
-	tlb_t aux = tlb[pos];
-	correrParaArriba(pos);
-	correrParaAbajo(config->entradas_tlb-1);
-	tlb[0] = aux;
-
-	return tlb[pos].marco;
+	else{
+		list_add_in_index(tlb, 0, elem_removido);
+		return TRUE;
+	}
 }
 
 void agregar_tlb(int pid, int pagina, int marco) {
-	correrParaAbajo(config->entradas_tlb-1);
-	tlb[0].pid = pid;
-	tlb[0].pagina = pagina;
-	tlb[0].marco = marco;
-}
-
-void borrar_tlb(int pid, int pagina) {
-	int pos = buscar_pos(pid, pagina);
-	correrParaArriba(pos);
-}
-
-void correrParaArriba(int pos) {
-	int i = pos;
-	for(; i < config->entradas_tlb-1; i++)
-		tlb[i] = tlb[i+1];
-}
-
-void correrParaAbajo(int pos) {
-	int i = pos;
-	for(; i > 0; i--)
-		tlb[i] = tlb[i-1];
-}
-
-int buscar_pos(int pid, int pagina) {
-	int pos = 0;
-	while(pos < config->entradas_tlb) {
-		if((tlb[pos].pid == pid) && (tlb[pos].pagina == pagina)) // encontró
-			return pos;
-		pos++;
+	if(list_size(tlb) == config->entradas_tlb){
+		free( list_remove(tlb, config->entradas_tlb - 1) );
 	}
-	return ERROR;
+	registro_tlb *elem = (registro_tlb*)reservarMemoria(sizeof(registro_tlb));
+	elem->pid = pid;
+	elem->pagina = pagina;
+	elem->marco = marco;
+	list_add_in_index(tlb, 0, elem);
+}
+
+void borrar_tlb(int pid) {
+	registro_tlb *elem = NULL;
+	bool esElementoTlb(registro_tlb *elemento){return elemento->pid == pid;}
+	while( (elem = list_remove_by_condition(tlb, (void*) esElementoTlb)) != NULL) {
+		free(elem);
+	}
 }
 
 // </TLB_FUNCS>
@@ -738,11 +745,7 @@ void iniciarEstructuras() {
 	iniciarTP();
 
 	// tlb
-	int sizeof_tlb = config->entradas_tlb * sizeof(tlb_t);
-	tlb = reservarMemoria(sizeof_tlb);
-	int k = 0;
-	for(; k < config->entradas_tlb; k++)
-		tlb[k].pid = -1;
+	tlb = list_create();
 
 	// pids (array de pid activo por CPU)
 	int j = 0;
@@ -767,7 +770,7 @@ void compararProtocolos(int protocolo1, int protocolo2) {
 void liberarRecusos() {
 	// liberar otros recursos
 	free(memoria);
-	free(tlb);
+	list_destroy(tlb);
 	free(bitmap);
 	sem_destroy(&mutex);
 	liberarConfig();
@@ -1154,24 +1157,13 @@ void dump(char *argumento) {
 void flush(char *argumento) {
 
 	if(!strcmp(argumento, "tlb"))
-		limpiarTLB();
+		list_clean(tlb);
 
 	if(!strcmp(argumento, "memory"))
 		cambiarModificado();
 
 	if( strcmp(argumento, "tlb") && strcmp(argumento, "memory") )
 		fprintf(stderr, "Error: argumento \"%s\" invalido.\n- flush tlb\n- flush memory\n", argumento);
-}
-
-void limpiarTLB() {
-	if(config->entradas_tlb == 0) {
-		fprintf(stderr, "Error: no es posible ejecutar el comando. <tlb desactivada>\n");
-		return;
-	}
-	int i = 0;
-	for(; i < config->entradas_tlb; i++) {
-		tlb[i].pid = -1;
-	}
 }
 
 void salir() {

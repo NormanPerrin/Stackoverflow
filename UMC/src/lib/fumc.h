@@ -50,7 +50,7 @@
 		int pagina;
 		int pid;
 		int marco;
-	} tlb_t;
+	} registro_tlb;
 
 	// Interfaz
 
@@ -75,7 +75,7 @@
 	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
 	void *memoria; // tha memory
 	tp_t tabla_paginas[MAX_PROCESOS];
-	tlb_t *tlb;
+	t_list *tlb;
 	sem_t mutex;
 	pid_activo pids[MAX_CONEXIONES];
 	int *bitmap;
@@ -148,12 +148,11 @@
 	// </PID_FUNCS>
 
 	// <TLB_FUNCS>
-	int buscar_tlb(int pid, int pagina);
 	void agregar_tlb(int pid, int pagina, int marco);
-	void borrar_tlb(int pid, int pagina);
-	void correrParaArriba(int pos);
-	void correrParaAbajo(int pos);
-	int buscar_pos(int pid, int pagina);
+	int actualizar_tlb(int pid, int pagina);
+	registro_tlb *buscar_tlb(int pid, int pagina);
+	int tlbListIndex(int pid, int pagina);
+	void borrar_tlb(int pid);
 	// </TLB_FUNCS>
 
 	// <MEMORIA_FUNCS>
