@@ -533,6 +533,7 @@ int buscarPagina(int fd, int pid, int pagina) {
 			*respuesta = NO_PERMITIDO;
 			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 			free(respuesta);
+			return ERROR;
 		}
 
 		// veo si está en MP y si no encuentro cargo desde Swap
