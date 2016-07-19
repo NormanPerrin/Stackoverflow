@@ -98,6 +98,7 @@ void ejecutarProcesoActivo(){
 	int quantum = pcbActual->quantum;
 
 	while (quantum > 0){
+
 		 // Obtengo la próxima instrucción a ejecutar:
 		char* proximaInstruccion = solicitarProximaInstruccionAUMC();
 
@@ -125,7 +126,7 @@ void ejecutarProcesoActivo(){
 			quantum--; // Decremento el quantum actual
 			(pcbActual->pc)++; // Incremento Program Counter del PCB
 
-			switch (devolvioPcb) {
+			switch (devolvioPcb){
 			case POR_IO:{
 				log_info(logger, "Expulsando proceso por pedido de I/O.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, &(pcbActual->pid));

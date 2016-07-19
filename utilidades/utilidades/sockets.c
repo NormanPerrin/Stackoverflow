@@ -5,14 +5,15 @@
 // *******************************
 
 // Creación del socket
-int nuevoSocket() {
+int nuevoSocket(){
 	int fileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-		if (fileDescriptor == ERROR) manejarError("Error: No se pudo crear el socket");
+	if (fileDescriptor == ERROR) manejarError("Error: No se pudo crear el socket.");
+
 	return fileDescriptor;
 }
 
 // Asociación del socket con algún puerto local
-struct sockaddr_in asociarSocket(int fd_socket, int puerto) {
+struct sockaddr_in asociarSocket(int fd_socket, int puerto){
 	struct sockaddr_in miDireccionSocket;
 
 	miDireccionSocket.sin_family = AF_INET;
@@ -23,21 +24,20 @@ struct sockaddr_in asociarSocket(int fd_socket, int puerto) {
 // Si el puerto ya está siendo utilizado, lanzamos un error
 	int enUso = 1;
 	int puertoYaAsociado = setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char*) &enUso, sizeof(enUso));
-		if (puertoYaAsociado == ERROR)
-			manejarError("Error: [Puerto] La dirección de socket ya está siendo utilizada");
+	if (puertoYaAsociado == ERROR) manejarError("Error: El puerto a asociar ya está siendo utilizado.");
 
 // Ya comprobado el error de puerto, llamamos a bind
 	int retornoBind = bind(fd_socket, (struct sockaddr *) &miDireccionSocket, sizeof(struct sockaddr));
-		if ( retornoBind == ERROR) manejarError("Error: No se pudo asociar el socket a un puerto");
+	if (retornoBind == ERROR) manejarError("Error: No se pudo asociar el socket al puerto.");
 
-		return miDireccionSocket;
+	return miDireccionSocket;
 }
 
 // Ponemos al socket a escuchar conexiones entrantes
-void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas) {
+void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas){
 	int retornoListen = listen(fd_socket, conexionesEntrantesPermitidas); // SOMAXCONN: máximo tamaño de la cola
-		if ( retornoListen == ERROR) manejarError("Error: No se pudo poner al socket a escuchar conexiones entrantes");
-		}
+	if (retornoListen == ERROR) manejarError("Error: No se pudo poner al socket a escuchar conexiones entrantes.");
+}
 
 // Obtención de una conexión entrante pendiente
 int aceptarConexionSocket(int fd_socket) {
@@ -45,7 +45,7 @@ int aceptarConexionSocket(int fd_socket) {
 	unsigned int addres_size = sizeof(unCliente);
 
 	int fdCliente = accept(fd_socket, (struct sockaddr*) &unCliente, &addres_size);
-		if(fdCliente == ERROR) manejarError("Error: No se pudo obtener una conexión entrante pendiente");
+	if(fdCliente == ERROR) manejarError("Error: No se pudo aceptar la conexión entrante.");
 
 	return fdCliente;
 }
@@ -64,12 +64,12 @@ int conectarSocket(int fd_socket, const char * ipDestino, int puerto){
 	memset(&(direccionServidor.sin_zero), '\0', 8);
 
 	int retornoConnect = connect(fd_socket, (struct sockaddr *) &direccionServidor, sizeof(struct sockaddr));
-		if ( retornoConnect == ERROR) {
-			manejarError("Error: No se pudo realizar la conexión entre el socket y el servidor");
-			return ERROR;
+	if (retornoConnect == ERROR) {
+		manejarError("Error: No se pudo realizar la conexión entre el socket y el servidor.");
+		return ERROR;
 	} else {
-			return 0;
-		}
+		return 0;
+	}
 }
 // **********************************
 // *    Enviar y Recibir Datos	    *
@@ -83,7 +83,7 @@ int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes) {
 	while (totalBytes < tamanioBytes) {
 		bytes_enviados = send(fdCliente, mensaje + totalBytes, tamanioBytes, 0); // El 0 significa que no le paso ningún Flag
 /* send: devuelve el múmero de bytes que se enviaron en realidad, pero como estos podrían ser menos
- * de los que pedimos que se enviaran, realizamos la siguiente validación */
+ * de los que pedimos que se enviaran, realizamos la siguiente validación: */
 
 		if (bytes_enviados == ERROR) {
 			break;
@@ -91,7 +91,7 @@ int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes) {
 		totalBytes += bytes_enviados;
 		tamanioBytes -= bytes_enviados;
 	}
-	if (bytes_enviados == ERROR) manejarError ("Error: No se pudo enviar correctamente los datos.");
+	if (bytes_enviados == ERROR) manejarError("Error: No se pudo enviar correctamente los datos.");
 
 	return bytes_enviados; // En caso de éxito, se retorna la cantidad de bytes realmente enviada
 }
@@ -112,9 +112,9 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 			}
 
 	if (bytes_recibidos == 0) { // Conexión cerrada
-		printf("La conexión #%d se ha cerrado.\n", fdServidor);
+		printf("La conexión fd #%d se ha cerrado.\n", fdServidor);
 		break;
-			}
+	}
 	total += bytes_recibidos;
 	tamanioBytes -= bytes_recibidos;
 		}
@@ -128,7 +128,7 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 // Cierre de la conexión del file descriptor del socket
 void cerrarSocket(int fd_socket) {
 	int retornoClose = close(fd_socket);
-		if (retornoClose == ERROR) manejarError("Error: No se pudo cerrar el socket.");
+	if (retornoClose == ERROR) manejarError("Error: No se pudo cerrar el socket.");
 }
 
 // ******************************************
