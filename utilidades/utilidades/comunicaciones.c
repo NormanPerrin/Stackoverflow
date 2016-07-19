@@ -426,8 +426,8 @@ int calcularTamanioIndiceStack(pcb* unPcb){
 
 	void calcularTamanioRegistroStack(registroStack* reg){
 		// Por cada var y arg: 2 bytes nombre + 12 bytes dirección + 4 bytes elements_count:
-		int tam_args = 4 + (reg->args->elements_count * 14);
-		int tam_vars = 4 + (reg->vars->elements_count * 14);
+		int tam_args = 4 + (reg->args->elements_count * 13);
+		int tam_vars = 4 + (reg->vars->elements_count * 13);
 		// Sumo además 12 bytes de retVar + 4 de retPos + 8 de cantidad args y vars:
 		int tamanio_registro = tam_args + tam_vars + 24;
 
@@ -535,8 +535,8 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	void serealizarIndiceStack(registroStack* reg){
 
 		void serealizarListaVariables(variable* var){
-			memcpy(buffer + desplazamiento, var->nombre, 2);
-				desplazamiento +=  2;
+			memcpy(buffer + desplazamiento, &var->nombre, 1);
+				desplazamiento +=  1;
 			memcpy(buffer + desplazamiento, &var->direccion, 12);
 				desplazamiento += 12;
 		}
@@ -657,9 +657,8 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 			variable *arg = malloc(sizeof(variable));
 
-			arg->nombre = malloc(2);
-			memcpy(arg->nombre, buffer + desplazamiento, 2);
-				desplazamiento += 2;
+			memcpy(&arg->nombre, buffer + desplazamiento, 1);
+				desplazamiento += 1;
 			memcpy(&arg->direccion, buffer + desplazamiento, 12);
 				desplazamiento += 12;
 
@@ -679,9 +678,8 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 			variable *var = malloc(sizeof(variable));
 
-			var->nombre = malloc(2);
-			memcpy(var->nombre, buffer + desplazamiento, 2);
-				desplazamiento += 2;
+			memcpy(&var->nombre, buffer + desplazamiento, 1);
+				desplazamiento += 1;
 			memcpy(&var->direccion, buffer + desplazamiento, 12);
 				desplazamiento += 12;
 

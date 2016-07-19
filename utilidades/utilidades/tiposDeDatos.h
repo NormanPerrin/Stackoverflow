@@ -30,7 +30,7 @@ typedef struct {
 
 // Variable AnSISOP:
 typedef struct {
-	char *nombre; // char 'id' + '/0' --> 2 bytes
+	char nombre; // char 'id' --> 1 bytes
 	direccion direccion; // --> 12 bytes
 } __attribute__((packed)) variable; // o argumento, son lo mismo
 
