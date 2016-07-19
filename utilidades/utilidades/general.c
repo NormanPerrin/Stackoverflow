@@ -118,14 +118,6 @@ void dormir(float miliseconds) {
 	usleep(miliseconds * 1000);
 }
 
-char* charAString(char caracter){
-	char* caracterMasBarraCero = (char*)malloc(2);
-		*caracterMasBarraCero = caracter;
-		*(caracterMasBarraCero + 1) = '\0';
-
-		return caracterMasBarraCero;
-}
-
 registroStack* reg_stack_create(){
 	registroStack* reg = malloc(sizeof(registroStack));
 	reg->cantidad_args = 0;

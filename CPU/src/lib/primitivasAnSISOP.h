@@ -1,5 +1,5 @@
-#ifndef LIB_PRIMITIVASANSISOP_H_
-#define LIB_PRIMITIVASANSISOP_H_
+#ifndef CPU_SRC_LIB_PRIMITIVASANSISOP_H_
+#define CPU_SRC_LIB_PRIMITIVASANSISOP_H_
 
 #include "globalesCPU.h"
 #include "principalesCPU.h"
@@ -28,4 +28,4 @@ extern bool cpuOciosa;
 extern bool huboStackOverflow;
 extern int devolvioPcb;
 
-#endif /* LIB_PRIMITIVASANSISOP_H_ */
+#endif /* CPU_SRC_LIB_PRIMITIVASANSISOP_H_ */

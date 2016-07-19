@@ -99,6 +99,7 @@
 	// </CONEXIONES_FUNCS>
 
 	// <AUXILIARES>
+	int validarPagina(int pid, int pagina);
 	void iniciarEstructuras();
 	void liberarConfig();
 	void liberarRecusos();
