@@ -1,15 +1,15 @@
 #!/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/Debug/Consola
-#Alliance - S4
-
 begin
 variables f, i, t
 
 	#`f`: Hasta donde contar
-	i=0
 	f=20
+	#`i`: Iterador
+	i=0
+	
 	:inicio
 
-	#`i`: Iterador
+	#Iterar
 	i=i+1
 	
 	#Imprimir el contador
@@ -18,10 +18,8 @@ variables f, i, t
 	#`t`: Comparador entre `i` y `f`
 	t=f-i
 	#De no ser iguales, salta a inicio
-
-	#esperar
-	io HDD1 3
 	jnz t inicio
+
 end
 
 
