@@ -355,7 +355,6 @@ pcb * crearPcb(string* programa){
 		// Inicializo índice de stack:
 		nuevoPcb->indiceStack = list_create();
 		nuevoPcb->cantidad_registros_stack = 0;
-		nuevoPcb->indexActualStack = 0;
 
 		// Inicializo índice de etiquetas:
 		if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0){

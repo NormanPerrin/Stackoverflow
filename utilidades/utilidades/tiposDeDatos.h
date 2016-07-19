@@ -55,7 +55,7 @@ typedef struct {
 
 // PCB de un proceso:
 typedef struct pcb{
-	int cantidad_instrucciones, id_cpu, indexActualStack, paginaActualCodigo, paginaActualStack;
+	int cantidad_instrucciones, id_cpu, paginaActualCodigo, paginaActualStack;
 	int paginas_codigo; // tamaño en páginas del segmento de código
 	int paginas_stack; // tamaño en páginas del segmento de stack
 	int pc; // program counter

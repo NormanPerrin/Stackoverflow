@@ -441,9 +441,9 @@ int calcularTamanioIndiceStack(pcb* unPcb){
 int calcularTamanioPcb(pcb* unPcb){
 	int tamanio;
 	int stack_size = calcularTamanioIndiceStack(unPcb);
-	// Sumo 68 bytes por los 17 int que tiene + los tamaños de los tres índices:
+	// Sumo 64bytes por los 16 int que tiene + los tamaños de los tres índices:
 	// TamañoS índice etiquetas y código vienen de la creación del PCB.
-	tamanio = 68  + unPcb->tamanioIndiceCodigo + unPcb->tamanioIndiceEtiquetas + stack_size;
+	tamanio = 64  + unPcb->tamanioIndiceCodigo + unPcb->tamanioIndiceEtiquetas + stack_size;
 
 	return tamanio;
 }
@@ -473,8 +473,6 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	memcpy(buffer + desplazamiento, &(unPcb->cantidad_instrucciones), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->id_cpu), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPcb->indexActualStack), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->paginaActualCodigo), INT);
 		desplazamiento += INT;
@@ -580,8 +578,6 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&unPcb->indexActualStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->paginaActualCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;

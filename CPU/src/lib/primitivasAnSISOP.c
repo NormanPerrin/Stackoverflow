@@ -38,7 +38,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			return ERROR;
 		}else{
 			// Agrego un nuevo registro al índice de stack:
-		registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indexActualStack);
+		registroStack* regStack = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
 			if(regStack == NULL){
 				regStack = reg_stack_create(); // TODO: Ver si pasar tamaño(s) como argumento del creator
 			}
@@ -82,7 +82,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	}
 	char* var_id = strdup(charAString(var_nombre));
 	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
-	registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indexActualStack);
+	registroStack* regStack = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
 	// Me posiciono al inicio de este registro y busco la variable del diccionario que coincida con el nombre solicitado:
 
 	if(!esArgumento(var_nombre)){ // Si entra acá es una variable:
@@ -134,11 +134,8 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 	printf("Dereferenciando variable...\n");
 	solicitudLectura * var_direccion = malloc(sizeof(solicitudLectura));
 
-	int num_pagina =  total_heap_offset / tamanioPagina;
-	int offset = total_heap_offset % tamanioPagina;
-
-	var_direccion->pagina = num_pagina;
-	var_direccion->offset = offset;
+	var_direccion->pagina = total_heap_offset / tamanioPagina;
+	var_direccion->offset = total_heap_offset % tamanioPagina;
 	var_direccion->tamanio = INT;
 
 	int head;
@@ -176,11 +173,8 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 	printf("Escribiendo variable...\n");
 	solicitudEscritura * var_escritura = malloc(sizeof(solicitudEscritura));
 
-	int num_pagina =  total_heap_offset / tamanioPagina;
-	int offset = total_heap_offset % tamanioPagina;
-
-		var_escritura->pagina = num_pagina;
-		var_escritura->offset = offset;
+		var_escritura->pagina = total_heap_offset / tamanioPagina;
+		var_escritura->offset = total_heap_offset % tamanioPagina;
 		var_escritura->contenido = valor;
 
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
@@ -257,8 +251,6 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 	nuevoRegistroStack->retPos = pcbActual->pc; // Guardo el valor actual del program counter
 	list_add(pcbActual->indiceStack, nuevoRegistroStack);
 
-	(pcbActual->indexActualStack)++;
-
 	irAlLabel(etiqueta);
 	return;
 }
@@ -267,8 +259,7 @@ void retornar(t_valor_variable var_retorno){
 
 	printf("Llamada a la función 'retornar'.\n");
 	// Tomo contexto actual:
-	int index = pcbActual->indexActualStack;
-	registroStack* registroActual = list_get(pcbActual->indiceStack, index);
+	registroStack* registroActual = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
 
 	// Limpio los argumentos del registro y descuento el espacio que ocupan en el stack en memoria:
 	pcbActual->stackPointer -= (4* registroActual->args->elements_count);
@@ -283,8 +274,7 @@ void retornar(t_valor_variable var_retorno){
 	// Elimino el contexto actual del índice de stack:
 	// Luego, seteo el contexto de ejecución actual en el index anterior:
 	pcbActual->pc = registroActual->retPos;
-	liberarRegistroStack(list_remove(pcbActual->indiceStack, pcbActual->indexActualStack));
-	(pcbActual->indexActualStack)--;
+	liberarRegistroStack(list_remove(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1));
 	return;
 }
 
