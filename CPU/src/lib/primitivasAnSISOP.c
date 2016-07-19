@@ -19,8 +19,6 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 		printf("Definiendo nuevo argumento: '%c'.\n", var_nombre);
 	}
 
-		char * var_id = strdup(charAString(var_nombre));
-
 		int var_pagina = pcbActual->primerPaginaStack;
 		int var_offset = pcbActual->stackPointer;
 
@@ -40,23 +38,24 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			if(regStack == NULL) regStack = reg_stack_create();
 
 			if(!esArgumento(var_nombre)){
-				variable* new_var = malloc(14);
+				variable* new_var = malloc(13);
+				new_var->nombre = var_nombre;
 				new_var->direccion.pagina = var_pagina;
 				new_var->direccion.offset = var_offset;
 				new_var->direccion.size = INT;
-				new_var->nombre = var_id;
+
 				list_add(regStack->vars, new_var);
 			}
 			else{
-				variable* new_arg = malloc(14);
+				variable* new_arg = malloc(13);
 				new_arg->direccion.pagina = var_pagina;
 				new_arg->direccion.offset = var_offset;
 				new_arg->direccion.size = INT;
-				new_arg->nombre = var_id;
+				new_arg->nombre = var_nombre;
 				list_add(regStack->args, new_arg);
 			}
 			printf("'%c' -> Dirección lógica: %i, %i, %i.\n", var_nombre, var_pagina, var_offset, INT);
-			free (var_id); var_id = NULL;
+
 			// Guardo el nuevo registro en el índice:
 			list_add(pcbActual->indiceStack, regStack);
 			// Actualizo parámetros del PCB:
@@ -76,7 +75,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	else{
 		printf("Obteneniendo posición del argumento: '%c'.\n", var_nombre);
 	}
-	char* var_id = strdup(charAString(var_nombre));
+
 	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
 	registroStack* regStack = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
 	//  Busco en este registro la variable del la lista que coincida con el nombre solicitado:
@@ -89,9 +88,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 			for(i = 0; i<regStack->vars->elements_count; i++){
 
 				variable* variable = list_get(regStack->vars, i);
-				if(string_equals_ignore_case(variable->nombre, var_id)){
-
-					free(var_id); var_id = NULL;
+				if(variable->nombre == var_nombre){
 
 					int var_offset_absoluto = (variable->direccion.pagina * tamanioPagina) + variable->direccion.offset;
 
@@ -110,9 +107,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 			for(j = 0; j<regStack->args->elements_count; j++){
 
 				variable* argumento = list_get(regStack->args, j);
-				if(string_equals_ignore_case(argumento->nombre, var_id)){
-
-					free(var_id); var_id = NULL;
+				if(argumento->nombre == var_nombre){
 
 					int arg_offset_absoluto = (argumento->direccion.pagina * tamanioPagina) + argumento->direccion.offset;
 
@@ -285,6 +280,7 @@ void imprimir(t_valor_variable valor_mostrar){
 
 void imprimirTexto(char* texto){
 	printf("Solicitando imprimir texto.\n");
+	texto = _string_trim(texto);
 	char * print_txt = malloc(strlen(texto)+1);
 	print_txt = texto;
 	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, print_txt);
