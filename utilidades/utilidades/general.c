@@ -133,9 +133,7 @@ registroStack* reg_stack_create(){
 }
 
 void liberarRegistroStack(registroStack* reg){
-	list_clean(reg->args);
 	list_destroy(reg->args);
-	list_clean(reg->vars);
 	list_destroy(reg->vars);
 	free(reg); reg = NULL;
 }
