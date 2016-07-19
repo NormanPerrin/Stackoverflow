@@ -71,7 +71,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 	int tamanio;
 
 	switch(head){
-		// CASE 0: El mensaje es un texto (string*)
+		// CASE 0: El mensaje es un texto (string)
 			case ENVIAR_SCRIPT:{
 				string* script = (string*) mensaje;
 				tamanio = script->tamanio + 4;
@@ -95,12 +95,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 				tamanio = strlen(msj->contenido) + 9;
 				break;
 			}
-			case INICIAR_PROGRAMA:{
-				inicioPrograma* msj = (inicioPrograma*) mensaje;
-				tamanio = msj->contenido.tamanio + 12;
-				break;
-			}
-		// CASE 4: El mensaje es un pcb (pcb)
+		// CASE 4: El mensaje es un PCB (pcb)
 			case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:
 			case PCB_WAIT:{
 				tamanio = calcularTamanioPcb((pcb*) mensaje);
@@ -123,7 +118,13 @@ int calcularTamanioMensaje(int head, void* mensaje){
 				tamanio = 12;
 				break;
 			}
-		}
+		// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
+			case INICIAR_PROGRAMA:{
+				inicioPrograma* msj = (inicioPrograma*) mensaje;
+				tamanio = msj->contenido.tamanio + 12;
+				break;
+			}
+		} // fin switch head
 	return tamanio;
 }
 
@@ -132,7 +133,7 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	void * buffer;
 
 	switch(head){
-
+	// CASE 0: El mensaje es un texto (string)
 	case ENVIAR_SCRIPT:{
 		buffer = serealizarString(mensaje, tamanio);
 		break;
@@ -150,15 +151,11 @@ void * serealizar(int head, void * mensaje, int tamanio){
 			break;
 		}
 	// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
-	case INICIAR_PROGRAMA:{
-		buffer = serealizarInicioPrograma(mensaje, tamanio);
-		break;
-	}
 	case ESCRIBIR_PAGINA:{
 		buffer = serealizarPedidoEscrituraPagina(mensaje, tamanio);
 			break;
 		}
-	// CASE 4: El mensaje es un pcb (pcb)
+	// CASE 4: El mensaje es un PCB (pcb)
 	case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
 		buffer = serealizarPcb(mensaje, tamanio);
 			break;
@@ -181,7 +178,12 @@ void * serealizar(int head, void * mensaje, int tamanio){
 		buffer = serealizarTresInt(mensaje, 12);
 			break;
 		}
-	}
+	// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
+	case INICIAR_PROGRAMA:{
+		buffer = serealizarInicioPrograma(mensaje, tamanio);
+			break;
+		}
+	} // fin switch head
 	return buffer;
 }
 
@@ -190,7 +192,7 @@ void * deserealizar(int head, void * buffer, int tamanio){
 	void * mensaje;
 
 	switch(head){
-
+		// CASE 0: El mensaje es un texto (string)
 		case ENVIAR_SCRIPT:{
 			mensaje = deserealizarString(buffer, tamanio);
 			break;
@@ -208,16 +210,11 @@ void * deserealizar(int head, void * buffer, int tamanio){
 			mensaje = deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 			}
-
 		case GRABAR_VAR_COMPARTIDA:{
 			mensaje = (var_compartida*)deserealizarTextoMasUnInt(buffer, tamanio);
 				break;
 		}
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
-		case INICIAR_PROGRAMA: {
-			mensaje = deserealizarInicioPrograma(buffer, tamanio);
-				break;
-			}
 		case ESCRIBIR_PAGINA:{
 			mensaje = deserealizarPedidoEscrituraPagina(buffer, tamanio);
 				break;
@@ -242,8 +239,17 @@ void * deserealizar(int head, void * buffer, int tamanio){
 				break;
 			}
 		// CASE 7: El mensaje son tres valores enteros (int)
-		case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION: case PEDIDO_ESCRITURA:{
+		case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
 			mensaje = (solicitudLectura*)deserealizarTresInt(buffer, tamanio);
+				break;
+			}
+		case PEDIDO_ESCRITURA:{
+			mensaje = (solicitudEscritura*)deserealizarTresInt(buffer, tamanio);
+			break;
+		}
+		// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
+		case INICIAR_PROGRAMA:{
+			mensaje = deserealizarInicioPrograma(buffer, tamanio);
 				break;
 			}
 		}
