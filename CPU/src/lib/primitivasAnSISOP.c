@@ -1,7 +1,6 @@
 #include "primitivasAnSISOP.h"
 
 /* FUNCIONES EXTRA */
-
 bool esArgumento(t_nombre_variable identificador_variable){
 	if(isdigit(identificador_variable)){
 		return true;
@@ -37,24 +36,24 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 
 			return ERROR;
 		}else{
-			// Agrego un nuevo registro al índice de stack:
+			// Agrego la variable al registro actual del índice de stack:
 		registroStack* regStack = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
 			if(regStack == NULL){
-				regStack = reg_stack_create(); // TODO: Ver si pasar tamaño(s) como argumento del creator
+				regStack = reg_stack_create();
 			}
 			//(stackPointer: desplazamiento desde la primer página del stack hasta donde arranca mi nueva variable)
 			if(!esArgumento(var_nombre)){
 				variable* new_var = malloc(14);
-				new_var->direccion.offset = var_offset;
 				new_var->direccion.pagina = var_pagina;
+				new_var->direccion.offset = var_offset;
 				new_var->direccion.size = var_size;
 				new_var->nombre = var_id;
 				list_add(regStack->vars, new_var);
 			}
 			else{
 				variable* new_arg = malloc(14);
-				new_arg->direccion.offset = var_offset;
 				new_arg->direccion.pagina = var_pagina;
+				new_arg->direccion.offset = var_offset;
 				new_arg->direccion.size = var_size;
 				new_arg->nombre = var_id;
 				list_add(regStack->args, new_arg);
@@ -83,7 +82,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	char* var_id = strdup(charAString(var_nombre));
 	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
 	registroStack* regStack = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
-	// Me posiciono al inicio de este registro y busco la variable del diccionario que coincida con el nombre solicitado:
+	//  Busco en este registro la variable del la lista que coincida con el nombre solicitado:
 
 	if(!esArgumento(var_nombre)){ // Si entra acá es una variable:
 		if(regStack->vars->elements_count > 0){ // si hay variables en la lista:
@@ -102,7 +101,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 					return var_offset_absoluto;
 				} // fin if equals
 			} // fin for variables
-		}
+		} // fin if hay variables
 		printf("Error: No hay variables en el registro actual de stack.\n");
 		return ERROR;
 	} // Si entra acá es un argumento:
@@ -123,7 +122,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 					return arg_offset_absoluto;
 				} // fin if equals
 			} // fin for argumentos
-		}
+		} // fin if hay argumentos
 		printf("Error: No hay argumentos en el registro actual de stack.\n");
 		return ERROR;
 	} // fin else argumentos
@@ -238,18 +237,18 @@ void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 }
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
-	/* Reserva espacio para un nuevo contexto vacío donde guarda el contexto
+	/* Reserva espacio para un nuevo contexto vacío donde guardo el contexto
 	 *  de ejecución actual, para luego volver al mismo. */
 	printf("Llamada con retorno. Preservando contexto de ejecución actual y posición de retorno.\n");
 
 	// Calculo la dirección de retorno y la guardo:
-	registroStack * nuevoRegistroStack = reg_stack_create();
-	nuevoRegistroStack->retVar.pagina = donde_retornar / tamanioPagina;
-	nuevoRegistroStack->retVar.offset = donde_retornar % tamanioPagina;
-	nuevoRegistroStack->retVar.size = INT;
+	registroStack * regsitroEjecucionActual = reg_stack_create();
+	regsitroEjecucionActual->retVar.pagina = donde_retornar / tamanioPagina;
+	regsitroEjecucionActual->retVar.offset = donde_retornar % tamanioPagina;
+	regsitroEjecucionActual->retVar.size = INT;
 
-	nuevoRegistroStack->retPos = pcbActual->pc; // Guardo el valor actual del program counter
-	list_add(pcbActual->indiceStack, nuevoRegistroStack);
+	regsitroEjecucionActual->retPos = pcbActual->pc; // Guardo el valor actual del program counter
+	list_add(pcbActual->indiceStack, regsitroEjecucionActual);
 
 	irAlLabel(etiqueta);
 	return;
@@ -262,7 +261,7 @@ void retornar(t_valor_variable var_retorno){
 	registroStack* registroActual = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
 
 	// Limpio los argumentos del registro y descuento el espacio que ocupan en el stack en memoria:
-	pcbActual->stackPointer -= (4* registroActual->args->elements_count);
+	pcbActual->stackPointer -= (4 * registroActual->args->elements_count);
 
 	// Limpio las variables del registro y descuento el espacio que ocupan en el stack en memoria:
 	pcbActual->stackPointer -= (4 * registroActual->vars->elements_count);
@@ -272,7 +271,7 @@ void retornar(t_valor_variable var_retorno){
 	asignar(offset_absoluto, var_retorno);
 
 	// Elimino el contexto actual del índice de stack:
-	// Luego, seteo el contexto de ejecución actual en el index anterior:
+	// Luego, seteo el nuevo contexto de ejecución en el index anterior:
 	pcbActual->pc = registroActual->retPos;
 	liberarRegistroStack(list_remove(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1));
 	return;
