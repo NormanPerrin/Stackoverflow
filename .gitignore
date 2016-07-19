@@ -36,5 +36,6 @@ Debug/
 .metadata
 *.log
 *.data
+*.txt
 RemoteSystemsTempFiles/
 Release/
