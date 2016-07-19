@@ -3,6 +3,7 @@
 void inicializarColecciones(){
 	listaCPU = list_create();
 	listaCPU_SIGUSR1 = list_create();
+	listaProcesosAbortivos = list_create();
 	listaConsolas = list_create();
 	listaProcesos = list_create(); // Lista de todos los procesos en el sistema
 	colaListos = queue_create();
@@ -129,9 +130,11 @@ void esperar_y_PlanificarProgramas(){
 
 	    }else{ // fin if nueva conexión --> nuevo msj
 
+	    	verificarDesconexionEnConsolas();
+
 	    	recorrerListaCPUsYAtenderNuevosMensajes();
 
-	    	} // fin else nuevo mensaje
+	    } // fin else nuevo mensaje CPU o desconexión Consola
 	} // fin del while
 } // fin select
 

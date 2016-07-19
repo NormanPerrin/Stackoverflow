@@ -635,16 +635,16 @@ void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modifi
 	int p = pos_pid(pid);
 
 	if(marco != -1)
-		tabla_paginas[p].tabla[pagina-1].marco = marco;
+		tabla_paginas[p].tabla[pagina].marco = marco;
 
 	if(marco != -1)
-		tabla_paginas[p].tabla[pagina-1].bit_presencia = b_presencia;
+		tabla_paginas[p].tabla[pagina].bit_presencia = b_presencia;
 
 	if(marco != -1)
-		tabla_paginas[p].tabla[pagina-1].bit_modificado = b_modificacion;
+		tabla_paginas[p].tabla[pagina].bit_modificado = b_modificacion;
 
 	if(marco != -1)
-		tabla_paginas[p].tabla[pagina-1].bit_uso = b_uso;
+		tabla_paginas[p].tabla[pagina].bit_uso = b_uso;
 
 }
 

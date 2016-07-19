@@ -416,9 +416,8 @@ void aceptarConexionEntranteDeConsola(){
 
 		planificarProceso();
 		return;
-		  }
+		  } // fin if head scrpit
 		  else{
-
 			  printf("Se espera script de la Consola #%d.\n", nuevaConsola->id);
 			  *respuesta = ERROR_CONEXION;
 			  aplicar_protocolo_enviar(new_fd, PROGRAMA_NEW, respuesta);
@@ -519,6 +518,28 @@ int envioSenialCPU(int id_cpu){
 	return FALSE; // no mandó señal
 }
 
+int seDesconectoConsolaAsociada(int quantum_pid){
+	int i;
+	for(i=0; i<list_size(listaProcesosAbortivos); i++){
+		int * exec_pid = list_get(listaProcesosAbortivos, i);
+		if(*exec_pid == quantum_pid){ // se desconectó la consola asociada
+			free(list_remove(listaProcesosAbortivos, i));
+
+			printf("Removiendo al proceso #%i porque se desconectó su Consola.\n", quantum_pid);
+			// Le informo a UMC que libere la memoria asignada al programa:
+			int index = pcbListIndex(quantum_pid); // indexo el pcb en la lista de procesos
+			finalizarPrograma(quantum_pid, index);
+			// Libero el PCB del proceso y lo saco del sistema:
+			liberarPcb(list_remove(listaProcesos, index));
+
+			planificarProceso();
+
+			return TRUE;
+		}
+	} // fin for
+	return FALSE; // no se deconectó consola
+}
+
 int pcbListIndex(int pid){
 	int i;
 	pcb * unPcb = NULL;
@@ -536,7 +557,7 @@ int pcbListIndex(int pid){
 void finalizarPrograma(int pid, int index){
 
 	if (index != -1){
-		printf("Liberarndo memoria asignada al proceso #%d.\n", pid);
+		printf("Liberando memoria asignada al proceso #%d.\n", pid);
 		// Aviso a UMC que libere la memoria asignada al proceso:
 		int* exit_pid = malloc(INT);
 		*exit_pid = pid;
@@ -583,6 +604,57 @@ void semaforo_blockProcess(t_queue* colaBloqueados, pcb* proceso){
 	queue_push(colaBloqueados, proceso);
 }
 
+void tratarPcbDeConsolaDesconectada(int pid){
+	bool cpuTieneElPidConsola(cpu* unCpu){ return unCpu->pid == pid;}
+
+	cpu* execCPU = list_find(listaCPU, (void*) cpuTieneElPidConsola);
+
+	if(execCPU == NULL){
+		printf("Removiendo al proceso #%i porque se desconectó su Consola.\n", pid);
+		// Le informo a UMC que libere la memoria asignada al programa:
+		int index = pcbListIndex(pid); // indexo el pcb en la lista de procesos
+		finalizarPrograma(pid, index);
+		// Libero el PCB del proceso y lo saco del sistema:
+		liberarPcb(list_remove(listaProcesos, index));
+
+		planificarProceso();
+	}
+	else{
+		printf("El proceso #%i se removerá cuando finalice ráfaga en CPU #%i porque se desconectó su Consola.\n",
+				pid, execCPU->id);
+		int * exit_pid = malloc(INT);
+		*exit_pid = pid;
+		list_add(listaProcesosAbortivos, exit_pid);
+	}
+}
+
+void verificarDesconexionEnConsolas(){
+	int i;
+	for (i = 0; i < list_size(listaConsolas); i++){
+
+		consola * unaConsola = (consola *)list_get(listaConsolas, i);
+		int fd = unaConsola->fd_consola;
+
+	if (FD_ISSET(fd , &readfds)){
+	// Recibo el nuevo mensaje de la Consola y verifico si en null:
+		int protocolo;
+		void * mensaje = NULL;
+		mensaje = aplicar_protocolo_recibir(fd, &protocolo);
+
+		if (mensaje == NULL){ // La Consla se desconectó; la quito del sistema y saco su PCB de ejecución:
+			log_info(logger,"La Consola #%i se ha desconectado. Removiendo PCB del sistema...", unaConsola->id);
+			tratarPcbDeConsolaDesconectada(unaConsola->pid);
+			cerrarSocket(fd);
+			free(list_remove(listaConsolas, i));
+			return;
+		} // fin if msj null
+		return;
+	  } // fin if nuevo msj
+	return;
+	} // fin for consolas
+	return;
+}
+
 void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 	int i;
@@ -599,10 +671,10 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		    void * mensaje = NULL;
 		    mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
-		    if (mensaje == NULL){ // Si el msj es NULL, quito al CPU del sistema y salvo la PCB:
+		    if (mensaje == NULL){ // El CPU se desconectó; lo quito del sistema y salvo su PCB:
+		    	log_info(logger,"La CPU #%i se ha desconectado. Salvando PCB en ejecución...", unCPU->id);
 		    	salvarProcesoEnCPU(unCPU->id);
 		    	cerrarSocket(fd);
-		    	log_info(logger,"La CPU #%i se ha desconectado. Salvando PCB en ejecución...", unCPU->id);
 		    	free(list_remove(listaCPU, i));
 		    	return;
 		    }else{
@@ -613,15 +685,18 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		pcb * pcbEjecutada = (pcb*) mensaje;
 		log_info(logger, "Proceso #%i fin de quantum en CPU #%i.", pcbEjecutada->pid, unCPU->id);
+
 		if(envioSenialCPU(unCPU->id)){
 			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
 		}
-		else{
-			// El CPU pasa de Ocupado a Libre:
+		else{ // El CPU pasa de Ocupado a Libre:
 			unCPU->disponibilidad = LIBRE;
 		}
+
+		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
+
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
 		queue_push(colaListos, pcbEjecutada);
@@ -634,15 +709,18 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		pcb * pcbEjecutada = (pcb*) mensaje;
 		log_info(logger, "Proceso #%i fin de ejecución en CPU %i.", pcbEjecutada->pid, unCPU->id);
+
 		if(envioSenialCPU(unCPU->id)){
 			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
 		}
-		else{
-			// El CPU pasa de Ocupado a Libre:
+		else{ // El CPU pasa de Ocupado a Libre:
 			unCPU->disponibilidad = LIBRE;
 		}
+
+		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
+
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 		int index = pcbListIndex(pcbEjecutada->pid); // indexo el pcb en la lista de procesos
 		// Le informo a UMC que libere la memoria asignada al programa:
@@ -668,19 +746,20 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Espero luego la PCB en ejecución:
 		void* entrada = NULL;
 		entrada = aplicar_protocolo_recibir(fd, &head);
-		if(head == PCB_ENTRADA_SALIDA){
-			pcbEjecutada = (pcb*)entrada;
-		}
-		log_info(logger, "Proceso #%i entrada salida en CPU #%i.", pcbEjecutada->pid, unCPU->id);
+		if(head == PCB_ENTRADA_SALIDA){ pcbEjecutada = (pcb*)entrada; }
+
 		if(envioSenialCPU(unCPU->id)){
 			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
 		}
-		else{
-			// El CPU pasa de Ocupado a Libre:
+		else{ // El CPU pasa de Ocupado a Libre:
 			unCPU->disponibilidad = LIBRE;
 		}
+
+		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
+
+		log_info(logger, "Proceso #%i entrada salida en CPU #%i.", pcbEjecutada->pid, unCPU->id);
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
 		realizarEntradaSalida(pcbEjecutada, datos);
@@ -712,15 +791,18 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		int* pid = (int*)mensaje;
 		int index = pcbListIndex(*pid);
 		log_info(logger, "Proceso #%i abortando ejecución en CPU #%i.", *pid, unCPU->id);
+
 		if(envioSenialCPU(unCPU->id)){
 			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 			cerrarSocket(fd);
 			free(list_remove(listaCPU, i));
 		}
-		else{
-			// El CPU pasa de Ocupado a Libre:
+		else{ // El CPU pasa de Ocupado a Libre:
 			unCPU->disponibilidad = LIBRE;
 		}
+
+		if(seDesconectoConsolaAsociada(*pid)) break;
+
 		// Le informo a UMC que libere la memoria asignada al programa:
 		finalizarPrograma(*pid, index);
 		// Le informo a la Consola asociada:
@@ -754,32 +836,30 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			// Recibo la PCB en ejecución que se bloqueó:
 			void* entrada = NULL;
 			entrada = aplicar_protocolo_recibir(fd, &head);
-			if(head == PCB_WAIT){
-				waitPcb = (pcb*)entrada;
-			}
+			if(head == PCB_WAIT){ waitPcb = (pcb*)entrada; }
 
 			if(envioSenialCPU(unCPU->id)){
 				log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
 				cerrarSocket(fd);
 				free(list_remove(listaCPU, i));
 			}
-			else{
-				// El CPU pasa de Ocupado a Libre:
+			else{ // El CPU pasa de Ocupado a Libre:
 				unCPU->disponibilidad = LIBRE;
 			}
+
+			if(seDesconectoConsolaAsociada(waitPcb->pid)) break;
+
 			semaforo_blockProcess(semaforo->bloqueados, waitPcb);
-			// free(waitPcb); ¿?
 		}
-		else{ // El proceso no se bloquea y puede seguir ejecutando
+		else{ // El proceso no se bloquea y puede seguir ejecutando:
 			aplicar_protocolo_enviar(fd, WAIT_SIN_BLOQUEO, MSJ_VACIO);
 		}
-		// free(semaforo); ¿?
 
 		break;
 	}
 	case OBTENER_VAR_COMPARTIDA:{
 
-		// Recibo un char* y devuelvo un int:
+		// Recibo un char* y devuelvo el int correspondiente:
 		var_compartida* varPedida = dictionary_get(diccionarioVarCompartidas, (char*)mensaje);
 		aplicar_protocolo_enviar(fd, DEVOLVER_VAR_COMPARTIDA, &(varPedida->valor));
 		free(varPedida->nombre); varPedida->nombre = NULL;
@@ -839,6 +919,10 @@ void limpiarColecciones(){
 	list_clean(listaCPU_SIGUSR1);
 	list_destroy(listaCPU_SIGUSR1);
 	listaCPU_SIGUSR1 = NULL;
+
+	list_clean(listaProcesosAbortivos);
+	list_destroy(listaProcesosAbortivos);
+	listaProcesosAbortivos = NULL;
 
 	list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola);
 	listaConsolas = NULL;

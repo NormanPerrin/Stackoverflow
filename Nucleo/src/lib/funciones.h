@@ -29,6 +29,7 @@ void aceptarConexionEntranteDeConsola(); // --> planificarProceso
 void aceptarConexionEntranteDeCPU(); // --> planificarProceso
 void atenderCambiosEnArchivoConfig(int* socketMaximo);
 void salvarProcesoEnCPU(int cpuId); // --> planificarProceso
+int seDesconectoConsolaAsociada(int quantum_pid);
 int envioSenialCPU(int id_cpu);
 void finalizarPrograma(int pid, int index);
 int pcbListIndex(int pid);
@@ -36,6 +37,8 @@ void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
 void semaforo_signal(t_semaforo* semaforo);
 int semaforo_wait(t_semaforo* semaforo);
 void semaforo_blockProcess(t_queue* colaBloqueados, pcb* proceso);
+void tratarPcbDeConsolaDesconectada(int pid);
+void verificarDesconexionEnConsolas();
 void recorrerListaCPUsYAtenderNuevosMensajes();
 // Liberar recursos:
 void liberarCPU(cpu * cpu);

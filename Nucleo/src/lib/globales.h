@@ -74,6 +74,7 @@ t_list * listaProcesos; // Lista de todos los procesos en el sistema
 t_list * listaCPU; // Lista de todos las CPU conectadas
 t_list * listaConsolas;  // Lista de todos las Consolas conectadas
 t_list * listaCPU_SIGUSR1;  // Lista de CPUs que enviaron señal SIGUSR1
+t_list * listaProcesosAbortivos; // Lista de PCBs cuya Consola se deconectó
 
 t_queue * colaListos; // Lista de todos los procesos listos para ejecutar
 
