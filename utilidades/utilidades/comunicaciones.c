@@ -7,9 +7,7 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 
 	int desplazamiento = 0, tamanioMensaje, tamanioTotalAEnviar;
 
-	if (head < 1 || head > FIN_DEL_PROTOCOLO){
-		printf("Error al enviar mensaje.\n");
-		}
+	if (head < 1 || head > FIN_DEL_PROTOCOLO) printf("Error al enviar mensaje.\n");
 	// Calculo el tamaño del mensaje:
 	tamanioMensaje = calcularTamanioMensaje(head, mensaje);
 
@@ -48,15 +46,11 @@ void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 	// Recibo ahora el tamaño del mensaje:
 	int* tamanioMensaje = malloc(INT);
 	recibido = recibirPorSocket(fdEmisor, tamanioMensaje, INT);
-		if (recibido <= 0){
-			return NULL;
-		}
+		if (recibido <= 0) return NULL;
 	// Recibo por último el mensaje serealizado:
 	void* mensaje = malloc(*tamanioMensaje);
 	recibido = recibirPorSocket(fdEmisor, mensaje, *tamanioMensaje);
-		if (recibido <= 0){
-			return NULL;
-		}
+		if (recibido <= 0) return NULL;
 	// Deserealizo el mensaje según el protocolo:
 	void* buffer = deserealizar(*head, mensaje, *tamanioMensaje);
 
@@ -78,8 +72,8 @@ int calcularTamanioMensaje(int head, void* mensaje){
 				break;
 			}
 		// CASE 1: El mensaje es un texto (char*)
-			case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
-			case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+			case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
+			case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 				tamanio = strlen((char*)mensaje)+ 1;
 				break;
 			}
@@ -139,8 +133,8 @@ void * serealizar(int head, void * mensaje, int tamanio){
 		break;
 	}
 	// CASE 1: El mensaje es un texto (char*)
-	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
-	case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
+	case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 			buffer = malloc(tamanio);
 			memcpy(buffer, mensaje, tamanio);
 			break;
@@ -198,8 +192,8 @@ void * deserealizar(int head, void * buffer, int tamanio){
 			break;
 		}
 		// CASE 1: El mensaje es un texto (char*)
-		case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST:
-		case SIGNAL_REQUEST: case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+		case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
+		case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
 			char* msj = malloc(tamanio);
 			memcpy(msj, buffer, tamanio);
 			mensaje = msj;

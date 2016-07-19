@@ -87,17 +87,11 @@ typedef enum{
 	ACEPTADO = 1, RECHAZADO, ERROR_CONEXION
 }  __attribute__((packed)) estadoInicio;
 
-// Respuesta de Swap a un pedido de Lectura de UMC:
-typedef struct {
-	int pagina;
-	char *contenido;
-} __attribute__((packed))devolverPagina;
+// Respuesta de Swap a un pedido de Lectura de UMC: /* MANDA UN CHAR* */
 
-// Respuesta a un pedido de Lectura de Variable de UMC a CPU:
-	/* MANDA DIRECTAMENTE UN INT */
+// Respuesta a un pedido de Lectura de Variable de UMC a CPU: /* MANDA UN INT */
 
-// Respuesta a un pedido de Lectura de Instrucción de UMC a CPU:
-	/* MANDA DIRECTAMENTE UN CHAR* */
+// Respuesta a un pedido de Lectura de Instrucción de UMC a CPU: /* MANDA UN CHAR* */
 
 // Pedido de Lectura de UMC a Swap:
 typedef struct {
