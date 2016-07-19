@@ -122,7 +122,6 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 
 t_valor_variable dereferenciar(t_puntero total_heap_offset){
 
-	printf("Dereferenciando variable...\n");
 	solicitudLectura * var_direccion = malloc(sizeof(solicitudLectura));
 
 	var_direccion->pagina = total_heap_offset / tamanioPagina;
@@ -133,6 +132,8 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 	void* entrada = NULL;
 	int* valor_variable = NULL;
 
+	printf("Solicitud Escritura -> Página: %i, Offset: %i, Size: %i.\n",
+			var_direccion->pagina, var_direccion->offset, INT);
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_VARIABLE, var_direccion);
 	free(var_direccion); var_direccion = NULL;
 
@@ -167,9 +168,9 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 		var_escritura->offset = total_heap_offset % tamanioPagina;
 		var_escritura->contenido = valor;
 
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
-	printf("Escribiendo variable en -> Dirección lógica: %i, %i, %i.\n",
+	printf("Solicitud Escritura -> Página: %i, Offset: %i, Contenido: %i.\n",
 			var_escritura->pagina, var_escritura->offset, var_escritura->contenido);
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
 	free(var_escritura); var_escritura = NULL;
 
 	// Valido el pedido de lectura a UMC:
