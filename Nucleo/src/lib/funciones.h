@@ -36,7 +36,7 @@ int pcbListIndex(int pid);
 void realizarEntradaSalida(pcb* procesoEjecutando, pedidoIO* datos);
 void semaforo_signal(t_semaforo* semaforo);
 int semaforo_wait(t_semaforo* semaforo);
-void semaforo_blockProcess(t_queue* colaBloqueados, pcb* proceso);
+void semaforoBloquearProceso(t_queue* colaBloqueados, pcb* proceso);
 void tratarPcbDeConsolaDesconectada(int pid);
 void verificarDesconexionEnConsolas();
 void recorrerListaCPUsYAtenderNuevosMensajes();

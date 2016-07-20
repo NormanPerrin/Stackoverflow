@@ -157,11 +157,11 @@ char* solicitarProximaInstruccionAUMC(){
 }
 
 void limpiarInstruccion(char * instruccion){
+
 	char *p2 = instruccion;
 	int a = 0;
 	while (*instruccion != '\0') {
-		if (*instruccion
-				!= '\t'&& *instruccion != '\n' && !iscntrl(*instruccion)) {
+		if (*instruccion != '\t' && *instruccion != '\n' && !iscntrl(*instruccion)) {
 			if (a == 0 && isdigit((int )*instruccion)) {
 				++instruccion;
 			} else {
