@@ -470,8 +470,8 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 		t_config * new_config = NULL;
 		new_config = config_create(RUTA_CONFIG_NUCLEO);
 
-			if (new_config && config_has_property(new_config, "QUANTUM")
-					&& config_has_property(new_config, "QUANTUM_SLEEP")){
+			if (new_config &&( config_has_property(new_config, "QUANTUM")
+					|| config_has_property(new_config, "QUANTUM_SLEEP"))){
 
 		config->quantum = config_get_int_value(new_config, "QUANTUM");
 		config->retardoQuantum = config_get_int_value(new_config, "QUANTUM_SLEEP");
