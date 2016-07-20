@@ -167,7 +167,8 @@
 	void actualizarPuntero(int pid, int pagina);
 	// </ALGORITMOS>
 
-	// <CONSOLA_FUNCS>
+	// <CONSOLA_FUNCS>}
+	void help(char *argumento);
 	void retardo(char *argumento);
 	void dump(char *argumento);
 	void flush(char *argumento);
