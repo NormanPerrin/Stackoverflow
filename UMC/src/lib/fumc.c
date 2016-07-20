@@ -39,7 +39,7 @@ void crearHilos() {
 
 void consola() {
 
-	printf("Hola! Ingresá \"salir\" para finalizar módulo y \"aiuuuda!!\" para ver los comandos\n");
+	printf("Hola! Ingresá \"salir\" para finalizar módulo y \"ayuda\" para ver los comandos\n");
 	char *mensaje = reservarMemoria(CHAR * MAX_CONSOLA);
 
 	while(!exitFlag) {
@@ -49,7 +49,7 @@ void consola() {
 
 		void (*funcion)(char*) = direccionarConsola(mensaje_separado->cabeza); // elijo función a ejecutar según mensaje
 		if(funcion == NULL) {
-			printf("Error: Comando no reconocido \"%s\"\n", mensaje_separado->cabeza);
+			printf("Error: Comando no reconocido \"%s\". Escribe \"ayuda\" para ver los comandos\n", mensaje_separado->cabeza);
 			free(mensaje_separado->cabeza);
 			free(mensaje_separado->argumento);
 			free(mensaje_separado);
@@ -824,7 +824,7 @@ void *direccionarConsola(char *mensaje) {
 		return salir;
 	}
 
-	if(!strcmp(mensaje, "aiuuuda!!"))
+	if(!strcmp(mensaje, "ayuda"))
 		return help;
 
 	return NULL;
@@ -1167,11 +1167,15 @@ void dump(char *argumento) {
 
 void flush(char *argumento) {
 
-	if(!strcmp(argumento, "tlb"))
+	if(!strcmp(argumento, "tlb")) {
 		list_clean(tlb);
+		printf("Se ha limpiado la tlb\n");
+	}
 
-	if(!strcmp(argumento, "memory"))
+	if(!strcmp(argumento, "memory")) {
 		cambiarModificado();
+		printf("Se ha cambiado las paginas de modificado\n");
+	}
 
 	if( strcmp(argumento, "tlb") && strcmp(argumento, "memory") )
 		fprintf(stderr, "Error: argumento \"%s\" invalido.\n- flush tlb\n- flush memory\n", argumento);
