@@ -194,9 +194,8 @@ void * deserealizar(int head, void * buffer, int tamanio){
 		// CASE 1: El mensaje es un texto (char*)
 		case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
 		case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
-			char* msj = malloc(tamanio);
-			memcpy(msj, buffer, tamanio);
-			mensaje = msj;
+			char* mensaje = malloc(tamanio);
+			memcpy(mensaje, buffer, tamanio);
 				break;
 			}
 		// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
@@ -222,9 +221,8 @@ void * deserealizar(int head, void * buffer, int tamanio){
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
 		case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case SENIAL_SIGUSR1: case TAMANIO_STACK:{
-			int* msj = malloc(tamanio);
-			memcpy(msj, buffer, tamanio);
-			mensaje = msj;
+			int* mensaje = malloc(tamanio);
+			memcpy(mensaje, buffer, tamanio);
 				break;
 			}
 		// CASE 6: El mensaje son dos valores enteros (int)
