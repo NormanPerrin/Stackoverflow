@@ -39,7 +39,7 @@ void crearHilos() {
 
 void consola() {
 
-	printf("Hola! Ingresá \"salir\" para salir\n");
+	printf("Hola! Ingresá \"salir\" para finalizar módulo y \"aiuuuda!!\" para ver los comandos\n");
 	char *mensaje = reservarMemoria(CHAR * MAX_CONSOLA);
 
 	while(!exitFlag) {
@@ -819,9 +819,13 @@ void *direccionarConsola(char *mensaje) {
 	if(!strcmp(mensaje, "flush"))
 		return flush;
 
-	if(!strcmp(mensaje, "salir"))
+	if(!strcmp(mensaje, "salir")) {
 		exitFlag = TRUE;
 		return salir;
+	}
+
+	if(!strcmp(mensaje, "aiuuuda!!"))
+		return help;
 
 	return NULL;
 }
@@ -1122,6 +1126,13 @@ void actualizarPuntero(int pid, int pagina) {
 
 
 // <CONSOLA_FUNCS>
+
+void help(char *argumento) {
+	printf("\nComandos:\n");
+	printf("> retardo num (en milisegundos. cambia retardo a num)\n");
+	printf("> dump (genera informe tabla paginas y memoria)\n");
+	printf("> flush tlb | memory (tlb: limpia contenido de tlb | memory: marca todas paginas de proceso como modificadas)\n\n");
+}
 
 void retardo(char *argumento) {
 	config->retardo = atoi(argumento);
