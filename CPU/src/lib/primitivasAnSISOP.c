@@ -338,18 +338,3 @@ void s_signal(t_nombre_semaforo nombre_semaforo){
 	free(id_semaforo); id_semaforo = NULL;
 	return;
 }
-/*void finalizar(void){
-	return;}
-	log_trace(trace_log_CPU,"finalizar");
-	    t_stack_element *stack_element = list_get(pcb->stack, list_size(pcb->stack)-1);
-
-	    if(stack_element->posicion_retorno) {
-	    	pcb->program_counter = stack_element->posicion_retorno;
-	    }
-
-	    go_back_to_previous_stack_element(stack_element);
-
-	    if(list_is_empty(pcb->stack)) {
-	    	pcb->program_finished = 1;*/
-
-
