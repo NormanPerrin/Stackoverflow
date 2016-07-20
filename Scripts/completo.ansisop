@@ -35,5 +35,3 @@ end
 :Siguiente	
 	print A+1
 goto Proximo
-
-
