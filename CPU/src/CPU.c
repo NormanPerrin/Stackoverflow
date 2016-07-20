@@ -13,8 +13,8 @@ AnSISOP_funciones funcionesAnSISOP = {
 		.AnSISOP_retornar = retornar,
 		.AnSISOP_imprimir = imprimir,
 		.AnSISOP_imprimirTexto = imprimirTexto,
-		.AnSISOP_entradaSalida = entradaSalida };
-
+		.AnSISOP_entradaSalida = entradaSalida};
+		//.AnSISOP_finalizar= finalizar };
 AnSISOP_kernel funcionesKernel = {
 		.AnSISOP_wait = s_wait,
 		.AnSISOP_signal = s_signal };
