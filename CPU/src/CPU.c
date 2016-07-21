@@ -109,7 +109,7 @@ void ejecutarProcesoActivo(){
 
 			limpiarInstruccion(proximaInstruccion);
 
-			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && (strcmp(proximaInstruccion, "end") == 0)){
+			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && string_starts_with(proximaInstruccion, "end")){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, pcbActual);

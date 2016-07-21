@@ -79,6 +79,7 @@ void* serealizarCuatroInt(void* mensaje, int tamanio);
 solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
 
 // -- Auxiliares:
+int sizeof_instruccion(t_intructions *instrucciones);
 int getStartInstruccion(t_intructions instruccion);
 int getOffsetInstruccion (t_intructions instruccion);
 t_intructions cargarIndiceCodigo(t_puntero_instruccion primera_instruccion, t_size offset_instruccion);
