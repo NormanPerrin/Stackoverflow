@@ -193,7 +193,7 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 	variableCompartida = (char*) var_compartida_nombre;
 
 	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, variableCompartida);
-	free(variableCompartida); variableCompartida = NULL;
+	//free(variableCompartida); variableCompartida = NULL;
 
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 	if(head == DEVOLVER_VAR_COMPARTIDA){
@@ -217,7 +217,7 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 	variableCompartida->nombre = (char*) var_compartida_nombre;
 
 	aplicar_protocolo_enviar(fdNucleo, GRABAR_VAR_COMPARTIDA, variableCompartida);
-	free(variableCompartida->nombre); variableCompartida->nombre = NULL;
+	//free(variableCompartida->nombre); variableCompartida->nombre = NULL;
 	free(variableCompartida); variableCompartida = NULL;
 
 	return var_compartida_valor;
@@ -311,7 +311,7 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 	id_semaforo = nombre_semaforo;
 
 	aplicar_protocolo_enviar(fdNucleo, WAIT_REQUEST, id_semaforo);
-	free(id_semaforo); id_semaforo = NULL;
+	//free(id_semaforo); id_semaforo = NULL;
 
 	int head;
 	void* entrada = NULL;
@@ -328,7 +328,6 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 			printf("Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'.\n", nombre_semaforo);
 		}
 	}
-	free(entrada);
 	return;
 }
 
