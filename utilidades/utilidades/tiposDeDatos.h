@@ -60,11 +60,11 @@ typedef struct pcb{
 	int paginas_stack; // tamaño en páginas del segmento de stack
 	int pc; // program counter
 	int pid, primerPaginaStack, quantum, quantum_sleep, stackPointer;
-	int tamanioIndiceCodigo, tamanioIndiceEtiquetas, tamanioIndiceStack; // Tamaños en bytes de los índices
+	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
 	int cantidad_registros_stack; // Cantidad de elementos en el índice de stack
 	t_intructions* indiceCodigo;
-	char* indiceEtiquetas;
 	t_list* indiceStack; // valores -> registroStack
+	char* indiceEtiquetas;
 } __attribute__((packed)) pcb;
 
 // Pedido de Lectura de CPU a UMC (dirección lógica):

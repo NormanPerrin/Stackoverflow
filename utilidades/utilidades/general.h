@@ -14,6 +14,8 @@
 	#define ERROR -1
 	#define INT (sizeof(int))
 	#define CHAR (sizeof(char))
+	#define DIRECCION (sizeof(direccion))
+	#define VARIABLE (sizeof(variable))
 	#define HANDSHAKE_SIZE CHAR*2 // Tamaño de consola\0
 	#define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 

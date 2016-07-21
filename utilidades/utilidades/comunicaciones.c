@@ -68,7 +68,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 0: El mensaje es un texto (string)
 			case ENVIAR_SCRIPT:{
 				string* script = (string*) mensaje;
-				tamanio = script->tamanio + 4;
+				tamanio = script->tamanio + INT;
 				break;
 			}
 		// CASE 1: El mensaje es un texto (char*)
@@ -80,13 +80,13 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
 			case ENTRADA_SALIDA: case GRABAR_VAR_COMPARTIDA:{
 				pedidoIO* msj = (pedidoIO*)mensaje;
-				tamanio = strlen(msj->nombreDispositivo)+ 5;
+				tamanio = strlen(msj->nombreDispositivo)+ 1 + INT;
 				break;
 			}
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 			case ESCRIBIR_PAGINA:{
 				solicitudEscribirPagina* msj = (solicitudEscribirPagina*) mensaje;
-				tamanio = strlen(msj->contenido) + 9;
+				tamanio = strlen(msj->contenido) + 1 + 2*INT;
 				break;
 			}
 		// CASE 4: El mensaje es un PCB (pcb)
@@ -99,23 +99,23 @@ int calcularTamanioMensaje(int head, void* mensaje){
 			case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 			case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
 			case TAMANIO_STACK: case SENIAL_SIGUSR1:{
-				tamanio = 4;
+				tamanio = INT;
 				break;
 				}
 		// CASE 6: El mensaje son dos valores enteros (int)
 			case LEER_PAGINA:{
-				tamanio = 8;
+				tamanio = 2*INT;
 				break;
 			}
 		// CASE 7: El mensaje son tres valores enteros (int)
 			case PEDIDO_LECTURA_VARIABLE: case PEDIDO_ESCRITURA: case PEDIDO_LECTURA_INSTRUCCION:{
-				tamanio = 12;
+				tamanio = 3*INT;
 				break;
 			}
 		// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
 			case INICIAR_PROGRAMA:{
 				inicioPrograma* msj = (inicioPrograma*) mensaje;
-				tamanio = msj->contenido.tamanio + 12;
+				tamanio = msj->contenido.tamanio + 3*INT;
 				break;
 			}
 		} // fin switch head
@@ -158,18 +158,18 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case SENIAL_SIGUSR1:
 	case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
 	case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case TAMANIO_STACK:{
-		buffer = malloc(4);
-		memcpy(buffer, mensaje, 4);
+		buffer = malloc(tamanio);
+		memcpy(buffer, mensaje, tamanio);
 			break;
 		}
 	// CASE 6: El mensaje son dos valores enteros (int)
 	case LEER_PAGINA:{
-		buffer = serealizarDosInt(mensaje, 8);
+		buffer = serealizarDosInt(mensaje, tamanio);
 			break;
 		}
 	// CASE 7: El mensaje son tres valores enteros (int)
 	case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION: case PEDIDO_ESCRITURA:{
-		buffer = serealizarTresInt(mensaje, 12);
+		buffer = serealizarTresInt(mensaje, tamanio);
 			break;
 		}
 	// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
@@ -425,25 +425,31 @@ int calcularTamanioIndiceStack(pcb* unPcb){
 	int tamanio_stack = 0;
 
 	void calcularTamanioRegistroStack(registroStack* reg){
-		// Por cada var y arg: 2 bytes nombre + 12 bytes dirección + 4 bytes elements_count:
-		int tam_args = 4 + (reg->args->elements_count * 13);
-		int tam_vars = 4 + (reg->vars->elements_count * 13);
-		// Sumo además 12 bytes de retVar + 4 de retPos + 8 de cantidad args y vars:
-		int tamanio_registro = tam_args + tam_vars + 24;
+		int tamanio_fijo_registro = INT + // Cantidad variables, campo lista
+									INT + // Cantidad argumentos, campo lista
+									INT + // retPos
+									INT + // Cantidad variables
+									INT + // Cantidad argumentos
+									DIRECCION; // retVar
+		// Tamaño variables y argumentos:
+		int tamanio_args_y_vars = (reg->args->elements_count * VARIABLE) + (reg->vars->elements_count * VARIABLE);
+
+		int tamanio_registro = tamanio_fijo_registro + tamanio_args_y_vars;
 
 		tamanio_stack += tamanio_registro;
 	}
-	list_iterate(unPcb->indiceStack, (void*)calcularTamanioRegistroStack);
 
-	return tamanio_stack + 4; // Sumo además 4 bytes de elements_count
+	list_iterate(unPcb->indiceStack, (void*) calcularTamanioRegistroStack);
+
+	return tamanio_stack + INT; // Sumo además 4 bytes de elements_count del stack
 }
 
 int calcularTamanioPcb(pcb* unPcb){
 	int tamanio;
 	int stack_size = calcularTamanioIndiceStack(unPcb);
-	// Sumo 64bytes por los 16 int que tiene + los tamaños de los tres índices:
-	// TamañoS índice etiquetas y código vienen de la creación del PCB.
-	tamanio = 64  + unPcb->tamanioIndiceCodigo + unPcb->tamanioIndiceEtiquetas + stack_size;
+	// Sumo 60 bytes por los 15 int que tiene + los tamaños de los tres índices:
+	// Tamaños índice etiquetas y código vienen de la creación del PCB.
+	tamanio = 60  + unPcb->tamanioIndiceCodigo + stack_size + unPcb->tamanioIndiceEtiquetas;
 
 	return tamanio;
 }
@@ -495,15 +501,10 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	memcpy(buffer + desplazamiento, &(unPcb->stackPointer), INT);
 		desplazamiento += INT;
 
-		// Copio los tamaños de los índices, calculando primero el tamaño del índice de stack:
+		// Copio los tamaños de los índices:
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceCodigo), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceEtiquetas), INT);
-		desplazamiento += INT;
-
-		unPcb->tamanioIndiceStack = calcularTamanioIndiceStack(unPcb);
-
-	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceStack), INT);
 		desplazamiento += INT;
 
 		unPcb->cantidad_registros_stack = unPcb->indiceStack->elements_count;
@@ -516,55 +517,60 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	while (contador_instrucciones < unPcb->cantidad_instrucciones){
 
 		int start_instruccion = getStartInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
-		memcpy(buffer + desplazamiento, &start_instruccion, INT);
-			desplazamiento += INT;
+		memcpy(buffer + desplazamiento, &start_instruccion, sizeof(t_puntero_instruccion));
+			desplazamiento += sizeof(t_puntero_instruccion);
 
 		int offset_instruccion = getOffsetInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
-		memcpy(buffer + desplazamiento, &offset_instruccion, INT);
-			desplazamiento += INT;
+		memcpy(buffer + desplazamiento, &offset_instruccion, sizeof(t_size));
+			desplazamiento += sizeof(t_size);
 
 		contador_instrucciones++;
 	} // fin carga índice de código
-
-		// Copio el índice de etiquetas:
-	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
-		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
 		// Copio el índice de stack:
 
 	void serealizarIndiceStack(registroStack* reg){
 
 		void serealizarListaVariables(variable* var){
-			memcpy(buffer + desplazamiento, &var->nombre, 1);
-				desplazamiento +=  1;
-			memcpy(buffer + desplazamiento, &var->direccion, 12);
-				desplazamiento += 12;
+			memcpy(buffer + desplazamiento, &var->nombre, CHAR);
+				desplazamiento +=  CHAR;
+			memcpy(buffer + desplazamiento, &var->direccion, DIRECCION);
+				desplazamiento += DIRECCION;
 		}
 
 		reg->cantidad_args = reg->args->elements_count;
-		memcpy(buffer + desplazamiento, &(reg->cantidad_args), 4);
-			desplazamiento += 4;
+		memcpy(buffer + desplazamiento, &(reg->cantidad_args), INT);
+			desplazamiento += INT;
+
 		list_iterate(reg->args, (void*) serealizarListaVariables);
-		memcpy(buffer + desplazamiento, &(reg->args->elements_count), 4);
-			desplazamiento += 4;
+
+		memcpy(buffer + desplazamiento, &(reg->args->elements_count), INT);
+			desplazamiento += INT;
 
 		reg->cantidad_vars = reg->vars->elements_count;
-		memcpy(buffer + desplazamiento, &(reg->cantidad_vars), 4);
-			desplazamiento += 4;
+		memcpy(buffer + desplazamiento, &(reg->cantidad_vars), INT);
+			desplazamiento += INT;
+
 		list_iterate(reg->vars, (void*) serealizarListaVariables);
+
 		memcpy(buffer + desplazamiento, &(reg->vars->elements_count), 4);
 			desplazamiento += 4;
 
-		memcpy(buffer + desplazamiento, &reg->retPos, 4);
-			desplazamiento += 4;
-		memcpy(buffer + desplazamiento, &reg->retVar, 12);
-			desplazamiento += 12;
+		memcpy(buffer + desplazamiento, &reg->retPos, INT);
+			desplazamiento += INT;
+		memcpy(buffer + desplazamiento, &reg->retVar, DIRECCION);
+			desplazamiento += DIRECCION;
 	} // fin función serealizadora índice de stack
 
 	list_iterate(unPcb->indiceStack, (void*) serealizarIndiceStack);
-		// Copio el int 'elements_count' campo del índice de stack:
+
+	// Copio el int 'elements_count' campo del índice de stack:
 	memcpy(buffer + desplazamiento, &(unPcb->indiceStack->elements_count), INT);
+		desplazamiento += INT;
 	// fin carga índice de stack
+
+	// Copio el índice de etiquetas:
+	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 
 	return buffer;
 }
@@ -572,7 +578,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 pcb * deserealizarPcb(void * buffer, int tamanio){
 
 	int desplazamiento = 0;
-	pcb * unPcb = malloc(tamanio);
+	pcb * unPcb = malloc(sizeof(pcb));
 
 	// Copio los valores enteros:
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
@@ -600,13 +606,10 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(&unPcb->stackPointer, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 
-		// Copio los valores de los índices:
+		// Copio los tamaños de los índices:
 	memcpy(&unPcb->tamanioIndiceCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-		// El tamaño del índice de stack se calculó e inicializó durante la serealización:
-	memcpy(&unPcb->tamanioIndiceStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 
 	memcpy(&unPcb->cantidad_registros_stack, buffer + desplazamiento, INT);
@@ -619,23 +622,19 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 	while(contador_instrucciones < unPcb->cantidad_instrucciones){
 
-		int start_instruccion = 0, offset_instruccion = 0;
+		t_puntero_instruccion start_instruccion = 0;
+		t_size offset_instruccion = 0;
 
-		memcpy(&start_instruccion, buffer + desplazamiento, INT);
-			desplazamiento += INT;
+		memcpy(&start_instruccion, buffer + desplazamiento, sizeof(t_puntero_instruccion));
+			desplazamiento += sizeof(t_puntero_instruccion);
 
-		memcpy(&offset_instruccion, buffer + desplazamiento, INT);
-			desplazamiento += INT;
+		memcpy(&offset_instruccion, buffer + desplazamiento, sizeof(t_size));
+			desplazamiento += sizeof(t_size);
 
 		(unPcb->indiceCodigo)[contador_instrucciones] = cargarIndiceCodigo(start_instruccion, offset_instruccion);
 
 		contador_instrucciones++;
 	} // fin carga índice código
-
-		// Copio el índice de etiquetas:
-		unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
-	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
-		desplazamiento += unPcb->tamanioIndiceEtiquetas;
 
 		// Copio el índice de stack:
 	unPcb->indiceStack = list_create();
@@ -646,8 +645,8 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 		registroStack *reg = malloc(sizeof(registroStack));
 
-		memcpy(&reg->cantidad_args, buffer + desplazamiento, 4);
-			desplazamiento += 4;
+		memcpy(&reg->cantidad_args, buffer + desplazamiento, INT);
+			desplazamiento += INT;
 
 		reg->args = list_create();
 
@@ -657,18 +656,21 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 			variable *arg = malloc(sizeof(variable));
 
-			memcpy(&arg->nombre, buffer + desplazamiento, 1);
-				desplazamiento += 1;
-			memcpy(&arg->direccion, buffer + desplazamiento, 12);
-				desplazamiento += 12;
+			memcpy(&arg->nombre, buffer + desplazamiento, CHAR);
+				desplazamiento += CHAR;
+			memcpy(&arg->direccion, buffer + desplazamiento, DIRECCION);
+				desplazamiento += DIRECCION;
 
 			list_add(reg->args, arg);
 
 			contador_argumentos++;
 		} // fin carga lista argumentos
 
-		memcpy(&reg->cantidad_vars, buffer + desplazamiento, 4);
-			desplazamiento += 4;
+		memcpy(&(reg->args->elements_count), buffer + desplazamiento, INT);
+			desplazamiento += INT;
+
+		memcpy(&reg->cantidad_vars, buffer + desplazamiento, INT);
+			desplazamiento += INT;
 
 		reg->vars = list_create();
 
@@ -678,28 +680,37 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 
 			variable *var = malloc(sizeof(variable));
 
-			memcpy(&var->nombre, buffer + desplazamiento, 1);
-				desplazamiento += 1;
-			memcpy(&var->direccion, buffer + desplazamiento, 12);
-				desplazamiento += 12;
+			memcpy(&var->nombre, buffer + desplazamiento, CHAR);
+				desplazamiento += CHAR;
+			memcpy(&var->direccion, buffer + desplazamiento, DIRECCION);
+				desplazamiento += DIRECCION;
 
 			list_add(reg->vars, var);
 
 			 contador_variables++;
 		} // fin carga lista variables
 
-		memcpy(&reg->retPos, buffer + desplazamiento, 4);
-			desplazamiento += 4;
-		memcpy(&reg->retVar, buffer + desplazamiento, 12);
-			desplazamiento += 12;
+		memcpy(&(reg->vars->elements_count), buffer + desplazamiento, INT);
+			desplazamiento += INT;
+
+		memcpy(&reg->retPos, buffer + desplazamiento, INT);
+			desplazamiento += INT;
+		memcpy(&reg->retVar, buffer + desplazamiento, DIRECCION);
+			desplazamiento += DIRECCION;
 
 		list_add(unPcb->indiceStack, reg); // agrego el registro cargado y avanzo al siguiente
 
 		contador_registros_stack++;
 	} // fin while
+
 	// Copio el int 'elements_count' campo del índice de stack:
 	memcpy(&(unPcb->indiceStack->elements_count), buffer + desplazamiento, INT);
+		desplazamiento += INT;
 	// fin carga índice stack
+
+	// Copio el índice de etiquetas:
+	unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
+	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 
 	return unPcb;
 }

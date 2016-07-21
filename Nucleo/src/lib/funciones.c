@@ -345,7 +345,6 @@ pcb * crearPcb(string* programa){
 
 		// Inicializo los tamaños de los índices:
 		nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size * sizeof_instrucciones(infoProg->instrucciones_serializado);
-		nuevoPcb->tamanioIndiceStack = 4;
 		nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
 
 		// Inicializo índice de código:
