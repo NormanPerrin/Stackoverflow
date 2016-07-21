@@ -536,10 +536,8 @@ int pcbListIndex(int pid){
 	for (i = 0; i < list_size(listaProcesos); i++){
 		unPcb = (pcb *)list_get(listaProcesos, i);
 		if(unPcb->pid == pid){
-			liberarPcb(unPcb);
 			return i; // el proceso está en la posición 'i'
 		}
-			liberarPcb(unPcb);
 	}
 	return ERROR; // no se encontró el proceso
 }
