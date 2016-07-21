@@ -111,7 +111,7 @@ void cliente(void* fdCliente) {
 	int *head = (int*)reservarMemoria(INT);
 
 	while(!exitFlag) {
-		void *mensaje = aplicar_protocolo_recibir(sockCliente, head); // recibo mensaje
+		void *mensaje = aplicar_protocolo_recibir(sockCliente, head); // recibos mensaje
 		if(mensaje == NULL) {
 			free(mensaje);
 			break;
@@ -155,7 +155,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	// espero respuesta de Swap
 	void *contenido_pagina = NULL;
 	if(*respuesta == PERMITIDO)
-		contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
+		(char*)contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
 
 	if(*protocolo != DEVOLVER_PAGINA) { // hubo un fallo
 
@@ -266,12 +266,13 @@ void leer_instruccion(int fd, void *msj) {
 
 		// pido segundo "cachito"
 			// busco el marco de la página en TLB TP y Swap
-			marco = buscarPagina(fd, pid, mensaje->pagina);
+			int nueva_pagina = mensaje->pagina + 1;
+			marco = buscarPagina(fd, pid, nueva_pagina);
 			// actualizo TLB y TP
-			actualizar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
-			actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
+			actualizar_tlb(pid, nueva_pagina); // la función buscar actualiza referencia también
+			actualizar_tp(pid, nueva_pagina, marco, 1, -1, 1);
 			// concateno segundo "cachito"
-			int pos_real = marco * (config->marco_size) + mensaje->offset;
+			int pos_real = marco * (config->marco_size);
 			nuevo_tamanio = mensaje->tamanio - nuevo_tamanio;
 			memcpy(contenido, memoria + pos_real, nuevo_tamanio);
 
