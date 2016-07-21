@@ -65,7 +65,12 @@ int main(int argc, char **argv){
 						break;
 					}
 			case FINALIZAR_PROGRAMA:{
-						puts("El programa ha finalizado con éxito.\n");
+						int respuesta = *((int*)entrada);
+						if(respuesta == PERMITIDO) {
+							puts("El programa ha finalizado con éxito.\n");
+						} else {
+							puts("El programa no ha finalizado con éxito.\n");
+						}
 						exitConsola();
 						return EXIT_SUCCESS;
 						break;

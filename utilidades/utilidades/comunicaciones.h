@@ -13,7 +13,7 @@
 typedef enum {
 	// Mensajes Estáticos:
 	IMPRIMIR = 1, 					// CPU - Núcleo / Núcleo - Consola
-	PROGRAMA_NEW,				// Núcleo - Consola --> MSJ_VACIO
+	PROGRAMA_NEW,					// Núcleo - Consola --> MSJ_VACIO
 	PEDIDO_LECTURA_INSTRUCCION, 	// CPU - UMC
 	PEDIDO_LECTURA_VARIABLE, 		// CPU - UMC
 	INDICAR_PID, 					// CPU - UMC
@@ -27,7 +27,7 @@ typedef enum {
 	WAIT_CON_BLOQUEO,				// Núcleo - CPU
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
 	TAMANIO_STACK,					// Núcleo - CPU
-	SENIAL_SIGUSR1,						// CPU - Núcleo --> MSJ_VACIO
+	SENIAL_SIGUSR1,					// CPU - Núcleo --> MSJ_VACIO
 	// Mensajes Dinámicos;
 	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
 	ENVIAR_SCRIPT, 					// Consola - Núcleo

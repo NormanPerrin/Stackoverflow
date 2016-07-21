@@ -159,7 +159,7 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
 	case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case TAMANIO_STACK:{
 		buffer = malloc(tamanio);
-		memcpy(buffer, mensaje, tamanio);
+		memcpy((int*)buffer, mensaje, tamanio);
 			break;
 		}
 	// CASE 6: El mensaje son dos valores enteros (int)
