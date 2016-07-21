@@ -447,10 +447,11 @@ int calcularTamanioIndiceStack(pcb* unPcb){
 }
 
 int sizeof_instruccion(t_intructions *instrucciones){
-	int sizeof_start_instruccion = sizeof(instrucciones->start);
+
+	int sizeof_puntero_primera_instruccion = sizeof(instrucciones->start);
 	int sizeof_offset = sizeof(instrucciones->offset);
 
-	return (sizeof_start_instruccion + sizeof_offset);
+	return (sizeof_puntero_primera_instruccion + sizeof_offset);
 }
 
 int calcularTamanioPcb(pcb* unPcb){
