@@ -292,7 +292,7 @@ void imprimirTexto(char* texto){
 
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
-	printf("Entrada/Salida en dispositivo: '%s' durante '%i' unidades de tiempo.\n",dispositivo,tiempo);
+	printf("Entrada/Salida en dispositivo: '%s' durante '%i' unidades de tiempo.\n", dispositivo, tiempo);
 	pedidoIO * pedidoEntradaSalida = malloc(strlen(dispositivo)+ 5);
 	pedidoEntradaSalida->tiempo = tiempo;
 	pedidoEntradaSalida->nombreDispositivo = strdup((char*) dispositivo);
@@ -314,16 +314,21 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 	free(id_semaforo); id_semaforo = NULL;
 
 	int head;
-	aplicar_protocolo_recibir(fdNucleo, &head);
+	void* entrada = NULL;
+	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 
-	if(head == WAIT_CON_BLOQUEO){
-		// Mando la pcb bloqueada y la saco de ejecución:
-		devolvioPcb = POR_WAIT;
-		printf("Proceso bloqueado al hacer WAIT del semáforo: '%s'.\n", nombre_semaforo);
+	if(head == RESPUESTA_WAIT){
+		int* respuesta = (int*) entrada;
+		if(*respuesta == CON_BLOQUEO){
+			// Mando la pcb bloqueada y la saco de ejecución:
+			devolvioPcb = POR_WAIT;
+			printf("Proceso bloqueado al hacer WAIT del semáforo: '%s'.\n", nombre_semaforo);
+		}
+		else{
+			printf("Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'.\n", nombre_semaforo);
+		}
 	}
-	else{
-		printf("Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'.\n", nombre_semaforo);
-	}
+	free(entrada);
 	return;
 }
 
