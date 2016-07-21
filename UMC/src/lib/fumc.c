@@ -155,7 +155,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	// espero respuesta de Swap
 	void *contenido_pagina = NULL;
 	if(*respuesta == PERMITIDO)
-		(char*)contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
+		contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
 
 	if(*protocolo != DEVOLVER_PAGINA) { // hubo un fallo
 
