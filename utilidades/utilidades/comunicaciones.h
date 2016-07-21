@@ -11,9 +11,9 @@
 
 /*** PROTOCOLO ***/
 typedef enum {
-	// Mensajes Estáticos:
+	// Mensajes de un solo elemento:
 	IMPRIMIR = 1, 					// CPU - Núcleo / Núcleo - Consola
-	PROGRAMA_NEW,					// Núcleo - Consola --> MSJ_VACIO
+	PROGRAMA_NEW,					// Núcleo - Consola
 	PEDIDO_LECTURA_INSTRUCCION, 	// CPU - UMC
 	PEDIDO_LECTURA_VARIABLE, 		// CPU - UMC
 	INDICAR_PID, 					// CPU - UMC
@@ -23,24 +23,25 @@ typedef enum {
 	DEVOLVER_VARIABLE, 				// UMC - CPU
 	RESPUESTA_PEDIDO, 				// UMC - CPU
 	ABORTO_PROCESO,					// CPU - Núcleo
-	WAIT_SIN_BLOQUEO, 				// Núcleo - CPU
-	WAIT_CON_BLOQUEO,				// Núcleo - CPU
+	WAIT_CON_BLOQUEO,				// Núcleo - CPU --> MSJ VACIO
+	WAIT_SIN_BLOQUEO,				// Núcleo - CPU --> MSJ VACIO
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
 	TAMANIO_STACK,					// Núcleo - CPU
 	SENIAL_SIGUSR1,					// CPU - Núcleo --> MSJ_VACIO
-	// Mensajes Dinámicos;
+	// Mensajes de un struct de elementos:
 	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
 	ENVIAR_SCRIPT, 					// Consola - Núcleo
 	PCB, 							// Núcleo - CPU
 	PCB_FIN_EJECUCION,				// CPU - Núcleo
 	PCB_FIN_QUANTUM,				// CPU - Núcleo
 	PCB_ENTRADA_SALIDA,				// CPU - Núcleo
-	PCB_WAIT,						// CPU - Núcleo
+	PCB_WAIT, 						// CPU - Núcleo
 	OBTENER_VAR_COMPARTIDA,			// CPU - Núcleo
 	IMPRIMIR_TEXTO, 				// CPU - Núcleo / Núcleo - Consola
 	DEVOLVER_INSTRUCCION,			// UMC - CPU
 	DEVOLVER_PAGINA,				// Swap - UMC
-	WAIT_REQUEST, SIGNAL_REQUEST,	// CPU - Núcleo
+	WAIT_REQUEST,					// CPU - Núcleo
+	SIGNAL_REQUEST,					// CPU - Núcleo
 	ENTRADA_SALIDA,					// CPU - Núcleo
 	GRABAR_VAR_COMPARTIDA,			// CPU - Núcleo
 	ESCRIBIR_PAGINA,				// UMC - Swap

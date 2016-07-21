@@ -98,7 +98,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 5: El mensaje es un valor entero (int)
 			case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 			case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
-			case TAMANIO_STACK: case SENIAL_SIGUSR1:{
+			case TAMANIO_STACK: case SENIAL_SIGUSR1: case WAIT_CON_BLOQUEO: case WAIT_SIN_BLOQUEO:{
 				tamanio = INT;
 				break;
 				}
@@ -135,8 +135,9 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	// CASE 1: El mensaje es un texto (char*)
 	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
 	case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+			char* msj = (char*) mensaje;
 			buffer = malloc(tamanio);
-			memcpy(buffer, mensaje, tamanio);
+			memcpy(buffer, msj, tamanio);
 			break;
 		}
 	// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
@@ -157,9 +158,10 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	// CASE 5: El mensaje es un valor entero (int)
 	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case SENIAL_SIGUSR1:
 	case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
-	case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case TAMANIO_STACK:{
+	case WAIT_CON_BLOQUEO: case WAIT_SIN_BLOQUEO: case TAMANIO_STACK:{
+		int* msj = (int*) mensaje;
 		buffer = malloc(tamanio);
-		memcpy((int*)buffer, mensaje, tamanio);
+		memcpy(buffer, msj, tamanio);
 			break;
 		}
 	// CASE 6: El mensaje son dos valores enteros (int)
@@ -221,7 +223,7 @@ void * deserealizar(int head, void * buffer, int tamanio){
 		// CASE 5: El mensaje es un valor entero (int)
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
-		case WAIT_SIN_BLOQUEO: case WAIT_CON_BLOQUEO: case SENIAL_SIGUSR1: case TAMANIO_STACK:{
+		case WAIT_CON_BLOQUEO: case WAIT_SIN_BLOQUEO: case SENIAL_SIGUSR1: case TAMANIO_STACK:{
 			int* msj = malloc(tamanio);
 			memcpy(msj, buffer, tamanio);
 			mensaje = msj;

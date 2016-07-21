@@ -38,6 +38,7 @@ int semaforo_wait(t_semaforo* semaforo);
 void semaforoBloquearProceso(t_queue* colaBloqueados, pcb* proceso);
 void tratarPcbDeConsolaDesconectada(int pid);
 void verificarDesconexionEnConsolas();
+void quitarCpuPorSenialSIGUSR1(cpu* unCpu, int index);
 void recorrerListaCPUsYAtenderNuevosMensajes();
 // Liberar recursos:
 void liberarCPU(cpu * cpu);
