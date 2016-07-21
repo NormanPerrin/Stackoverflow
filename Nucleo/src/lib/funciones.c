@@ -716,7 +716,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Le informo a la Consola asociada:
 		bool consolaTieneElPid(consola* unaConsola){ return unaConsola->pid == pcbEjecutada->pid;}
 		consola * consolaAsociada = list_remove_by_condition(listaConsolas, (void*) consolaTieneElPid);
-		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, MSJ_VACIO);
+		int respuesta = PERMITIDO;
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, &respuesta);
 		// Libero la Consola asociada y la saco del sistema:
 		liberarConsola(consolaAsociada);
 		// Libero el PCB del proceso y lo saco del sistema:
@@ -796,7 +797,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Le informo a la Consola asociada:
 		bool consolaTieneElPidProceso(consola* unaConsola){ return unaConsola->pid == *pid;}
 		consola * consolaAsociada = list_remove_by_condition(listaConsolas, (void*) consolaTieneElPidProceso);
-		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, MSJ_VACIO);
+		int respuesta = NO_PERMITIDO;
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, &respuesta);
 		// Libero la Consola asociada y la saco del sistema:
 		liberarConsola(consolaAsociada);
 		// Libero el PCB del proceso y lo saco del sistema:
