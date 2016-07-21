@@ -184,7 +184,7 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
-	printf("Obteniendo el valor de la variable compartida: '%s'.\n", var_compartida_nombre);
+	printf("Obteniendo valor de la variable compartida: '%s'.\n", var_compartida_nombre);
 	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
 	void* entrada = NULL;
 	int* valor_variable = NULL;
@@ -200,7 +200,7 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 		valor_variable = (int*) entrada;
 	}
 	if(valor_variable == NULL){
-		printf("Error al obtener variable compartida del proceso actual.\n");
+		printf("Error al obtener valor de la variable compartida '%s'.\n", var_compartida_nombre);
 		return ERROR;
 	}
 	else{
@@ -210,7 +210,7 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 
 t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombre, t_valor_variable var_compartida_valor){
 
-	printf("Asignando el valor %d a la variable compartida '%s'.\n", var_compartida_valor, var_compartida_nombre);
+	printf("Asignando el valor '%d' a la variable compartida '%s'.\n", var_compartida_valor, var_compartida_nombre);
 	var_compartida * variableCompartida = malloc(strlen(var_compartida_nombre)+ 5);
 
 	variableCompartida->valor = var_compartida_valor;
@@ -224,9 +224,9 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 }
 
 void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
-	printf("Llendo a la etiqueta: '%s'...\n", nombre_etiqueta);
-	t_puntero_instruccion num_instruccion = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
-	pcbActual->pc = num_instruccion - 1;
+	printf("Llendo a la etiqueta: '%s'.\n", nombre_etiqueta);
+	t_puntero_instruccion posicion_etiqueta = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
+	pcbActual->pc = posicion_etiqueta + 1;
 	return;
 }
 

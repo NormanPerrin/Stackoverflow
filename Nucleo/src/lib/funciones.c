@@ -230,6 +230,7 @@ void planificarProceso(){
 				// Saco el primer proceso de la cola:
 				pcb * unPCB = (pcb *)queue_pop(colaListos);
 				unPCB->id_cpu = unCPU->id;
+				unCPU->pid = unPCB->pid;
 				unCPU->disponibilidad = OCUPADO;
 
 		aplicar_protocolo_enviar(unCPU->fd_cpu, PCB, unPCB);
