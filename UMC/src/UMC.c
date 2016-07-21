@@ -6,7 +6,6 @@
 int main(void) {
 
 	leerArchivoDeConfiguracion(RUTA_CONFIG); // Abro archivo de configuración
-	leerArchivoDeConfiguracion("/home/utnso/tp-2016-1c-Cazadores-de-cucos/UMC/Debug/configUMC.txt");
 
 	iniciarEstructuras(); // Crea memoria y estructuras de administracións
 
