@@ -20,8 +20,7 @@ int main(int argc, char **argv){
 	script->cadena = programa;
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, script);
 	printf("Script enviado a Núcleo. Esperando respuesta...\n");
-	free(script->cadena);
-	free(script);
+	free(script->cadena); free(script);
 
 	int head;
 	int* respuesta = malloc(INT);
@@ -69,7 +68,7 @@ int main(int argc, char **argv){
 						if(respuesta == PERMITIDO) {
 							puts("El programa ha finalizado con éxito.\n");
 						} else {
-							puts("El programa no ha finalizado con éxito.\n");
+							puts("El programa ha sido abortado.\n");
 						}
 						exitConsola();
 						return EXIT_SUCCESS;
@@ -86,7 +85,6 @@ int main(int argc, char **argv){
 		free(respuesta); respuesta = NULL;
 	} // fin if head válido
 
-	log_error(logger, "No se recibió respuesta de inicio de programa de Núcleo.");
 	exitConsola();
 	return EXIT_FAILURE;
 

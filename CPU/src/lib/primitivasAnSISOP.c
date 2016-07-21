@@ -308,7 +308,7 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 void s_wait(t_nombre_semaforo nombre_semaforo){
 
 	char* id_semaforo = malloc(strlen(nombre_semaforo)+1);
-	id_semaforo = (char*) nombre_semaforo;
+	id_semaforo = nombre_semaforo;
 
 	aplicar_protocolo_enviar(fdNucleo, WAIT_REQUEST, id_semaforo);
 	free(id_semaforo); id_semaforo = NULL;

@@ -642,6 +642,12 @@ void verificarDesconexionEnConsolas(){
 	return;
 }
 
+void quitarCpuPorSenialSIGUSR1(cpu* unCpu, int index){
+	log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCpu->id);
+	cerrarSocket(unCpu->fd_cpu);
+	liberarCPU(list_remove(listaCPU, index));
+}
+
 void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 	int i;
@@ -652,8 +658,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		bool consolaTieneElPidCPU(consola* unaConsola){ return unaConsola->pid == unCPU->pid;}
 
-		if (FD_ISSET(fd , &readfds)){
-			// Recibo el nuevo mensaje del CPU:
+		if (FD_ISSET(fd , &readfds)){ // Recibo el nuevo mensaje del CPU:
+
 			int protocolo;
 		    void * mensaje = NULL;
 		    mensaje = aplicar_protocolo_recibir(fd, &protocolo);
@@ -663,7 +669,9 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		    	salvarProcesoEnCPU(unCPU->id);
 		    	cerrarSocket(fd);
 		    	liberarCPU(list_remove(listaCPU, i));
+
 		    	return;
+
 		    }else{
 		    	// El mensaje no es NULL, entoces veo de qué se trata:
 	switch(protocolo){
@@ -673,14 +681,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		pcb * pcbEjecutada = (pcb*) mensaje;
 		log_info(logger, "Proceso #%i fin de quantum en CPU #%i.", pcbEjecutada->pid, unCPU->id);
 
-		if(envioSenialCPU(unCPU->id)){
-			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
-			cerrarSocket(fd);
-			liberarCPU(list_remove(listaCPU, i));
-		}
-		else{ // El CPU pasa de Ocupado a Libre:
-			unCPU->disponibilidad = LIBRE;
-		}
+		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
+		} else { unCPU->disponibilidad = LIBRE; }
 
 		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
 
@@ -697,14 +699,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		pcb * pcbEjecutada = (pcb*) mensaje;
 		log_info(logger, "Proceso #%i fin de ejecución en CPU %i.", pcbEjecutada->pid, unCPU->id);
 
-		if(envioSenialCPU(unCPU->id)){
-			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
-			cerrarSocket(fd);
-			liberarCPU(list_remove(listaCPU, i));
-		}
-		else{ // El CPU pasa de Ocupado a Libre:
-			unCPU->disponibilidad = LIBRE;
-		}
+		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
+		} else { unCPU->disponibilidad = LIBRE; }
 
 		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
 
@@ -735,14 +731,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		entrada = aplicar_protocolo_recibir(fd, &head);
 		if(head == PCB_ENTRADA_SALIDA) pcbEjecutada = (pcb*)entrada;
 
-		if(envioSenialCPU(unCPU->id)){
-			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
-			cerrarSocket(fd);
-			liberarCPU(list_remove(listaCPU, i));
-		}
-		else{ // El CPU pasa de Ocupado a Libre:
-			unCPU->disponibilidad = LIBRE;
-		}
+		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
+		} else { unCPU->disponibilidad = LIBRE; }
 
 		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
 
@@ -779,14 +769,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		int index = pcbListIndex(*pid);
 		log_info(logger, "Proceso #%i abortando ejecución en CPU #%i.", *pid, unCPU->id);
 
-		if(envioSenialCPU(unCPU->id)){
-			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
-			cerrarSocket(fd);
-			liberarCPU(list_remove(listaCPU, i));
-		}
-		else{ // El CPU pasa de Ocupado a Libre:
-			unCPU->disponibilidad = LIBRE;
-		}
+		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
+		} else { unCPU->disponibilidad = LIBRE; }
 
 		if(seDesconectoConsolaAsociada(*pid)) break;
 
@@ -826,14 +810,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			entrada = aplicar_protocolo_recibir(fd, &head);
 			if(head == PCB_WAIT){ waitPcb = (pcb*)entrada; }
 
-			if(envioSenialCPU(unCPU->id)){
-				log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
-				cerrarSocket(fd);
-				liberarCPU(list_remove(listaCPU, i));
-			}
-			else{ // El CPU pasa de Ocupado a Libre:
-				unCPU->disponibilidad = LIBRE;
-			}
+			if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
+			} else { unCPU->disponibilidad = LIBRE; }
 
 			if(seDesconectoConsolaAsociada(waitPcb->pid)) break;
 
