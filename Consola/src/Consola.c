@@ -60,7 +60,7 @@ int main(int argc, char **argv){
 
 			case IMPRIMIR_TEXTO:{
 						// Imprime lo que recibe, ya sea texto a variable (convertida a texto):
-						printf("IMPRIMIR: %s.", (char*)entrada);
+						printf("IMPRIMIR: '%s'.\n", (char*)entrada);
 						break;
 					}
 			case FINALIZAR_PROGRAMA:{
