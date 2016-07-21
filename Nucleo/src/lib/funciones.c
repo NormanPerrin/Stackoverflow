@@ -751,7 +751,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
-		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR, string_itoa(*((int*) mensaje)));
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, string_itoa(*((int*) mensaje)));
 		printf("Proceso #%i solicita imprimir variable en CPU #%i.\n", unCPU->pid, unCPU->id);
 
 		break;
