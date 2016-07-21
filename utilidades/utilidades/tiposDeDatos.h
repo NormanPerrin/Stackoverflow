@@ -87,6 +87,10 @@ typedef enum{
 	ACEPTADO = 1, RECHAZADO, ERROR_CONEXION
 }  __attribute__((packed)) estadoInicio;
 
+typedef enum{
+	CON_BLOQUEO = 1, SIN_BLOQUEO, SENIAL
+}  __attribute__((packed)) infoCPU;
+
 // Respuesta de Swap a un pedido de Lectura de UMC: /* MANDA UN CHAR* */
 
 // Respuesta a un pedido de Lectura de Variable de UMC a CPU: /* MANDA UN INT */

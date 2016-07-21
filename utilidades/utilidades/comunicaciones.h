@@ -4,7 +4,6 @@
 #include "general.h"
 
 #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)))
-#define MSJ_VACIO ((void *)1) // Para no enviar NULL
 
 // ENVIAR UN PAQUETE: void aplicar_protocolo_enviar(int fdReceptor, int protocolo, void* mensaje);
 // RECIBIR UN PAQUETE: void * aplicar_protocolo_recibir(int fdEmisor, int* protocolo);
@@ -23,11 +22,10 @@ typedef enum {
 	DEVOLVER_VARIABLE, 				// UMC - CPU
 	RESPUESTA_PEDIDO, 				// UMC - CPU
 	ABORTO_PROCESO,					// CPU - Núcleo
-	WAIT_CON_BLOQUEO,				// Núcleo - CPU --> MSJ VACIO
-	WAIT_SIN_BLOQUEO,				// Núcleo - CPU --> MSJ VACIO
+	RESPUESTA_WAIT,					// Núcleo - CPU
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
 	TAMANIO_STACK,					// Núcleo - CPU
-	SENIAL_SIGUSR1,					// CPU - Núcleo --> MSJ_VACIO
+	SENIAL_SIGUSR1,					// CPU - Núcleo
 	// Mensajes de un struct de elementos:
 	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
 	ENVIAR_SCRIPT, 					// Consola - Núcleo

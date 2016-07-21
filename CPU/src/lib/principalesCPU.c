@@ -32,7 +32,10 @@ void liberarPcbActiva(){
 
 void atenderSenialSIGUSR1() {
 		printf("Se recibió señal SIGUSR1. Notificando a Núcleo.\n");
-		aplicar_protocolo_enviar(fdNucleo, SENIAL_SIGUSR1, MSJ_VACIO);
+		int* respuesta = malloc(INT);
+		*respuesta = SENIAL;
+		aplicar_protocolo_enviar(fdNucleo, SENIAL_SIGUSR1, respuesta);
+		free(respuesta);
 		if (cpuOciosa){
 			printf("Cerrando proceso CPU...\n");
 			liberarRecursos();

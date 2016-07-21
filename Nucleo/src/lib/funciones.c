@@ -716,6 +716,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		liberarConsola(consolaAsociada);
 		// Libero el PCB del proceso y lo saco del sistema:
 		liberarPcb(list_remove(listaProcesos, index));
+		free(mensaje);
 
 		planificarProceso();
 
@@ -785,6 +786,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		liberarConsola(consolaAsociada);
 		// Libero el PCB del proceso y lo saco del sistema:
 		liberarPcb(list_remove(listaProcesos, index));
+		free(mensaje);
 
 		planificarProceso();
 
@@ -794,6 +796,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*)mensaje);
 		semaforo_signal(semaforo);
+		free(mensaje);
 
 		break;
 	}
@@ -802,7 +805,10 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*)mensaje);
 		if (semaforo_wait(semaforo)){ // El proceso se bloquea al hacer wait del semáforo
 			// Notifico al CPU:
-			aplicar_protocolo_enviar(fd, WAIT_CON_BLOQUEO, MSJ_VACIO);
+			int* respuesta = malloc(INT);
+			*respuesta = CON_BLOQUEO;
+			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, respuesta);
+			free(respuesta);
 			pcb* waitPcb = NULL;
 			int head;
 			// Recibo la PCB en ejecución que se bloqueó:
@@ -818,8 +824,12 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			 semaforoBloquearProceso(semaforo->bloqueados, waitPcb);
 		}
 		else{ // El proceso no se bloquea y puede seguir ejecutando:
-			aplicar_protocolo_enviar(fd, WAIT_SIN_BLOQUEO, MSJ_VACIO);
+			int* respuesta = malloc(INT);
+			*respuesta = SIN_BLOQUEO;
+			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, respuesta);
+			free(respuesta);
 		}
+		free(mensaje);
 
 		break;
 	}
@@ -828,8 +838,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Recibo un char* y devuelvo el int correspondiente:
 		var_compartida* varPedida = dictionary_get(diccionarioVarCompartidas, (char*)mensaje);
 		aplicar_protocolo_enviar(fd, DEVOLVER_VAR_COMPARTIDA, &(varPedida->valor));
-		free(varPedida->nombre); varPedida->nombre = NULL;
-		free(varPedida); varPedida = NULL;
+		free(mensaje);
 
 		break;
 	}
@@ -839,15 +848,14 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Actualizo el valor de la variable solicitada:
 		var_compartida* varBuscada = dictionary_get(diccionarioVarCompartidas, var_aGrabar->nombre);
 		varBuscada->valor = var_aGrabar->valor;
-		free(var_aGrabar->nombre); var_aGrabar->nombre = NULL;
-		free(var_aGrabar); var_aGrabar = NULL;
-
+		free(mensaje);
 		break;
 	}
 	case SENIAL_SIGUSR1: {
 
 		printf("Señal SIGUSR1 del CPU #%i. Esperando su PCB en ejecución.\n", unCPU->id);
 		list_add(listaCPU_SIGUSR1, &(unCPU->id));
+		free(mensaje);
 
 		break;
 	}
