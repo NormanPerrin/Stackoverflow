@@ -81,7 +81,7 @@ solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
 // -- Auxiliares:
 int getStartInstruccion(t_intructions instruccion);
 int getOffsetInstruccion (t_intructions instruccion);
-t_intructions cargarIndiceCodigo(int primera_instruccion, int offset_instruccion);
+t_intructions cargarIndiceCodigo(t_puntero_instruccion primera_instruccion, t_size offset_instruccion);
 int calcularTamanioIndiceStack(pcb* unPcb);
 int calcularTamanioPcb(pcb* mensaje);
 

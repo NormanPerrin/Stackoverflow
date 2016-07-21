@@ -60,7 +60,7 @@ typedef struct pcb{
 	int paginas_stack; // tamaño en páginas del segmento de stack
 	int pc; // program counter
 	int pid, primerPaginaStack, quantum, quantum_sleep, stackPointer;
-	int tamanioIndiceCodigo, tamanioIndiceEtiquetas; // Tamaños en bytes de los índices
+	int tamanioIndiceEtiquetas; // Tamaños en bytes del índice
 	int cantidad_registros_stack; // Cantidad de elementos en el índice de stack
 	t_intructions* indiceCodigo;
 	t_list* indiceStack; // valores -> registroStack

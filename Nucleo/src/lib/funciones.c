@@ -309,13 +309,6 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 		}
 }
 
-int sizeof_instrucciones(t_intructions *instrucciones){
-	int sizeof_start = sizeof(instrucciones->start);
-	int sizeof_offset = sizeof(instrucciones->offset);
-
-	return (sizeof_start + sizeof_offset);
-}
-
 pcb * crearPcb(string* programa){
 
 	pcb * nuevoPcb = malloc(sizeof(pcb));
@@ -343,10 +336,6 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->stackPointer = 0;
 		nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
-		// Inicializo los tamaños de los índices:
-		nuevoPcb->tamanioIndiceCodigo = infoProg->instrucciones_size * sizeof_instrucciones(infoProg->instrucciones_serializado);
-		nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
-
 		// Inicializo índice de código:
 		nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
@@ -355,6 +344,8 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->cantidad_registros_stack = 0;
 
 		// Inicializo índice de etiquetas:
+		nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
+
 		if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0){
 			nuevoPcb->indiceEtiquetas = infoProg->etiquetas;
 		} else {
@@ -520,9 +511,10 @@ int seDesconectoConsolaAsociada(int quantum_pid){
 	int i;
 	for(i=0; i<list_size(listaProcesosAbortivos); i++){
 		int * exec_pid = list_get(listaProcesosAbortivos, i);
-		if(*exec_pid == quantum_pid){ // se desconectó la consola asociada
-			free(list_remove(listaProcesosAbortivos, i));
 
+		if(*exec_pid == quantum_pid){ // se desconectó la consola asociada
+
+			free(list_remove(listaProcesosAbortivos, i));
 			printf("Removiendo al proceso #%i porque se desconectó su Consola.\n", quantum_pid);
 			// Le informo a UMC que libere la memoria asignada al programa:
 			int index = pcbListIndex(quantum_pid); // indexo el pcb en la lista de procesos
@@ -554,7 +546,7 @@ int pcbListIndex(int pid){
 
 void finalizarPrograma(int pid, int index){
 
-	if (index != -1){
+	if (index != ERROR){
 		printf("Liberando memoria asignada al proceso #%d.\n", pid);
 		// Aviso a UMC que libere la memoria asignada al proceso:
 		int* exit_pid = malloc(INT);

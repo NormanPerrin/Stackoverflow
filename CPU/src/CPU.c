@@ -77,7 +77,10 @@ int recibirMensajesDeNucleo(){
 				// Seteo la pcb actual que recibo de Núcleo:
 				pcbActual = (pcb*) mensaje;
 				// Le informo a UMC el cambio de proceso activo:
-				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, &(pcbActual->pid));
+				int* nuevoPid = malloc(INT);
+				*nuevoPid = pcbActual->pid;
+				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, nuevoPid);
+				free(nuevoPid);
 				// Comienzo la ejecución del proceso:
 				cpuOciosa = false;
 				huboStackOverflow = false;
@@ -118,7 +121,10 @@ void ejecutarProcesoActivo(){
 
 			if (huboStackOverflow){
 				log_info(logger, "Se ha producido Stack Overflow. Abortando programa...");
-				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+				int* pidActual = malloc(INT);
+				*pidActual = pcbActual->pid;
+				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, pidActual);
+				free(pidActual);
 				exitProceso();
 					return;
 				}
@@ -129,13 +135,19 @@ void ejecutarProcesoActivo(){
 			switch (devolvioPcb){
 			case POR_IO:{
 				log_info(logger, "Expulsando proceso por pedido de I/O.");
-				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, &(pcbActual->pid));
+				int* pidActual = malloc(INT);
+				*pidActual = pcbActual->pid;
+				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, pidActual);
+				free(pidActual);
 				exitProceso();
 				return;
 			}
 			case POR_WAIT:{
 				log_info(logger, "Expulsando proceso por operación Wait.");
-				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, &(pcbActual->pid));
+				int* pidActual = malloc(INT);
+				*pidActual = pcbActual->pid;
+				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, pidActual);
+				free(pidActual);
 				exitProceso();
 				return;
 			}
