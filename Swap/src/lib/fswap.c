@@ -337,6 +337,8 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
 void eliminar_programa(void *msj) {
 
+	dormir(config->retardoAcceso);
+
 	int *respuesta = (int*)reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 
@@ -376,7 +378,6 @@ void eliminar_programa(void *msj) {
 			char *c = (char*)reservarMemoria(config->tamanioPagina);
 			int l = 0;
 			for(; l < config->tamanioPagina; l++) c[l] = '\0';
-			dormir(config->retardoAcceso);
 			fwrite(c, CHAR, config->tamanioPagina, archivoSwap);
 		}
 
