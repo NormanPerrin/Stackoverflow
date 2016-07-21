@@ -339,6 +339,6 @@ void s_signal(t_nombre_semaforo nombre_semaforo){
 	aplicar_protocolo_enviar(fdNucleo, SIGNAL_REQUEST, id_semaforo);
 
 	printf("SIGNAL del semáforo '%s'.\n", nombre_semaforo);
-	free(id_semaforo); id_semaforo = NULL;
+	//free(id_semaforo); id_semaforo = NULL;
 	return;
 }
