@@ -369,8 +369,6 @@ void finalizar_programa(int fd, void *msj) {
 		return;
 	}
 
-	free(tabla_paginas[pos].marcos_reservados);
-
 	int i = 0;
 	for(; i < tabla_paginas[pos].paginas; i++) {
 
@@ -380,9 +378,20 @@ void finalizar_programa(int fd, void *msj) {
 		// elimino página de TP
 		eliminar_pagina(pid, i);
 
-		// elimino página de TLB si está
-		borrar_tlb(pid);
+	}
 
+	// elimino páginas de TLB si hay
+	borrar_tlb(pid);
+
+	// elimino pid de tabla paginas
+	tabla_paginas[pos].pid = -1;
+	tabla_paginas[pos].paginas = MAX_PAGINAS;
+	tabla_paginas[pos].puntero = 0;
+
+	// borro marcos asignados
+	int m = 0;
+	for(; m < config->marco_x_proceso; m++) {
+		tabla_paginas[pos].marcos_reservados[m] = -1;
 	}
 
 }
@@ -513,7 +522,7 @@ void eliminar_pagina(int pid, int pagina) {
 		set.bit_uso = 0;
 		set.bit_presencia = 0;
 		set.bit_modificado = 0;
-		setear_entrada(pos, pagina-1, set);
+		setear_entrada(pos, pagina, set);
 	}
 }
 
