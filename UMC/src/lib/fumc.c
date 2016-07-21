@@ -256,7 +256,30 @@ void leer_instruccion(int fd, void *msj) {
 	// busco el código que me piden
 	void *contenido = reservarMemoria(mensaje->tamanio);
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
-	memcpy(contenido, memoria + pos_real, mensaje->tamanio);
+
+	// tengo en cuenta si la instrucción está cortada
+	if( (mensaje->offset + mensaje->tamanio) > config->marco_size ) { // tengo que pedir otra pagina más
+
+		// agrego primer "cachito"
+			int nuevo_tamanio = config->marco_size - mensaje->offset;
+			memcpy(contenido, memoria + pos_real, nuevo_tamanio);
+
+		// pido segundo "cachito"
+			// busco el marco de la página en TLB TP y Swap
+			marco = buscarPagina(fd, pid, mensaje->pagina);
+			// actualizo TLB y TP
+			actualizar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
+			actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
+			// concateno segundo "cachito"
+			int pos_real = marco * (config->marco_size) + mensaje->offset;
+			nuevo_tamanio = mensaje->tamanio - nuevo_tamanio;
+			memcpy(contenido, memoria + pos_real, nuevo_tamanio);
+
+	} else { // no hay problemas raros
+
+		memcpy(contenido, memoria + pos_real, mensaje->tamanio);
+
+	}
 
 	// respondo que pedido fue válido
 	int *respuesta = (int*)reservarMemoria(INT);
