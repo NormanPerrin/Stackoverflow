@@ -318,7 +318,7 @@ pcb * crearPcb(string* programa){
 
 	int respuestaUMC = solicitarSegmentosAUMC(nuevoPcb, programa);
 	if(respuestaUMC == FALSE){ // el programa es rechazado del sistema
-		liberarPcb(nuevoPcb);
+		liberarPcbNucleo(nuevoPcb);
 		return NULL;
 	}
 	else{
@@ -352,7 +352,7 @@ pcb * crearPcb(string* programa){
 		} else {
 			nuevoPcb->indiceEtiquetas = NULL;
 		}
-		metadata_destruir(infoProg); infoProg = NULL;
+		free(infoProg); infoProg = NULL;
 
 		return nuevoPcb;
 	}
@@ -521,7 +521,7 @@ int seDesconectoConsolaAsociada(int quantum_pid){
 			int index = pcbListIndex(quantum_pid); // indexo el pcb en la lista de procesos
 			finalizarPrograma(quantum_pid, index);
 			// Libero el PCB del proceso y lo saco del sistema:
-			liberarPcb(list_remove(listaProcesos, index));
+			liberarPcbNucleo(list_remove(listaProcesos, index));
 
 			planificarProceso();
 
@@ -603,7 +603,7 @@ void tratarPcbDeConsolaDesconectada(int pid){
 		int index = pcbListIndex(pid); // indexo el pcb en la lista de procesos
 		finalizarPrograma(pid, index);
 		// Libero el PCB del proceso y lo saco del sistema:
-		liberarPcb(list_remove(listaProcesos, index));
+		liberarPcbNucleo(list_remove(listaProcesos, index));
 
 		planificarProceso();
 	}
@@ -716,7 +716,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Libero la Consola asociada y la saco del sistema:
 		liberarConsola(consolaAsociada);
 		// Libero el PCB del proceso y lo saco del sistema:
-		liberarPcb(list_remove(listaProcesos, index));
+		liberarPcbNucleo(list_remove(listaProcesos, index));
 		free(mensaje);
 
 		planificarProceso();
@@ -786,7 +786,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Libero la Consola asociada y la saco del sistema:
 		liberarConsola(consolaAsociada);
 		// Libero el PCB del proceso y lo saco del sistema:
-		liberarPcb(list_remove(listaProcesos, index));
+		liberarPcbNucleo(list_remove(listaProcesos, index));
 		free(mensaje);
 
 		planificarProceso();
@@ -872,20 +872,27 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	return;
 }
 
+void liberarPcbNucleo(pcb* unPcb){
+	free(unPcb->indiceCodigo); unPcb->indiceCodigo = NULL;
+	free(unPcb->indiceEtiquetas); unPcb->indiceEtiquetas = NULL;
+	list_destroy(unPcb->indiceStack); unPcb->indiceStack = NULL;
+	free(unPcb); unPcb = NULL;
+}
+
 void liberarCPU(cpu * cpu){ free(cpu); cpu = NULL; }
 
 void liberarConsola(consola * consola){ free(consola); consola = NULL;}
 
 void liberarSemaforo(t_semaforo * sem){
 	free(sem->nombre); sem->nombre = NULL;
-	queue_destroy_and_destroy_elements(sem->bloqueados, (void *) liberarPcb);
+	queue_destroy_and_destroy_elements(sem->bloqueados, (void *) liberarPcbNucleo);
 	sem->bloqueados = NULL;
 	free(sem); sem = NULL; }
 
 void liberarVarCompartida(var_compartida * var){ free(var->nombre); var->nombre = NULL; free(var); var = NULL; }
 
 void limpiarColecciones(){
-	list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPcb);
+	list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPcbNucleo);
 	listaProcesos = NULL;
 
 	list_destroy_and_destroy_elements(listaCPU,(void *) liberarCPU);
@@ -900,7 +907,7 @@ void limpiarColecciones(){
 	list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola);
 	listaConsolas = NULL;
 
-	queue_destroy_and_destroy_elements(colaListos, (void *) liberarPcb);
+	queue_destroy_and_destroy_elements(colaListos, (void *) liberarPcbNucleo);
 	colaListos = NULL;
 
 	dictionary_destroy_and_destroy_elements(diccionarioSemaforos, (void *) liberarSemaforo);

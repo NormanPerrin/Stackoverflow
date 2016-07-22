@@ -38,7 +38,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			if(regStack == NULL) regStack = reg_stack_create();
 
 			if(!esArgumento(var_nombre)){
-				variable* new_var = malloc(13);
+				variable* new_var = malloc(sizeof(variable));
 				new_var->nombre = var_nombre;
 				new_var->direccion.pagina = var_pagina;
 				new_var->direccion.offset = var_offset;
@@ -47,11 +47,12 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 				list_add(regStack->vars, new_var);
 			}
 			else{
-				variable* new_arg = malloc(13);
+				variable* new_arg = malloc(sizeof(variable));
+				new_arg->nombre = var_nombre;
 				new_arg->direccion.pagina = var_pagina;
 				new_arg->direccion.offset = var_offset;
 				new_arg->direccion.size = INT;
-				new_arg->nombre = var_nombre;
+
 				list_add(regStack->args, new_arg);
 			}
 			printf("'%c' -> Dirección lógica: %i, %i, %i.\n", var_nombre, var_pagina, var_offset, INT);

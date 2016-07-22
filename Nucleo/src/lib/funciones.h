@@ -41,6 +41,7 @@ void verificarDesconexionEnConsolas();
 void quitarCpuPorSenialSIGUSR1(cpu* unCpu, int index);
 void recorrerListaCPUsYAtenderNuevosMensajes();
 // Liberar recursos:
+void liberarPcbNucleo(pcb* unPcb);
 void liberarCPU(cpu * cpu);
 void liberarConsola(consola * consola);
 void liberarSemaforo(t_semaforo * sem);

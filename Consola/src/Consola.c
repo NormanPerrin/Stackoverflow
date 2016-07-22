@@ -64,9 +64,9 @@ int main(int argc, char **argv){
 			case FINALIZAR_PROGRAMA:{
 						int respuesta = *((int*)entrada);
 						if(respuesta == PERMITIDO) {
-							puts("El programa ha finalizado con éxito.\n");
+							printf("El programa ha finalizado con éxito.\n");
 						} else {
-							puts("El programa ha sido abortado.\n");
+							printf("El programa ha sido abortado.\n");
 						}
 						exitConsola();
 						return EXIT_SUCCESS;

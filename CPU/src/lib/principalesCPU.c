@@ -27,7 +27,10 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void liberarPcbActiva(){
-	liberarPcb(pcbActual);
+	free(pcbActual->indiceCodigo); pcbActual->indiceCodigo = NULL;
+	free(pcbActual->indiceEtiquetas); pcbActual->indiceEtiquetas = NULL;
+	list_destroy(pcbActual->indiceStack); pcbActual->indiceStack = NULL;
+	free(pcbActual); pcbActual = NULL;
 }
 
 void atenderSenialSIGUSR1() {
