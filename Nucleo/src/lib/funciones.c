@@ -228,7 +228,7 @@ void planificarProceso(){
 			// Si hay algún proceso listo para ejecutar...
 			if (queue_size(colaListos) > 0){
 				// Saco el primer proceso de la cola:
-				pcb * unPCB = (pcb *)queue_pop(colaListos);
+				pcb * unPCB = (pcb*) queue_pop(colaListos);
 				unPCB->id_cpu = unCPU->id;
 				unCPU->pid = unPCB->pid;
 				unCPU->disponibilidad = OCUPADO;
@@ -330,7 +330,6 @@ pcb * crearPcb(string* programa){
 		// Analizo con el parser el código del programa para obtener su metadata:
 		t_metadata_program* infoProg = metadata_desde_literal(programa->cadena);
 
-		nuevoPcb->paginaActualCodigo = 0; // el código empieza en la página #0
 		nuevoPcb->primerPaginaStack = nuevoPcb->paginas_codigo; // el stack comienza luego del código
 		nuevoPcb->paginaActualStack = nuevoPcb->primerPaginaStack;
 		nuevoPcb->pc = infoProg->instruccion_inicio;
@@ -338,6 +337,7 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
 		// Inicializo índice de código:
+		nuevoPcb->indiceCodigo = malloc(sizeof(t_intructions));
 		nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
@@ -348,7 +348,7 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
 
 		if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0){
-			nuevoPcb->indiceEtiquetas = infoProg->etiquetas;
+			nuevoPcb->indiceEtiquetas = strdup(infoProg->etiquetas);
 		} else {
 			nuevoPcb->indiceEtiquetas = NULL;
 		}

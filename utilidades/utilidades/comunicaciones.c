@@ -456,11 +456,11 @@ int sizeof_instruccion(t_intructions *instrucciones){
 
 int calcularTamanioPcb(pcb* unPcb){
 	int tamanio;
-	int code_index_size = sizeof_instruccion(unPcb->indiceCodigo) * (unPcb->cantidad_instrucciones);
+	int code_index_size = sizeof(t_intructions) * (unPcb->cantidad_instrucciones);
 	int stack_index_size = calcularTamanioIndiceStack(unPcb);
-	// Sumo 56 bytes por los 14 int que tiene + los tamaños de los tres índices:
+	// Sumo 52 bytes por los 13 int que tiene + los tamaños de los tres índices:
 	// Tamaños índice etiquetas y código vienen de la creación del PCB.
-	tamanio = 56  + code_index_size + stack_index_size + unPcb->tamanioIndiceEtiquetas;
+	tamanio = 52  + stack_index_size + code_index_size + unPcb->tamanioIndiceEtiquetas;
 
 	return tamanio;
 }
@@ -487,8 +487,6 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->id_cpu), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(unPcb->paginaActualCodigo), INT);
-		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->paginaActualStack), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->paginas_codigo), INT);
@@ -513,22 +511,6 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		unPcb->cantidad_registros_stack = unPcb->indiceStack->elements_count;
 	memcpy(buffer + desplazamiento, &(unPcb->cantidad_registros_stack), INT);
 		desplazamiento += INT;
-
-		// Copio el índice de código:
-	int contador_instrucciones = 0;
-
-	while (contador_instrucciones < unPcb->cantidad_instrucciones){
-
-		t_puntero_instruccion start_instruccion = getStartInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
-		memcpy(buffer + desplazamiento, &start_instruccion, sizeof(t_puntero_instruccion));
-			desplazamiento += sizeof(t_puntero_instruccion);
-
-		t_size offset_instruccion = getOffsetInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
-		memcpy(buffer + desplazamiento, &offset_instruccion, sizeof(t_size));
-			desplazamiento += sizeof(t_size);
-
-		contador_instrucciones++;
-	} // fin carga índice de código
 
 		// Copio el índice de stack:
 
@@ -572,6 +554,22 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += INT;
 	// fin carga índice de stack
 
+	// Copio el índice de código:
+	int contador_instrucciones = 0;
+
+	while (contador_instrucciones < unPcb->cantidad_instrucciones){
+
+		t_puntero_instruccion start_instruccion = getStartInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
+		memcpy(buffer + desplazamiento, &start_instruccion, sizeof(t_puntero_instruccion));
+			desplazamiento += sizeof(t_puntero_instruccion);
+
+		t_size offset_instruccion = getOffsetInstruccion((unPcb->indiceCodigo)[contador_instrucciones]);
+		memcpy(buffer + desplazamiento, &offset_instruccion, sizeof(t_size));
+			desplazamiento += sizeof(t_size);
+
+		contador_instrucciones++;
+	} // fin carga índice de código
+
 	// Copio el índice de etiquetas:
 	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 
@@ -587,8 +585,6 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(&unPcb->cantidad_instrucciones, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->id_cpu, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	memcpy(&unPcb->paginaActualCodigo, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	memcpy(&unPcb->paginaActualStack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
@@ -618,22 +614,6 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	int contador_instrucciones = 0;
 
 	unPcb->indiceCodigo = malloc(sizeof(t_intructions)*(unPcb->cantidad_instrucciones));
-
-	while(contador_instrucciones < unPcb->cantidad_instrucciones){
-
-		t_puntero_instruccion start_instruccion = 0;
-		t_size offset_instruccion = 0;
-
-		memcpy(&start_instruccion, buffer + desplazamiento, sizeof(t_puntero_instruccion));
-			desplazamiento += sizeof(t_puntero_instruccion);
-
-		memcpy(&offset_instruccion, buffer + desplazamiento, sizeof(t_size));
-			desplazamiento += sizeof(t_size);
-
-		(unPcb->indiceCodigo)[contador_instrucciones] = cargarIndiceCodigo(start_instruccion, offset_instruccion);
-
-		contador_instrucciones++;
-	} // fin carga índice código
 
 		// Copio el índice de stack:
 	unPcb->indiceStack = list_create();
@@ -706,6 +686,22 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(&(unPcb->indiceStack->elements_count), buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	// fin carga índice stack
+
+	while(contador_instrucciones < unPcb->cantidad_instrucciones){
+
+		t_puntero_instruccion start_instruccion = 0;
+		t_size offset_instruccion = 0;
+
+		memcpy(&start_instruccion, buffer + desplazamiento, sizeof(t_puntero_instruccion));
+			desplazamiento += sizeof(t_puntero_instruccion);
+
+		memcpy(&offset_instruccion, buffer + desplazamiento, sizeof(t_size));
+			desplazamiento += sizeof(t_size);
+
+		(unPcb->indiceCodigo)[contador_instrucciones] = cargarIndiceCodigo(start_instruccion, offset_instruccion);
+
+		contador_instrucciones++;
+	} // fin carga índice código
 
 	// Copio el índice de etiquetas:
 	unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
