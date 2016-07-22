@@ -697,19 +697,19 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case PCB_FIN_EJECUCION:{
 
-		pcb * pcbEjecutada = (pcb*) mensaje;
-		log_info(logger, "Proceso #%i fin de ejecución en CPU %i.", pcbEjecutada->pid, unCPU->id);
+		int* pidEjecutado = (int*) mensaje;
+		log_info(logger, "Proceso #%i fin de ejecución en CPU %i.", *pidEjecutado, unCPU->id);
 
 		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 		} else { unCPU->disponibilidad = LIBRE; }
 
-		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
+		if(seDesconectoConsolaAsociada(*pidEjecutado)) break;
 
-		int index = pcbListIndex(pcbEjecutada->pid); // indexo el pcb en la lista de procesos
+		int index = pcbListIndex(*pidEjecutado); // indexo el pcb en la lista de procesos
 		// Le informo a UMC que libere la memoria asignada al programa:
-		finalizarPrograma(pcbEjecutada->pid, index);
+		finalizarPrograma(*pidEjecutado, index);
 		// Le informo a la Consola asociada:
-		bool consolaTieneElPid(consola* unaConsola){ return unaConsola->pid == pcbEjecutada->pid;}
+		bool consolaTieneElPid(consola* unaConsola){ return unaConsola->pid == *pidEjecutado;}
 		consola * consolaAsociada = list_remove_by_condition(listaConsolas, (void*) consolaTieneElPid);
 		int respuesta = PERMITIDO;
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, &respuesta);
@@ -767,7 +767,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case ABORTO_PROCESO:{ // Es lo mismo que para fin de ejecución
 
-		int* pid = (int*)mensaje;
+		int* pid = (int*) mensaje;
 		int index = pcbListIndex(*pid);
 		log_info(logger, "Proceso #%i abortando ejecución en CPU #%i.", *pid, unCPU->id);
 

@@ -23,14 +23,12 @@ int main(int argc, char **argv){
 	free(script->cadena); free(script);
 
 	int head;
-	int* respuesta = malloc(INT);
 	void * mensaje = NULL;
 	mensaje = aplicar_protocolo_recibir(fd_nucleo, &head); // Recibo respuesta de incio programa
 
 	if (head == PROGRAMA_NEW){
-		respuesta = (int*) mensaje;
 
-		switch(*respuesta){
+		switch(*((int*) mensaje)){
 
 	case RECHAZADO:{ // programa rechazado
 				log_info(logger, "La UMC no pudo alocar los segmentos pedidos. Programa rechazado.");
@@ -82,7 +80,7 @@ int main(int argc, char **argv){
 					break;
 		} // fin case aceptado
 	} // fin switch respuesta inicio
-		free(respuesta); respuesta = NULL;
+		free(mensaje);
 	} // fin if head válido
 
 	exitConsola();
