@@ -273,8 +273,8 @@ void leer_instruccion(int fd, void *msj) {
 			actualizar_tp(pid, nueva_pagina, marco, 1, -1, 1);
 			// concateno segundo "cachito"
 			int pos_real = marco * (config->marco_size);
-			nuevo_tamanio = mensaje->tamanio - nuevo_tamanio;
-			memcpy(contenido, memoria + pos_real, nuevo_tamanio);
+			int nuevo_tamanio2 = mensaje->tamanio - nuevo_tamanio;
+			memcpy(contenido + nuevo_tamanio, memoria + pos_real, nuevo_tamanio2);
 
 	} else { // no hay problemas raros
 
