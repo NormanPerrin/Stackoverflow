@@ -122,7 +122,7 @@ hiloIO* crearHiloIO(int index){
   hiloIO *hilo = malloc(sizeof(hiloIO));
   	  hilo->dataHilo.retardo = atoi(config->retardosIO[index]);
   	  sem_init(&hilo->dataHilo.sem_io, 0, 0);
-  	  	  pthread_mutex_init(&hilo->dataHilo.mutex_io, NULL );
+  	  	  pthread_mutex_init(&hilo->dataHilo.mutex_io, NULL);
   	  hilo->dataHilo.bloqueados = queue_create();
   	  hilo->dataHilo.nombre = strdup(config->ioID[index]);
 
@@ -161,22 +161,22 @@ proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos){
 }
 
 void encolarPcbAListos(pcb* proceso){
-  	 printf("Moviendo al proceso #%d a la cola de Listos.\n", proceso->pid);
-  	  queue_push(colaListos, proceso);
+	printf("Fin de E/S para el proceso #%d.\n", proceso->pid);
+	printf("Moviendo al proceso #%d a la cola de Listos.\n", proceso->pid);
+	queue_push(colaListos, proceso);
 }
 
 void* entradaSalidaThread(void* dataHilo){
 	int tiempoDeEspera;
-	dataDispositivo *datos = dataHilo;
-	proceso_bloqueadoIO* pcb_block;
+	dataDispositivo* datos = (dataDispositivo*) dataHilo;
+	proceso_bloqueadoIO* pcb_block = NULL;
 		while (TRUE){
 			pcb_block = esperarPorProcesoIO(datos); // tomo el primer proceso en la cola de espera del dispositivo
 			tiempoDeEspera = (datos->retardo * pcb_block->espera) * 1000; // duración de la E/S
 			usleep(tiempoDeEspera);
 			encolarPcbAListos(pcb_block->proceso); // agrego al proceso a la cola de listos
-			pcb_block = NULL;
 		}
-		return NULL ;
+		return NULL;
 }
 
 int obtenerSocketMaximoInicial(){
@@ -557,7 +557,7 @@ void finalizarPrograma(int pid, int index){
 
 void realizarEntradaSalida(pcb* pcbEjecutada, pedidoIO* datos){
 
-	proceso_bloqueadoIO* pcbIO = malloc(sizeof *pcbIO);
+	proceso_bloqueadoIO* pcbIO = malloc(sizeof (proceso_bloqueadoIO));
 	hiloIO* dispositivoIO = dictionary_get(diccionarioIO, datos->nombreDispositivo);
 		pcbIO->espera = datos->tiempo;
 		pcbIO->proceso = pcbEjecutada; // debería hacer memcpy ¿?
@@ -725,13 +725,13 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case ENTRADA_SALIDA:{
 		// Recibo primero los datos del pedido de IO:
-		pedidoIO* datos = (pedidoIO*)mensaje;
+		pedidoIO* datos = (pedidoIO*) mensaje;
 		pcb* pcbEjecutada = NULL;
 		int head;
 		// Espero luego la PCB en ejecución:
 		void* entrada = NULL;
 		entrada = aplicar_protocolo_recibir(fd, &head);
-		if(head == PCB_ENTRADA_SALIDA) pcbEjecutada = (pcb*)entrada;
+		if(head == PCB_ENTRADA_SALIDA) pcbEjecutada = (pcb*) entrada;
 
 		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 		} else { unCPU->disponibilidad = LIBRE; }

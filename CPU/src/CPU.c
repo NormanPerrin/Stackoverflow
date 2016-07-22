@@ -145,7 +145,7 @@ void ejecutarProcesoActivo(){
 				return;
 			}
 			case POR_WAIT:{
-				log_info(logger, "Expulsando proceso por operación Wait.");
+				log_info(logger, "Expulsando proceso por operación Wait bloqueante.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, pcbActual);
 				exitProceso();
 				return;
