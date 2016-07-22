@@ -112,7 +112,11 @@ void ejecutarProcesoActivo(){
 			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && string_starts_with(proximaInstruccion, "end")){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
-				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, pcbActual);
+				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
+				int* pidActual = malloc(INT);
+				*pidActual = pcbActual->pid;
+				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, pidActual);
+				free(pidActual);
 				exitProceso();
 					return;
 			} // No es 'end'. Ejecuto la próxima instrucción:
@@ -121,6 +125,7 @@ void ejecutarProcesoActivo(){
 
 			if (huboStackOverflow){
 				log_info(logger, "Se ha producido Stack Overflow. Abortando programa...");
+				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
 				int* pidActual = malloc(INT);
 				*pidActual = pcbActual->pid;
 				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, pidActual);
@@ -135,19 +140,13 @@ void ejecutarProcesoActivo(){
 			switch (devolvioPcb){
 			case POR_IO:{
 				log_info(logger, "Expulsando proceso por pedido de I/O.");
-				int* pidActual = malloc(INT);
-				*pidActual = pcbActual->pid;
-				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, pidActual);
-				free(pidActual);
+				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, pcbActual);
 				exitProceso();
 				return;
 			}
 			case POR_WAIT:{
 				log_info(logger, "Expulsando proceso por operación Wait.");
-				int* pidActual = malloc(INT);
-				*pidActual = pcbActual->pid;
-				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, pidActual);
-				free(pidActual);
+				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, pcbActual);
 				exitProceso();
 				return;
 			}
