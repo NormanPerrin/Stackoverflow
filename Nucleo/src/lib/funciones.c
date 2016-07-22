@@ -352,8 +352,8 @@ pcb * crearPcb(string* programa){
 		} else {
 			nuevoPcb->indiceEtiquetas = NULL;
 		}
-		metadata_destruir(infoProg); infoProg = NULL;
 
+		free(infoProg);
 		return nuevoPcb;
 	}
 }
