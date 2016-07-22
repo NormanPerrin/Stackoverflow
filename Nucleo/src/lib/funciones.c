@@ -175,6 +175,8 @@ void* entradaSalidaThread(void* dataHilo){
 			tiempoDeEspera = (datos->retardo * pcb_block->espera) * 1000; // duración de la E/S
 			usleep(tiempoDeEspera);
 			encolarPcbAListos(pcb_block->proceso); // agrego al proceso a la cola de listos
+
+			planificarProceso();
 		}
 		return NULL;
 }
@@ -221,7 +223,7 @@ void planificarProceso(){
 	pthread_mutex_lock(&mutex_planificarProceso);
 
 	int i, asignado = 0;
-	for (i = 0; (i < list_size(listaCPU) && asignado==0); i++){
+	for (i = 0; (i < list_size(listaCPU) && asignado == 0); i++){
 		// Recorro buscando algún CPU libre:
 		cpu * unCPU = (cpu *)list_get(listaCPU, i);
 		if (unCPU->disponibilidad == LIBRE){
@@ -240,7 +242,7 @@ void planificarProceso(){
 		asignado = 1;
 				}
 			}
-		}
+		} // Si no hay CPU libre sigue de largo.
 	pthread_mutex_unlock(&mutex_planificarProceso);
 }
 
@@ -361,8 +363,9 @@ pcb * crearPcb(string* programa){
 void aceptarConexionEntranteDeConsola(){
 
 	// Las Conosolas mandan un único msj con el script ni bien se conectan:
-	 int new_fd = aceptarConexionSocket(fdEscuchaConsola);
-	 int ret_handshake = handshake_servidor(new_fd, "N");
+	int new_fd = aceptarConexionSocket(fdEscuchaConsola);
+
+	int ret_handshake = handshake_servidor(new_fd, "N");
 
 	if(ret_handshake == FALSE){ // Falló el handshake
 		log_error(logger, "Conexión inicial fallida con la Consola fd #%d.", new_fd);
@@ -405,14 +408,13 @@ void aceptarConexionEntranteDeConsola(){
 		queue_push(colaListos, nuevoPcb);
 
 		planificarProceso();
-		return;
+
 		  } // fin if head scrpit
 		  else{
 			  printf("Se espera script de la Consola #%d.\n", nuevaConsola->id);
 			  *respuesta = ERROR_CONEXION;
 			  aplicar_protocolo_enviar(new_fd, PROGRAMA_NEW, respuesta);
 			  free(respuesta); respuesta = NULL;
-			  return;
 		  }
 }
 
@@ -421,6 +423,7 @@ void aceptarConexionEntranteDeCPU(){
 	int new_fd = aceptarConexionSocket(fdEscuchaCPU);
 
 	int ret_handshake = handshake_servidor(new_fd, "N");
+
 	if(ret_handshake == FALSE){ // Falló el handshake
 		log_error(logger, "Conexión inicial fallida el CPU fd #%d.", new_fd);
 		cerrarSocket(new_fd);
@@ -437,14 +440,13 @@ void aceptarConexionEntranteDeCPU(){
 	log_info(logger,"La CPU #%i se ha conectado.", nuevoCPU->id);
 
 	// Le envío el tamaño de stack a usar:
-	int * stack_size = malloc(INT);
+	int* stack_size = malloc(INT);
 	*stack_size = config->cantidadPaginasStack;
 	aplicar_protocolo_enviar(new_fd, TAMANIO_STACK, stack_size);
 	free(stack_size);
 
-	// El nuevo CPU está listo para ejecutar procesos
+	// El nuevo CPU está listo para ejecutar procesos:
 	planificarProceso();
-	return;
 }
 
 void atenderCambiosEnArchivoConfig(int* socketMaximo){
@@ -456,7 +458,7 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 	if (length <= 0){
 		log_error(logger, "Inotify no pudo leer archivo de configuración.");
 		return;
-	} else if (length > 0) {
+	} else if (length > 0){
 		struct inotify_event *event = (struct inotify_event *) &buffer[i];
 		t_config * new_config = NULL;
 		new_config = config_create(RUTA_CONFIG_NUCLEO);
@@ -491,8 +493,6 @@ void salvarProcesoEnCPU(int id_cpu){
 	if(unPcb != NULL){
 		unPcb->id_cpu = -1; // le desasigno CPU
 		queue_push(colaListos, unPcb); // la mando de nuevo a cola de listos
-
-		planificarProceso();
 	}
 }
 
@@ -572,11 +572,8 @@ void realizarEntradaSalida(pcb* pcbEjecutada, pedidoIO* datos){
 void semaforo_signal(t_semaforo* semaforo){
 	semaforo->valor++;
 	if (semaforo->valor <= 0){
-      pcb* procesoBloqueado = queue_pop(semaforo->bloqueados);
-      if (procesoBloqueado != NULL){
-          encolarPcbAListos(procesoBloqueado);
-          planificarProceso();
-        }
+		pcb* procesoBloqueado = queue_pop(semaforo->bloqueados);
+		if (procesoBloqueado != NULL) encolarPcbAListos(procesoBloqueado);
     }
 }
 
@@ -604,8 +601,6 @@ void tratarPcbDeConsolaDesconectada(int pid){
 		finalizarPrograma(pid, index);
 		// Libero el PCB del proceso y lo saco del sistema:
 		liberarPcbNucleo(list_remove(listaProcesos, index));
-
-		planificarProceso();
 	}
 	else{
 		printf("El proceso #%i se removerá cuando finalice ráfaga en CPU #%i porque se desconectó su Consola.\n",
@@ -623,24 +618,20 @@ void verificarDesconexionEnConsolas(){
 		consola * unaConsola = (consola *)list_get(listaConsolas, i);
 		int fd = unaConsola->fd_consola;
 
-	if (FD_ISSET(fd , &readfds)){
-	// Recibo el nuevo mensaje de la Consola y verifico si en null:
+	if (FD_ISSET(fd , &readfds)){ // nuevo mensaje de consola
 		int protocolo;
 		void * mensaje = NULL;
 		mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
-		if (mensaje == NULL){ // La Consla se desconectó; la quito del sistema y saco su PCB de ejecución:
+		if (mensaje == NULL){ // La Consla se desconectó, la quito del sistema y saco su PCB de ejecución:
 			log_info(logger,"La Consola #%i se ha desconectado. Removiendo PCB del sistema...", unaConsola->id);
 			tratarPcbDeConsolaDesconectada(unaConsola->pid);
 			cerrarSocket(fd);
 			liberarConsola(list_remove(listaConsolas, i));
 			return;
 		} // fin if msj null
-		return;
 	  } // fin if nuevo msj
-	return;
 	} // fin for consolas
-	return;
 }
 
 void quitarCpuPorSenialSIGUSR1(cpu* unCpu, int index){
@@ -665,12 +656,13 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		    void * mensaje = NULL;
 		    mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
-		    if (mensaje == NULL){ // El CPU se desconectó; lo quito del sistema y salvo su PCB:
+		    if (mensaje == NULL){ // El CPU se desconectó, lo quito del sistema y salvo su PCB:
 		    	log_info(logger,"La CPU #%i se ha desconectado. Salvando PCB en ejecución...", unCPU->id);
 		    	salvarProcesoEnCPU(unCPU->id);
 		    	cerrarSocket(fd);
 		    	liberarCPU(list_remove(listaCPU, i));
 
+		    	planificarProceso();
 		    	return;
 
 		    }else{
@@ -690,8 +682,6 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
 		queue_push(colaListos, pcbEjecutada);
-
-		planificarProceso();
 
 		break;
 	}
@@ -719,8 +709,6 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		liberarPcbNucleo(list_remove(listaProcesos, index));
 		free(mensaje);
 
-		planificarProceso();
-
 		break;
 	}
 	case ENTRADA_SALIDA:{
@@ -742,8 +730,6 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
 		realizarEntradaSalida(pcbEjecutada, datos);
-
-		planificarProceso();
 
 		break;
 	}
@@ -789,13 +775,11 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		liberarPcbNucleo(list_remove(listaProcesos, index));
 		free(mensaje);
 
-		planificarProceso();
-
 		break;
 	}
 	case SIGNAL_REQUEST:{
 
-		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*)mensaje);
+		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*) mensaje);
 		semaforo_signal(semaforo);
 		free(mensaje);
 
@@ -803,7 +787,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case WAIT_REQUEST:{
 
-		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*)mensaje);
+		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*) mensaje);
 		if (semaforo_wait(semaforo)){ // El proceso se bloquea al hacer wait del semáforo
 			// Notifico al CPU:
 			int* respuesta = malloc(INT);
@@ -837,7 +821,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	case OBTENER_VAR_COMPARTIDA:{
 
 		// Recibo un char* y devuelvo el int correspondiente:
-		var_compartida* varPedida = dictionary_get(diccionarioVarCompartidas, (char*)mensaje);
+		var_compartida* varPedida = dictionary_get(diccionarioVarCompartidas, (char*) mensaje);
 		aplicar_protocolo_enviar(fd, DEVOLVER_VAR_COMPARTIDA, &(varPedida->valor));
 		free(mensaje);
 
@@ -845,7 +829,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case GRABAR_VAR_COMPARTIDA:{
 
-		var_compartida* var_aGrabar = (var_compartida*)mensaje;
+		var_compartida* var_aGrabar = (var_compartida*) mensaje;
 		// Actualizo el valor de la variable solicitada:
 		var_compartida* varBuscada = dictionary_get(diccionarioVarCompartidas, var_aGrabar->nombre);
 		varBuscada->valor = var_aGrabar->valor;
@@ -864,12 +848,12 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		printf("Head #%d de mensaje recibido no reconocido.\n", protocolo);
 		break;
 	} // fin switch protocolo
-		    } // fin else mensaje not null
-		    return;
-		} // fin if nuevo mensaje fd CPU
-		return;
-	} // fin for listaCPU
+
+	planificarProceso();
 	return;
+		    } // fin else mensaje not null
+		} // fin if nuevo mensaje fd CPU
+	} // fin for listaCPU
 }
 
 void liberarPcbNucleo(pcb* unPcb){

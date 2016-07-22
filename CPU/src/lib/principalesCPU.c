@@ -181,6 +181,12 @@ void limpiarInstruccion(char * instruccion){
 	*p2 = '\0';
 }
 
+void liberarRegistroStack(registroStack* reg){
+	list_destroy(reg->args); reg->args = NULL;
+	list_destroy(reg->vars); reg->vars = NULL;
+	reg = NULL;
+}
+
 void liberarRecursos(){
 	free(config->ipUMC);
 	free(config); config = NULL;

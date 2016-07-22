@@ -116,15 +116,15 @@ void esperar_y_PlanificarProgramas(){
 
 	    seleccionarSocket(max_fd, &readfds , NULL , NULL , NULL, NULL); // función select
 
-	    if (FD_ISSET(fdEscuchaConsola, &readfds)){
+	    if (FD_ISSET(fdEscuchaConsola, &readfds)){ // nueva conexión consola
 
 	    		aceptarConexionEntranteDeConsola();
 
-	    } else if(FD_ISSET(fdEscuchaCPU, &readfds)){
+	    } else if(FD_ISSET(fdEscuchaCPU, &readfds)){ // nueva conexión cpu
 
 	    		aceptarConexionEntranteDeCPU();
 
-	    } else if(FD_ISSET(fd_inotify, &readfds)){
+	    } else if(FD_ISSET(fd_inotify, &readfds)){ // nueva conexión inotify
 
 	    		atenderCambiosEnArchivoConfig(&max_fd);
 

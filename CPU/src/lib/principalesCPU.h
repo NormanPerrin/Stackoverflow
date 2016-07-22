@@ -19,6 +19,7 @@ int recibirYvalidarEstadoDelPedidoAUMC();
 void exitPorErrorUMC();
 void exitProceso();
 void limpiarInstruccion(char * instruccion);
+void liberarRegistroStack(registroStack* reg);
 char* solicitarProximaInstruccionAUMC();
 void liberarRecursos();
 void exitCPU();
