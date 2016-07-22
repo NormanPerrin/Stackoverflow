@@ -90,15 +90,14 @@ int calcularTamanioMensaje(int head, void* mensaje){
 				break;
 			}
 		// CASE 4: El mensaje es un PCB (pcb)
-			case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA:
-			case PCB_WAIT:{
+			case PCB: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
 				tamanio = calcularTamanioPcb((pcb*) mensaje);
 				break;
 			}
 		// CASE 5: El mensaje es un valor entero (int)
 			case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 			case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
-			case TAMANIO_STACK: case SENIAL_SIGUSR1: case RESPUESTA_WAIT:{
+			case TAMANIO_STACK: case SENIAL_SIGUSR1: case RESPUESTA_WAIT: case PCB_FIN_EJECUCION:{
 				tamanio = INT;
 				break;
 				}
@@ -151,14 +150,14 @@ void * serealizar(int head, void * mensaje, int tamanio){
 			break;
 		}
 	// CASE 4: El mensaje es un PCB (pcb)
-	case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
+	case PCB: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
 		buffer = serealizarPcb(mensaje, tamanio);
 			break;
 		}
 	// CASE 5: El mensaje es un valor entero (int)
 	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case SENIAL_SIGUSR1:
 	case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
-	case RESPUESTA_WAIT: case TAMANIO_STACK:{
+	case RESPUESTA_WAIT: case TAMANIO_STACK: case PCB_FIN_EJECUCION:{
 		int* msj = (int*) mensaje;
 		buffer = malloc(tamanio);
 		memcpy(buffer, msj, tamanio);
@@ -216,14 +215,14 @@ void * deserealizar(int head, void * buffer, int tamanio){
 				break;
 			}
 		// CASE 4: El mensaje es un pcb (pcb)
-		case PCB: case PCB_FIN_EJECUCION: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
+		case PCB: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
 			mensaje = deserealizarPcb(buffer, tamanio);
 				break;
 			}
 		// CASE 5: El mensaje es un valor entero (int)
 		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
 		case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
-		case RESPUESTA_WAIT: case SENIAL_SIGUSR1: case TAMANIO_STACK:{
+		case RESPUESTA_WAIT: case SENIAL_SIGUSR1: case TAMANIO_STACK: case PCB_FIN_EJECUCION:{
 			int* msj = malloc(tamanio);
 			memcpy(msj, buffer, tamanio);
 			mensaje = msj;
@@ -446,14 +445,6 @@ int calcularTamanioIndiceStack(pcb* unPcb){
 	return tamanio_stack + INT; // Sumo además 4 bytes de elements_count del stack
 }
 
-int sizeof_instruccion(t_intructions *instrucciones){
-
-	int sizeof_puntero_primera_instruccion = sizeof(instrucciones->start);
-	int sizeof_offset = sizeof(instrucciones->offset);
-
-	return (sizeof_puntero_primera_instruccion + sizeof_offset);
-}
-
 int calcularTamanioPcb(pcb* unPcb){
 	int tamanio;
 	int code_index_size = sizeof(t_intructions) * (unPcb->cantidad_instrucciones);
@@ -610,11 +601,6 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(&unPcb->cantidad_registros_stack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 
-		// Copio índice de código:
-	int contador_instrucciones = 0;
-
-	unPcb->indiceCodigo = malloc(sizeof(t_intructions)*(unPcb->cantidad_instrucciones));
-
 		// Copio el índice de stack:
 	unPcb->indiceStack = list_create();
 
@@ -686,6 +672,11 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	memcpy(&(unPcb->indiceStack->elements_count), buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	// fin carga índice stack
+
+	// Copio índice de código:
+	int contador_instrucciones = 0;
+
+	unPcb->indiceCodigo = malloc(sizeof(t_intructions)*(unPcb->cantidad_instrucciones));
 
 	while(contador_instrucciones < unPcb->cantidad_instrucciones){
 

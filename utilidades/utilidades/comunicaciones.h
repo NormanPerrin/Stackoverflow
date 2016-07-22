@@ -22,6 +22,7 @@ typedef enum {
 	DEVOLVER_VARIABLE, 				// UMC - CPU
 	RESPUESTA_PEDIDO, 				// UMC - CPU
 	ABORTO_PROCESO,					// CPU - Núcleo
+	PCB_FIN_EJECUCION,				// CPU - Núcleo
 	RESPUESTA_WAIT,					// Núcleo - CPU
 	DEVOLVER_VAR_COMPARTIDA,		// Núcleo - CPU
 	TAMANIO_STACK,					// Núcleo - CPU
@@ -30,7 +31,6 @@ typedef enum {
 	INICIAR_PROGRAMA, 				// Núcleo - UMC / UMC - Swap
 	ENVIAR_SCRIPT, 					// Consola - Núcleo
 	PCB, 							// Núcleo - CPU
-	PCB_FIN_EJECUCION,				// CPU - Núcleo
 	PCB_FIN_QUANTUM,				// CPU - Núcleo
 	PCB_ENTRADA_SALIDA,				// CPU - Núcleo
 	PCB_WAIT, 						// CPU - Núcleo
@@ -78,7 +78,6 @@ void* serealizarCuatroInt(void* mensaje, int tamanio);
 solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
 
 // -- Auxiliares:
-int sizeof_instruccion(t_intructions *instrucciones);
 int getStartInstruccion(t_intructions instruccion);
 int getOffsetInstruccion (t_intructions instruccion);
 t_intructions cargarIndiceCodigo(t_puntero_instruccion primera_instruccion, t_size offset_instruccion);
