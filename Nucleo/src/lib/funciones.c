@@ -275,7 +275,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 	nuevoPcb->paginas_stack = config->cantidadPaginasStack;
 
 	// Le solicito a UMC espacio para el heap del programa y verifico su respuesta:
-		inicioPrograma* solicitudDeInicio = (inicioPrograma*)malloc(tamanio_programa+12);
+		inicioPrograma* solicitudDeInicio = (inicioPrograma*) malloc(tamanio_programa+12);
 		solicitudDeInicio->paginas = nuevoPcb->paginas_stack + nuevoPcb->paginas_codigo;
 		solicitudDeInicio->pid = nuevoPcb->pid;
 		solicitudDeInicio->contenido.tamanio = programa->tamanio;
@@ -319,7 +319,7 @@ pcb * crearPcb(string* programa){
 
 	int respuestaUMC = solicitarSegmentosAUMC(nuevoPcb, programa);
 	if(respuestaUMC == FALSE){ // el programa es rechazado del sistema
-		liberarPcbNucleo(nuevoPcb);
+		free(nuevoPcb);
 		return NULL;
 	}
 	else{
@@ -457,21 +457,32 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 	char buffer[EVENT_BUF_LEN];
 	length = read(fd_inotify, buffer, EVENT_BUF_LEN);
 
+	log_info(logger, "Se ha modificado el archivo de configuración.");
+
 	if (length <= 0){
+
 		log_error(logger, "Inotify no pudo leer archivo de configuración.");
 		return;
-	} else if (length > 0){
+
+	} else {
+
 		struct inotify_event *event = (struct inotify_event *) &buffer[i];
 		t_config * new_config = NULL;
 		new_config = config_create(RUTA_CONFIG_NUCLEO);
 
-			if (new_config &&( config_has_property(new_config, "QUANTUM")
-					|| config_has_property(new_config, "QUANTUM_SLEEP"))){
+		int aux_quantum, aux_retardo;
 
-		config->quantum = config_get_int_value(new_config, "QUANTUM");
-		config->retardoQuantum = config_get_int_value(new_config, "QUANTUM_SLEEP");
-		log_info(logger, "Se ha modificado el archivo de configuración. Quantum: %d - Quantum Sleep: %d",
-				config->quantum, config->retardoQuantum);
+		aux_quantum = config_get_int_value(new_config, "QUANTUM");
+		aux_retardo = config_get_int_value(new_config, "QUANTUM_SLEEP");
+
+		if(config->quantum != aux_quantum){
+			config->quantum = aux_quantum;
+			log_info(logger, "Nuevo valor de Quantum: %d.", config->quantum);
+		}
+		if(config->retardoQuantum != aux_retardo){
+			config->retardoQuantum = aux_retardo;
+			log_info(logger, "Nuevo valor de Quantum Sleep: %d.", config->retardoQuantum);
+		}
 
 		i += EVENT_SIZE + event->len;
 		free(new_config); new_config = NULL;
@@ -479,12 +490,10 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 		FD_CLR(fd_inotify, &readfds);
 		iniciarEscuchaDeInotify();
 
-		*socketMaximo = (*socketMaximo < fd_inotify)?fd_inotify:*socketMaximo;
-				FD_SET(fd_inotify, &readfds);
-				return;
-			} // fin if tiene properties
-			return;
-		} // fin else-if
+		*socketMaximo = (*socketMaximo < fd_inotify)? fd_inotify : *socketMaximo;
+		FD_SET(fd_inotify, &readfds);
+		return;
+	} // fin else-if
 }
 
 void salvarProcesoEnCPU(int id_cpu){
@@ -858,8 +867,13 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 void liberarPcbNucleo(pcb* unPcb){
 	free(unPcb->indiceCodigo); unPcb->indiceCodigo = NULL;
-	free(unPcb->indiceEtiquetas); unPcb->indiceEtiquetas = NULL;
+
+	if(unPcb->indiceEtiquetas != NULL){
+		free(unPcb->indiceEtiquetas); unPcb->indiceEtiquetas = NULL;
+	}
+
 	list_destroy(unPcb->indiceStack); unPcb->indiceStack = NULL;
+
 	free(unPcb); unPcb = NULL;
 }
 
@@ -876,10 +890,21 @@ void liberarSemaforo(t_semaforo * sem){
 void liberarVarCompartida(var_compartida * var){ free(var->nombre); var->nombre = NULL; free(var); var = NULL; }
 
 void limpiarColecciones(){
-	list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPcbNucleo);
+
+	if(list_size(listaProcesos) > 0){
+		list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPcbNucleo);
+	}
+	else{
+		list_destroy(listaProcesos);
+	}
 	listaProcesos = NULL;
 
-	list_destroy_and_destroy_elements(listaCPU,(void *) liberarCPU);
+	if(list_size(listaCPU) > 0){
+		list_destroy_and_destroy_elements(listaCPU,(void *) liberarCPU);
+	}
+	else{
+		list_destroy(listaCPU);
+	}
 	listaCPU = NULL;
 
 	list_destroy(listaCPU_SIGUSR1);
@@ -888,17 +913,40 @@ void limpiarColecciones(){
 	list_destroy(listaProcesosAbortivos);
 	listaProcesosAbortivos = NULL;
 
-	list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola);
+	if(list_size(listaConsolas) > 0){
+		list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola);
+	}
+	else{
+		list_destroy(listaConsolas);
+	}
 	listaConsolas = NULL;
 
-	queue_destroy_and_destroy_elements(colaListos, (void *) liberarPcbNucleo);
+	if(queue_size(colaListos) > 0){
+		queue_destroy_and_destroy_elements(colaListos, (void *) liberarPcbNucleo);
+	}
+	else{
+		queue_destroy(colaListos);
+	}
 	colaListos = NULL;
 
-	dictionary_destroy_and_destroy_elements(diccionarioSemaforos, (void *) liberarSemaforo);
+	if(dictionary_size(diccionarioSemaforos) > 0){
+		dictionary_destroy_and_destroy_elements(diccionarioSemaforos, (void *) liberarSemaforo);
+	}
+	else{
+		dictionary_destroy(diccionarioSemaforos);
+	}
 	diccionarioSemaforos = NULL;
 
-	dictionary_destroy_and_destroy_elements(diccionarioVarCompartidas, (void *) liberarVarCompartida);
+	if(dictionary_size(diccionarioVarCompartidas) > 0){
+		dictionary_destroy_and_destroy_elements(diccionarioVarCompartidas, (void *) liberarVarCompartida);
+		}
+	else{
+		dictionary_destroy(diccionarioVarCompartidas);
+	}
 	diccionarioVarCompartidas = NULL;
+
+	dictionary_destroy(diccionarioIO);
+	diccionarioIO = NULL;
 }
 
 void limpiarArchivoConfig(){

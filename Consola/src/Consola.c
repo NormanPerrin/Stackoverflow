@@ -20,7 +20,7 @@ int main(int argc, char **argv){
 	script->cadena = programa;
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, script);
 	printf("Script enviado a Núcleo. Esperando respuesta...\n");
-	free(script->cadena); free(script);
+	free(script);
 
 	int head;
 	void * mensaje = NULL;

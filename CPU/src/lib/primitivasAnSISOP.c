@@ -9,6 +9,12 @@ bool esArgumento(t_nombre_variable identificador_variable){
 	}
 }
 
+void liberarRegistroStack(registroStack* reg){
+	list_destroy(reg->args); reg->args = NULL;
+	list_destroy(reg->vars); reg->vars = NULL;
+	reg = NULL;
+}
+
 /* --- PRIMITIVAS --- */
 t_puntero definirVariable(t_nombre_variable var_nombre){
 
