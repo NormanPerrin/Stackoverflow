@@ -216,8 +216,11 @@ void inciar_programa(int fd, void *msj) {
 	iniciar_principales(mensaje->pid, mensaje->paginas);
 	agregar_paginas_nuevas(mensaje->pid, mensaje->paginas);
 	if( asignarMarcos(mensaje->pid) == FALSE ) {
+		respuesta = (int*)reservarMemoria(INT);
 		*respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+		free(respuesta);
+		return;
 	}
 
 	// 2) Envío a Swap
