@@ -117,7 +117,6 @@ void exitProceso(){
 	cpuOciosa = true;
 	liberarPcbActiva();
 	revisarFinalizarCPU();
-	printf("Esperando nuevo proceso...\n");
 }
 
 void exitPorErrorUMC(){
