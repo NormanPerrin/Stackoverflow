@@ -139,18 +139,14 @@ void esperar_y_PlanificarProgramas(){
 } // fin select
 
 void unirHilosIO(){
-	/*int i = 0;
-	  while (config->ioID[i] != '\0'){
-	      hiloIO*hilo = (hiloIO*)dictionary_get(diccionarioIO, config->ioID[i]);
-	      pthread_join(hilo->hiloID, NULL);
-	      free(hilo); hilo = NULL;
-	   i++;
-	}*/
-	void cerrarHiloIO(char* id, hiloIO* hilo){
+	int i = 0;
+	while (config->ioID[i] != '\0'){
+		hiloIO* hilo = (hiloIO*) dictionary_get(diccionarioIO, config->ioID[i]);
 		printf("Cerrando hilo de IO del dispositivo '%s'.\n", hilo->dataHilo.nombre);
-		pthread_join(hilo->hiloID, NULL); free(hilo); hilo = NULL; }
-
-	 dictionary_iterator(diccionarioIO, (void*) cerrarHiloIO);
+		pthread_join(hilo->hiloID, NULL);
+		//free(hilo); hilo = NULL;
+		i++;
+	}
 }
 
 void liberarRecursosUtilizados(){
@@ -160,12 +156,9 @@ void liberarRecursosUtilizados(){
 }
 
 void exitNucleo(){
-	log_info(logger, "Finalizando proceso Núcleo...");
+	log_info(logger, "Núcleo ha salido del sistema.");
 	liberarRecursosUtilizados();
-	cerrarSocket(fdEscuchaConsola);
-	cerrarSocket(fdEscuchaCPU);
 	cerrarSocket(fd_UMC);
 	inotify_rm_watch(fd_inotify, watch_descriptor);
 	cerrarSocket(fd_inotify);
-	printf("Núcleo ha salido del sistema.\n");
 }

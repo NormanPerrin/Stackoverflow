@@ -27,9 +27,15 @@ void setearValores_config(t_config * archivoConfig){
 }
 
 void liberarPcbActiva(){
+
 	free(pcbActual->indiceCodigo); pcbActual->indiceCodigo = NULL;
-	free(pcbActual->indiceEtiquetas); pcbActual->indiceEtiquetas = NULL;
+
+	if(pcbActual->indiceEtiquetas != NULL){
+		free(pcbActual->indiceEtiquetas); pcbActual->indiceEtiquetas = NULL;
+	}
+
 	list_destroy(pcbActual->indiceStack); pcbActual->indiceStack = NULL;
+
 	free(pcbActual); pcbActual = NULL;
 }
 
@@ -141,7 +147,7 @@ char* solicitarProximaInstruccionAUMC(){
 	direccionInstruccion->offset = comienzo % tamanioPagina;
 	direccionInstruccion->tamanio = longitud;
 
-	printf("Solicitando instrucción -> Pagina: %d - Offset: %d - Size: %d.\n",
+	printf("Solicitando Instrucción -> Pagina: %d - Offset: %d - Size: %d.\n",
 			direccionInstruccion->pagina, direccionInstruccion->offset, longitud);
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
 	free(direccionInstruccion);
@@ -178,12 +184,6 @@ void limpiarInstruccion(char * instruccion){
 		}
 	}
 	*aux = '\0';
-}
-
-void liberarRegistroStack(registroStack* reg){
-	list_destroy(reg->args); reg->args = NULL;
-	list_destroy(reg->vars); reg->vars = NULL;
-	reg = NULL;
 }
 
 void liberarRecursos(){

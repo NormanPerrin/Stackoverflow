@@ -59,6 +59,7 @@ int main(void) {
 void exitCPU(){
 	liberarRecursos(); // Libero memoria reservada
 	cerrarSocket(fdUMC);
+	cerrarSocket(fdNucleo);
 }
 
 // Funciones CPU:
