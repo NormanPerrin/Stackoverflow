@@ -31,7 +31,7 @@ int main(int argc, char **argv){
 		switch(*((int*) mensaje)){
 
 	case RECHAZADO:{ // programa rechazado
-				log_info(logger, "La UMC no pudo alocar los segmentos pedidos. Programa rechazado.");
+				log_info(logger, "UMC no pudo alocar los segmentos pedidos. Programa rechazado.");
 				exitConsola();
 				return EXIT_FAILURE;
 				break;

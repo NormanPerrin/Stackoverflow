@@ -185,15 +185,11 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
 	printf("Obteniendo valor de la variable compartida: '%s'.\n", var_compartida_nombre);
-	char * variableCompartida = malloc(strlen(var_compartida_nombre)+1);
 	void* entrada = NULL;
 	int* valor_variable = NULL;
 	int head;
 
-	variableCompartida = (char*) var_compartida_nombre;
-
-	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, variableCompartida);
-	//free(variableCompartida); variableCompartida = NULL;
+	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, var_compartida_nombre);
 
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 	if(head == DEVOLVER_VAR_COMPARTIDA){
@@ -214,11 +210,9 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 	var_compartida * variableCompartida = malloc(strlen(var_compartida_nombre)+ 5);
 
 	variableCompartida->valor = var_compartida_valor;
-	variableCompartida->nombre = (char*) var_compartida_nombre;
+	variableCompartida->nombre = var_compartida_nombre; // TODO: malloc
 
 	aplicar_protocolo_enviar(fdNucleo, GRABAR_VAR_COMPARTIDA, variableCompartida);
-	//free(variableCompartida->nombre); variableCompartida->nombre = NULL;
-	free(variableCompartida); variableCompartida = NULL;
 
 	return var_compartida_valor;
 }
@@ -282,10 +276,7 @@ void imprimir(t_valor_variable valor_mostrar){
 void imprimirTexto(char* texto){
 	printf("Solicitando imprimir texto.\n");
 	texto = _string_trim(texto);
-	char * print_txt = malloc(strlen(texto)+1);
-	print_txt = texto;
-	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, print_txt);
-	free(print_txt); print_txt = NULL;
+	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, texto);
 }
 
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
@@ -293,22 +284,17 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 	printf("Entrada/Salida en dispositivo: '%s' durante '%i' unidades de tiempo.\n", dispositivo, tiempo);
 	pedidoIO * pedidoEntradaSalida = malloc(strlen(dispositivo)+ 5);
 	pedidoEntradaSalida->tiempo = tiempo;
-	pedidoEntradaSalida->nombreDispositivo = strdup((char*) dispositivo);
+	pedidoEntradaSalida->nombreDispositivo = dispositivo; // TODO: malloc
 
 	aplicar_protocolo_enviar(fdNucleo,ENTRADA_SALIDA, pedidoEntradaSalida);
-
-	free(pedidoEntradaSalida->nombreDispositivo); pedidoEntradaSalida->nombreDispositivo = NULL;
 	free(pedidoEntradaSalida); pedidoEntradaSalida = NULL;
+
 	devolvioPcb = POR_IO;
 }
 
 void s_wait(t_nombre_semaforo nombre_semaforo){
 
-	char* id_semaforo = malloc(strlen(nombre_semaforo)+1);
-	id_semaforo = nombre_semaforo;
-
-	aplicar_protocolo_enviar(fdNucleo, WAIT_REQUEST, id_semaforo);
-	//free(id_semaforo); id_semaforo = NULL;
+	aplicar_protocolo_enviar(fdNucleo, WAIT_REQUEST, nombre_semaforo);
 
 	int head;
 	void* entrada = NULL;
@@ -329,11 +315,7 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 
 void s_signal(t_nombre_semaforo nombre_semaforo){
 
-	char* id_semaforo = malloc(strlen(nombre_semaforo)+1);
-	id_semaforo = (char*) nombre_semaforo;
-
-	aplicar_protocolo_enviar(fdNucleo, SIGNAL_REQUEST, id_semaforo);
+	aplicar_protocolo_enviar(fdNucleo, SIGNAL_REQUEST, nombre_semaforo);
 
 	printf("SIGNAL del semáforo '%s'.\n", nombre_semaforo);
-	//free(id_semaforo); id_semaforo = NULL;
 }

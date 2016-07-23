@@ -9,7 +9,7 @@ void crearLoggerConsola(){
 
 void validar_argumentos(int arg) {
 	if(arg != 2) {
-		printf("Debe ingresar el archivo a ejecutar como parámetro.\n");
+		printf("Error al iniciar: Debe ingresar el script como parámetro.\n");
 		exit(1);
 	}
 }

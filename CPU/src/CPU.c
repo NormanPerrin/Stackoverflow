@@ -40,7 +40,7 @@ int main(void) {
 			conectarConNucleo(); // Conexión con Núcleo
 
 			while (TRUE){
-				printf("Esperando mensajes de Núcleo...\n"); // Espera activa de mensajes
+				printf("Esperando nuevo proceso a ejecutar...\n"); // Espera activa de mensajes
 					if (recibirMensajesDeNucleo() == TRUE) {
 					} else {
 						exitCPU();
