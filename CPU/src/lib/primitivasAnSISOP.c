@@ -180,7 +180,6 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 		exitPorErrorUMC();
 	}
 	printf("La variable ha sido asignada.\n");
-	return;
 }
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
@@ -227,8 +226,10 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 	printf("Llendo a la etiqueta: '%s'.\n", nombre_etiqueta);
 	t_puntero_instruccion posicion_etiqueta = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
-	pcbActual->pc = posicion_etiqueta + 1;
-	return;
+
+	if(posicion_etiqueta == ERROR) printf("La etiqueta '%s' no se encuentra en el índice.\n", nombre_etiqueta);
+
+	pcbActual->pc = posicion_etiqueta - 1; // TODO
 }
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
@@ -246,7 +247,6 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 	list_add(pcbActual->indiceStack, regsitroEjecucionActual);
 
 	irAlLabel(etiqueta);
-	return;
 }
 
 void retornar(t_valor_variable var_retorno){
@@ -269,7 +269,6 @@ void retornar(t_valor_variable var_retorno){
 	// Luego, seteo el nuevo contexto de ejecución en el index anterior:
 	pcbActual->pc = registroActual->retPos;
 	liberarRegistroStack(list_remove(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1));
-	return;
 }
 
 void imprimir(t_valor_variable valor_mostrar){
@@ -278,7 +277,6 @@ void imprimir(t_valor_variable valor_mostrar){
 	*valor = valor_mostrar;
 	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR, valor);
 	free(valor); valor = NULL;
-	return;
 }
 
 void imprimirTexto(char* texto){
@@ -288,7 +286,6 @@ void imprimirTexto(char* texto){
 	print_txt = texto;
 	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, print_txt);
 	free(print_txt); print_txt = NULL;
-	return;
 }
 
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
@@ -303,7 +300,6 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 	free(pedidoEntradaSalida->nombreDispositivo); pedidoEntradaSalida->nombreDispositivo = NULL;
 	free(pedidoEntradaSalida); pedidoEntradaSalida = NULL;
 	devolvioPcb = POR_IO;
-	return;
 }
 
 void s_wait(t_nombre_semaforo nombre_semaforo){
@@ -329,7 +325,6 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 			printf("Proceso continúa ejecutando luego de hacer WAIT del semáforo: '%s'.\n", nombre_semaforo);
 		}
 	}
-	return;
 }
 
 void s_signal(t_nombre_semaforo nombre_semaforo){
@@ -341,5 +336,4 @@ void s_signal(t_nombre_semaforo nombre_semaforo){
 
 	printf("SIGNAL del semáforo '%s'.\n", nombre_semaforo);
 	//free(id_semaforo); id_semaforo = NULL;
-	return;
 }

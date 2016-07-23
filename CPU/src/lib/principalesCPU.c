@@ -164,21 +164,21 @@ char* solicitarProximaInstruccionAUMC(){
 
 void limpiarInstruccion(char * instruccion){
 
-	char *p2 = instruccion;
-	int a = 0;
+	char *aux = instruccion;
+	int j = 0;
 	while (*instruccion != '\0') {
 		if (*instruccion != '\t' && *instruccion != '\n' && !iscntrl(*instruccion)) {
-			if (a == 0 && isdigit((int )*instruccion)) {
+			if (j == 0 && isdigit((int )*instruccion)) {
 				++instruccion;
 			} else {
-				*p2++ = *instruccion++;
-				a++;
+				*aux++ = *instruccion++;
+				j++;
 			}
 		} else {
 			++instruccion;
 		}
 	}
-	*p2 = '\0';
+	*aux = '\0';
 }
 
 void liberarRegistroStack(registroStack* reg){

@@ -161,8 +161,7 @@ proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos){
 }
 
 void encolarPcbAListos(pcb* proceso){
-	printf("Fin de E/S para el proceso #%d.\n", proceso->pid);
-	printf("Moviendo al proceso #%d a la cola de Listos.\n", proceso->pid);
+	printf("Fin de E/S para el proceso #%d. Moviéndolo a cola de Listos.\n", proceso->pid);
 	queue_push(colaListos, proceso);
 }
 
@@ -335,11 +334,12 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->primerPaginaStack = nuevoPcb->paginas_codigo; // el stack comienza luego del código
 		nuevoPcb->paginaActualStack = nuevoPcb->primerPaginaStack;
 		nuevoPcb->pc = infoProg->instruccion_inicio;
+		printf("Program Counter initial value: '%d'. Proceso #%d.\n", nuevoPcb->pc, nuevoPcb->pid); // TODO: Sacar
 		nuevoPcb->stackPointer = 0;
 		nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
 		// Inicializo índice de código:
-		nuevoPcb->indiceCodigo = malloc(sizeof(t_intructions));
+		//nuevoPcb->indiceCodigo = malloc(sizeof(t_intructions));
 		nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
@@ -349,8 +349,10 @@ pcb * crearPcb(string* programa){
 		// Inicializo índice de etiquetas:
 		nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
 
-		if (infoProg->cantidad_de_etiquetas > 0 || infoProg->cantidad_de_funciones > 0){
-			nuevoPcb->indiceEtiquetas = strdup(infoProg->etiquetas);
+		if (infoProg->cantidad_de_etiquetas > 0){
+			//nuevoPcb->indiceEtiquetas = strdup(infoProg->etiquetas);
+			nuevoPcb->indiceEtiquetas = infoProg->etiquetas;
+			printf("Indice etiquetas: '%s'. Proceso #%d.\n", nuevoPcb->indiceEtiquetas, nuevoPcb->pid); // TODO: Sacar
 		} else {
 			nuevoPcb->indiceEtiquetas = NULL;
 		}
@@ -523,8 +525,6 @@ int seDesconectoConsolaAsociada(int quantum_pid){
 			// Libero el PCB del proceso y lo saco del sistema:
 			liberarPcbNucleo(list_remove(listaProcesos, index));
 
-			planificarProceso();
-
 			return TRUE;
 		}
 	} // fin for
@@ -624,7 +624,7 @@ void verificarDesconexionEnConsolas(){
 		mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
 		if (mensaje == NULL){ // La Consla se desconectó, la quito del sistema y saco su PCB de ejecución:
-			log_info(logger,"La Consola #%i se ha desconectado. Removiendo PCB del sistema...", unaConsola->id);
+			log_info(logger,"La Consola #%i se ha desconectado.", unaConsola->id);
 			tratarPcbDeConsolaDesconectada(unaConsola->pid);
 			cerrarSocket(fd);
 			liberarConsola(list_remove(listaConsolas, i));
