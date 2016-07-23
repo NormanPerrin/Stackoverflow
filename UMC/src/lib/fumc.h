@@ -110,6 +110,7 @@
 	char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla);
 	funcion_t *separarMensaje(char *mensaje);
 	void *direccionarConsola(char *mensaje);
+	t_list *verProcesosDelSistema();
 	// </AUXILIARES>
 
 	// <PRINCIPAL>
@@ -148,6 +149,7 @@
 	// </PID_FUNCS>
 
 	// <TLB_FUNCS>
+	int borrar_entrada_tlb(int pid, int pagina);
 	void agregar_tlb(int pid, int pagina, int marco);
 	int actualizar_tlb(int pid, int pagina);
 	registro_tlb *buscar_tlb(int pid, int pagina);
@@ -159,6 +161,8 @@
 	void borrarMarco(int marco);
 	int buscarMarcoLibre(int pid);
 	int asignarMarcos(int pid);
+	int contarMarcosAsignados(int pid);
+	int agregarMarcos(int pid);
 	// </MEMORIA_FUNCS>
 
 	// <ALGORITMOS>

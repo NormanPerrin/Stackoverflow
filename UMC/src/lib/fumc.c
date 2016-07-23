@@ -422,6 +422,12 @@ void finalizar_programa(int fd, void *msj) {
 		tabla_paginas[pos].marcos_reservados[m] = -1;
 	}
 
+	t_list *posiciones = verProcesosDelSistema();
+	int cant_pos = 0;
+	for(; cant_pos < list_size(posiciones); cant_pos++) {
+		int *pos = (int*)list_get(posiciones, cant_pos);
+		agregarMarcos(tabla_paginas[*pos].pid);
+	}
 }
 
 // | int pid |
@@ -600,8 +606,9 @@ int cargar_pagina(int pid, int pagina, void *contenido) {
 
 	int marco = ERROR;
 	int paginas_asignadas = contar_paginas_asignadas(pid);
+	int marcos_asignados = contarMarcosAsignados(pid);
 
-	if(paginas_asignadas < config->marco_x_proceso) { // no hay necesidad de reemplazo
+	if(paginas_asignadas < marcos_asignados) { // no hay necesidad de reemplazo
 
 		marco = buscarMarcoLibre(pid);
 
@@ -613,6 +620,7 @@ int cargar_pagina(int pid, int pagina, void *contenido) {
 		actualizar_tp(pid, pagina_reemplazar.pagina, -1, 0, 0, 0); // seteo en -1 el marco de la víctima y sus bits 0
 		actualizarPuntero(pid, pagina); // seteo el puntero a la próxima página
 		marco = pagina_reemplazar.marco;
+		borrar_entrada_tlb(pid, pagina_reemplazar.pagina);
 
 	}
 
@@ -662,7 +670,6 @@ subtp_t buscarVictimaReemplazo(int pid) {
 		pos_tp++;
 	}
 
-
 	// 2) aplico algoritmo y me devuelve quién debe ser reemplazado
 	subtp_t pagina_reemplazada = aplicar_algoritmo(paginas, tabla_paginas[p].puntero);
 
@@ -692,6 +699,16 @@ void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modifi
 
 
 // <TLB_FUNCS>
+
+int borrar_entrada_tlb(int pid, int pagina) {
+	int pos = tlbListIndex(pid, pagina);
+	if(pos == ERROR)
+		return ERROR;
+	else
+		list_remove(tlb, pos);
+
+	return pos;
+}
 
 int tlbListIndex(int pid, int pagina) {
 	int i = 0;
@@ -751,6 +768,22 @@ void borrar_tlb(int pid) {
 
 
 // <AUXILIARES>
+
+t_list *verProcesosDelSistema() {
+
+	t_list *procesos = list_create();
+
+	int i = 0;
+	for(; i < MAX_PROCESOS; i++) {
+		if(tabla_paginas[i].pid != -1) { // hay un proceso que se inicializó
+			int *pos = (int*)reservarMemoria(INT);
+			*pos = i;
+			list_add(procesos, pos);
+		}
+	}
+
+	return procesos;
+}
 
 int validarPagina(int pid, int pagina) {
 	int pos = pos_pid(pid);
@@ -904,6 +937,15 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 		// envío pedido
 		aplicar_protocolo_enviar(sockClienteDeSwap, ESCRIBIR_PAGINA, pedido);
 
+		// espero respuesta swap
+		int *respuesta = NULL;
+		int *protocolo = (int*)reservarMemoria(INT);
+		respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
+		free(protocolo);
+
+		if(*respuesta == NO_PERMITIDO)
+			fprintf(stderr, "Error: no se pudo escribir pagina en Swap (%d) de pid #%d\n", pagina_reemplazar.pagina, pid);
+
 	} // sino se puede reemplazar tranquilamente
 
 }
@@ -1009,17 +1051,18 @@ void borrarMarco(int marco) {
 }
 
 int buscarMarcoLibre(int pid) {
+
 	int pos = pos_pid(pid);
-	int cant_paginas_ocupadas = contar_paginas_asignadas(pid);
-	if(cant_paginas_ocupadas != config->marco_x_proceso) {
-		int i = 0;
-		for(; i < config->marco_x_proceso; i++) {
-			int marco = tabla_paginas[pos].marcos_reservados[i];
-			if(verificarMarcoLibre(pid, marco))
-				return marco;
-		}
+	int marcos_asignados = contarMarcosAsignados(pid);
+
+	int i = 0;
+	for(; i < marcos_asignados; i++) {
+		int marco = tabla_paginas[pos].marcos_reservados[i];
+		if(verificarMarcoLibre(pid, marco))
+			return marco;
 	}
-	return ERROR;
+
+	return ERROR; // si no encuentra marcos libres
 }
 
 int verificarMarcoLibre(int pid, int marco) {
@@ -1035,22 +1078,72 @@ int verificarMarcoLibre(int pid, int marco) {
 
 int asignarMarcos(int pid) {
 
+	int asigno = FALSE;
 	int pos = pos_pid(pid);
 
 	int cont_locales = 0, cont_globales = 0;
 	for(; cont_locales < config->marco_x_proceso; cont_locales++) {
 
-		for(; cont_globales < config->marcos; cont_globales++) {
-			if(bitmap[cont_globales] == 0) {
-				break;
-			}
-		}
+		for(; cont_globales < config->marcos; cont_globales++)
+			if(bitmap[cont_globales] == 0) break;
 
-		if(bitmap[cont_globales] != 0)
-			return FALSE;
+		if(bitmap[cont_globales] != 0) { // no encontro marco
+			if(!asigno) // no encontro marco dentro de las globales y no asigno antes
+				return FALSE;
+			else // no encontro marco dentro de las globales pero asigno antes
+				return TRUE;
+		}
 
 		tabla_paginas[pos].marcos_reservados[cont_locales] = cont_globales;
 		bitmap[cont_globales] = 1;
+		asigno = TRUE;
+	}
+
+	return TRUE;
+}
+
+int contarMarcosAsignados(int pid) {
+
+	int pos = pos_pid(pid);
+
+	int cont = 0;
+	for(; cont < config->marco_x_proceso; cont++)
+		if(tabla_paginas[pos].marcos_reservados[cont] == -1) break;
+
+	return cont;
+}
+
+int agregarMarcos(int pid) {
+
+	int pos = pos_pid(pid);
+	int marcos_asignados = contarMarcosAsignados(pid);
+
+	if(marcos_asignados == config->marco_x_proceso) { // no hace falta agregarle marcos
+
+		return FALSE;
+
+	} else { // me jodieron un poco mas el tp
+
+		int asigno = TRUE;
+		int marcos_faltantes = config->marco_x_proceso - marcos_asignados;
+		int cont_locales = 0, cont_globales = 0;
+
+		for(; cont_locales < marcos_faltantes; cont_locales++) {
+
+			for(; cont_globales < config->marcos; cont_globales++)
+				if(bitmap[cont_globales] == 0) break;
+
+			if(bitmap[cont_globales] != 0) { // no encontro marco
+				if(!asigno) // no encontro marco dentro de las globales y no asigno antes
+					return FALSE;
+				else // no encontro marco dentro de las globales pero asigno antes
+					return TRUE;
+			}
+
+			tabla_paginas[pos].marcos_reservados[marcos_asignados + cont_locales] = cont_globales;
+			bitmap[cont_globales] = 1;
+			asigno = TRUE;
+		}
 	}
 
 	return TRUE;
