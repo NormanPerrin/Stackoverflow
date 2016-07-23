@@ -229,7 +229,7 @@ void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 
 	if(posicion_etiqueta == ERROR) printf("La etiqueta '%s' no se encuentra en el índice.\n", nombre_etiqueta);
 
-	pcbActual->pc = posicion_etiqueta - 1; // TODO
+	pcbActual->pc = posicion_etiqueta - 1;
 }
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){

@@ -61,7 +61,6 @@ typedef struct pcb{
 		paginas_codigo, // tamaño en páginas del segmento de código
 		paginas_stack, // tamaño en páginas del segmento de stack
 		pc, // program counter
-		//int pc_initial_value; // valor inicial del pc (0 ó 1)
 		pid,
 		primerPaginaStack,
 		quantum,
