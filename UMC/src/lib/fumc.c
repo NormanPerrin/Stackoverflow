@@ -254,7 +254,7 @@ void leer_instruccion(int fd, void *msj) {
 	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
 
 	// busco el código que me piden
-	void *contenido = reservarMemoria(mensaje->tamanio);
+	void *contenido = reservarMemoria(mensaje->tamanio + CHAR);
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
 
 	// tengo en cuenta si la instrucción está cortada
@@ -289,6 +289,7 @@ void leer_instruccion(int fd, void *msj) {
 	free(respuesta);
 
 	// devuelvo el contenido solicitado
+	memset(contenido + mensaje->tamanio, '\0', CHAR);
 	aplicar_protocolo_enviar(fd, DEVOLVER_INSTRUCCION, contenido);
 
 	free(contenido);

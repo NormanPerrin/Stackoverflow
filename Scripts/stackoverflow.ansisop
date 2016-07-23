@@ -1,5 +1,5 @@
 #!/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/Debug/Consola
-#Overflow en el numero 3*4 + 5 % 300 = 16
+
 begin
 	variables r
 	r <- f 0
