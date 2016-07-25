@@ -37,7 +37,5 @@ Debug/
 *.log
 *.data
 *.txt
-*.ansisop
-Scripts/
 RemoteSystemsTempFiles/
 Release/
