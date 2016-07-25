@@ -20,31 +20,9 @@
   5. Aprietan Ctrl + C y escriben ":wq" y enter
   6. Para verificar que les funcionó pueden ir al directorio del ejecutable y escribir: `ldd Swap` y les debería aparecer la shared con una dirección
   7. Si no quieren hacer todo esto pueden optar por usar el comando `export` cuando lo necesiten estando en el directorio del ejecutable. Pero cada vez que abran una consola nueva lo van a tener que escribir de nuevo
-
-## Vamos a trabajar todos sobre la rama 'master'. Comandos necesarios:
-1. *Indicar la direcicón de mi proyecto:* `cd /home/utnso/...` (donde lo tengan guardado)
-2. *Averiguar el estado de mi proyecto:* `git status`
-3. *Bajar del repo la última versión del proyecto:* `git pull` (siempre antes de un push)
-4. *Agregar (todos) los cambios realizados:* `git add .`
-5. *Agregar solo un cambio realizado:* `git add nombre_del_archivo`
-5. *Hacer el commit correspondiente:* `git commit -m "los cambios que hice"`
-6. *Actualizar la versión existente en Github (subir lo que hice):* `git push`
-
-Más comandos acá (branches, etc.): http://blog.desdelinux.net/guia-rapida-para-utilizar-github/
-
-## Para implementar/usar alguna de las common libraries en un .c/.h debe incluirse así:
-
-- Logging: `#include <commons/log.h>`
-- Manipulación de Strings: `<commons/string.h>`
-- Manipulación de archivos de configuración: `<commons/config.h>`
-- Manejo/Funciones de fechas: `<commons/temporal.h>`
-- Manejo de array de bits: `<commons/bitarray.h>`
-- Información de procesos: `<commons/process.h>`
-- Manejo simple de archivos de texto: `<commons/txt.h>`
-Conjunto de elementos:
-- List: `#include <commons/collections/list.h>`
-- Dictionary: `#include <commons/collections/dictionary.h>`
-- Queue: `#include <commons/collections/queue.h>`
+  
+## Comandos Github:
+- Link: http://blog.desdelinux.net/guia-rapida-para-utilizar-github/
 
 ## Debuguear
 - [Tutorial de UTN](https://youtu.be/XsefDXRfA9k)
@@ -58,7 +36,7 @@ Conjunto de elementos:
 - [Direccionario UTN](http://faq.utn.so/)
 - [Git Difftool](https://youtu.be/iCGrKFH2oeo)
 
-## Comandos
+## Comandos Consola Linux
 - `less config.txt` Muestra contenido del archivo. Se sale con q
 - `vim config.txt` Te deja modificar el archivo
 	- Para insertar: apretar "i" y moverse con flechas
@@ -73,9 +51,14 @@ Conjunto de elementos:
 - `rm -fr dir` Eliminar todo el directorio dir
 - `make all` Compilar módulo
 
-## Pasos para deploy
+## Pasos para el Deploy
 - En caso de instalar con pendrive: descompilar con  `tar -xvf commons_ultimo.tar`
 - En caso de instalar con internet: `git clone http://github.com/sisoputnfrba/tp-2016-1c-Cazadores-de-cucos.git`
 - Abrir terminal agregar export al bashrc sino export a cada módulo
 - Ir a la carpeta cada módulo y ejecutar el makefile (`make all`)
 - Mover configs de cada módulo a la carpeta Debug correspondiente (`cp -f config.txt modulo/Debug/config.txt`)
+
+## Instalación de Scripts AnSISOP:
+
+- Revisar si los scripts ya tienen permisos de ejecución. Para ello, vamos con la terminal a la ubicación de los scripts y utilizamos el comando `ls`, si los nombres de los scripts aparecen resaltados en verde es que ya están bien.
+- Sino aparecen en verde, parados en la terminal en la misma ubicación escribimos `sudo chmod 775 facil.ansisop` para cada uno de los scripts. Luego, verificamos nuevamente que sí aparezcan en verde con `ls`.
