@@ -2,6 +2,7 @@
 #define NUCLEOVIEJOMALDITO_SRC_LIB_FUNCIONES_H_
 
 #include "globales.h"
+#include <parser/metadata_program.h>
 
 // Configuración y setting:
 void iniciarEscuchaDeInotify();

@@ -2,6 +2,8 @@
 #define CPU_SRC_LIB_PRIMITIVASANSISOP_H_
 
 #include "globalesCPU.h"
+#include <parser/metadata_program.h>
+#include <parser/parser.h>
 #include "principalesCPU.h"
 
 /** PROTOTIPO PRIMITIVAS ANSISOP **/

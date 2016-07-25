@@ -13,7 +13,6 @@
 #include <netdb.h> 		// gethostbyname
 #include <netinet/in.h>
 #include <fcntl.h> // fcntl
-#include <commons/error.h>
 
 #define FALSE 0
 #define TRUE 1

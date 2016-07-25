@@ -2,8 +2,6 @@
 #define UTILIDADES_TIPOSDEDATOS_H_
 
 #include <commons/collections/list.h>
-#include <commons/collections/dictionary.h>
-//#include <parser/parser.h>
 #include <parser/metadata_program.h>
 
 typedef struct {
@@ -40,9 +38,6 @@ typedef struct {
 	char* nombreDispositivo;
 } __attribute__((packed)) pedidoIO;
 
-// Respuesta ante el inicio de un programa de UMC a Núcleo:
-	/* MANDA DIRECTAMENTE UN INT --> RESPUESTA_PEDIDO: PERMITIDO ó NO_PERMITIDO */
-
 // Elemento del Índice de Stack:
 typedef struct {
 	int cantidad_args;
@@ -53,7 +48,7 @@ typedef struct {
 	direccion retVar;
 }  __attribute__((packed)) registroStack;
 
-// PCB de un proceso:
+// PCB de un Proceso:
 typedef struct pcb{
 	int cantidad_instrucciones,
 		id_cpu,
@@ -96,12 +91,6 @@ typedef enum{
 typedef enum{
 	CON_BLOQUEO = 1, SIN_BLOQUEO, SENIAL
 }  __attribute__((packed)) infoCPU;
-
-// Respuesta de Swap a un pedido de Lectura de UMC: /* MANDA UN CHAR* */
-
-// Respuesta a un pedido de Lectura de Variable de UMC a CPU: /* MANDA UN INT */
-
-// Respuesta a un pedido de Lectura de Instrucción de UMC a CPU: /* MANDA UN CHAR* */
 
 // Pedido de Lectura de UMC a Swap:
 typedef struct {
