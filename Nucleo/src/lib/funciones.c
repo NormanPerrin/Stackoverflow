@@ -265,9 +265,9 @@ int asignarPid(){
 	return randomPid;
 }
 
-int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
+int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 
-	int tamanio_programa = programa->tamanio;
+	int tamanio_programa = strlen(programa)+ 1;
 	int cantidad_paginas = tamanio_programa / tamanioPagina;
 	int offset_restante = tamanio_programa % tamanioPagina;
 
@@ -278,13 +278,11 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 		inicioPrograma* solicitudDeInicio = (inicioPrograma*) malloc(tamanio_programa+12);
 		solicitudDeInicio->paginas = nuevoPcb->paginas_stack + nuevoPcb->paginas_codigo;
 		solicitudDeInicio->pid = nuevoPcb->pid;
-		solicitudDeInicio->contenido.tamanio = programa->tamanio;
-		solicitudDeInicio->contenido.cadena = malloc(programa->tamanio);
-		solicitudDeInicio->contenido.cadena = programa->cadena;
+		solicitudDeInicio->contenido = strdup(programa);
 		printf("Solicitando segmentos de código y de stack a UMC para el proceso #%d.\n", nuevoPcb->pid);
 
 		aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
-		free(solicitudDeInicio->contenido.cadena); free(solicitudDeInicio);
+		free(solicitudDeInicio);
 
 		int* respuestaUMC = NULL;
 		int head;
@@ -311,7 +309,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, string* programa){
 		}
 }
 
-pcb * crearPcb(string* programa){
+pcb * crearPcb(char* programa){
 
 	pcb * nuevoPcb = malloc(sizeof(pcb));
 
@@ -329,7 +327,7 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->quantum_sleep = config->retardoQuantum;
 
 		// Analizo con el parser el código del programa para obtener su metadata:
-		t_metadata_program* infoProg = metadata_desde_literal(programa->cadena);
+		t_metadata_program* infoProg = metadata_desde_literal(programa);
 
 		nuevoPcb->primerPaginaStack = nuevoPcb->paginas_codigo; // el stack comienza luego del código
 		nuevoPcb->paginaActualStack = nuevoPcb->primerPaginaStack;
@@ -388,7 +386,7 @@ void aceptarConexionEntranteDeConsola(){
 
 	if(head == ENVIAR_SCRIPT){
 	 // Creo la PCB del programa y pido espacio para los segmentos a UMC:
-		pcb * nuevoPcb = crearPcb((string*) entrada);
+		pcb * nuevoPcb = crearPcb((char*) entrada);
 
 		if(nuevoPcb == NULL){ //  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
 			*respuesta = RECHAZADO;

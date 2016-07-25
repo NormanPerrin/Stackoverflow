@@ -4,11 +4,6 @@
 #include <commons/collections/list.h>
 #include <parser/metadata_program.h>
 
-typedef struct {
-	int tamanio;
-	char* cadena;
-} __attribute__((packed)) string;
-
 // Dirección lógica:
 typedef struct {
 	int pagina, offset, size;
@@ -17,7 +12,7 @@ typedef struct {
 // Solicitud de inicio de un programa:
 typedef struct {
 	int pid, paginas;
-	string contenido;
+	char* contenido;
 } __attribute__((packed)) inicioPrograma;
 
 // Variable compartida AnSISOP:

@@ -209,7 +209,7 @@ void inciar_programa(int fd, void *msj) {
 
 	dormir(config->retardo); // retardo por escritura en tabla páginas
 
-	inicioPrograma *mensaje = (inicioPrograma*)msj; // casteo
+	inicioPrograma *mensaje = (inicioPrograma*) msj; // casteo
 	printf("> [INICIAR_PROGRAMA]: (#fd: %d) (#pid: %d) (#paginas: %d)\n", fd, mensaje->pid, mensaje->paginas);
 
 	// 1) Agrego a tabla de páginas

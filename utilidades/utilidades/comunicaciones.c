@@ -65,15 +65,9 @@ int calcularTamanioMensaje(int head, void* mensaje){
 	int tamanio;
 
 	switch(head){
-		// CASE 0: El mensaje es un texto (string)
-			case ENVIAR_SCRIPT:{
-				string* script = (string*) mensaje;
-				tamanio = script->tamanio + INT;
-				break;
-			}
 		// CASE 1: El mensaje es un texto (char*)
 			case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
-			case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+			case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
 				tamanio = strlen((char*)mensaje)+ 1;
 				break;
 			}
@@ -114,7 +108,7 @@ int calcularTamanioMensaje(int head, void* mensaje){
 		// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
 			case INICIAR_PROGRAMA:{
 				inicioPrograma* msj = (inicioPrograma*) mensaje;
-				tamanio = msj->contenido.tamanio + 3*INT;
+				tamanio = strlen(msj->contenido)+ 1 + 2*INT;
 				break;
 			}
 		} // fin switch head
@@ -126,14 +120,9 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	void * buffer;
 
 	switch(head){
-	// CASE 0: El mensaje es un texto (string)
-	case ENVIAR_SCRIPT:{
-		buffer = serealizarString(mensaje, tamanio);
-		break;
-	}
 	// CASE 1: El mensaje es un texto (char*)
 	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
-	case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+	case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
 			char* msj = (char*) mensaje;
 			buffer = malloc(tamanio);
 			memcpy(buffer, msj, tamanio);
@@ -187,14 +176,9 @@ void * deserealizar(int head, void * buffer, int tamanio){
 	void * mensaje;
 
 	switch(head){
-		// CASE 0: El mensaje es un texto (string)
-		case ENVIAR_SCRIPT:{
-			mensaje = deserealizarString(buffer, tamanio);
-			break;
-		}
 		// CASE 1: El mensaje es un texto (char*)
 		case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
-		case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA:{
+		case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
 			char* msj = malloc(tamanio);
 			memcpy(msj, buffer, tamanio);
 			mensaje = msj;
@@ -252,30 +236,6 @@ void * deserealizar(int head, void * buffer, int tamanio){
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
 /**** SEREALIZACIONES PARTICULARES ****/
-void* serealizarString(void* mensaje, int tamanio){
-	string* msj = (string*) mensaje;
-	int desplazamiento = 0;
-
-	void * buffer = malloc(tamanio);
-	memcpy(buffer + desplazamiento, &(msj->tamanio), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, msj->cadena, msj->tamanio);
-
-	return buffer;
-}
-
-string* deserealizarString(void* buffer, int tamanio){
-	int desplazamiento = 0;
-
-	string * msj = malloc(sizeof(string));
-	memcpy(&msj->tamanio, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	msj->cadena = malloc(msj->tamanio);
-	memcpy(msj->cadena, buffer + desplazamiento, msj->tamanio);
-
-	return msj;
-}
-
 void* serealizarInicioPrograma(void* mensaje, int tamanio){
 	inicioPrograma* msj = (inicioPrograma*) mensaje;
 	int desplazamiento = 0;
@@ -285,9 +245,7 @@ void* serealizarInicioPrograma(void* mensaje, int tamanio){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(msj->paginas), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(msj->contenido.tamanio), INT);
-		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, msj->contenido.cadena, msj->contenido.tamanio);
+	memcpy(buffer + desplazamiento, msj->contenido, tamanio-8);
 
 	return buffer;
 }
@@ -300,10 +258,8 @@ inicioPrograma* deserealizarInicioPrograma(void* buffer, int tamanio){
 		desplazamiento += INT;
 	memcpy(&msj->paginas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&msj->contenido.tamanio, buffer + desplazamiento, INT);
-		desplazamiento += INT;
-	msj->contenido.cadena = malloc(msj->contenido.tamanio);
-	memcpy(msj->contenido.cadena, buffer + desplazamiento, msj->contenido.tamanio);
+	msj->contenido = malloc(tamanio-8);
+	memcpy(msj->contenido, buffer + desplazamiento, tamanio-8);
 
 	return msj;
 }

@@ -62,8 +62,6 @@ void * deserealizar(int head, void * buffer, int tamanio);
 // -- Serealizaciones y deserealizaciones PARTICULARES:
 void* serealizarPcb(void* mensaje, int tamanio);
 pcb* deserealizarPcb(void* buffer, int tamanio);
-void* serealizarString(void* mensaje, int tamanio);
-string* deserealizarString(void* buffer, int tamanio);
 void* serealizarInicioPrograma(void* mensaje, int tamanio);
 inicioPrograma* deserealizarInicioPrograma(void* buffer, int tamanio);
 void* serealizarTextoMasUnInt(void* mensaje, int tamanio);

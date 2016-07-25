@@ -15,12 +15,8 @@ int main(int argc, char **argv){
 
 	conectarCon_Nucleo(); // Conexión con Núcleo
 
-	string* script = malloc(tamanioPrograma + 4);
-	script->tamanio = tamanioPrograma;
-	script->cadena = programa;
-	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, script);
+	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
 	printf("Script enviado a Núcleo. Esperando respuesta...\n");
-	free(script);
 
 	int head;
 	void * mensaje = NULL;

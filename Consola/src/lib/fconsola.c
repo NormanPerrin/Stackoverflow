@@ -21,7 +21,7 @@ void setearValores_config(t_config * archivoConfig){
 
 void leerScript(char * rutaPrograma){
 
-	int tamanio, descriptorArchivo;
+	int descriptorArchivo;
 	struct stat infoArchivo; // función de stat.h
 
 	descriptorArchivo = open(rutaPrograma, O_RDONLY); // Abre el archivo .asnsisop
@@ -29,13 +29,17 @@ void leerScript(char * rutaPrograma){
 
 	fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
 
-	tamanio = infoArchivo.st_size;
-	programa = malloc(tamanio);
+	tamanioPrograma = infoArchivo.st_size;
+	programa = malloc(tamanioPrograma);
 
-	tamanioPrograma = read(descriptorArchivo, programa, tamanio); // Guardo el script en programa
-	if(tamanioPrograma == ERROR) perror("Error al leer script.");
-	programa = realloc(programa, tamanioPrograma + 1);
-	programa[tamanioPrograma] = '\0';
+	int read_status = read(descriptorArchivo, programa, tamanioPrograma); // Guardo el script en programa
+	if(read_status == ERROR) perror("Error al leer script.");
+
+	if((*programa + tamanioPrograma) != '\0'){
+		tamanioPrograma++;
+		programa = realloc(programa, tamanioPrograma);
+		*(programa + tamanioPrograma) = '\0';
+	}
 
 	printf("Leyendo script...\n\n");
 	printf("%s\n", programa);

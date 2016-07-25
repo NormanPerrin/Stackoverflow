@@ -119,7 +119,7 @@ void iniciar_programa(void *msj) {
 	int *respuesta = (int*)reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 
-	inicioPrograma *mensaje = (inicioPrograma*)msj;
+	inicioPrograma *mensaje = (inicioPrograma*) msj;
 	int pid = mensaje->pid;
 	int paginas = mensaje->paginas;
 	printf("> [INICIAR_PROGRAMA]: (#pid: %d) (#paginas: %d)\n", pid, paginas);
@@ -163,7 +163,7 @@ void iniciar_programa(void *msj) {
 		int pos = buscarPaginaEnTablaDePaginas(pid, 0);
 		avanzarPaginas(pos);
 		dormir(config->retardoAcceso);
-		fwrite(mensaje->contenido.cadena, CHAR, mensaje->contenido.tamanio, archivoSwap);
+		fwrite(mensaje->contenido, CHAR, strlen(mensaje->contenido)+ 1, archivoSwap);
 	}
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);

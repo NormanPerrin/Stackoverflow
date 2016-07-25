@@ -23,8 +23,8 @@ int obtenerSocketMaximoInicial();
 void planificarProceso();
 pcb* buscarProcesoPorPid(int pid);
 int asignarPid();
-int solicitarSegmentosAUMC(pcb * nuevoPcb, string* programa);
-pcb* crearPcb(string* programa);
+int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa);
+pcb* crearPcb(char* programa);
 void aceptarConexionEntranteDeConsola(); // --> planificarProceso
 void aceptarConexionEntranteDeCPU(); // --> planificarProceso
 void atenderCambiosEnArchivoConfig(int* socketMaximo);
