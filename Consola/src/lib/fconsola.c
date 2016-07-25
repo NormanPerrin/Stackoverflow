@@ -33,8 +33,9 @@ void leerScript(char * rutaPrograma){
 	programa = malloc(tamanio);
 
 	tamanioPrograma = read(descriptorArchivo, programa, tamanio); // Guardo el script en programa
-	if(tamanioPrograma == ERROR) perror("Error al cerrar script.");
-	programa = realloc(programa, tamanioPrograma);
+	if(tamanioPrograma == ERROR) perror("Error al leer script.");
+	programa = realloc(programa, tamanioPrograma + 1);
+	programa[tamanioPrograma] = '\0';
 
 	printf("Leyendo script...\n\n");
 	printf("%s\n", programa);
