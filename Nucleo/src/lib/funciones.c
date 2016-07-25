@@ -339,7 +339,6 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
 		// Inicializo índice de código:
-		//nuevoPcb->indiceCodigo = malloc(sizeof(t_intructions));
 		nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 
 		// Inicializo índice de stack:
@@ -350,7 +349,6 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
 
 		if (infoProg->cantidad_de_etiquetas > 0){
-			//nuevoPcb->indiceEtiquetas = strdup(infoProg->etiquetas);
 			nuevoPcb->indiceEtiquetas = infoProg->etiquetas;
 			printf("Indice etiquetas: '%s'. Proceso #%d.\n", nuevoPcb->indiceEtiquetas, nuevoPcb->pid); // TODO: Sacar
 		} else {
@@ -836,7 +834,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		break;
 	}
-	case GRABAR_VAR_COMPARTIDA:{
+	case GRABAR_VAR_COMPARTIDA:{ // TODO:  ver memcpy de mensaje, free, si se envia, qué onda
 
 		var_compartida* var_aGrabar = (var_compartida*) mensaje;
 		// Actualizo el valor de la variable solicitada:

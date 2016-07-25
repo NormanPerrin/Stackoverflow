@@ -562,7 +562,7 @@ void * serealizarPcb(void * mensaje, int tamanio){
 	} // fin carga índice de código
 
 	// Copio el índice de etiquetas:
-	memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
+		memcpy(buffer + desplazamiento, unPcb->indiceEtiquetas, unPcb->tamanioIndiceEtiquetas);
 
 	return buffer;
 }
@@ -695,8 +695,8 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 	} // fin carga índice código
 
 	// Copio el índice de etiquetas:
-	unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
-	memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
+		unPcb->indiceEtiquetas = malloc(unPcb->tamanioIndiceEtiquetas);
+		memcpy(unPcb->indiceEtiquetas, buffer + desplazamiento, unPcb->tamanioIndiceEtiquetas);
 
 	return unPcb;
 }

@@ -1,0 +1,9 @@
+#!/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Consola/Debug
+begin
+	variables a, b
+	a = 3
+	b = 5
+	a = b + 12
+end
+
+

@@ -1,4 +1,4 @@
-#!/home/utnso/tp-2016-1c-Cazadores-de-cucos/Consola/Debug/Consola
+#!/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Consola/Debug
 
 #Respuesta esperada: 1; 1; Hola Mundo!; 3; Bye
 
@@ -35,3 +35,5 @@ end
 :Siguiente	
 	print A+1
 goto Proximo
+
+

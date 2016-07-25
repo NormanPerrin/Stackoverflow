@@ -57,7 +57,7 @@ int main(void) {
 }
 
 void exitCPU(){
-	liberarRecursos(); // Libero memoria reservada
+	liberarRecursos(); // Libero memoria utilizada
 	cerrarSocket(fdUMC);
 	cerrarSocket(fdNucleo);
 }
@@ -67,13 +67,13 @@ int recibirMensajesDeNucleo(){
 
 	int head;
 	void *mensaje = NULL;
-	mensaje = aplicar_protocolo_recibir(fdNucleo, &head);
-	/*if (mensaje == NULL) {
-			log_info(logger, "El Núcleo se ha desconectado. Cerrando proceso CPU...");
-			cerrarSocket(fdNucleo);
 
-			return FALSE;
-	} else {*/
+	mensaje = aplicar_protocolo_recibir(fdNucleo, &head);
+
+	if (mensaje == NULL){
+		log_info(logger, "Núcleo se ha desconectado.");
+		return FALSE;
+	} else {
 		if(head == PCB){
 				// Seteo la pcb actual que recibo de Núcleo:
 				pcbActual = (pcb*) mensaje;
@@ -93,8 +93,8 @@ int recibirMensajesDeNucleo(){
 		} // fin else head
 		else{
 			return FALSE;
-		}
-	//} // fin else msj not null
+		} // fin else head pcb
+	} // fin else msj null
 }
 
 void ejecutarProcesoActivo(){
@@ -110,6 +110,8 @@ void ejecutarProcesoActivo(){
 
 			limpiarInstruccion(proximaInstruccion);
 
+			if(string_starts_with(proximaInstruccion, "#")){ exitPorErrorUMC(); return; }
+
 			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && string_starts_with(proximaInstruccion, "end")){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
@@ -119,9 +121,9 @@ void ejecutarProcesoActivo(){
 				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, pidActual);
 				free(pidActual);
 				exitProceso();
-					return;
-			} // No es 'end'. Ejecuto la próxima instrucción:
-
+				return;
+			}
+			// No es 'end'. Ejecuto la próxima instrucción:
 			analizadorLinea(proximaInstruccion, &funcionesAnSISOP, &funcionesKernel);
 
 			if (huboStackOverflow){
@@ -132,8 +134,8 @@ void ejecutarProcesoActivo(){
 				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, pidActual);
 				free(pidActual);
 				exitProceso();
-					return;
-				}
+				return;
+			}
 
 			quantum--; // Decremento el quantum actual
 			(pcbActual->pc)++; // Incremento Program Counter del PCB
@@ -159,7 +161,7 @@ void ejecutarProcesoActivo(){
 		else { // Llegó instrucción null por error con UMC:
 			exitPorErrorUMC();
 			return;
-			} // fin else not null
+		} // fin else not null
 	} // fin while que descuenta quantum
 	// Finalizó ráfaga de ejecución:
 	aplicar_protocolo_enviar(fdNucleo, PCB_FIN_QUANTUM, pcbActual);
