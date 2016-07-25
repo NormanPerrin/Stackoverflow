@@ -338,6 +338,8 @@ pcb * crearPcb(string* programa){
 		nuevoPcb->stackPointer = 0;
 		nuevoPcb->cantidad_instrucciones = infoProg->instrucciones_size;
 
+		printf("Cantidad instrucciones: '%d'. Proceso #%d.\n", nuevoPcb->cantidad_instrucciones, nuevoPcb->pid); // TODO: Sacar
+
 		// Inicializo índice de código:
 		nuevoPcb->indiceCodigo = infoProg->instrucciones_serializado;
 

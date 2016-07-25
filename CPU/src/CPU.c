@@ -102,15 +102,12 @@ void ejecutarProcesoActivo(){
 	int quantum = pcbActual->quantum;
 
 	while (quantum > 0){
-
 		 // Obtengo la próxima instrucción a ejecutar:
 		char* proximaInstruccion = solicitarProximaInstruccionAUMC();
 
 		if (proximaInstruccion != NULL){ // Llegó una instrucción, analizo si es o no 'end':
 
 			limpiarInstruccion(proximaInstruccion);
-
-			if(string_starts_with(proximaInstruccion, "#")){ exitPorErrorUMC(); return; }
 
 			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && string_starts_with(proximaInstruccion, "end")){
 				// Es 'end'. Finalizo ejecución por EXIT:
@@ -124,6 +121,8 @@ void ejecutarProcesoActivo(){
 				return;
 			}
 			// No es 'end'. Ejecuto la próxima instrucción:
+			log_info(logger, "Instrucción recibida: %s", proximaInstruccion); // TODO: Cambiar por debug
+
 			analizadorLinea(proximaInstruccion, &funcionesAnSISOP, &funcionesKernel);
 
 			if (huboStackOverflow){
@@ -158,7 +157,7 @@ void ejecutarProcesoActivo(){
 			usleep(pcbActual->quantum_sleep * 1000); // Retardo de quantum
 
 		} // fin if not null
-		else { // Llegó instrucción null por error con UMC:
+		else { // Llegó instrucción null por error o rechazo de UMC:
 			exitPorErrorUMC();
 			return;
 		} // fin else not null

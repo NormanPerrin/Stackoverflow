@@ -1,4 +1,4 @@
-#!/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Consola/Debug
+#!/usr/bin/ansisop
 #Overflow en el numero 3*4 + 5 % 300 = 16
 begin
 	variables r

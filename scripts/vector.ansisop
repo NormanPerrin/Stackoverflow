@@ -1,4 +1,4 @@
-#!/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/Consola/Debug
+#!/usr/bin/ansisop
 begin
 #un vector de 5 posiciones
 variables a, b, c, d, e, i

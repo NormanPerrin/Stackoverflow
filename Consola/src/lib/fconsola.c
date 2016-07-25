@@ -36,6 +36,9 @@ void leerScript(char * rutaPrograma){
 	if(tamanioPrograma == ERROR) perror("Error al cerrar script.");
 	programa = realloc(programa, tamanioPrograma);
 
+	printf("Leyendo script...\n\n");
+	printf("%s\n", programa);
+
 	close(descriptorArchivo);
 } // El programa ya está listo para ser enviado a Núcleo
 
