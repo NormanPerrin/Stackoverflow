@@ -1,4 +1,4 @@
-## Instalar ambiente de trabajo
+## Instalar ambiente de trabajo:
 1. `git clone http://github.com/sisoputnfrba/tp-2016-1c-Cazadores-de-cucos.git`
 2. Abrir eclipse
 3. File - New - Import - General - Existing...
@@ -24,19 +24,19 @@
 ## Comandos Github:
 - Link: http://blog.desdelinux.net/guia-rapida-para-utilizar-github/
 
-## Debuguear
+## Debuguear:
 - [Tutorial de UTN](https://youtu.be/XsefDXRfA9k)
 - F6: siguiente instrucción
 - F5: meterse en instrucción
 - Para debuggear hilos usar breakpoints
 
-## Links importantes
+## Links importantes:
 - [Enunciado]()
 - [Tutorial básico GitHub](https://youtu.be/cEGIFZDyszA?list=PL6gx4Cwl9DGAKWClAD_iKpNC0bGHxGhcx)
 - [Direccionario UTN](http://faq.utn.so/)
 - [Git Difftool](https://youtu.be/iCGrKFH2oeo)
 
-## Comandos Consola Linux
+## Comandos Consola Linux:
 - `less config.txt` Muestra contenido del archivo. Se sale con q
 - `vim config.txt` Te deja modificar el archivo
 	- Para insertar: apretar "i" y moverse con flechas
@@ -51,7 +51,7 @@
 - `rm -fr dir` Eliminar todo el directorio dir
 - `make all` Compilar módulo
 
-## Pasos para el Deploy
+## Pasos para el Deploy:
 - En caso de instalar con pendrive: descompilar con  `tar -xvf commons_ultimo.tar`
 - En caso de instalar con internet: `git clone http://github.com/sisoputnfrba/tp-2016-1c-Cazadores-de-cucos.git`
 - Abrir terminal agregar export al bashrc sino export a cada módulo
