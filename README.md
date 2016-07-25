@@ -60,5 +60,8 @@
 
 ## Instalación de Scripts AnSISOP:
 
-- Revisar si los scripts ya tienen permisos de ejecución. Para ello, vamos con la terminal a la ubicación de los scripts y utilizamos el comando `ls`, si los nombres de los scripts aparecen resaltados en verde es que ya están bien.
+1)
+-Revisar si los scripts ya tienen permisos de ejecución. Para ello, vamos con la terminal a la ubicación de los scripts y utilizamos el comando `ls`, si los nombres de los scripts aparecen resaltados en verde es que ya están bien (realizar para carpetas `scripts` y `Consola/Debug`.
 - Si no aparecen en verde, parados en la terminal en la misma ubicación escribimos `sudo chmod 775 facil.ansisop` para cada uno de los scripts. Luego, verificamos nuevamente que sí aparezcan en verde con `ls`.
+2)
+Una vez que todos se hayan bajado los scripts, agregamos nuevamente `*.ansisop` y `scripts/` al .gitignore.
