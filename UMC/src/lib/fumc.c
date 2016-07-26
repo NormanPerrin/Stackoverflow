@@ -686,21 +686,28 @@ int tlbListIndex(int pid, int pagina) {
 	registro_tlb *aux = NULL;
 	for (; i < list_size(tlb); i++){
 		aux = (registro_tlb*)list_get(tlb, i);
+
 		if( (aux->pid == pid) && (aux->pagina == pagina) ) {
 			free(aux);
 			return i; // el proceso está en la posición 'i'
 		}
-			free(aux);
+
 	}
+	free(aux);
 	return ERROR; // no se encontró el proceso
+
 }
 
 registro_tlb *buscar_tlb(int pid, int pagina) {
 
-	bool esElementoTlb(registro_tlb *elemento){ return (elemento->pagina == pagina && elemento->pid == pid );}
+	bool esElementoTlb(registro_tlb *elemento){
+		return (elemento->pagina == pagina && elemento->pid == pid );}
+
 	registro_tlb* elemento = list_find(tlb, (void*) esElementoTlb);
 
 	return elemento;
+	free(elemento);
+
 }
 
 int actualizar_tlb(int pid, int pagina) {
