@@ -35,9 +35,11 @@ void leerScript(char * rutaPrograma){
 	int read_status = read(descriptorArchivo, programa, tamanioPrograma); // Guardo el script en programa
 	if(read_status == ERROR) perror("Error al leer script.");
 
-	if((*programa + tamanioPrograma) != '\0'){
-		*(programa + tamanioPrograma) = '\0';
-		// Lo superpongo así, sin realloc, porque los scripts vienen con varios '\n' al final.
+	if((*programa + tamanioPrograma - 1) != '\0'){
+		tamanioPrograma++;
+		programa = realloc(programa, tamanioPrograma); // Reservo un espacio para el '\0'.
+		*(programa + tamanioPrograma - 1) = '\0';
+		// Sino sin realloc, lo superpongo al último'\n' porque los scripts vienen con varios al final.
 	}
 
 	printf("Leyendo script...\n\n");
