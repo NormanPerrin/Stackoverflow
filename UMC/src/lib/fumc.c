@@ -897,14 +897,16 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 	if(pagina_reemplazar.bit_modificado == 1) { // tengo que escribir en disco
 
 		// seteo pedido
-		solicitudEscribirPagina *pedido = NULL;
+		solicitudEscribirPagina *pedido = (solicitudEscribirPagina*)reservarMemoria(sizeof(solicitudEscribirPagina));
 		pedido->pid = pid;
 		pedido->pagina = pagina_reemplazar.pagina;
-		void *dir_real = memoria + pagina_reemplazar.marco * config->marco_size;
-		memcpy(pedido->contenido, dir_real, config->marco_size);
+		pedido->contenido = reservarMemoria(config->marco_size);
+		int dir_real = pagina_reemplazar.marco * config->marco_size;
+		memcpy(pedido->contenido, memoria + dir_real, config->marco_size);
 
 		// envío pedido
 		aplicar_protocolo_enviar(sockClienteDeSwap, ESCRIBIR_PAGINA, pedido);
+		free(pedido->contenido); free(pedido);
 
 		// espero respuesta swap
 		int *respuesta = NULL;
