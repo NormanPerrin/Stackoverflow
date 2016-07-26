@@ -626,7 +626,6 @@ int cargar_pagina(int pid, int pagina, void *contenido) {
 		actualizar_tp(pid, pagina, marco, 1, -1, 1);
 		actualizarPuntero(pid, pagina);
 
-
 	} else { // las paginas asignadas es mayor al número de marcos disponibles
 
 		return ERROR;
@@ -1267,6 +1266,11 @@ void actualizarPuntero(int pid, int pagina) {
 
 	int pos = pos_pid(pid);
 	int encontro = FALSE;
+
+	if(contar_paginas_asignadas(pid) == 1) {
+		tabla_paginas[pos].puntero = pagina;
+		return;
+	}
 
 	int i = pagina+1;
 	for(; i < tabla_paginas[pos].paginas; i++) {
