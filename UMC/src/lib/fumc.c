@@ -693,10 +693,14 @@ int tlbListIndex(int pid, int pagina) {
 
 registro_tlb *buscar_tlb(int pid, int pagina) {
 
-	bool esElementoTlb(registro_tlb *elemento){ return (elemento->pagina == pagina && elemento->pid == pid );}
+	bool esElementoTlb(registro_tlb *elemento){
+		return (elemento->pagina == pagina && elemento->pid == pid );}
+
 	registro_tlb* elemento = list_find(tlb, (void*) esElementoTlb);
 
 	return elemento;
+	free(elemento);
+
 }
 
 int actualizar_tlb(int pid, int pagina) {
