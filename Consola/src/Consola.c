@@ -28,6 +28,7 @@ int main(int argc, char **argv){
 
 	case RECHAZADO:{ // programa rechazado
 				log_info(logger, "UMC no pudo alocar los segmentos pedidos. Programa rechazado.");
+				free(mensaje); mensaje = NULL;
 				exitConsola();
 				return EXIT_FAILURE;
 				break;
@@ -35,6 +36,7 @@ int main(int argc, char **argv){
 
 	case ERROR_CONEXION:{
 				log_error(logger, "Error al iniciar programa. Script no enviado.");
+				free(mensaje); mensaje = NULL;
 				exitConsola();
 				return EXIT_FAILURE;
 				break;
@@ -54,7 +56,8 @@ int main(int argc, char **argv){
 
 			case IMPRIMIR_TEXTO:{
 						// Imprime lo que recibe, ya sea texto a variable (convertida a texto):
-						printf("IMPRIMIR: '%s'.\n", (char*)entrada);
+						printf("IMPRIMIR: '%s'.\n", (char*) entrada);
+						free(entrada); entrada = NULL;
 						break;
 					}
 			case FINALIZAR_PROGRAMA:{
@@ -64,21 +67,19 @@ int main(int argc, char **argv){
 						} else {
 							printf("El programa ha sido abortado.\n");
 						}
+						free(entrada); entrada = NULL;
+						free(mensaje); mensaje = NULL;
 						exitConsola();
 						return EXIT_SUCCESS;
 						break;
 					}
-			default:
-				printf("Se ha recibido un mensaje inválido de Núcleo.");
-				break;
 				} // fin switch-case nuevos mensajes
 			} // fin while espera mensajes
-					break;
+		break;
 		} // fin case aceptado
 	} // fin switch respuesta inicio
-		free(mensaje);
 	} // fin if head válido
-
+	free(mensaje); mensaje = NULL;
 	exitConsola();
 	return EXIT_FAILURE;
 

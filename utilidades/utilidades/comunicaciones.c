@@ -28,8 +28,8 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 	// Envío la totalidad del paquete (lo contenido en el buffer):
 	enviarPorSocket(fdReceptor, buffer, tamanioTotalAEnviar);
 
-	free(mensajeSerealizado);
-	free(buffer);
+	free(mensajeSerealizado); mensajeSerealizado = NULL;
+	free(buffer); buffer = NULL;
 }
 
 void * aplicar_protocolo_recibir(int fdEmisor, int* head){
@@ -119,55 +119,53 @@ void * serealizar(int head, void * mensaje, int tamanio){
 
 	void * buffer;
 
-	switch(head){
+	switch(head) {
 	// CASE 1: El mensaje es un texto (char*)
 	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
 	case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
-			char* msj = (char*) mensaje;
-			buffer = malloc(tamanio);
-			memcpy(buffer, msj, tamanio);
-			break;
-		}
+		buffer = malloc(tamanio);
+		memcpy(buffer, mensaje, tamanio);
+		break;
+	}
 	// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
 	case ENTRADA_SALIDA: case GRABAR_VAR_COMPARTIDA:{
-			buffer = serealizarTextoMasUnInt(mensaje, tamanio);
-			break;
-		}
+		buffer = serealizarTextoMasUnInt(mensaje, tamanio);
+		break;
+	}
 	// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 	case ESCRIBIR_PAGINA:{
 		buffer = serealizarPedidoEscrituraPagina(mensaje, tamanio);
-			break;
-		}
+		break;
+	}
 	// CASE 4: El mensaje es un PCB (pcb)
 	case PCB: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
 		buffer = serealizarPcb(mensaje, tamanio);
-			break;
-		}
+		break;
+	}
 	// CASE 5: El mensaje es un valor entero (int)
 	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR: case SENIAL_SIGUSR1:
 	case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
 	case RESPUESTA_WAIT: case TAMANIO_STACK: case PCB_FIN_EJECUCION:{
-		int* msj = (int*) mensaje;
 		buffer = malloc(tamanio);
-		memcpy(buffer, msj, tamanio);
-			break;
-		}
+		memcpy(buffer, mensaje, tamanio);
+		break;
+	}
 	// CASE 6: El mensaje son dos valores enteros (int)
 	case LEER_PAGINA:{
 		buffer = serealizarDosInt(mensaje, tamanio);
-			break;
-		}
+		break;
+	}
 	// CASE 7: El mensaje son tres valores enteros (int)
 	case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION: case PEDIDO_ESCRITURA:{
 		buffer = serealizarTresInt(mensaje, tamanio);
-			break;
-		}
+		break;
+	}
 	// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
 	case INICIAR_PROGRAMA:{
 		buffer = serealizarInicioPrograma(mensaje, tamanio);
-			break;
-		}
-	} // fin switch head
+		break;
+	}
+  } // fin switch head
 	return buffer;
 }
 
@@ -176,62 +174,60 @@ void * deserealizar(int head, void * buffer, int tamanio){
 	void * mensaje;
 
 	switch(head){
-		// CASE 1: El mensaje es un texto (char*)
-		case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
-		case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
-			char* msj = malloc(tamanio);
-			memcpy(msj, buffer, tamanio);
-			mensaje = msj;
-				break;
-			}
-		// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
-		case ENTRADA_SALIDA:{
-			mensaje = deserealizarTextoMasUnInt(buffer, tamanio);
-				break;
-			}
-		case GRABAR_VAR_COMPARTIDA:{
-			mensaje = (var_compartida*)deserealizarTextoMasUnInt(buffer, tamanio);
-				break;
-		}
-		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
-		case ESCRIBIR_PAGINA:{
-			mensaje = deserealizarPedidoEscrituraPagina(buffer, tamanio);
-				break;
-			}
-		// CASE 4: El mensaje es un pcb (pcb)
-		case PCB: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
-			mensaje = deserealizarPcb(buffer, tamanio);
-				break;
-			}
-		// CASE 5: El mensaje es un valor entero (int)
-		case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
-		case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
-		case RESPUESTA_WAIT: case SENIAL_SIGUSR1: case TAMANIO_STACK: case PCB_FIN_EJECUCION:{
-			int* msj = malloc(tamanio);
-			memcpy(msj, buffer, tamanio);
-			mensaje = msj;
-				break;
-			}
-		// CASE 6: El mensaje son dos valores enteros (int)
-		case LEER_PAGINA:{
-			mensaje = deserealizarDosInt(buffer, tamanio);
-				break;
-			}
-		// CASE 7: El mensaje son tres valores enteros (int)
-		case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
-			mensaje = (solicitudLectura*)deserealizarTresInt(buffer, tamanio);
-				break;
-			}
-		case PEDIDO_ESCRITURA:{
-			mensaje = (solicitudEscritura*)deserealizarTresInt(buffer, tamanio);
-			break;
-		}
-		// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
-		case INICIAR_PROGRAMA:{
-			mensaje = deserealizarInicioPrograma(buffer, tamanio);
-				break;
-			}
-		}
+	// CASE 1: El mensaje es un texto (char*)
+	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
+	case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
+		mensaje = malloc(tamanio);
+		memcpy(mensaje, buffer, tamanio);
+		break;
+	}
+	// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
+	case ENTRADA_SALIDA:{
+		mensaje = deserealizarTextoMasUnInt(buffer, tamanio);
+		break;
+	}
+	case GRABAR_VAR_COMPARTIDA:{
+		mensaje = (var_compartida*)deserealizarTextoMasUnInt(buffer, tamanio);
+		break;
+	}
+	// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
+	case ESCRIBIR_PAGINA:{
+		mensaje = deserealizarPedidoEscrituraPagina(buffer, tamanio);
+		break;
+	}
+	// CASE 4: El mensaje es un pcb (pcb)
+	case PCB: case PCB_FIN_QUANTUM: case PCB_ENTRADA_SALIDA: case PCB_WAIT:{
+		mensaje = deserealizarPcb(buffer, tamanio);
+		break;
+	}
+	// CASE 5: El mensaje es un valor entero (int)
+	case DEVOLVER_VARIABLE: case RESPUESTA_PEDIDO: case FINALIZAR_PROGRAMA: case IMPRIMIR:
+	case PROGRAMA_NEW: case ABORTO_PROCESO: case INDICAR_PID: case DEVOLVER_VAR_COMPARTIDA:
+	case RESPUESTA_WAIT: case SENIAL_SIGUSR1: case TAMANIO_STACK: case PCB_FIN_EJECUCION:{
+		mensaje = malloc(tamanio);
+		memcpy(mensaje, buffer, tamanio);
+		break;
+	}
+	// CASE 6: El mensaje son dos valores enteros (int)
+	case LEER_PAGINA:{
+		mensaje = deserealizarDosInt(buffer, tamanio);
+		break;
+	}
+	// CASE 7: El mensaje son tres valores enteros (int)
+	case PEDIDO_LECTURA_VARIABLE: case PEDIDO_LECTURA_INSTRUCCION:{
+		mensaje = (solicitudLectura*)deserealizarTresInt(buffer, tamanio);
+		break;
+	}
+	case PEDIDO_ESCRITURA:{
+		mensaje = (solicitudEscritura*)deserealizarTresInt(buffer, tamanio);
+		break;
+	}
+	// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
+	case INICIAR_PROGRAMA:{
+		mensaje = deserealizarInicioPrograma(buffer, tamanio);
+		break;
+	}
+ }
 	return mensaje;
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 

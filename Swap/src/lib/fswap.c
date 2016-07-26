@@ -1,6 +1,5 @@
 #include "fswap.h"
 
-
 // Globales
 t_configuracion *config; // guarda valores config
 int sockUMC; // socket cliente UMC
@@ -8,7 +7,6 @@ t_tablaDePaginas *tablaPaginas;
 t_bitMap *tablaDeBitMap;
 FILE *archivoSwap;
 int paginasLibresTotales;
-
 
 // Funciones
 void setearValores_config(t_config * archivoConfig) {
@@ -21,7 +19,6 @@ void setearValores_config(t_config * archivoConfig) {
 	config->retardoCompactacion = config_get_int_value(archivoConfig, "RETARDO_COMPACTACION");
 	config->retardoAcceso = config_get_int_value(archivoConfig , "RETARDO_ACCESO");
 }
-
 
 void escucharUMC() {
 
@@ -56,7 +53,6 @@ void escucharUMC() {
 	close(sockServidor);
 }
 
-
 void liberarEstructura() {
 	free(config->nombreSwap);
 	free(config);
@@ -77,8 +73,6 @@ int validar_cliente(char *id) {
 	}
 }
 int validar_servidor(char *id) {return 0;}
-
-
 
 void inicializarSwap() {
 
@@ -169,7 +163,6 @@ void iniciar_programa(void *msj) {
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 	free(respuesta);
 }
-
 
 void escribir_pagina(void *msj) {
 
@@ -281,8 +274,6 @@ int cuantasPaginasTieneElProceso(arrancaProceso) {
 	return(i);
 }
 
-
-
 /* Funcionamiento:
  * copia la pagina de arrancaProceso a posLibre
  * posLibre++, arrancaProceso++
@@ -332,8 +323,6 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
 	free(contenido);
 }
-
-
 
 void eliminar_programa(void *msj) {
 
@@ -410,6 +399,11 @@ void leer_pagina(void *msj) {
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 
+	if( (*contenido + (config->tamanioPagina - 1)) != '\0' ){
+		contenido = realloc(contenido, config->tamanioPagina + 1); // Reservo un espacio para el '\0'.
+		*(contenido + config->tamanioPagina) = '\0';
+	}
+
 	if(*respuesta == PERMITIDO)
 		aplicar_protocolo_enviar(sockUMC, DEVOLVER_PAGINA, contenido);
 
@@ -431,7 +425,6 @@ int buscarAPartirDeEnTablaDePaginas(int pid) {
 	return ERROR;
 }
 
-
 int hayFragmentacion() {
 
 	int hayLibre = FALSE;
@@ -450,7 +443,6 @@ int hayFragmentacion() {
 
 	return FALSE;
 }
-
 
 int compactar() {
 
@@ -485,7 +477,6 @@ void actualizarBitMap() {
 			tablaDeBitMap[i].ocupada = 1;
 	}
 }
-
 
 void *elegirFuncion(int head) {
 

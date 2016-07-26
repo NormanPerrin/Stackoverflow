@@ -635,8 +635,13 @@ int cargar_pagina(int pid, int pagina, void *contenido) {
 
 	// escribo en memoria principal
 	int pos_real = marco * config->marco_size;
-	memcpy(memoria + pos_real, contenido, config->marco_size);
 
+	if( (*((char*) contenido) + config->marco_size) == '\0' ){
+		char* barraCero = contenido + config->marco_size;
+		contenido = realloc(contenido, config->marco_size); // Saco el espacio del '\0'.
+		free(barraCero);
+	}
+	memcpy(memoria + pos_real, contenido, config->marco_size);
 
 	// actualizo tlb si esta activada
 	if(config->entradas_tlb != 0)

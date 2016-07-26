@@ -348,11 +348,12 @@ pcb * crearPcb(char* programa){
 		// Inicializo índice de etiquetas:
 		nuevoPcb->tamanioIndiceEtiquetas = infoProg->etiquetas_size;
 
-		if (infoProg->cantidad_de_etiquetas > 0){
+		if (infoProg->cantidad_de_funciones > 0 || infoProg->cantidad_de_etiquetas > 0){
 			nuevoPcb->indiceEtiquetas = infoProg->etiquetas;
 			printf("Indice etiquetas: '%s'. Proceso #%d.\n", nuevoPcb->indiceEtiquetas, nuevoPcb->pid); // TODO: Sacar
 		} else {
 			nuevoPcb->indiceEtiquetas = NULL;
+			nuevoPcb->tamanioIndiceEtiquetas = 0;
 		}
 		free(infoProg); infoProg = NULL;
 
