@@ -66,14 +66,12 @@ void* serealizarInicioPrograma(void* mensaje, int tamanio);
 inicioPrograma* deserealizarInicioPrograma(void* buffer, int tamanio);
 void* serealizarTextoMasUnInt(void* mensaje, int tamanio);
 pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio);
-void*  serealizarPedidoEscrituraPagina(void* buffer, int tamanio);
-solicitudEscribirPagina*  deserealizarPedidoEscrituraPagina(void* buffer, int tamanio);
+void*  serealizarTextoMasDosInt(void* mensaje, int tamanio);
+solicitudEscribirPagina*  deserealizarTextoMasDosInt(void* buffer, int tamanio);
 void* serealizarDosInt(void* mensaje, int tamanio);
 solicitudLeerPagina* deserealizarDosInt(void* buffer, int tamanio);
 void* serealizarTresInt(void* mensaje, int tamanio);
 direccion* deserealizarTresInt(void* buffer, int tamanio);
-void* serealizarCuatroInt(void* mensaje, int tamanio);
-solicitudEscritura* deserealizarCuatroInt(void* buffer, int tamanio);
 
 // -- Auxiliares:
 int getStartInstruccion(t_intructions instruccion);
