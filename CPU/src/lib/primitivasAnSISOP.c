@@ -301,7 +301,7 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 	printf("Entrada/Salida en dispositivo: '%s' durante '%i' unidades de tiempo.\n", dispositivo, tiempo);
 	pedidoIO * pedidoEntradaSalida = malloc(strlen(dispositivo)+ 5);
 	pedidoEntradaSalida->tiempo = tiempo;
-	pedidoEntradaSalida->nombreDispositivo = dispositivo; // TODO: malloc
+	pedidoEntradaSalida->nombreDispositivo = dispositivo;
 
 	aplicar_protocolo_enviar(fdNucleo,ENTRADA_SALIDA, pedidoEntradaSalida);
 	free(pedidoEntradaSalida); pedidoEntradaSalida = NULL;

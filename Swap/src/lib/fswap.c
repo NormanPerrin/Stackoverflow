@@ -385,27 +385,29 @@ void leer_pagina(void *msj) {
 
 	char *contenido = (char*)reservarMemoria(config->tamanioPagina);
 
-	solicitudLeerPagina *mensaje = (solicitudLeerPagina*)msj;
+	solicitudLeerPagina *mensaje = (solicitudLeerPagina*) msj;
 	int pid= mensaje->pid;
 	int pagina= mensaje->pagina;
 	printf("> [LEER_PAGINA]: (#pid: %d) (#pagina: %d)\n", pid, pagina);
 
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
 	if(pagABuscar != ERROR) { // encontro pagina del proceso
+
 		avanzarPaginas(pagABuscar);
 		dormir(config->retardoAcceso);
 		fread(contenido, CHAR, config->tamanioPagina, archivoSwap);
+
 	} else *respuesta = NO_PERMITIDO; // no encontro pagina solicitada del pid
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 
-	if( (*contenido + (config->tamanioPagina - 1)) != '\0' ){
-		contenido = realloc(contenido, config->tamanioPagina + 1); // Reservo un espacio para el '\0'.
-		*(contenido + config->tamanioPagina) = '\0';
-	}
-
-	if(*respuesta == PERMITIDO)
+	if(*respuesta == PERMITIDO){
+		if( (*contenido + config->tamanioPagina - 1) != '\0' ){
+			contenido = realloc(contenido, config->tamanioPagina + 1); // Reservo un espacio para el '\0'.
+			*(contenido + config->tamanioPagina) = '\0';
+		}
 		aplicar_protocolo_enviar(sockUMC, DEVOLVER_PAGINA, contenido);
+	}
 
 	free(respuesta);
 	free(contenido);

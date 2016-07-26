@@ -543,7 +543,7 @@ int pcbListIndex(int pid){
 	int i;
 	pcb * unPcb = NULL;
 	for (i = 0; i < list_size(listaProcesos); i++){
-		unPcb = (pcb *)list_get(listaProcesos, i);
+		unPcb = (pcb *) list_get(listaProcesos, i);
 		if(unPcb->pid == pid){
 			return i; // el proceso está en la posición 'i'
 		}
@@ -715,7 +715,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		liberarConsola(consolaAsociada);
 		// Libero el PCB del proceso y lo saco del sistema:
 		liberarPcbNucleo(list_remove(listaProcesos, index));
-		free(mensaje);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
@@ -738,24 +738,27 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
 		realizarEntradaSalida(pcbEjecutada, datos);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
 	case IMPRIMIR:{
 
-		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPidCPU);
+		consola * consolaAsociada = list_find(listaConsolas, (void *) consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, string_itoa(*((int*) mensaje)));
 		printf("Proceso #%i solicita imprimir variable en CPU #%i.\n", unCPU->pid, unCPU->id);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
 	case IMPRIMIR_TEXTO:{
 
-		consola * consolaAsociada = list_find(listaConsolas, (void *)consolaTieneElPidCPU);
+		consola * consolaAsociada = list_find(listaConsolas, (void *) consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
 		printf("Proceso #%i solicita imprimir texto en CPU #%i.\n", unCPU->pid, unCPU->id);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
@@ -781,7 +784,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		liberarConsola(consolaAsociada);
 		// Libero el PCB del proceso y lo saco del sistema:
 		liberarPcbNucleo(list_remove(listaProcesos, index));
-		free(mensaje);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
@@ -789,7 +792,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*) mensaje);
 		semaforo_signal(semaforo);
-		free(mensaje);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
@@ -807,7 +810,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			// Recibo la PCB en ejecución que se bloqueó:
 			void* entrada = NULL;
 			entrada = aplicar_protocolo_recibir(fd, &head);
-			if(head == PCB_WAIT){ waitPcb = (pcb*)entrada; }
+			if(head == PCB_WAIT){ waitPcb = (pcb*) entrada; }
 
 			if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 			} else { unCPU->disponibilidad = LIBRE; }
@@ -822,7 +825,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, respuesta);
 			free(respuesta);
 		}
-		free(mensaje);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
@@ -831,7 +834,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Recibo un char* y devuelvo el int correspondiente:
 		var_compartida* varPedida = dictionary_get(diccionarioVarCompartidas, (char*) mensaje);
 		aplicar_protocolo_enviar(fd, DEVOLVER_VAR_COMPARTIDA, &(varPedida->valor));
-		free(mensaje);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
@@ -841,20 +844,17 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Actualizo el valor de la variable solicitada:
 		var_compartida* varBuscada = dictionary_get(diccionarioVarCompartidas, var_aGrabar->nombre);
 		varBuscada->valor = var_aGrabar->valor;
-		free(mensaje);
+		free(mensaje); mensaje = NULL;
 		break;
 	}
 	case SENIAL_SIGUSR1: {
 
 		printf("Señal SIGUSR1 del CPU #%i. Esperando su PCB en ejecución.\n", unCPU->id);
 		list_add(listaCPU_SIGUSR1, &(unCPU->id));
-		free(mensaje);
+		free(mensaje); mensaje = NULL;
 
 		break;
 	}
-	default:
-		printf("Head #%d de mensaje recibido no reconocido.\n", protocolo);
-		break;
 	} // fin switch protocolo
 
 	planificarProceso();

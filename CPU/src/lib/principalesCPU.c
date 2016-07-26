@@ -158,7 +158,7 @@ char* solicitarProximaInstruccionAUMC(){
 		entrada = aplicar_protocolo_recibir(fdUMC, &head);
 
 		if(head == DEVOLVER_INSTRUCCION){
-			return (char*)entrada; // UMC aceptó el pedido y me devuelve la instrucción
+			return (char*) entrada; // UMC aceptó el pedido y me devuelve la instrucción
 		}
 		else { // retorno null por error en el head
 			return NULL;

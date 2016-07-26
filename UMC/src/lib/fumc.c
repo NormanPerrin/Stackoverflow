@@ -165,7 +165,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 		free(estadoDelPedido);
 
 	} else // tengo que cargar la página a MP
-		marco = cargar_pagina(pid, pagina, contenido_pagina);
+		marco = cargar_pagina(pid, pagina, (char*) contenido_pagina);
 
 	free(protocolo);
 	return marco;
@@ -602,7 +602,7 @@ int buscarPagina(int fd, int pid, int pagina) {
 	return marco;
 }
 
-int cargar_pagina(int pid, int pagina, void *contenido) {
+int cargar_pagina(int pid, int pagina, char *contenido) {
 
 	int marco = ERROR;
 	int paginas_asignadas = contar_paginas_asignadas(pid);
@@ -635,16 +635,14 @@ int cargar_pagina(int pid, int pagina, void *contenido) {
 	// escribo en memoria principal
 	int pos_real = marco * config->marco_size;
 
-	if( (*((char*) contenido) + config->marco_size) == '\0' ){
-		char* barraCero = contenido + config->marco_size;
+	if(strlen(contenido) == config->marco_size){ // Si entra acá es que se le agregó un '\0'.
 		contenido = realloc(contenido, config->marco_size); // Saco el espacio del '\0'.
-		free(barraCero);
 	}
+
 	memcpy(memoria + pos_real, contenido, config->marco_size);
 
 	// actualizo tlb si esta activada
-	if(config->entradas_tlb != 0)
-		agregar_tlb(pid, pagina, marco);
+	if(config->entradas_tlb != 0) agregar_tlb(pid, pagina, marco);
 
 	return marco;
 }
@@ -685,12 +683,10 @@ int tlbListIndex(int pid, int pagina) {
 	int i = 0;
 	registro_tlb *aux = NULL;
 	for (; i < list_size(tlb); i++){
-		aux = (registro_tlb*)list_get(tlb, i);
+		aux = (registro_tlb*) list_get(tlb, i);
 		if( (aux->pid == pid) && (aux->pagina == pagina) ) {
-			free(aux);
 			return i; // el proceso está en la posición 'i'
 		}
-			free(aux);
 	}
 	return ERROR; // no se encontró el proceso
 }

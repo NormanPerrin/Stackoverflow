@@ -78,10 +78,7 @@ int recibirMensajesDeNucleo(){
 				// Seteo la pcb actual que recibo de Núcleo:
 				pcbActual = (pcb*) mensaje;
 				// Le informo a UMC el cambio de proceso activo:
-				int* nuevoPid = malloc(INT);
-				*nuevoPid = pcbActual->pid;
-				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, nuevoPid);
-				free(nuevoPid);
+				aplicar_protocolo_enviar(fdUMC, INDICAR_PID, &(pcbActual->pid));
 				// Comienzo la ejecución del proceso:
 				cpuOciosa = false;
 				huboStackOverflow = false;
@@ -113,10 +110,8 @@ void ejecutarProcesoActivo(){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
 				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
-				int* pidActual = malloc(INT);
-				*pidActual = pcbActual->pid;
-				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, pidActual);
-				free(pidActual);
+				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, &(pcbActual->pid));
+				free(proximaInstruccion); proximaInstruccion = NULL;
 				exitProceso();
 				return;
 			}
@@ -128,10 +123,8 @@ void ejecutarProcesoActivo(){
 			if (huboStackOverflow){
 				log_info(logger, "Se ha producido Stack Overflow. Abortando programa...");
 				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
-				int* pidActual = malloc(INT);
-				*pidActual = pcbActual->pid;
-				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, pidActual);
-				free(pidActual);
+				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+				free(proximaInstruccion); proximaInstruccion = NULL;
 				exitProceso();
 				return;
 			}
@@ -143,12 +136,14 @@ void ejecutarProcesoActivo(){
 			case POR_IO:{
 				log_info(logger, "Expulsando proceso por pedido de I/O.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_ENTRADA_SALIDA, pcbActual);
+				free(proximaInstruccion); proximaInstruccion = NULL;
 				exitProceso();
 				return;
 			}
 			case POR_WAIT:{
 				log_info(logger, "Expulsando proceso por operación Wait bloqueante.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, pcbActual);
+				free(proximaInstruccion); proximaInstruccion = NULL;
 				exitProceso();
 				return;
 			}
@@ -156,6 +151,7 @@ void ejecutarProcesoActivo(){
 
 			usleep(pcbActual->quantum_sleep * 1000); // Retardo de quantum
 
+			free(proximaInstruccion); proximaInstruccion = NULL;
 		} // fin if not null
 		else { // Llegó instrucción null por error o rechazo de UMC:
 			exitPorErrorUMC();

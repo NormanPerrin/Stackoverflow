@@ -136,7 +136,7 @@
 	int contar_paginas_asignadas(int pid);
 	void eliminar_pagina(int pid, int pagina);
 	int buscarPagina(int fd, int pid, int pagina);
-	int cargar_pagina(int pid, int pagina, void *contenido);
+	int cargar_pagina(int pid, int pagina, char *contenido);
 	void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modificacion, int b_uso);
 	void iniciar_principales(int pid, int paginas);
 	int buscarEntradaLibre();
