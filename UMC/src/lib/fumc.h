@@ -69,6 +69,11 @@
 		int pid;
 	} pid_activo;
 
+	typedef struct {
+		subtp_t *paginas;
+		subtp_t elegida;
+	} respuesta_algoritmo;
+
 
 	// Globales
 	t_configuracion *config; // guarda valores del config
@@ -105,7 +110,6 @@
 	void liberarRecusos();
 	void *elegirFuncion(protocolo head);
 	void compararProtocolos(int protocolo1, int protocolo2);
-	subtp_t aplicar_algoritmo(subtp_t *paginas, int puntero);
 	void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid);
 	char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla);
 	funcion_t *separarMensaje(char *mensaje);
@@ -132,7 +136,6 @@
 	int contar_paginas_asignadas(int pid);
 	void eliminar_pagina(int pid, int pagina);
 	int buscarPagina(int fd, int pid, int pagina);
-	subtp_t buscarVictimaReemplazo(int pid);
 	int cargar_pagina(int pid, int pagina, void *contenido);
 	void actualizar_tp(int pid, int pagina, int marco, int b_presencia, int b_modificacion, int b_uso);
 	void iniciar_principales(int pid, int paginas);
@@ -166,8 +169,10 @@
 	// </MEMORIA_FUNCS>
 
 	// <ALGORITMOS>
-	subtp_t aplicarClock(subtp_t paginas[], int puntero);
-	subtp_t aplicarClockM(subtp_t paginas[], int puntero);
+	respuesta_algoritmo *buscarVictimaReemplazo(int pid);
+	respuesta_algoritmo *aplicar_algoritmo(subtp_t *paginas, int puntero, int cantidad_paginas);
+	respuesta_algoritmo *aplicarClock(subtp_t paginas[], int puntero, int cantidad_paginas);
+	respuesta_algoritmo *aplicarClockM(subtp_t paginas[], int puntero, int cantidad_paginas);
 	void actualizarPuntero(int pid, int pagina);
 	// </ALGORITMOS>
 
