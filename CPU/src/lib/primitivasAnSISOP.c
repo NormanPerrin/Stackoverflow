@@ -161,14 +161,14 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 	else{ // no hubo error de lectura
 		int head;
 		void* entrada = NULL;
-		int* valor_variable = NULL;
+		entrada = aplicar_protocolo_recibir(fdUMC, &head);  // respuesta OK de UMC, recibo la variable leída
 
-		entrada = aplicar_protocolo_recibir(fdUMC, &head); // respuesta OK de UMC, recibo la variable leída
 		if(head == DEVOLVER_VARIABLE){
-			valor_variable = (int*) entrada;
-			printf("Variable dereferenciada -> Valor: %d\n.", *valor_variable);
+			int valor = atoi((char*) entrada);
+			printf("Variable dereferenciada -> Valor: %d\n.", valor);
+			free(entrada); entrada = NULL;
 
-			return *valor_variable;
+			return valor;
 		}
 		else{
 			printf("Error al leer variable del proceso actual.\n");
@@ -185,11 +185,14 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 
 		var_escritura->pagina = total_heap_offset / tamanioPagina;
 		var_escritura->offset = total_heap_offset % tamanioPagina;
-		var_escritura->contenido = valor;
+		var_escritura->contenido = malloc(INT);
+		sprintf(var_escritura->contenido, "%d", valor);
 
-	printf("Solicitud Escritura Variable -> Página: %i, Offset: %i, Contenido: %i.\n",
+	printf("Solicitud Escritura Variable -> Página: %i, Offset: %i, Contenido: %s.\n",
 			var_escritura->pagina, var_escritura->offset, var_escritura->contenido);
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
+
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura->contenido);
+	free(var_escritura->contenido); var_escritura->contenido = NULL;
 	free(var_escritura); var_escritura = NULL;
 
 	// Valido el pedido de lectura a UMC:

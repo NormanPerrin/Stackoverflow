@@ -70,7 +70,8 @@ typedef struct {
 
 // Pedido de Escritura de CPU a UMC (dirección lógica + variable):
 typedef struct {
-	int pagina, offset, contenido;
+	int pagina, offset;
+	char* contenido; // variable numérica a asignar
 } __attribute__((packed)) solicitudEscritura;
 
 // Valores que puede tomar la respuesta de UMC ante un pedido:
@@ -90,12 +91,12 @@ typedef enum{
 // Pedido de Lectura de UMC a Swap:
 typedef struct {
 	int pid, pagina;
-} __attribute__((packed))solicitudLeerPagina;
+} __attribute__((packed)) solicitudLeerPagina;
 
 // Pedido de Escritura de UMC a Swap (contenido = variable a escribir):
 typedef struct {
 	int pid, pagina;
 	char* contenido;
-} __attribute__((packed))solicitudEscribirPagina;
+} __attribute__((packed)) solicitudEscribirPagina;
 
 #endif /* UTILIDADES_TIPOSDEDATOS_H_ */

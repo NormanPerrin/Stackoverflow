@@ -310,7 +310,7 @@ void leer_variable(int fd, void *msj) {
 	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
 
 	// busco el dato que me piden
-	int *contenido = reservarMemoria(INT);
+	char *contenido = reservarMemoria(INT);
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
 	memcpy(contenido, memoria + pos_real, INT);
 
@@ -318,11 +318,11 @@ void leer_variable(int fd, void *msj) {
 	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-	free(respuesta);
+	free(respuesta); respuesta = NULL;
 
 	// devuelvo el contenido solicitado
 	aplicar_protocolo_enviar(fd, DEVOLVER_VARIABLE, contenido);
-	free(contenido);
+	free(contenido); contenido = NULL;
 }
 
 void escribir_bytes(int fd, void *msj) {
@@ -334,7 +334,7 @@ void escribir_bytes(int fd, void *msj) {
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
 	int pid = pids[pos].pid;
-	printf("> [ESCRIBIR_BYTES]: (#fd: %d) (#pid: %d) (#pagina: %d) (#offset: %d) (#contenido: %d)\n", fd, pid, mensaje->pagina, mensaje->offset, mensaje->contenido);
+	printf("> [ESCRIBIR_BYTES]: (#fd: %d) (#pid: %d) (#pagina: %d) (#offset: %d) (#contenido: %s)\n", fd, pid, mensaje->pagina, mensaje->offset, mensaje->contenido);
 
 	// busco el marco de la página en TLB TP y Swap
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
@@ -346,7 +346,7 @@ void escribir_bytes(int fd, void *msj) {
 
 		// escribo contenido
 		int pos_real = marco * (config->marco_size) + mensaje->offset;
-		memcpy(memoria + pos_real, &(mensaje->contenido), INT);
+		memcpy(memoria + pos_real, mensaje->contenido, INT);
 
 		// respondo a CPU
 		int *respuesta = reservarMemoria(INT);
