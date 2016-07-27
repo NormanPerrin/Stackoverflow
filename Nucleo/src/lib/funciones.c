@@ -744,7 +744,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case IMPRIMIR:{
 
-		consola * consolaAsociada = list_find(listaConsolas, (void *) consolaTieneElPidCPU);
+		consola * consolaAsociada = list_find(listaConsolas, (void*) consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, string_itoa(*((int*) mensaje)));
 		printf("Proceso #%i solicita imprimir variable en CPU #%i.\n", unCPU->pid, unCPU->id);
@@ -754,7 +754,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case IMPRIMIR_TEXTO:{
 
-		consola * consolaAsociada = list_find(listaConsolas, (void *) consolaTieneElPidCPU);
+		consola * consolaAsociada = list_find(listaConsolas, (void*) consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
 		printf("Proceso #%i solicita imprimir texto en CPU #%i.\n", unCPU->pid, unCPU->id);

@@ -71,7 +71,7 @@ typedef struct {
 // Pedido de Escritura de CPU a UMC (dirección lógica + variable):
 typedef struct {
 	int pagina, offset;
-	char* contenido; // variable numérica a asignar
+	char* contenido; // variable a asignar --> size: 4 bytes
 } __attribute__((packed)) solicitudEscritura;
 
 // Valores que puede tomar la respuesta de UMC ante un pedido:

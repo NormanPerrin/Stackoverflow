@@ -310,7 +310,7 @@ void leer_variable(int fd, void *msj) {
 	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
 
 	// busco el dato que me piden
-	char *contenido = reservarMemoria(INT);
+	char* contenido = reservarMemoria(INT);
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
 	memcpy(contenido, memoria + pos_real, INT);
 

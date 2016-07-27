@@ -185,13 +185,20 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 
 		var_escritura->pagina = total_heap_offset / tamanioPagina;
 		var_escritura->offset = total_heap_offset % tamanioPagina;
-		var_escritura->contenido = malloc(INT);
+		var_escritura->contenido = malloc(INT); // --> 4 bytes
 		sprintf(var_escritura->contenido, "%d", valor);
+
+	// Relleno con barra cero los espacios vacíos:
+		int chars_numericos = strlen(var_escritura->contenido); // cantidad caracteres numéricos
+		int i;
+		for(i = chars_numericos+1; i <= INT-1; i++){
+			var_escritura->contenido[i] = '\0';
+		}
 
 	printf("Solicitud Escritura Variable -> Página: %i, Offset: %i, Contenido: %s.\n",
 			var_escritura->pagina, var_escritura->offset, var_escritura->contenido);
 
-	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura->contenido);
+	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
 	free(var_escritura->contenido); var_escritura->contenido = NULL;
 	free(var_escritura); var_escritura = NULL;
 
