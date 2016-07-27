@@ -95,8 +95,13 @@ typedef struct {
 
 // Pedido de Escritura de UMC a Swap (contenido = variable a escribir):
 typedef struct {
-	int pid, pagina;
+	int pid, pagina, tamanio_marco;
 	char* contenido;
 } __attribute__((packed)) solicitudEscribirPagina;
+
+typedef struct {
+	int tamanio_marco;
+	char* contenido;
+} __attribute__((packed)) paginaSwap;
 
 #endif /* UTILIDADES_TIPOSDEDATOS_H_ */

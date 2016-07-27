@@ -163,7 +163,7 @@ void iniciar_programa(void *msj) {
 		avanzarPaginas(pos);
 		dormir(config->retardoAcceso);
 		// Escribo la totalidad del código en el archivo:
-		fwrite(mensaje->contenido, CHAR, strlen(mensaje->contenido)+ 1, archivoSwap);
+		fwrite(mensaje->contenido, CHAR, strlen(mensaje->contenido), archivoSwap);
 	}
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
@@ -184,7 +184,7 @@ void escribir_pagina(void *msj){
 		avanzarPaginas(numeroDePagina); // Desplazamiento dentro del archivo
 		dormir(config->retardoAcceso);
 		// Escribo el contenido recibido en el archivo:
-		fwrite(mensaje->contenido, CHAR, config->tamanioPagina, archivoSwap);
+		fwrite(mensaje->contenido, CHAR, mensaje->tamanio_marco, archivoSwap);
 	}
 	else{
 		*respuesta = NO_PERMITIDO; // no encontró página en tabla de páginas
@@ -404,15 +404,15 @@ void leer_pagina(void *msj) {
 		avanzarPaginas(pagABuscar);
 		dormir(config->retardoAcceso);
 		// Cargo en la página a devolver el contenido leído del archivo:
-		char *contenido = reservarMemoria(config->tamanioPagina);
-		fread(contenido, CHAR, config->tamanioPagina, archivoSwap);
+		paginaSwap* pagina_swap = malloc(sizeof(paginaSwap));
+		pagina_swap->tamanio_marco = config->tamanioPagina;
+		pagina_swap->contenido = malloc(config->tamanioPagina);
 
-		if( (*contenido + config->tamanioPagina - 1) != '\0' ){
-			contenido = realloc(contenido, config->tamanioPagina + 1); // Reservo un espacio para el '\0'.
-			*(contenido + config->tamanioPagina) = '\0';
-		}
-		aplicar_protocolo_enviar(sockUMC, DEVOLVER_PAGINA, contenido);
-		free(contenido); contenido = NULL;
+		fread(pagina_swap->contenido, CHAR, config->tamanioPagina, archivoSwap);
+
+		aplicar_protocolo_enviar(sockUMC, DEVOLVER_PAGINA, pagina_swap);
+		free(pagina_swap->contenido); pagina_swap->contenido = NULL;
+		free(pagina_swap); pagina_swap = NULL;
 	}
 	else{ // No encontró página solicitada del proceso:
 		*respuesta = NO_PERMITIDO;

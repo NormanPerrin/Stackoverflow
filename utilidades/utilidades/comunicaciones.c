@@ -64,8 +64,12 @@ int calcularTamanioMensaje(int head, void* mensaje){
 	switch(head){
 		// CASE 1: El mensaje es un texto (char*)
 			case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
-			case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
+			case OBTENER_VAR_COMPARTIDA: case ENVIAR_SCRIPT:{
 				tamanio = strlen((char*) mensaje) + 1;
+				break;
+			}
+			case DEVOLVER_PAGINA:{
+				tamanio = ((paginaSwap*) mensaje)->tamanio_marco + INT;
 				break;
 			}
 		// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
@@ -74,8 +78,12 @@ int calcularTamanioMensaje(int head, void* mensaje){
 				break;
 			}
 		// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
-			case ESCRIBIR_PAGINA: case INICIAR_PROGRAMA:{
-				tamanio = strlen(((solicitudEscribirPagina*) mensaje)->contenido) + 1 + 2*INT;
+			case INICIAR_PROGRAMA:{
+				tamanio = strlen(((inicioPrograma*) mensaje)->contenido) + 1 + 2*INT;
+				break;
+			}
+			case ESCRIBIR_PAGINA:{
+				tamanio = ((solicitudEscribirPagina*) mensaje)->tamanio_marco + 3*INT;
 				break;
 			}
 		// CASE 4: El mensaje es un PCB (pcb)
@@ -112,9 +120,17 @@ void * serealizar(int head, void * mensaje, int tamanio){
 	switch(head) {
 	// CASE 1: El mensaje es un texto (char*)
 	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION: case WAIT_REQUEST: case SIGNAL_REQUEST:
-	case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
+	case OBTENER_VAR_COMPARTIDA: case ENVIAR_SCRIPT:{
 		buffer = malloc(tamanio);
 		memcpy(buffer, mensaje, tamanio);
+		break;
+	}
+	case DEVOLVER_PAGINA:{
+		buffer = serealizarDevolverPagina(mensaje, tamanio);
+		break;
+	}
+	case ESCRIBIR_PAGINA:{
+		buffer = serealizarEscribirPagina(mensaje, tamanio);
 		break;
 	}
 	// CASE 2: El mensaje es un texto (char*) más un valor entero (int)
@@ -123,7 +139,7 @@ void * serealizar(int head, void * mensaje, int tamanio){
 		break;
 	}
 	// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
-	case ESCRIBIR_PAGINA: case INICIAR_PROGRAMA:{
+	case INICIAR_PROGRAMA:{
 		buffer = serealizarTextoMasDosInt(mensaje, tamanio);
 		break;
 	}
@@ -166,7 +182,7 @@ void * deserealizar(int head, void * buffer, int tamanio){
 	switch(head){
 	// CASE 1: El mensaje es un texto (char*)
 	case IMPRIMIR_TEXTO: case DEVOLVER_INSTRUCCION:  case WAIT_REQUEST: case SIGNAL_REQUEST:
-	case OBTENER_VAR_COMPARTIDA: case DEVOLVER_PAGINA: case ENVIAR_SCRIPT:{
+	case OBTENER_VAR_COMPARTIDA: case ENVIAR_SCRIPT:{
 		mensaje = malloc(tamanio);
 		memcpy(mensaje, buffer, tamanio);
 		break;
@@ -180,14 +196,18 @@ void * deserealizar(int head, void * buffer, int tamanio){
 		mensaje = (var_compartida*) deserealizarTextoMasUnInt(buffer, tamanio);
 		break;
 	}
+	case DEVOLVER_PAGINA:{
+		mensaje = deserealizarDevolverPagina(buffer, tamanio);
+		break;
+	}
 	// CASE 3: El mensaje es un texto (char*) más dos valores enteros (int)
 	case ESCRIBIR_PAGINA:{
-		mensaje = deserealizarTextoMasDosInt(buffer, tamanio);
+		mensaje = deserealizarEscribirPagina(buffer, tamanio);
 		break;
 	}
 	// CASE 8: El mensaje es un texto (string) más dos valores enteros (int)
 	case INICIAR_PROGRAMA:{
-		mensaje = (inicioPrograma*) deserealizarTextoMasDosInt(buffer, tamanio);
+		mensaje = deserealizarTextoMasDosInt(buffer, tamanio);
 		break;
 	}
 	// CASE 4: El mensaje es un pcb (pcb)
@@ -222,6 +242,62 @@ void * deserealizar(int head, void * buffer, int tamanio){
 } // Se debe castear lo retornado (indicar el tipo de dato que debe matchear con el void*)
 
 /**** SEREALIZACIONES PARTICULARES ****/
+void* serealizarEscribirPagina(void* mensaje, int tamanio){
+	solicitudEscribirPagina* msj = (solicitudEscribirPagina*) mensaje;
+	int desplazamiento = 0;
+
+	void * buffer = malloc(tamanio);
+	memcpy(buffer + desplazamiento, &(msj->pid), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(msj->pagina), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, &(msj->tamanio_marco), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, msj->contenido, msj->tamanio_marco);
+
+	return buffer;
+}
+
+solicitudEscribirPagina* deserealizarEscribirPagina(void* buffer, int tamanio){
+	int desplazamiento = 0;
+
+	solicitudEscribirPagina *msj = malloc(sizeof(solicitudEscribirPagina));
+	memcpy(&msj->pid, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&msj->pagina, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	memcpy(&msj->tamanio_marco, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	msj->contenido = malloc(msj->tamanio_marco);
+	memcpy(msj->contenido, buffer + desplazamiento, msj->tamanio_marco);
+
+	return msj;
+}
+
+void* serealizarDevolverPagina(void* mensaje, int tamanio){
+	paginaSwap* msj = (paginaSwap*) mensaje;
+	int desplazamiento = 0;
+
+	void * buffer = malloc(tamanio);
+	memcpy(buffer + desplazamiento, &(msj->tamanio_marco), INT);
+		desplazamiento += INT;
+	memcpy(buffer + desplazamiento, msj->contenido, msj->tamanio_marco);
+
+	return buffer;
+}
+
+paginaSwap* deserealizarDevolverPagina(void* buffer, int tamanio){
+	int desplazamiento = 0;
+
+	paginaSwap *msj = malloc(sizeof(paginaSwap));
+	memcpy(&msj->tamanio_marco, buffer + desplazamiento, INT);
+		desplazamiento += INT;
+	msj->contenido = malloc(msj->tamanio_marco);
+	memcpy(msj->contenido, buffer + desplazamiento, msj->tamanio_marco);
+
+	return msj;
+}
+
 void* serealizarPedidoEscritura(void* mensaje, int tamanio){
 	solicitudEscritura* msj = (solicitudEscritura*) mensaje;
 	int desplazamiento = 0;
@@ -278,27 +354,27 @@ pedidoIO* deserealizarTextoMasUnInt(void* buffer, int tamanio){
 
 void*  serealizarTextoMasDosInt(void* mensaje, int tamanio){
 
-	solicitudEscribirPagina* msj = (solicitudEscribirPagina*) mensaje;
+	inicioPrograma* msj = (inicioPrograma*) mensaje;
 	int desplazamiento = 0;
 
 	void * buffer = malloc(tamanio);
 	memcpy(buffer + desplazamiento, &(msj->pid), INT);
 		desplazamiento += INT;
-	memcpy(buffer + desplazamiento, &(msj->pagina), INT);
+	memcpy(buffer + desplazamiento, &(msj->paginas), INT);
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, msj->contenido, tamanio - 2*INT);
 
 	return buffer;
 }
 
-solicitudEscribirPagina*  deserealizarTextoMasDosInt(void* buffer, int tamanio){
+inicioPrograma*  deserealizarTextoMasDosInt(void* buffer, int tamanio){
 
 	int desplazamiento = 0;
 
-	solicitudEscribirPagina *msj = malloc(sizeof(solicitudEscribirPagina));
+	inicioPrograma *msj = malloc(sizeof(inicioPrograma));
 	memcpy(&msj->pid, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-	memcpy(&msj->pagina, buffer + desplazamiento, INT);
+	memcpy(&msj->paginas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 	msj->contenido = malloc(tamanio - 2*INT);
 	memcpy(msj->contenido, buffer + desplazamiento, tamanio - 2*INT);

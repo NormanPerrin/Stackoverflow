@@ -164,10 +164,15 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 		entrada = aplicar_protocolo_recibir(fdUMC, &head);  // respuesta OK de UMC, recibo la variable leída
 
 		if(head == DEVOLVER_VARIABLE){
-			int valor = atoi((char*) entrada);
+			/*int valor = atoi((char*) entrada);
 			printf("Variable dereferenciada -> Valor: %d\n.", valor);
 			free(entrada); entrada = NULL;
 
+			return valor;*/
+			int valor = 0;
+			char *aux = malloc(INT);
+			memcpy(aux, entrada, INT);
+			valor = (int)*(aux);
 			return valor;
 		}
 		else{
@@ -185,7 +190,7 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 
 		var_escritura->pagina = total_heap_offset / tamanioPagina;
 		var_escritura->offset = total_heap_offset % tamanioPagina;
-		var_escritura->contenido = malloc(INT); // --> 4 bytes
+		/*var_escritura->contenido = malloc(INT); // --> 4 bytes
 		sprintf(var_escritura->contenido, "%d", valor);
 
 	// Relleno con barra cero los espacios vacíos:
@@ -193,13 +198,16 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 		int i;
 		for(i = chars_numericos+1; i <= INT-1; i++){
 			var_escritura->contenido[i] = '\0';
-		}
+		}*/
+		var_escritura->contenido = (char*) &valor;
+		/*	t_valor_variable valor --> (char*) &valor
+		 * size = sizeof(uint32_t); */
 
-	printf("Solicitud Escritura Variable -> Página: %i, Offset: %i, Contenido: %s.\n",
-			var_escritura->pagina, var_escritura->offset, var_escritura->contenido);
+	printf("Solicitud Escritura Variable -> Página: %i, Offset: %i, Contenido: %d.\n",
+			var_escritura->pagina, var_escritura->offset, valor);
 
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_ESCRITURA, var_escritura);
-	free(var_escritura->contenido); var_escritura->contenido = NULL;
+	//free(var_escritura->contenido); var_escritura->contenido = NULL;
 	free(var_escritura); var_escritura = NULL;
 
 	// Valido el pedido de lectura a UMC:

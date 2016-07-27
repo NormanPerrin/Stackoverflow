@@ -152,8 +152,8 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	}
 	else{ // espero respuesta de Swap:
 		int head;
-		void *contenido_pagina = NULL;
-		contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, &head);
+		void *entrada_swap = NULL;
+		entrada_swap = aplicar_protocolo_recibir(sockClienteDeSwap, &head);
 
 		if(head != DEVOLVER_PAGINA){ // hubo un fallo
 			int* estadoDelPedido = reservarMemoria(INT);
@@ -162,7 +162,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 			free(estadoDelPedido);
 		}
 		else{ // tengo que cargar la página a MP
-			marco = cargar_pagina(pid, pagina, (char*) contenido_pagina);
+			marco = cargar_pagina(pid, pagina, ((paginaSwap*) entrada_swap)->contenido);
 		}
 	}
 
@@ -345,7 +345,7 @@ void escribir_bytes(int fd, void *msj) {
 		actualizar_tp(pid, mensaje->pagina, marco, 1, 1, 1);
 
 		// escribo contenido
-		int pos_real = marco * (config->marco_size) + mensaje->offset;
+		int pos_real = (marco * config->marco_size) + mensaje->offset;
 		memcpy(memoria + pos_real, mensaje->contenido, INT);
 
 		// respondo a CPU
@@ -891,6 +891,7 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 		solicitudEscribirPagina *pedido = reservarMemoria(sizeof(solicitudEscribirPagina));
 		pedido->pid = pid;
 		pedido->pagina = pagina_reemplazar.pagina;
+		pedido->tamanio_marco = config->marco_size;
 		pedido->contenido = reservarMemoria(config->marco_size);
 		int dir_real = pagina_reemplazar.marco * config->marco_size;
 		memcpy(pedido->contenido, memoria + dir_real, config->marco_size);
