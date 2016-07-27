@@ -8,6 +8,7 @@
 
 /** PROTOTIPO PRIMITIVAS ANSISOP **/
 bool esArgumento(t_nombre_variable identificador_variable);
+registroStack* reg_stack_create();
 void liberarRegistroStack(registroStack* reg);
 
 t_puntero definirVariable(t_nombre_variable identificador_variable);

@@ -450,7 +450,7 @@ void aceptarConexionEntranteDeCPU(){
 	planificarProceso();
 }
 
-void atenderCambiosEnArchivoConfig(int* socketMaximo){
+void atenderCambiosEnArchivoConfig(){
 
 	int length, i = 0;
 	char buffer[EVENT_BUF_LEN];
@@ -469,10 +469,8 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 		t_config * new_config = NULL;
 		new_config = config_create(RUTA_CONFIG_NUCLEO);
 
-		int aux_quantum, aux_retardo;
-
-		aux_quantum = config_get_int_value(new_config, "QUANTUM");
-		aux_retardo = config_get_int_value(new_config, "QUANTUM_SLEEP");
+		int aux_quantum = config_get_int_value(new_config, "QUANTUM");
+		int aux_retardo = config_get_int_value(new_config, "QUANTUM_SLEEP");
 
 		if(config->quantum != aux_quantum){
 			config->quantum = aux_quantum;
@@ -489,7 +487,7 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 		FD_CLR(fd_inotify, &readfds);
 		iniciarEscuchaDeInotify();
 
-		*socketMaximo = (*socketMaximo < fd_inotify)? fd_inotify : *socketMaximo;
+		max_fd = (max_fd < fd_inotify)? fd_inotify : max_fd;
 		FD_SET(fd_inotify, &readfds);
 		return;
 	} // fin else-if
