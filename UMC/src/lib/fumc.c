@@ -314,6 +314,12 @@ void leer_variable(int fd, void *msj) {
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
 	memcpy(contenido, memoria + pos_real, INT);
 
+	// TODO (DEBUG)
+	char *variable = reservarMemoria(INT);
+	memcpy(variable, contenido, INT);
+	printf("Leyo de UMC: %s\n", variable);
+	free(variable);
+
 	// respondo que el pedido fue válido
 	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
@@ -347,6 +353,12 @@ void escribir_bytes(int fd, void *msj) {
 		// escribo contenido
 		int pos_real = (marco * config->marco_size) + mensaje->offset;
 		memcpy(memoria + pos_real, mensaje->contenido, INT);
+
+		// TODO (DEBUG)
+		char *variable = reservarMemoria(INT);
+		memcpy(variable, memoria + pos_real, INT);
+		printf("Se escribio: %s\n", variable);
+		free(variable);
 
 		// respondo a CPU
 		int *respuesta = reservarMemoria(INT);
@@ -630,6 +642,12 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 	// Hace el memcpy del tamaño de marco, por lo cual no copia el '\0' extra agregado al final.
 	memcpy(memoria + pos_real, contenido, config->marco_size);
 
+	// TODO (DEBUG)
+	char *variable = reservarMemoria(config->marco_size);
+	memcpy(variable, memoria + pos_real, config->marco_size);
+	printf("Se cargo en UMC:\n%s\n", variable);
+	free(variable);
+
 	// actualizo tlb si esta activada
 	if(config->entradas_tlb != 0) agregar_tlb(pid, pagina, marco);
 
@@ -895,6 +913,12 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 		pedido->contenido = reservarMemoria(config->marco_size);
 		int dir_real = pagina_reemplazar.marco * config->marco_size;
 		memcpy(pedido->contenido, memoria + dir_real, config->marco_size);
+
+		// TODO (DEBUG)
+		char *variable = reservarMemoria(config->marco_size);
+		memcpy(variable, pedido->contenido, config->marco_size);
+		printf("Se manda a Swap:\n%s\n", variable);
+		free(variable);
 
 		// envío pedido
 		aplicar_protocolo_enviar(sockClienteDeSwap, ESCRIBIR_PAGINA, pedido);
