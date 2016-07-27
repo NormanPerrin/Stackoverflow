@@ -35,32 +35,35 @@ void escucharUMC() {
 		else ret_handshake = handshake_servidor(sockUMC, "S");
 	}
 
-	int *head = (int*)reservarMemoria(INT);
+	int head;
 	while(TRUE) {
-		void *mensaje = aplicar_protocolo_recibir(sockUMC, head);
+		void *mensaje = aplicar_protocolo_recibir(sockUMC, &head);
 		if(mensaje == NULL) {
-			close(sockUMC);
-			close(sockServidor);
+			cerrarSocket(sockUMC);
+			cerrarSocket(sockServidor);
 			return;
 		}
-		void (*funcion)(void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
+		void (*funcion)(void*) = elegirFuncion(head); // elijo función a ejecutar según protocolo
 		if(funcion == NULL) continue;
 		funcion(mensaje); // ejecuto función
 		funcion = NULL;
 	}
 
-	close(sockUMC);
-	close(sockServidor);
+	cerrarSocket(sockUMC);
+	cerrarSocket(sockServidor);
 }
 
 void liberarEstructura() {
-	free(config->nombreSwap);
-	free(config);
+	free(config->nombreSwap); config->nombreSwap = NULL;
+	free(config); config = NULL;
 }
 
 void liberarRecusos() {
 	// liberar otros recursos
 	liberarEstructura();
+	free(tablaPaginas); tablaPaginas = NULL;
+	free(tablaDeBitMap); tablaDeBitMap = NULL;
+	fclose(archivoSwap);
 }
 
 int validar_cliente(char *id) {
@@ -84,33 +87,35 @@ void inicializarSwap() {
 
 	archivoSwap = fopen(config->nombreSwap , "w+");
 	if(archivoSwap != NULL) {
-		char *c = (char*)reservarMemoria(tamanioSwap);
-		int l = 0;
-		for(; l < tamanioSwap; l++) c[l] = '\0';
-		fwrite(c, CHAR, tamanioSwap, archivoSwap);
-		free(c);
+
+		char caracter = '\0';
+		int i;
+		for(i=0; i < tamanioSwap; i++){
+			fwrite(&caracter, CHAR, CHAR, archivoSwap);
+		}
 	}
 }
 
 void inicializarTablaDePaginas() {
-	tablaPaginas = (t_tablaDePaginas*)reservarMemoria(sizeof(t_tablaDePaginas) * config->cantidadPaginas);
-	int i = 0;
-	for (; i < config->cantidadPaginas; i++) {
+	tablaPaginas = reservarMemoria(sizeof(t_tablaDePaginas) * config->cantidadPaginas);
+	int i;
+	for (i=0; i < config->cantidadPaginas; i++) {
 		tablaPaginas[i].pid=-1;
 		tablaPaginas[i].pagina=-1;
 	}
 }
 
 void inicializarTablaBitMap() {
-	tablaDeBitMap = (t_bitMap*)reservarMemoria(sizeof(t_bitMap) * config->cantidadPaginas);
-	int i = 0;
-	for(; i < config->cantidadPaginas; i++)
+	tablaDeBitMap = reservarMemoria(sizeof(t_bitMap) * config->cantidadPaginas);
+	int i;
+	for(i=0; i < config->cantidadPaginas; i++){
 		tablaDeBitMap[i].ocupada = 0;
+	}
 }
 
 void iniciar_programa(void *msj) {
 
-	int *respuesta = (int*)reservarMemoria(INT);
+	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 
 	inicioPrograma *mensaje = (inicioPrograma*) msj;
@@ -124,8 +129,8 @@ void iniciar_programa(void *msj) {
 		if(posLibre != ERROR) { // se encontraron espacios contiguos para alojar proceso
 
 			paginasLibresTotales -= paginas;
-			int pagina = 0;
-			for(; pagina < paginas ; pagina++) {
+			int pagina;
+			for(pagina=0; pagina < paginas ; pagina++) {
 				tablaPaginas[posLibre].pid = pid;
 				tablaPaginas[posLibre].pagina = pagina;
 				tablaDeBitMap[posLibre].ocupada = 1;
@@ -140,8 +145,8 @@ void iniciar_programa(void *msj) {
 			actualizarBitMap();
 
 			int posLibre = buscarPosLibresEnBitMap(paginas);
-			int pagina = 0;
-			for(; pagina < paginas; pagina++) {
+			int pagina;
+			for(pagina=0; pagina < paginas; pagina++) {
 				tablaPaginas[posLibre].pid= pid;
 				tablaPaginas[posLibre].pagina = posLibre;
 				tablaDeBitMap[posLibre].ocupada=1;
@@ -157,53 +162,57 @@ void iniciar_programa(void *msj) {
 		int pos = buscarPaginaEnTablaDePaginas(pid, 0);
 		avanzarPaginas(pos);
 		dormir(config->retardoAcceso);
+		// Escribo la totalidad del código en el archivo:
 		fwrite(mensaje->contenido, CHAR, strlen(mensaje->contenido)+ 1, archivoSwap);
 	}
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
-	free(respuesta);
+	free(respuesta); respuesta = NULL;
 }
 
-void escribir_pagina(void *msj) {
+void escribir_pagina(void *msj){
 
-	int *respuesta = (int*)reservarMemoria(INT);
-	*respuesta = PERMITIDO;
+	solicitudEscribirPagina *mensaje = (solicitudEscribirPagina*) msj;
 
-	solicitudEscribirPagina *mensaje = (solicitudEscribirPagina*)msj;
-	int pid = mensaje->pid;
-	int pagina = mensaje->pagina;
-	char *contenido = mensaje->contenido;
-	printf("> [ESCRIBIR_PAGINA]: (#pid: %d) (#pagina: %d)\n", pid, pagina);
+	printf("> [ESCRIBIR_PAGINA]: (#pid: %d) (#pagina: %d)\n", mensaje->pid, mensaje->pagina);
+	int numeroDePagina = buscarPaginaEnTablaDePaginas(mensaje->pid, mensaje->pagina);
+	int *respuesta = reservarMemoria(INT);
 
-	int pos = buscarPaginaEnTablaDePaginas(pid, pagina);
-	if(pos != ERROR) {
-		avanzarPaginas(pos);
-		int tamanio = strlen(contenido);
+	if(numeroDePagina != ERROR){
+		*respuesta = PERMITIDO;
+		aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
+		avanzarPaginas(numeroDePagina); // Desplazamiento dentro del archivo
 		dormir(config->retardoAcceso);
-		fwrite(mensaje->contenido, CHAR, tamanio, archivoSwap);
+		// Escribo el contenido recibido en el archivo:
+		fwrite(mensaje->contenido, CHAR, config->tamanioPagina, archivoSwap);
 	}
-	else *respuesta = NO_PERMITIDO; // no encontro pagina en tabla de paginas
+	else{
+		*respuesta = NO_PERMITIDO; // no encontró página en tabla de páginas
+		aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
+	}
 
-	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
-	free(respuesta);
+	free(respuesta); respuesta = NULL;
 }
 
 int buscarPaginaEnTablaDePaginas(int pid, int pagina) {
 
-	int i = 0, encontro = FALSE;
-	for(; i < config->cantidadPaginas; i++) {
-		if( (tablaPaginas[i].pagina == pagina) && (tablaPaginas[i].pid == pid)) {
+	int i, encontro = FALSE;
+	for(i=0; i < config->cantidadPaginas; i++) {
+		if((tablaPaginas[i].pagina == pagina) && (tablaPaginas[i].pid == pid)) {
 			encontro = TRUE;
 			break;
 		}
 	}
 
-	if(encontro) return i;
-	return ERROR;
+	if(encontro){
+		return i;
+	} else{
+		return ERROR; }
 }
 
-void avanzarPaginas(int cantidad) {
-	int avanceTotal = cantidad * config->tamanioPagina;
+void avanzarPaginas(int numeroDePagina){
+	int avanceTotal = numeroDePagina * config->tamanioPagina;
+	// Me desplazo desde el inicio del archivo hasta la posición solicitada:
 	fseek(archivoSwap, avanceTotal, SEEK_SET);
 }
 
@@ -281,10 +290,10 @@ int cuantasPaginasTieneElProceso(arrancaProceso) {
  * */
 void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
 
-	char *contenido = (char*)reservarMemoria(config->tamanioPagina);
+	char *contenido = reservarMemoria(config->tamanioPagina);
 
-	int i = 0;
-	for(; i < cantidadDePaginasDelProceso ; i++) {
+	int i;
+	for(i=0; i < cantidadDePaginasDelProceso ; i++){
 
     	int pid = tablaPaginas[arrancaProceso].pid;
     	int pagina = tablaPaginas[arrancaProceso].pagina;
@@ -303,114 +312,114 @@ void mover(int posLibre, int arrancaProceso, int cantidadDePaginasDelProceso) {
     	tablaDeBitMap[posLibre].ocupada = 1;
     	tablaDeBitMap[arrancaProceso].ocupada = 0;
 
-    	// escribo pagina de proceso en pagina libre
+    	// escribo página de proceso en página libre
     	avanzarPaginas(posLibre);
     	fwrite(contenido, CHAR, config->tamanioPagina, archivoSwap);
 
-
-    	// escribo \0 en la pagina arrancaProceso
-		char *c = (char*)reservarMemoria(config->tamanioPagina);
-		int l = 0;
-		for(; l < config->tamanioPagina; l++) c[l] = '\0';
-		avanzarPaginas(arrancaProceso);
-		fwrite(c, CHAR, config->tamanioPagina, archivoSwap);
-		free(c);
+    	// escribo \0 en la página arrancaProceso
+    	char caracter = '\0';
+    	int i;
+    	for(i=0; i < config->tamanioPagina; i++){
+    		fwrite(&caracter, CHAR, CHAR, archivoSwap);
+    	}
 
     	//actualizo contadores
     	posLibre++;
     	arrancaProceso++;
 	}
 
-	free(contenido);
+	free(contenido); contenido = NULL;
 }
 
-void eliminar_programa(void *msj) {
+void eliminar_programa(void *msj){
 
 	dormir(config->retardoAcceso);
 
-	int *respuesta = (int*)reservarMemoria(INT);
+	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 
-	// casteo
-	int pid = *((int*)msj);
+	// casteo pid
+	int pid = *((int*) msj);
 	printf("> [ELIMINAR_PROGRAMA]: (#pid: %d)\n", pid);
 
-	// busco primer aparicion del pid en tp
+	// busco primer aparición del pid en tabla de páginas
 	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
-	if(aPartirDe == ERROR) {
-		*respuesta = NO_PERMITIDO; // no encontro pagina
+	if(aPartirDe == ERROR){
+		*respuesta = NO_PERMITIDO; // no encontró página
 	} else {
 
-		// cuento total de paginas
+		// cuento total de páginas
 	    int totalPaginas = 0;
 	    int posicion = aPartirDe;
-		while(tablaPaginas[posicion].pid == pid) {
+		while(tablaPaginas[posicion].pid == pid){
 			totalPaginas++;
 			posicion++;
 		}
 
-		// repito como cantidad de paginas tenga el proceso
-		int i = 0;
-		for(; i < totalPaginas; i++) {
+		// repito como cantidad de páginas tenga el proceso
+		int i;
+		for(i=0; i < totalPaginas; i++){
 
-			// posiciono puntero en inicio de pagina
+			// posiciono puntero del archivo en inicio de página
 			int pagina = i + aPartirDe;
 			avanzarPaginas(pagina);
 
-			// actualizo tabla paginas
+			// actualizo tabla de páginas
 			tablaPaginas[pagina].pid = -1;
 
 			// actualizo bitmap
 			tablaDeBitMap[pagina].ocupada = 0;
 
 			// escribo '\0' en paginas del proceso
-			char *c = (char*)reservarMemoria(config->tamanioPagina);
-			int l = 0;
-			for(; l < config->tamanioPagina; l++) c[l] = '\0';
-			fwrite(c, CHAR, config->tamanioPagina, archivoSwap);
+			char caracter = '\0';
+			int i;
+			for(i=0; i < config->tamanioPagina; i++){
+				fwrite(&caracter, CHAR, CHAR, archivoSwap);
+			}
 		}
-
 		// acutalizo contador global
 		paginasLibresTotales += totalPaginas;
 	}
 
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
-	free(respuesta);
+	free(respuesta); respuesta = NULL;
 }
 
 void leer_pagina(void *msj) {
 
-	int *respuesta = (int*)reservarMemoria(INT);
-	*respuesta = PERMITIDO;
-
-	char *contenido = (char*)reservarMemoria(config->tamanioPagina);
-
 	solicitudLeerPagina *mensaje = (solicitudLeerPagina*) msj;
-	int pid= mensaje->pid;
-	int pagina= mensaje->pagina;
+	int pid = mensaje->pid;
+	int pagina = mensaje->pagina;
 	printf("> [LEER_PAGINA]: (#pid: %d) (#pagina: %d)\n", pid, pagina);
 
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
-	if(pagABuscar != ERROR) { // encontro pagina del proceso
+
+	int *respuesta = reservarMemoria(INT);
+
+	if(pagABuscar != ERROR){ // Encontró página solicitada del proceso:
+
+		*respuesta = PERMITIDO;
+		aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 
 		avanzarPaginas(pagABuscar);
 		dormir(config->retardoAcceso);
+		// Cargo en la página a devolver el contenido leído del archivo:
+		char *contenido = reservarMemoria(config->tamanioPagina);
 		fread(contenido, CHAR, config->tamanioPagina, archivoSwap);
 
-	} else *respuesta = NO_PERMITIDO; // no encontro pagina solicitada del pid
-
-	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
-
-	if(*respuesta == PERMITIDO){
 		if( (*contenido + config->tamanioPagina - 1) != '\0' ){
 			contenido = realloc(contenido, config->tamanioPagina + 1); // Reservo un espacio para el '\0'.
 			*(contenido + config->tamanioPagina) = '\0';
 		}
 		aplicar_protocolo_enviar(sockUMC, DEVOLVER_PAGINA, contenido);
+		free(contenido); contenido = NULL;
+	}
+	else{ // No encontró página solicitada del proceso:
+		*respuesta = NO_PERMITIDO;
+		aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 	}
 
-	free(respuesta);
-	free(contenido);
+	free(respuesta); respuesta = NULL;
 }
 
 int buscarAPartirDeEnTablaDePaginas(int pid) {
@@ -448,9 +457,9 @@ int hayFragmentacion() {
 
 int compactar() {
 
-	printf("> [COMPACTAR]\n");
+	printf("> [COMPACTACIÓN]\n");
 
-	while(hayFragmentacion()) {
+	while(hayFragmentacion()){
 
 		// 1) busco primer posicion libre en bitmap
 		int posLibre = buscarPosLibreEnBitMap();

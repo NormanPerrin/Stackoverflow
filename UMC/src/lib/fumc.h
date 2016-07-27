@@ -78,7 +78,7 @@
 	// Globales
 	t_configuracion *config; // guarda valores del config
 	int sockClienteDeSwap, sockServidor; // Se lo va a llamar a necesidad en distintas funciones
-	void *memoria; // tha memory
+	char *memoria; // tha memory
 	tp_t tabla_paginas[MAX_PROCESOS];
 	t_list *tlb;
 	sem_t mutex;

@@ -4,8 +4,8 @@
 int exitFlag = FALSE; // exit del programa
 
 void setearValores_config(t_config * archivoConfig) {
-	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
-	config->ip_swap = (char*)reservarMemoria(CHAR*20);
+	config = reservarMemoria(sizeof(t_configuracion));
+	config->ip_swap = reservarMemoria(CHAR*20);
 	config->backlog = config_get_int_value(archivoConfig, "BACKLOG");
 	config->puerto = config_get_int_value(archivoConfig, "PUERTO");
 	config->ip_swap = strdup(config_get_string_value(archivoConfig, "IP_SWAP"));
@@ -74,7 +74,7 @@ void servidor() {
 	while(!exitFlag) {
 
 		int ret_handshake = 0;
-		int *sockCliente = (int*)reservarMemoria(INT);
+		int *sockCliente = reservarMemoria(INT);
 
 		while(ret_handshake == 0) {
 
@@ -108,23 +108,22 @@ void cliente(void* fdCliente) {
 	int sockCliente = *((int*)fdCliente);
 	free(fdCliente);
 
-	int *head = (int*)reservarMemoria(INT);
+	int head;
 
 	while(!exitFlag) {
-		void *mensaje = aplicar_protocolo_recibir(sockCliente, head); // recibos mensaje
+		void *mensaje = aplicar_protocolo_recibir(sockCliente, &head); // recibos mensaje
 		if(mensaje == NULL) {
 			free(mensaje);
 			break;
 		}
-		void (*funcion)(int, void*) = elegirFuncion(*head); // elijo función a ejecutar según protocolo
+		void (*funcion)(int, void*) = elegirFuncion(head); // elijo función a ejecutar según protocolo
 		sem_wait(&mutex);
 		funcion(sockCliente, mensaje); // ejecuto función
 		sem_post(&mutex);
 		free(mensaje); // aplicar_protocolo_recibir pide memoria, por lo tanto hay que liberarla
 	}
 
-	free(head);
-	close(sockCliente);
+	cerrarSocket(sockCliente);
 }
 
 int pedir_pagina_swap(int fd, int pid, int pagina) {
@@ -134,45 +133,44 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	int marco = ERROR;
 
 	// pido página a Swap
-	solicitudLeerPagina pedido;
-	pedido.pid = pid;
-	pedido.pagina = pagina;
+	solicitudLeerPagina* pedido = malloc(sizeof(solicitudLeerPagina));
+	pedido->pid = pid;
+	pedido->pagina = pagina;
 	printf("> [PEDIR_PAGINA_SWAP]: (#fd: %d) (#pid: %d) (#pagina: %d)\n", fd, pid, pagina);
-	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, &pedido);
-
-	int *protocolo = (int*)reservarMemoria(INT);
+	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, pedido);
+	free(pedido); pedido = NULL;
 
 	// espero respuesta válida o inválida de Swap
+	int protocolo;
 	int *respuesta = NULL;
-	respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
-	if(*respuesta == NO_PERMITIDO || *protocolo != RESPUESTA_PEDIDO) {
+	respuesta = (int*) aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
+
+	if(*respuesta == NO_PERMITIDO || protocolo != RESPUESTA_PEDIDO){
 		*respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 		free(respuesta);
-		return ERROR;
+	}
+	else{ // espero respuesta de Swap:
+		int head;
+		void *contenido_pagina = NULL;
+		contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, &head);
+
+		if(head != DEVOLVER_PAGINA){ // hubo un fallo
+			int* estadoDelPedido = reservarMemoria(INT);
+			*estadoDelPedido= NO_PERMITIDO;
+			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, estadoDelPedido);
+			free(estadoDelPedido);
+		}
+		else{ // tengo que cargar la página a MP
+			marco = cargar_pagina(pid, pagina, (char*) contenido_pagina);
+		}
 	}
 
-	// espero respuesta de Swap
-	void *contenido_pagina = NULL;
-	if(*respuesta == PERMITIDO)
-		contenido_pagina = aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
-
-	if(*protocolo != DEVOLVER_PAGINA) { // hubo un fallo
-
-		int* estadoDelPedido = (int*)reservarMemoria(INT);
-		*estadoDelPedido= NO_PERMITIDO;
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, estadoDelPedido);
-		free(estadoDelPedido);
-
-	} else // tengo que cargar la página a MP
-		marco = cargar_pagina(pid, pagina, (char*) contenido_pagina);
-
-	free(protocolo);
 	return marco;
 }
 
 void enviarTamanioMarco(int fd, int tamanio) {
-	int *msj = (int*)reservarMemoria(INT);
+	int *msj = reservarMemoria(INT);
 	*msj = tamanio;
 	enviarPorSocket(fd, msj, INT);
 	free(msj);
@@ -205,8 +203,6 @@ int validar_servidor(char *id) {
 
 void inciar_programa(int fd, void *msj) {
 
-	int *respuesta = NULL;
-
 	dormir(config->retardo); // retardo por escritura en tabla páginas
 
 	inicioPrograma *mensaje = (inicioPrograma*) msj; // casteo
@@ -216,33 +212,31 @@ void inciar_programa(int fd, void *msj) {
 	iniciar_principales(mensaje->pid, mensaje->paginas);
 	agregar_paginas_nuevas(mensaje->pid, mensaje->paginas);
 	if( asignarMarcos(mensaje->pid) == FALSE ) {
-		respuesta = (int*)reservarMemoria(INT);
+		int* respuesta = reservarMemoria(INT);
 		*respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 		free(respuesta);
 		return;
 	}
 
-	// 2) Envío a Swap
+	// 2) Envío a Swap directamente
 	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, msj);
 
 	// 3) Espero respuesta de Swap
-	int *protocolo = (int*)reservarMemoria(INT);
-	respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
-	compararProtocolos(*protocolo, RESPUESTA_PEDIDO); // comparo protocolo recibido con esperado
-	free(protocolo);
+	int protocolo;
+	void *respuestaDeInicio = NULL;
+	respuestaDeInicio = aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
+	compararProtocolos(protocolo, RESPUESTA_PEDIDO); // comparo protocolo recibido con esperado
 
 	// 4) Respondo a Núcleo como salió la operación
-	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-	free(respuesta);
-
+	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaDeInicio);
 }
 
 void leer_instruccion(int fd, void *msj) {
 
 	dormir(config->retardo); // retardo por lectura en memoria
 
-	solicitudLectura *mensaje = (solicitudLectura*)msj; // casteo
+	solicitudLectura *mensaje = (solicitudLectura*) msj; // casteo
 
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
@@ -257,7 +251,7 @@ void leer_instruccion(int fd, void *msj) {
 	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
 
 	// busco el código que me piden
-	void *contenido = reservarMemoria(mensaje->tamanio + CHAR);
+	char *contenido = reservarMemoria(mensaje->tamanio + CHAR); // Reservo espacio para el '\0'.
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
 
 	// tengo en cuenta si la instrucción está cortada
@@ -276,17 +270,16 @@ void leer_instruccion(int fd, void *msj) {
 			actualizar_tp(pid, nueva_pagina, marco, 1, -1, 1);
 			// concateno segundo "cachito"
 			int pos_real = marco * (config->marco_size);
-			int nuevo_tamanio2 = mensaje->tamanio - nuevo_tamanio;
-			memcpy(contenido + nuevo_tamanio, memoria + pos_real, nuevo_tamanio2);
+			int tamanio_extra = mensaje->tamanio - nuevo_tamanio;
+			memcpy(contenido + nuevo_tamanio, memoria + pos_real, tamanio_extra);
 
 	} else { // no hay problemas raros
 
 		memcpy(contenido, memoria + pos_real, mensaje->tamanio);
-
 	}
 
-	// respondo que pedido fue válido
-	int *respuesta = (int*)reservarMemoria(INT);
+	// respondo que el pedido fue válido
+	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 	free(respuesta);
@@ -296,14 +289,13 @@ void leer_instruccion(int fd, void *msj) {
 	aplicar_protocolo_enviar(fd, DEVOLVER_INSTRUCCION, contenido);
 
 	free(contenido);
-
 }
 
 void leer_variable(int fd, void *msj) {
 
 	dormir(config->retardo); // retardo por lectura en memoria
 
-	solicitudLectura *mensaje = (solicitudLectura*)msj; // casteo
+	solicitudLectura *mensaje = (solicitudLectura*) msj; // casteo
 
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
@@ -317,29 +309,27 @@ void leer_variable(int fd, void *msj) {
 	actualizar_tlb(pid, mensaje->pagina); // la función buscar actualiza referencia también
 	actualizar_tp(pid, mensaje->pagina, marco, 1, -1, 1);
 
-	// busco el código que me piden
-	void *contenido = reservarMemoria(INT);
+	// busco el dato que me piden
+	int *contenido = reservarMemoria(INT);
 	int pos_real = marco * (config->marco_size) + mensaje->offset;
 	memcpy(contenido, memoria + pos_real, INT);
 
-	// respondo que pedido fue válido
-	int *respuesta = (int*)reservarMemoria(INT);
+	// respondo que el pedido fue válido
+	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 	free(respuesta);
 
 	// devuelvo el contenido solicitado
 	aplicar_protocolo_enviar(fd, DEVOLVER_VARIABLE, contenido);
-
 	free(contenido);
-
 }
 
 void escribir_bytes(int fd, void *msj) {
 
 	dormir(config->retardo); // retardo por lectura en memoria
 
-	solicitudEscritura *mensaje = (solicitudEscritura*)msj; // casteo
+	solicitudEscritura *mensaje = (solicitudEscritura*) msj; // casteo
 
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
@@ -359,7 +349,7 @@ void escribir_bytes(int fd, void *msj) {
 		memcpy(memoria + pos_real, &(mensaje->contenido), INT);
 
 		// respondo a CPU
-		int *respuesta = (int*)reservarMemoria(INT);
+		int *respuesta = reservarMemoria(INT);
 		*respuesta = PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 		free(respuesta);
@@ -563,7 +553,7 @@ void eliminar_pagina(int pid, int pagina) {
 int buscarPagina(int fd, int pid, int pagina) {
 
 	if(validarPagina(pid, pagina) == FALSE) {
-		int *respuesta = (int*)reservarMemoria(INT);
+		int *respuesta = reservarMemoria(INT);
 		*respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 		free(respuesta);
@@ -585,7 +575,7 @@ int buscarPagina(int fd, int pid, int pagina) {
 		// 2) busco en TP
 		int pos_tp = pos_pid(pid);
 		if(pos_tp == ERROR) { // no se inicializó el proceso
-			int *respuesta = (int*)reservarMemoria(INT);
+			int *respuesta = reservarMemoria(INT);
 			*respuesta = NO_PERMITIDO;
 			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
 			free(respuesta);
@@ -634,11 +624,7 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 
 	// escribo en memoria principal
 	int pos_real = marco * config->marco_size;
-
-	if(strlen(contenido) == config->marco_size){ // Si entra acá es que se le agregó un '\0'.
-		contenido = realloc(contenido, config->marco_size); // Saco el espacio del '\0'.
-	}
-
+	// Hace el memcpy del tamaño de marco, por lo cual no copia el '\0' extra agregado al final.
 	memcpy(memoria + pos_real, contenido, config->marco_size);
 
 	// actualizo tlb si esta activada
@@ -777,7 +763,7 @@ void iniciarEstructuras() {
 	memset(memoria, '\0', sizeof_memoria);
 
 	// bitmap
-	bitmap = (int*)reservarMemoria(INT * config->marcos);
+	bitmap = reservarMemoria(INT * config->marcos);
 	int i = 0;
 	for(; i < config->marcos; i++)
 		bitmap[i] = 0;
@@ -797,8 +783,8 @@ void iniciarEstructuras() {
 }
 
 void liberarConfig() {
-	free(config->ip_swap);
-	free(config);
+	free(config->ip_swap); config->ip_swap = NULL;
+	free(config); config = NULL;
 }
 
 void compararProtocolos(int protocolo1, int protocolo2) {
@@ -810,12 +796,12 @@ void compararProtocolos(int protocolo1, int protocolo2) {
 
 void liberarRecusos() {
 	// liberar otros recursos
-	free(memoria);
-	list_destroy(tlb);
-	free(bitmap);
+	free(memoria); memoria = NULL;
+	list_destroy(tlb); tlb = NULL;
+	free(bitmap); bitmap = NULL;
 	sem_destroy(&mutex);
 	liberarConfig();
-	log_destroy(logger);
+	log_destroy(logger); logger = NULL;
 }
 
 void *elegirFuncion(protocolo head) {
@@ -872,10 +858,10 @@ void *direccionarConsola(char *mensaje) {
 }
 
 funcion_t *separarMensaje(char *mensaje) {
-	char *cabeza = (char*)reservarMemoria(CHAR*10);
-	char *argumento = (char*)reservarMemoria(CHAR*10);
+	char *cabeza = reservarMemoria(CHAR*10);
+	char *argumento = reservarMemoria(CHAR*10);
 	sscanf(mensaje, "%s %s\n", cabeza, argumento);
-	funcion_t *retorno = (funcion_t*)reservarMemoria(sizeof(funcion_t));
+	funcion_t *retorno = reservarMemoria(sizeof(funcion_t));
 	retorno->cabeza = cabeza;
 	retorno->argumento = argumento;
 	return retorno;
@@ -897,7 +883,7 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 	if(pagina_reemplazar.bit_modificado == 1) { // tengo que escribir en disco
 
 		// seteo pedido
-		solicitudEscribirPagina *pedido = (solicitudEscribirPagina*)reservarMemoria(sizeof(solicitudEscribirPagina));
+		solicitudEscribirPagina *pedido = reservarMemoria(sizeof(solicitudEscribirPagina));
 		pedido->pid = pid;
 		pedido->pagina = pagina_reemplazar.pagina;
 		pedido->contenido = reservarMemoria(config->marco_size);
@@ -906,25 +892,24 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 
 		// envío pedido
 		aplicar_protocolo_enviar(sockClienteDeSwap, ESCRIBIR_PAGINA, pedido);
-		free(pedido->contenido); free(pedido);
+		free(pedido->contenido); pedido->contenido = NULL;
+		free(pedido); pedido = NULL;
 
 		// espero respuesta swap
 		int *respuesta = NULL;
-		int *protocolo = (int*)reservarMemoria(INT);
-		respuesta = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
-		free(protocolo);
+		int protocolo;
+		respuesta = (int*) aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
 
 		if(*respuesta == NO_PERMITIDO)
 			fprintf(stderr, "Error: no se pudo escribir pagina en Swap (%d) de pid #%d\n", pagina_reemplazar.pagina, pid);
 
 	} // sino se puede reemplazar tranquilamente
-
 }
 
 char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla) {
 
-	char *mensaje = (char*)reservarMemoria(CHAR * 10000);
-	char *linea = (char*)reservarMemoria(CHAR * 1000);
+	char *mensaje = reservarMemoria(CHAR * 10000);
+	char *linea = reservarMemoria(CHAR * 1000);
 	mensaje[0] = '\0';
 
 	sprintf(linea, "> #PID: %d;\t#Paginas: %d;\t#Puntero: %d;\n", pid, paginas, puntero);
@@ -1131,7 +1116,7 @@ respuesta_algoritmo *buscarVictimaReemplazo(int pid) {
 	int p = pos_pid(pid);
 	int paginas_asignadas = contar_paginas_asignadas(pid);
 
-	subtp_t *paginas = (subtp_t*)reservarMemoria(paginas_asignadas * sizeof(subtp_t));
+	subtp_t *paginas = reservarMemoria(paginas_asignadas * sizeof(subtp_t));
 
 	int i = 0, // va a ir hasta páginas asignadas
 	pos_tp = 0; // va a ir hasta total páginas del pid
@@ -1323,13 +1308,13 @@ void dump(char *argumento) {
 		free(mensaje);
 	}
 
-	char *marco = (char*)reservarMemoria(CHAR * config->marco_size);
+	char *marco = reservarMemoria(CHAR * config->marco_size);
 	marco[0] = '\0';
 
 	// 2) Generar reporte Memoria Principal
 	int j = 0;
 	for(; j < config->marcos; j++) {
-		void *posicion_mp = memoria + (j * config->marco_size);
+		char *posicion_mp = memoria + (j * config->marco_size);
 		memcpy(marco, posicion_mp, config->marco_size);
 		log_info(logger, "Contenido pagina #%d:\n%s\n", j, marco);
 	}

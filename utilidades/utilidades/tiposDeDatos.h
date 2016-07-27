@@ -12,7 +12,7 @@ typedef struct {
 // Solicitud de inicio de un programa:
 typedef struct {
 	int pid, paginas;
-	char* contenido;
+	char* contenido; // código script
 } __attribute__((packed)) inicioPrograma;
 
 // Variable compartida AnSISOP:

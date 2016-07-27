@@ -146,10 +146,6 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 	var_direccion->offset = total_heap_offset % tamanioPagina;
 	var_direccion->tamanio = INT;
 
-	int head;
-	void* entrada = NULL;
-	int* valor_variable = NULL;
-
 	printf("Solicitud Lectura Variable -> Página: %i, Offset: %i, Size: %i.\n",
 			var_direccion->pagina, var_direccion->offset, INT);
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_VARIABLE, var_direccion);
@@ -163,9 +159,14 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 		return ERROR;
 	}
 	else{ // no hubo error de lectura
+		int head;
+		void* entrada = NULL;
+		int* valor_variable = NULL;
+
 		entrada = aplicar_protocolo_recibir(fdUMC, &head); // respuesta OK de UMC, recibo la variable leída
 		if(head == DEVOLVER_VARIABLE){
-			valor_variable = (int*)entrada;
+			valor_variable = (int*) entrada;
+			printf("Variable dereferenciada -> Valor: %d\n.", *valor_variable);
 
 			return *valor_variable;
 		}
