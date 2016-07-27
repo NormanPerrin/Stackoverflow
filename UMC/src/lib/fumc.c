@@ -609,12 +609,15 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 		if(config->entradas_tlb != 0)
 			borrar_entrada_tlb(pid, pagina_reemplazar->elegida.pagina);
 
+		printf("[Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: %d)\n", pid, pagina, marco, pagina_reemplazar->elegida.pagina);
 
 	} else if(paginas_asignadas < marcos_asignados) { // se puede buscar marco entre los disponibles
 
 		marco = buscarMarcoLibre(pid);
 		actualizar_tp(pid, pagina, marco, 1, -1, 1);
 		actualizarPuntero(pid, pagina);
+
+		printf("[Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: nadie)\n", pid, pagina, marco);
 
 	} else { // las paginas asignadas es mayor al número de marcos disponibles
 
@@ -881,6 +884,8 @@ respuesta_algoritmo *aplicar_algoritmo(subtp_t *paginas, int puntero, int cantid
 void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 
 	if(pagina_reemplazar.bit_modificado == 1) { // tengo que escribir en disco
+
+		printf("[Escritura Disco] (#pid: %d) (#pagina: %d)\n", pid, pagina_reemplazar.pagina);
 
 		// seteo pedido
 		solicitudEscribirPagina *pedido = reservarMemoria(sizeof(solicitudEscribirPagina));
