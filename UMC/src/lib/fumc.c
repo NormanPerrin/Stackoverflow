@@ -804,6 +804,7 @@ void liberarConfig() {
 void compararProtocolos(int protocolo1, int protocolo2) {
 	if(protocolo1 != protocolo2) {
 		log_error(logger, "Error: se esperaba protocolo #%d y se obtuvo protocolo #%d\n", protocolo2, protocolo1);
+		log_info(logger, "UMC ha salido del sistema.\n");
 		exit(ERROR);
 	}
 }

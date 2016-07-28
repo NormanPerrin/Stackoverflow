@@ -63,6 +63,7 @@ void exitCPU(){
 	liberarRecursos(); // Libero memoria utilizada
 	cerrarSocket(fdUMC);
 	cerrarSocket(fdNucleo);
+	printf("CPU ha salido del sistema.\n");
 }
 
 // Funciones CPU:

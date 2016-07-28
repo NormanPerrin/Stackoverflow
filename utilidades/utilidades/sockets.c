@@ -36,7 +36,7 @@ struct sockaddr_in asociarSocket(int fd_socket, int puerto){
 // Ponemos al socket a escuchar conexiones entrantes
 void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas){
 	int retornoListen = listen(fd_socket, conexionesEntrantesPermitidas); // SOMAXCONN: máximo tamaño de la cola
-	if (retornoListen == ERROR) manejarError("Error: No se pudo poner al socket a escuchar conexiones entrantes.");
+	if (retornoListen == ERROR) manejarError("Error: No se pudo poner al socket a escuchar conexiones.");
 }
 
 // Obtención de una conexión entrante pendiente
@@ -112,7 +112,7 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 			}
 
 	if (bytes_recibidos == 0) { // Conexión cerrada
-		printf("La conexión fd #%d se ha cerrado.\n", fdServidor);
+		printf("Error: La conexión fd #%d se ha cerrado.\n", fdServidor);
 		break;
 	}
 	total += bytes_recibidos;
@@ -150,7 +150,7 @@ void seleccionarSocket(int mayorValorDeFD,
 
 	int retornoSelect = select((mayorValorDeFD + 1), fdListosParaLectura, fdListosParaEscritura, fdListosParaEjecucion, NULL);
 
-	if(retornoSelect == ERROR && errno != EINTR) manejarError("Error: No se pudo seleccionar ningún socket del conjunto");
+	if(retornoSelect == ERROR && errno != EINTR) manejarError("Error: No se pudo seleccionar ningún socket del conjunto.");
 
 	}else{
 /* Si segundos y microsegundos valen cero:
@@ -165,7 +165,7 @@ select regresará inmediatamente después de interrogar a todos los FD incluidos
 
 		int selectConLimiteDeTiempo = select((mayorValorDeFD + 1), fdListosParaLectura,
 								  fdListosParaEscritura, fdListosParaEjecucion, &periodoMaximoDeEspera);
-		if(selectConLimiteDeTiempo == ERROR && errno != EINTR) manejarError("Error: [Timed out] El temporizador ha expirado y no se pudo seleccionar ningún socket");
+		if(selectConLimiteDeTiempo == ERROR && errno != EINTR) manejarError("Error: El temporizador del select() ha expirado.");
 	}
 
 	if (errno == EINTR){

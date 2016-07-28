@@ -160,11 +160,6 @@ proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos){
 	return proceso;
 }
 
-void encolarPcbAListos(pcb* proceso){
-	printf("Fin de E/S para el proceso #%d. Moviéndolo a cola de Listos.\n", proceso->pid);
-	queue_push(colaListos, proceso);
-}
-
 void* entradaSalidaThread(void* dataHilo){
 	int tiempoDeEspera;
 	dataDispositivo* datos = (dataDispositivo*) dataHilo;
@@ -173,8 +168,9 @@ void* entradaSalidaThread(void* dataHilo){
 			pcb_block = esperarPorProcesoIO(datos); // tomo el primer proceso en la cola de espera del dispositivo
 			tiempoDeEspera = (datos->retardo * pcb_block->espera) * 1000; // duración de la E/S
 			usleep(tiempoDeEspera);
-			encolarPcbAListos(pcb_block->proceso); // agrego al proceso a la cola de listos
+			printf("Fin de E/S para el proceso #%d. Moviéndolo a cola de Listos.\n", pcb_block->proceso->pid);
 
+			queue_push(colaListos, pcb_block->proceso);
 			planificarProceso();
 		}
 		return NULL;
@@ -214,17 +210,30 @@ int obtenerSocketMaximoInicial(){
 			max_fd_inicial = fd;
 	} // fin for cpu
 
+	max_fd_inicial = (fd_UMC > max_fd_inicial)? fd_UMC : max_fd_inicial;
+
 	return max_fd_inicial;
+}
+
+void setearQuantumYQuantumSleep(){
+	int i;
+	for (i = 0; i < colaListos->elements->elements_count; i++){
+		pcb* pcb_ready = (pcb*) list_get(colaListos->elements, i);
+		pcb_ready->quantum = config->quantum;
+		pcb_ready->quantum_sleep = config->retardoQuantum;
+	}
 }
 
 void planificarProceso(){
 
 	pthread_mutex_lock(&mutex_planificarProceso);
 
+	setearQuantumYQuantumSleep();
+
 	int i, asignado = 0;
 	for (i = 0; (i < list_size(listaCPU) && asignado == 0); i++){
 		// Recorro buscando algún CPU libre:
-		cpu * unCPU = (cpu *)list_get(listaCPU, i);
+		cpu * unCPU = (cpu *) list_get(listaCPU, i);
 		if (unCPU->disponibilidad == LIBRE){
 			// Si hay algún proceso listo para ejecutar...
 			if (queue_size(colaListos) > 0){
@@ -249,7 +258,7 @@ pcb * buscarProcesoPorPid(int pid){
 	int i;
 	pcb * unPcb;
 	for (i = 0; i < list_size(listaProcesos); i++){
-		unPcb = (pcb *)list_get(listaProcesos, i);
+		unPcb = (pcb *) list_get(listaProcesos, i);
 		if(unPcb->pid == pid){
 			return unPcb; // la pcb del proceso es unPcb
 		}
@@ -291,6 +300,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 		entrada = aplicar_protocolo_recibir(fd_UMC, &head);
 
 		if(entrada == NULL){ // UMC mandó un msj vacío, significa que se desconectó
+			seDesconectoUMC = true;
 			return FALSE;
 		}
 		if(head == RESPUESTA_PEDIDO){
@@ -374,7 +384,7 @@ void aceptarConexionEntranteDeConsola(){
 		return;
 	}
 	// Se conectó una nueva Consola:
-	consola * nuevaConsola = malloc(sizeof(consola));
+	consola* nuevaConsola = malloc(sizeof(consola));
 	nuevaConsola->id = new_fd - fdEscuchaConsola;
 	nuevaConsola->fd_consola = new_fd;
 	log_info(logger,"La Consola #%i se ha conectado.", nuevaConsola->id);
@@ -383,6 +393,13 @@ void aceptarConexionEntranteDeConsola(){
 	int head;
 	void * entrada = NULL;
 	entrada = aplicar_protocolo_recibir(new_fd, &head);
+
+	if(entrada == NULL){ // La Consla se desconectó, la quito del sistema y saco su PCB de ejecución:
+		log_info(logger,"La Consola #%i se ha desconectado antes de enviar script.", nuevaConsola->id);
+		cerrarSocket(new_fd);
+		return;
+	}
+
 	int* respuesta = malloc(INT);
 
 	if(head == ENVIAR_SCRIPT){
@@ -407,7 +424,6 @@ void aceptarConexionEntranteDeConsola(){
 	// Pongo al nuevo programa en la cola de Listos:
 		list_add(listaProcesos, nuevoPcb);
 		queue_push(colaListos, nuevoPcb);
-
 		planificarProceso();
 
 		  } // fin if head scrpit
@@ -502,7 +518,8 @@ void salvarProcesoEnCPU(int id_cpu){
 
 	bool esLaPcbEnEjecucion(pcb * pcb){ return pcb->id_cpu == id_cpu; }
 
-	pcb * unPcb = (pcb *) list_find(listaProcesos, (void *) esLaPcbEnEjecucion);
+	pcb * unPcb = (pcb *) list_find(listaProcesos, (void*) esLaPcbEnEjecucion);
+
 	if(unPcb != NULL){
 		unPcb->id_cpu = -1; // le desasigno CPU
 		queue_push(colaListos, unPcb); // la mando de nuevo a cola de listos
@@ -512,9 +529,10 @@ void salvarProcesoEnCPU(int id_cpu){
 int envioSenialCPU(int id_cpu){
 	int i;
 	for(i=0; i<list_size(listaCPU_SIGUSR1); i++){
-		int * cpu = list_get(listaCPU_SIGUSR1, i);
-		if(*cpu == id_cpu){ // mandó señal
-			liberarCPU(list_remove(listaCPU_SIGUSR1, i));
+
+		int * id_cpu_senial = list_get(listaCPU_SIGUSR1, i);
+		if(*id_cpu_senial == id_cpu){ // mandó señal
+			free(list_remove(listaCPU_SIGUSR1, i));
 			return TRUE;
 			}
 	} // fin for
@@ -584,7 +602,13 @@ void semaforo_signal(t_semaforo* semaforo){
 	semaforo->valor++;
 	if (semaforo->valor <= 0){
 		pcb* procesoBloqueado = queue_pop(semaforo->bloqueados);
-		if (procesoBloqueado != NULL) encolarPcbAListos(procesoBloqueado);
+
+		if (procesoBloqueado != NULL){
+			printf("Proceso #%d desbloqueado por SIGNAL del semáforo '%s'.\n",
+			procesoBloqueado->pid, semaforo->nombre);
+			queue_push(colaListos, procesoBloqueado);
+			planificarProceso();
+		}
     }
 }
 
@@ -601,7 +625,9 @@ void semaforoBloquearProceso(t_queue* colaBloqueados, pcb* proceso){
 }
 
 void tratarPcbDeConsolaDesconectada(int pid){
-	bool cpuTieneElPidConsola(cpu* unCpu){ return unCpu->pid == pid;}
+
+	bool cpuTieneElPidConsola(cpu* unCpu){ return unCpu->pid == pid; }
+	bool esPcbAbortada(pcb* proceso){ return proceso->pid == pid; }
 
 	cpu* execCPU = list_find(listaCPU, (void*) cpuTieneElPidConsola);
 
@@ -611,7 +637,24 @@ void tratarPcbDeConsolaDesconectada(int pid){
 		int index = pcbListIndex(pid); // indexo el pcb en la lista de procesos
 		finalizarPrograma(pid, index);
 		// Libero el PCB del proceso y lo saco del sistema:
-		liberarPcbNucleo(list_remove(listaProcesos, index));
+
+		pcb* remove_from_ready = list_remove_by_condition(colaListos->elements, (void*) esPcbAbortada);
+		if(remove_from_ready != NULL){
+			liberarPcbNucleo(remove_from_ready);
+		}
+
+		pcb* remove_from_system = list_remove(listaProcesos, index);
+		if(remove_from_system != NULL){
+			liberarPcbNucleo(remove_from_system);
+		}
+
+		// TODO: Ver cola bloqueados E/S
+
+		int i;
+		for(i=0; i<dictionary_size(diccionarioSemaforos); i++){
+
+		}
+
 	}
 	else{
 		printf("El proceso #%i se removerá cuando finalice ráfaga en CPU #%i porque se desconectó su Consola.\n",
@@ -626,7 +669,7 @@ void verificarDesconexionEnConsolas(){
 	int i;
 	for (i = 0; i < list_size(listaConsolas); i++){
 
-		consola * unaConsola = (consola *)list_get(listaConsolas, i);
+		consola * unaConsola = (consola*) list_get(listaConsolas, i);
 		int fd = unaConsola->fd_consola;
 
 	if (FD_ISSET(fd , &readfds)){ // nuevo mensaje de consola
@@ -649,7 +692,13 @@ void quitarCpuPorSenialSIGUSR1(cpu* unCpu, int index){
 	log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCpu->id);
 	cerrarSocket(unCpu->fd_cpu);
 	liberarCPU(list_remove(listaCPU, index));
+}
 
+void tratarCPUDesconectada(int id_cpu, int fd_cpu, int index){
+	log_info(logger,"La CPU #%i se ha desconectado. Salvando PCB en ejecución...", id_cpu);
+	salvarProcesoEnCPU(id_cpu);
+	cerrarSocket(fd_cpu);
+	liberarCPU(list_remove(listaCPU, index));
 	planificarProceso();
 }
 
@@ -670,12 +719,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		    mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
 		    if (mensaje == NULL){ // El CPU se desconectó, lo quito del sistema y salvo su PCB:
-		    	log_info(logger,"La CPU #%i se ha desconectado. Salvando PCB en ejecución...", unCPU->id);
-		    	salvarProcesoEnCPU(unCPU->id);
-		    	cerrarSocket(fd);
-		    	liberarCPU(list_remove(listaCPU, i));
 
-		    	planificarProceso();
+		    	tratarCPUDesconectada(unCPU->id, fd, i);
 		    	return;
 
 		    }else{
@@ -738,6 +783,9 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		// Espero luego la PCB en ejecución:
 		void* entrada = NULL;
 		entrada = aplicar_protocolo_recibir(fd, &head);
+
+		if(entrada == NULL) tratarCPUDesconectada(unCPU->id, fd, i);
+
 		if(head == PCB_ENTRADA_SALIDA) pcbEjecutada = (pcb*) entrada;
 		log_info(logger, "Proceso #%i entrada salida en CPU #%i.", pcbEjecutada->pid, unCPU->id);
 
@@ -828,6 +876,9 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			// Recibo la PCB en ejecución que se bloqueó:
 			void* entrada = NULL;
 			entrada = aplicar_protocolo_recibir(fd, &head);
+
+			if(entrada == NULL) tratarCPUDesconectada(unCPU->id, fd, i);
+
 			if(head == PCB_WAIT){ waitPcb = (pcb*) entrada; }
 
 			if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
@@ -873,9 +924,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		printf("Señal SIGUSR1 en CPU #%i.\n", unCPU->id);
 
 		if(unCPU->disponibilidad == LIBRE){ // saco al cpu del sistema
-			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
-			cerrarSocket(unCPU->fd_cpu);
-			liberarCPU(list_remove(listaCPU, i));
+			 quitarCpuPorSenialSIGUSR1(unCPU, i);
 		}
 		else{ // el cpu sigue ejecutando (sale después)
 			list_add(listaCPU_SIGUSR1, &(unCPU->id));
