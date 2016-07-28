@@ -16,7 +16,7 @@ int main(int argc, char **argv){
 	conectarCon_Nucleo(); // Conexión con Núcleo
 
 	aplicar_protocolo_enviar(fd_nucleo, ENVIAR_SCRIPT, programa);
-	printf("Script enviado a Núcleo. Esperando respuesta...\n");
+	log_info(logger, "Script enviado a Núcleo. Esperando respuesta.");
 
 	int head;
 	void * mensaje = NULL;
@@ -56,16 +56,16 @@ int main(int argc, char **argv){
 
 			case IMPRIMIR_TEXTO:{
 						// Imprime lo que recibe, ya sea texto a variable (convertida a texto):
-						printf("IMPRIMIR: '%s'.\n", (char*) entrada);
+						printf(">> IMPRIMIR: '%s'.\n", (char*) entrada);
 						free(entrada); entrada = NULL;
 						break;
 					}
 			case FINALIZAR_PROGRAMA:{
 						int respuesta = *((int*)entrada);
 						if(respuesta == PERMITIDO) {
-							printf("El programa ha finalizado con éxito.\n");
+							log_info(logger, "El programa ha finalizado con éxito.");
 						} else {
-							printf("El programa ha sido abortado.\n");
+							log_error(logger, "El programa ha sido abortado.");
 						}
 						free(entrada); entrada = NULL;
 						free(mensaje); mensaje = NULL;

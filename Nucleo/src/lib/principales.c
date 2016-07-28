@@ -21,14 +21,14 @@ void crearLoggerNucleo(){
 void leerConfiguracionNucleo(){
 	t_config * archivoConfig = NULL;
 		if (comprobarQueExistaArchivo(RUTA_CONFIG_NUCLEO) == ERROR){
-			printf("Error: Archivo de configuración no encontrado.\n");
+			log_error(logger, "Archivo de configuración no encontrado.");
 		}
 		archivoConfig = config_create(RUTA_CONFIG_NUCLEO);
 
 		if(setearValoresDeConfig(archivoConfig)){
-			printf("Archivo de configuracion leído correctamente.\n");
+			log_info(logger, "Archivo de configuracion leído correctamente.");
 		}else{
-			printf("Lectura incorrecta del archivo de configuración.\n");
+			log_error(logger, "Lectura incorrecta del archivo de configuración.");
 		}
 }
 
@@ -54,7 +54,7 @@ void lanzarHilosIO(){
       hiloIO *hilo = crearHiloIO(i);
       pthread_create(&hilo->hiloID, NULL, &entradaSalidaThread, (void*) &hilo->dataHilo);
       dictionary_put(diccionarioIO, config->ioID[i], hilo);
-      printf("Lanzando hilo de IO #%d perteneciente al dispositivo '%s'.\n", i, hilo->dataHilo.nombre);
+      log_info(logger, "Lanzando hilo de E/S #%d del dispositivo '%s'.", i, hilo->dataHilo.nombre);
     i++;
     }
 }
@@ -81,7 +81,7 @@ int conexionConUMC(){
 	}else{
 		// Seteo el tamaño de página que recibo de UMC
 		tamanioPagina = *tamPagina;
-		printf("Recibí tamanio de página: %d.\n", *tamPagina);
+		log_info(logger, "Recibí tamanio de página: %d.", *tamPagina);
 		free(tamPagina); tamPagina = NULL;
 
 		return TRUE;
@@ -156,7 +156,7 @@ void unirHilosIO(){
 	int i = 0;
 	while (config->ioID[i] != '\0'){
 		hiloIO* hilo = (hiloIO*) dictionary_get(diccionarioIO, config->ioID[i]);
-		printf("Cerrando hilo de IO del dispositivo '%s'.\n", hilo->dataHilo.nombre);
+		log_info(logger, "Cerrando hilo de E/S del dispositivo '%s'.", hilo->dataHilo.nombre);
 		pthread_join(hilo->hiloID, NULL);
 		//free(hilo); hilo = NULL;
 		i++;

@@ -39,12 +39,12 @@ void liberarPcbActiva(){
 	free(pcbActual); pcbActual = NULL;
 }
 
-void atenderSenialSIGUSR1() {
-		printf("Se recibió señal SIGUSR1. Notificando a Núcleo.\n");
+void atenderSenialSIGUSR1(){
+		log_info(logger, "Se recibió señal SIGUSR1. Notificando a Núcleo.");
 		int* info_senial = malloc(INT);
 		* info_senial = SENIAL;
 		aplicar_protocolo_enviar(fdNucleo, SENIAL_SIGUSR1, info_senial);
-		free( info_senial);  info_senial = NULL;
+		free(info_senial); info_senial = NULL;
 
 		if (cpuOciosa){ // cpu sale del sistema
 			exitCPU();
@@ -52,7 +52,7 @@ void atenderSenialSIGUSR1() {
 		}
 		else{ // cpu sigue ejecutando (sale después)
 			finalizarCPU = true;
-			printf("El CPU se cerrará cuando finalice ráfaga actual.\n");
+			log_info(logger, "El CPU se cerrará cuando finalice ráfaga actual.");
 		}
 }
 
@@ -72,7 +72,7 @@ void obtenerTamanioDePagina(){
 	recibirPorSocket(fdUMC, tamPagina, INT);
 	tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
 	free(tamPagina); tamPagina = NULL;
-	printf("Recibí tamanio de página: %d.\n", tamanioPagina);
+	log_info(logger, "Recibí tamanio de página: %d.", tamanioPagina);
 }
 
 void conectarConNucleo() {
@@ -88,7 +88,7 @@ void conectarConNucleo() {
 	if(head == TAMANIO_STACK){
 		tamanioStack = *((int*) entrada); // Seteo el tamaño de stack que recibo de Núcleo
 	}
-	printf("Recibí tamanio de stack: %d.\n", tamanioStack);
+	log_info(logger, "Recibí tamanio de stack: %d.", tamanioStack);
 	free(entrada); entrada = NULL;
 }
 
@@ -104,7 +104,7 @@ void revisarFinalizarCPU(){
 }
 
 int recibirYvalidarEstadoDelPedidoAUMC(){
-// Tras validación: liberarPcbActiva(); revisarFinalizarCPU(); printf("Esperando nuevo proceso...\n");
+
 	int head;
 	void* entrada = NULL;
 	int* estadoDelPedido = NULL;
@@ -116,12 +116,12 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 
 		free(entrada); entrada = NULL;
 	 if(*estadoDelPedido == NO_PERMITIDO){ // retorno false por pedido rechazado
-		 printf("UMC ha rechazado un pedido del proceso actual.\n");
+		 log_info(logger, "UMC ha rechazado pedido del proceso actual.");
 		 return FALSE;
 		 } // retorno true por pedido acpetado
 	 return TRUE;
 	} // retorno false por error en el head
-	printf("Error durante pedido a UMC.\n");
+	log_error(logger, "No se pudo completar pedido a UMC.");
 	return FALSE;
 }
 
@@ -132,7 +132,7 @@ void exitProceso(){
 }
 
 void exitPorErrorUMC(){
-	log_debug(logger, "Abortando programa actual...");
+	log_info(logger, "Abortando programa actual por error con UMC.");
 	aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
 	exitProceso();
 }
@@ -153,7 +153,7 @@ char* solicitarProximaInstruccionAUMC(){
 	direccionInstruccion->offset = comienzo % tamanioPagina;
 	direccionInstruccion->tamanio = longitud;
 
-	printf("Solicitando Instrucción -> Pagina: %d - Offset: %d - Size: %d.\n",
+	log_info(logger, "Solicitando Instrucción -> Pagina: %d - Offset: %d - Size: %d.",
 			direccionInstruccion->pagina, direccionInstruccion->offset, longitud);
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_INSTRUCCION, direccionInstruccion);
 	free(direccionInstruccion);
