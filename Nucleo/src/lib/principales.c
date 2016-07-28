@@ -103,8 +103,6 @@ void esperar_y_PlanificarProgramas(){
 
 		if(seDesconectoUMC) break; // salgo del bucle si UMC se ha desconectado
 
-		int max_fd;
-
 		// Borra el conjunto maestro:
 	    FD_ZERO(&readfds);
 	    // Añadir listeners al conjunto maestro:
@@ -126,13 +124,13 @@ void esperar_y_PlanificarProgramas(){
 
 	    } else if(FD_ISSET(fd_inotify, &readfds)){ // nueva conexión inotify
 
-	    		atenderCambiosEnArchivoConfig(&max_fd);
+	    		atenderCambiosEnArchivoConfig();
 
 	    }else{ // fin if nueva conexión --> nuevo msj
 
-	    	verificarDesconexionEnConsolas();
+	    	verificarDesconexionEnConsolas(); // nuevo msj consola
 
-	    	recorrerListaCPUsYAtenderNuevosMensajes();
+	    	recorrerListaCPUsYAtenderNuevosMensajes(); // nuevo msj cpu
 
 	    } // fin else nuevo mensaje CPU o desconexión Consola
 	} // fin del while

@@ -13,7 +13,9 @@ AnSISOP_funciones funcionesAnSISOP = {
 		.AnSISOP_retornar = retornar,
 		.AnSISOP_imprimir = imprimir,
 		.AnSISOP_imprimirTexto = imprimirTexto,
-		.AnSISOP_entradaSalida = entradaSalida};
+		.AnSISOP_entradaSalida = entradaSalida,
+		.AnSISOP_llamarSinRetorno = llamarSinRetorno,
+		.AnSISOP_finalizar = finalizar };
 
 AnSISOP_kernel funcionesKernel = {
 		.AnSISOP_wait = s_wait,
@@ -22,6 +24,7 @@ AnSISOP_kernel funcionesKernel = {
 bool finalizarCPU = false;
 bool cpuOciosa = true;
 bool huboStackOverflow = false;
+bool finalizoPrograma = false;
 int devolvioPcb = DEFAULT;
 
 int main(void) {
@@ -83,6 +86,7 @@ int recibirMensajesDeNucleo(){
 				cpuOciosa = false;
 				huboStackOverflow = false;
 				devolvioPcb = DEFAULT;
+				finalizoPrograma = false;
 
 				ejecutarProcesoActivo(); // Ejecuto ráfaga del proceso actual
 
@@ -106,7 +110,8 @@ void ejecutarProcesoActivo(){
 
 			limpiarInstruccion(proximaInstruccion);
 
-			if (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && string_starts_with(proximaInstruccion, "end")){
+			if ( (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && string_starts_with(proximaInstruccion, "end"))
+					|| finalizoPrograma ){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
 				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
@@ -115,8 +120,8 @@ void ejecutarProcesoActivo(){
 				exitProceso();
 				return;
 			}
-			// No es 'end'. Ejecuto la próxima instrucción:
-			log_info(logger, "Instrucción recibida: %s", proximaInstruccion); // TODO: Cambiar por debug
+			// Si no es 'end'. Ejecuto la próxima instrucción:
+			log_info(logger, "Instrucción recibida: %s", proximaInstruccion);
 
 			analizadorLinea(proximaInstruccion, &funcionesAnSISOP, &funcionesKernel);
 

@@ -450,7 +450,7 @@ void aceptarConexionEntranteDeCPU(){
 	planificarProceso();
 }
 
-void atenderCambiosEnArchivoConfig(int* socketMaximo){
+void atenderCambiosEnArchivoConfig(){
 
 	int length, i = 0;
 	char buffer[EVENT_BUF_LEN];
@@ -459,20 +459,23 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 	log_info(logger, "Se ha modificado el archivo de configuración.");
 
 	if (length <= 0){
-
 		log_error(logger, "Inotify no pudo leer archivo de configuración.");
-		return;
-
 	} else {
 
 		struct inotify_event *event = (struct inotify_event *) &buffer[i];
 		t_config * new_config = NULL;
 		new_config = config_create(RUTA_CONFIG_NUCLEO);
 
-		int aux_quantum, aux_retardo;
+		if( new_config == NULL ||
+			!config_has_property(new_config, "QUANTUM") ||
+			!config_has_property(new_config, "QUANTUM_SLEEP") ){
 
-		aux_quantum = config_get_int_value(new_config, "QUANTUM");
-		aux_retardo = config_get_int_value(new_config, "QUANTUM_SLEEP");
+			log_error(logger, "Inotify: Archivo NULL o propiedades no encontradas.");
+			return;
+		}
+
+		int aux_quantum = config_get_int_value(new_config, "QUANTUM");
+		int aux_retardo = config_get_int_value(new_config, "QUANTUM_SLEEP");
 
 		if(config->quantum != aux_quantum){
 			config->quantum = aux_quantum;
@@ -489,10 +492,10 @@ void atenderCambiosEnArchivoConfig(int* socketMaximo){
 		FD_CLR(fd_inotify, &readfds);
 		iniciarEscuchaDeInotify();
 
-		*socketMaximo = (*socketMaximo < fd_inotify)? fd_inotify : *socketMaximo;
+		max_fd = (max_fd < fd_inotify)? fd_inotify : max_fd;
 		FD_SET(fd_inotify, &readfds);
-		return;
 	} // fin else-if
+	return;
 }
 
 void salvarProcesoEnCPU(int id_cpu){

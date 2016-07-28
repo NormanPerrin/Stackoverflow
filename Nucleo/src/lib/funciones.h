@@ -27,7 +27,7 @@ int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa);
 pcb* crearPcb(char* programa);
 void aceptarConexionEntranteDeConsola(); // --> planificarProceso
 void aceptarConexionEntranteDeCPU(); // --> planificarProceso
-void atenderCambiosEnArchivoConfig(int* socketMaximo);
+void atenderCambiosEnArchivoConfig();
 void salvarProcesoEnCPU(int cpuId); // --> planificarProceso
 int seDesconectoConsolaAsociada(int quantum_pid);
 int envioSenialCPU(int id_cpu);

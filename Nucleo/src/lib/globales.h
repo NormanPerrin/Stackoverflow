@@ -66,6 +66,7 @@ typedef struct {
 t_configuracion * config;
 int fd_UMC, tamanioPagina, fdEscuchaConsola, fdEscuchaCPU;
 t_log * logger;
+int max_fd;
 fd_set readfds; // conjunto maestro de descriptores de fichero para select()
 // Inotify:
 int fd_inotify, watch_descriptor;

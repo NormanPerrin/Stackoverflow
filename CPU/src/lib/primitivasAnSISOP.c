@@ -9,10 +9,24 @@ bool esArgumento(t_nombre_variable identificador_variable){
 	}
 }
 
+registroStack* reg_stack_create(){
+	registroStack* reg = malloc(sizeof(registroStack));
+	reg->cantidad_args = 0;
+	reg->args = list_create();
+	reg->cantidad_vars = 0;
+	reg->vars = list_create();
+	reg->retPos = 0;
+	reg->retVar.offset = 0;
+	reg->retVar.pagina = 0;
+	reg->retVar.size = 0;
+
+	return reg;
+}
+
 void liberarRegistroStack(registroStack* reg){
 	list_destroy(reg->args); reg->args = NULL;
 	list_destroy(reg->vars); reg->vars = NULL;
-	reg = NULL;
+	free(reg); reg = NULL;
 }
 
 /* --- PRIMITIVAS --- */
@@ -39,11 +53,16 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 
 			return ERROR;
 		}else{
-			// Agrego la variable al registro actual del índice de stack:
-			registroStack* regStack = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
-			if(regStack == NULL) regStack = reg_stack_create();
+			// Selecciono registro actual del índice de stack:
+			registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indiceStack->elements_count -1);
 
-			if(!esArgumento(var_nombre)){
+			if(regStack == NULL){ // si no hay registros, creo uno nuevo
+				regStack = reg_stack_create();
+				// Guardo el nuevo registro en el índice:
+				list_add(pcbActual->indiceStack, regStack);
+			}
+
+			if(!esArgumento(var_nombre)){ // agrego nueva variable
 				variable* new_var = malloc(sizeof(variable));
 				new_var->nombre = var_nombre;
 				new_var->direccion.pagina = var_pagina;
@@ -52,7 +71,7 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 
 				list_add(regStack->vars, new_var);
 			}
-			else{
+			else{ // agrego nuevo argumento
 				variable* new_arg = malloc(sizeof(variable));
 				new_arg->nombre = var_nombre;
 				new_arg->direccion.pagina = var_pagina;
@@ -64,8 +83,6 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 
 			printf("'%c' -> Dirección lógica definida: %i, %i, %i.\n", var_nombre, var_pagina, var_offset, INT);
 
-			// Guardo el nuevo registro en el índice:
-			list_add(pcbActual->indiceStack, regStack);
 			// Actualizo parámetros del PCB:
 			int total_heap_offset = (pcbActual->paginas_codigo * tamanioPagina) + pcbActual->stackPointer;
 			pcbActual->stackPointer += INT;
@@ -87,7 +104,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 	}
 
 	// Obtengo el registro del stack correspondiente al contexto de ejecución actual:
-	registroStack* regStack = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
+	registroStack* regStack = list_get(pcbActual->indiceStack, pcbActual->indiceStack->elements_count -1);
 
 	// Busco en este registro la variable que coincida con el nombre solicitado:
 	if(!esArgumento(var_nombre)){ // Si entra acá es una variable:
@@ -200,8 +217,6 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 			var_escritura->contenido[i] = '\0';
 		}*/
 		var_escritura->contenido = (char*) &valor;
-		/*	t_valor_variable valor --> (char*) &valor
-		 * size = sizeof(uint32_t); */
 
 	printf("Solicitud Escritura Variable -> Página: %i, Offset: %i, Contenido: %d.\n",
 			var_escritura->pagina, var_escritura->offset, valor);
@@ -221,23 +236,24 @@ void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombre){
 
 	printf("Obteniendo valor de Variable Compartida: '%s'.\n", var_compartida_nombre);
+	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, var_compartida_nombre);
+
 	void* entrada = NULL;
 	int* valor_variable = NULL;
 	int head;
 
-	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, var_compartida_nombre);
-
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
-	if(head == DEVOLVER_VAR_COMPARTIDA){
+
+	if(head == DEVOLVER_VAR_COMPARTIDA && entrada != NULL){
 		valor_variable = (int*) entrada;
 		printf("Variable Compartida: '%s' -> Valor: '%d'.\n", var_compartida_nombre, *valor_variable);
-	}
-	if(valor_variable == NULL){
-		printf("Error al obtener valor Variable Compartida '%s'.\n", var_compartida_nombre);
-		return ERROR;
+
+		return *valor_variable;
 	}
 	else{
-		return *valor_variable;
+		printf("Error al obtener valor Variable Compartida '%s'.\n", var_compartida_nombre);
+
+		return ERROR;
 	}
 }
 
@@ -255,6 +271,7 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 }
 
 void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
+
 	printf("Llendo a la etiqueta: '%s'.\n", nombre_etiqueta);
 	t_puntero_instruccion posicion_etiqueta = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
 
@@ -264,44 +281,36 @@ void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
 }
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
-	/* Reserva espacio para un nuevo contexto vacío donde guardo el contexto
-	 *  de ejecución actual, para luego volver al mismo. */
+	/* Reserva espacio para un nuevo contexto vacío para la función que se llama,
+	 * y se guarda iformación sobre el contexto de ejecución actual. */
 	printf("Llamada con retorno. Preservando contexto de ejecución actual y posición de retorno.\n");
 
 	// Calculo la dirección de retorno y la guardo:
-	registroStack * regsitroEjecucionActual = reg_stack_create();
-	regsitroEjecucionActual->retVar.pagina = donde_retornar / tamanioPagina;
-	regsitroEjecucionActual->retVar.offset = donde_retornar % tamanioPagina;
-	regsitroEjecucionActual->retVar.size = INT;
+	registroStack * nuevoRegistro = reg_stack_create();
+	nuevoRegistro->retVar.pagina = donde_retornar / tamanioPagina;
+	nuevoRegistro->retVar.offset = donde_retornar % tamanioPagina;
+	nuevoRegistro->retVar.size = INT;
 
-	regsitroEjecucionActual->retPos = pcbActual->pc; // Guardo el valor actual del program counter
-	list_add(pcbActual->indiceStack, regsitroEjecucionActual);
+	nuevoRegistro->retPos = pcbActual->pc; // Guardo el valor actual del program counter
+	list_add(pcbActual->indiceStack, nuevoRegistro);
 
 	irAlLabel(etiqueta);
 }
 
 void retornar(t_valor_variable var_retorno){
 
-	printf("Llamada a función 'retornar'. Restaurando contexto de ejecución.\n");
+	printf("Llamada a función 'retornar'.\n");
 	// Tomo contexto actual:
-	registroStack* registroActual = list_get(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1);
-
-	// Limpio los argumentos del registro y descuento el espacio que ocupan en el stack en memoria:
-	pcbActual->stackPointer -= (4 * registroActual->args->elements_count);
-
-	// Limpio las variables del registro y descuento el espacio que ocupan en el stack en memoria:
-	pcbActual->stackPointer -= (4 * registroActual->vars->elements_count);
-
+	registroStack* registroActual = list_get(pcbActual->indiceStack, pcbActual->indiceStack->elements_count -1);
 	// Calculo la dirección de retorno a partir de retVar:
 	t_puntero offset_absoluto = (registroActual->retVar.pagina * tamanioPagina) + registroActual->retVar.offset;
 	asignar(offset_absoluto, var_retorno);
 
-	// Elimino el contexto actual del índice de stack, y seteo el nuevo contexto de ejecución en el index anterior:
-	pcbActual->pc = registroActual->retPos;
-	liberarRegistroStack(list_remove(pcbActual->indiceStack, list_size(pcbActual->indiceStack)-1));
+	finalizar();
 }
 
 void imprimir(t_valor_variable valor_mostrar){
+
 	printf("Solicitando imprimir variable.\n");
 	int * valor = malloc(INT);
 	*valor = valor_mostrar;
@@ -310,6 +319,7 @@ void imprimir(t_valor_variable valor_mostrar){
 }
 
 void imprimirTexto(char* texto){
+
 	printf("Solicitando imprimir texto.\n");
 	texto = _string_trim(texto);
 	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, texto);
@@ -353,6 +363,49 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 void s_signal(t_nombre_semaforo nombre_semaforo){
 
 	aplicar_protocolo_enviar(fdNucleo, SIGNAL_REQUEST, nombre_semaforo);
-
 	printf("SIGNAL del semáforo '%s'.\n", nombre_semaforo);
+}
+
+void llamarSinRetorno(t_nombre_etiqueta etiqueta){
+
+	printf("Llamada sin retorno.\n");
+    registroStack* nuevoRegistro = reg_stack_create();
+    nuevoRegistro->retPos = pcbActual->pc; // Guardo el valor actual del program counter
+    list_add(pcbActual->indiceStack, nuevoRegistro);
+
+    irAlLabel(etiqueta);
+}
+
+void restaurarContextoDeEjecucion(){
+
+	printf("Restaurando contexto de ejecución anterior.\n");
+	registroStack* registroActual = list_remove(pcbActual->indiceStack, pcbActual->indiceStack->elements_count -1);
+
+	// Limpio los argumentos del registro y descuento el espacio que ocupan en el stack en memoria:
+	int i;
+	for(i = 0; i < registroActual->args->elements_count; i++){
+		variable* arg = list_remove(registroActual->args, i);
+		pcbActual->stackPointer -= INT;
+		free(arg); arg = NULL;
+	}
+	// Limpio las variables del registro y descuento el espacio que ocupan en el stack en memoria:
+	for(i = 0; i < registroActual->vars->elements_count; i++){
+		variable* var = list_remove(registroActual->vars, i);
+		pcbActual->stackPointer -= INT;
+		free(var); var = NULL;
+	}
+	// Elimino el contexto actual del índice de stack, y seteo el nuevo contexto de ejecución en el index anterior:
+	pcbActual->pc = registroActual->retPos;
+	//liberarRegistroStack(registroActual);
+	free(registroActual); registroActual = NULL;
+}
+
+void finalizar(void){
+
+    restaurarContextoDeEjecucion();
+
+    if(list_is_empty(pcbActual->indiceStack)){
+    	printf("Finalizar contexto principal.\n");
+    	finalizoPrograma = true;
+    }
 }

@@ -117,17 +117,3 @@ int validar_recive(int status, int modo) {
 void dormir(float miliseconds) {
 	usleep(miliseconds * 1000);
 }
-
-registroStack* reg_stack_create(){
-	registroStack* reg = malloc(sizeof(registroStack));
-	reg->cantidad_args = 0;
-	reg->args = list_create();
-	reg->cantidad_vars = 0;
-	reg->vars = list_create();
-	reg->retPos = 0;
-	reg->retVar.offset = 0;
-	reg->retVar.pagina = 0;
-	reg->retVar.size = 0;
-
-	return reg;
-}
