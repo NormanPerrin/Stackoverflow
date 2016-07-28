@@ -42,6 +42,7 @@ void escucharUMC() {
 		if(mensaje == NULL) {
 			cerrarSocket(sockUMC);
 			cerrarSocket(sockServidor);
+			printf("Swap ha salido del sistema.\n");
 			return;
 		}
 		void (*funcion)(void*) = elegirFuncion(head); // elijo función a ejecutar según protocolo
@@ -52,6 +53,7 @@ void escucharUMC() {
 
 	cerrarSocket(sockUMC);
 	cerrarSocket(sockServidor);
+	printf("Swap ha salido del sistema.\n");
 }
 
 void liberarEstructura() {

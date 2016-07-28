@@ -50,6 +50,7 @@
 - `rm file` Elimina archivo (remove)
 - `rm -fr dir` Eliminar todo el directorio dir
 - `make all` Compilar módulo
+- `watch -n 1 hexdump -c nombArchi.data` comando para controlar archivo en tiempo real
 
 ## Pasos para el Deploy:
 - En caso de instalar con pendrive: descompilar con  `tar -xvf commons_ultimo.tar`
@@ -64,6 +65,5 @@
 - Una vez que todos se hayan bajado los scripts, agregamos nuevamente `*.ansisop` y `scripts/` al .gitignore.
 
 ## Mandar señal SIGUSR1 al proceso CPU:
-
 - 1) Averigüar el PID desde una nueva consola: `~$ pidof CPU`.
 - 2) Usamos el PID devuelto por el comando anterior para terminar el proceso: `~$ kill -USR1 1234`.

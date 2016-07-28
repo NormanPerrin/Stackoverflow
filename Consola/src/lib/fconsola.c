@@ -9,7 +9,7 @@ void crearLoggerConsola(){
 
 void validar_argumentos(int arg) {
 	if(arg != 2) {
-		printf("Error al iniciar: Debe ingresar el script como parámetro.\n");
+		log_error(logger, "Para iniciar se debe ingresar el script como parámetro.");
 		exit(1);
 	}
 }
@@ -25,7 +25,7 @@ void leerScript(char * rutaPrograma){
 	struct stat infoArchivo; // función de stat.h
 
 	descriptorArchivo = open(rutaPrograma, O_RDONLY); // Abre el archivo .asnsisop
-	if(descriptorArchivo == ERROR) perror("Error al abrir script.");
+	if(descriptorArchivo == ERROR) log_error(logger, "No se pudo abrir script.");
 
 	fstat(descriptorArchivo, &infoArchivo); // Obtengo la información del script
 
@@ -33,7 +33,7 @@ void leerScript(char * rutaPrograma){
 	programa = malloc(tamanioPrograma);
 
 	int read_status = read(descriptorArchivo, programa, tamanioPrograma); // Guardo el script en programa
-	if(read_status == ERROR) perror("Error al leer script.");
+	if(read_status == ERROR) log_error(logger, "No se pudo leer script.");
 
 	if( (*programa + tamanioPrograma - 1) != '\0' ){
 		tamanioPrograma++;
@@ -41,7 +41,6 @@ void leerScript(char * rutaPrograma){
 		*(programa + tamanioPrograma - 1) = '\0';
 	}
 
-	printf("Leyendo script...\n\n");
 	printf("%s", programa);
 
 	close(descriptorArchivo);
@@ -57,7 +56,7 @@ void conectarCon_Nucleo(){
 void exitConsola(){
 	cerrarSocket(fd_nucleo);
 	liberarRecursos(); // Libera memoria asignada
-	printf("Cerrando proceso Consola.\n");
+	printf("Consola ha salido del sistema.\n");
 }
 
 void liberarRecursos() {

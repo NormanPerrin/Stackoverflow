@@ -43,7 +43,7 @@ int main(void) {
 			conectarConNucleo(); // Conexión con Núcleo
 
 			while (TRUE){
-				printf("Esperando nuevo proceso a ejecutar...\n"); // Espera activa de mensajes
+				log_info(logger, "Esperando nuevo proceso a ejecutar."); // Espera activa de mensajes
 					if (recibirMensajesDeNucleo() == TRUE) {
 					} else {
 						exitCPU();
@@ -63,6 +63,7 @@ void exitCPU(){
 	liberarRecursos(); // Libero memoria utilizada
 	cerrarSocket(fdUMC);
 	cerrarSocket(fdNucleo);
+	printf("CPU ha salido del sistema.\n");
 }
 
 // Funciones CPU:
@@ -74,7 +75,7 @@ int recibirMensajesDeNucleo(){
 	mensaje = aplicar_protocolo_recibir(fdNucleo, &head);
 
 	if (mensaje == NULL){
-		log_info(logger, "Núcleo se ha desconectado.");
+		log_error(logger, "Núcleo se ha desconectado.");
 		return FALSE;
 	} else {
 		if(head == PCB){
@@ -93,14 +94,14 @@ int recibirMensajesDeNucleo(){
 				return TRUE;
 		} // fin else head
 		else{
-			log_info(logger, "Mensaje inválido de Núcleo.");
+			log_error(logger, "Mensaje inválido de Núcleo.");
 			return FALSE;
 		} // fin else head pcb
 	} // fin else msj null
 }
 
 void ejecutarProcesoActivo(){
-	log_info(logger, "El proceso #%d entró en ejecución.\n", pcbActual->pid);
+	log_info(logger, "El proceso #%d entró en ejecución.", pcbActual->pid);
 	int quantum = pcbActual->quantum;
 
 	while (quantum > 0){
@@ -127,7 +128,7 @@ void ejecutarProcesoActivo(){
 			analizadorLinea(proximaInstruccion, &funcionesAnSISOP, &funcionesKernel);
 
 			if (huboStackOverflow){
-				log_info(logger, "Se ha producido Stack Overflow. Abortando programa...");
+				log_info(logger, "Se ha producido Stack Overflow. Abortando programa actual.");
 				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
 				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
 				free(proximaInstruccion); proximaInstruccion = NULL;
@@ -156,7 +157,7 @@ void ejecutarProcesoActivo(){
 				return;
 			}
 			case POR_WAIT:{
-				log_info(logger, "Expulsando proceso por operación Wait bloqueante.");
+				log_info(logger, "Expulsando proceso por operación WAIT bloqueante.");
 				aplicar_protocolo_enviar(fdNucleo, PCB_WAIT, pcbActual);
 				free(proximaInstruccion); proximaInstruccion = NULL;
 				exitProceso();
