@@ -110,8 +110,8 @@ void ejecutarProcesoActivo(){
 
 			limpiarInstruccion(proximaInstruccion);
 
-			if ( (pcbActual->pc >= (pcbActual->cantidad_instrucciones -1) && string_starts_with(proximaInstruccion, "end"))
-					|| finalizoPrograma ){
+			if ( pcbActual->pc >= (pcbActual->cantidad_instrucciones -1)
+					&& string_starts_with(proximaInstruccion, "end") ){
 				// Es 'end'. Finalizo ejecución por EXIT:
 				log_info(logger, "El programa actual ha finalizado con éxito.");
 				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
@@ -129,6 +129,15 @@ void ejecutarProcesoActivo(){
 				log_info(logger, "Se ha producido Stack Overflow. Abortando programa...");
 				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
 				aplicar_protocolo_enviar(fdNucleo, ABORTO_PROCESO, &(pcbActual->pid));
+				free(proximaInstruccion); proximaInstruccion = NULL;
+				exitProceso();
+				return;
+			}
+			if(finalizoPrograma){
+				// Finalizo ejecución por EXIT:
+				log_info(logger, "El programa actual ha finalizado con éxito.");
+				// Mando solamente el pid, porque al Núcleo ya no le sirve el PCB.
+				aplicar_protocolo_enviar(fdNucleo, PCB_FIN_EJECUCION, &(pcbActual->pid));
 				free(proximaInstruccion); proximaInstruccion = NULL;
 				exitProceso();
 				return;

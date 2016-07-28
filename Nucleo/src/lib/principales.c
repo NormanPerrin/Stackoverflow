@@ -72,7 +72,7 @@ int conexionConUMC(){
 	}
 	handshake_cliente(fd_UMC, "N"); // es terminante por tratarse de UMC
 
-	int * tamPagina = (int*)malloc(INT);
+	int * tamPagina = malloc(INT);
 	int recibido = recibirPorSocket(fd_UMC, tamPagina, INT);
 	if(recibido <= 0){
 		seDesconectoUMC = true;

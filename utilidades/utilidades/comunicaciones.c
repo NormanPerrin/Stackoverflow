@@ -512,7 +512,6 @@ void * serealizarPcb(void * mensaje, int tamanio){
 		desplazamiento += INT;
 	memcpy(buffer + desplazamiento, &(unPcb->tamanioIndiceEtiquetas), INT);
 		desplazamiento += INT;
-
 		unPcb->cantidad_registros_stack = unPcb->indiceStack->elements_count;
 	memcpy(buffer + desplazamiento, &(unPcb->cantidad_registros_stack), INT);
 		desplazamiento += INT;
@@ -611,7 +610,6 @@ pcb * deserealizarPcb(void * buffer, int tamanio){
 		desplazamiento += INT;
 	memcpy(&unPcb->tamanioIndiceEtiquetas, buffer + desplazamiento, INT);
 		desplazamiento += INT;
-
 	memcpy(&unPcb->cantidad_registros_stack, buffer + desplazamiento, INT);
 		desplazamiento += INT;
 
