@@ -282,7 +282,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 		printf("Solicitando segmentos de código y de stack a UMC para el proceso #%d.\n", nuevoPcb->pid);
 
 		aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
-		free(solicitudDeInicio);
+		free(solicitudDeInicio); solicitudDeInicio = NULL;
 
 		int* respuestaUMC = NULL;
 		int head;
@@ -294,7 +294,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 			return FALSE;
 		}
 		if(head == RESPUESTA_PEDIDO){
-			respuestaUMC = (int*)entrada;
+			respuestaUMC = (int*) entrada;
 		}
 		// Verifico la respuesta de UMC:
 		if(*respuestaUMC == PERMITIDO){
@@ -317,7 +317,7 @@ pcb * crearPcb(char* programa){
 
 	int respuestaUMC = solicitarSegmentosAUMC(nuevoPcb, programa);
 	if(respuestaUMC == FALSE){ // el programa es rechazado del sistema
-		free(nuevoPcb);
+		free(nuevoPcb); nuevoPcb = NULL;
 		return NULL;
 	}
 	else{
@@ -444,7 +444,7 @@ void aceptarConexionEntranteDeCPU(){
 	int* stack_size = malloc(INT);
 	*stack_size = config->cantidadPaginasStack;
 	aplicar_protocolo_enviar(new_fd, TAMANIO_STACK, stack_size);
-	free(stack_size);
+	free(stack_size); stack_size = NULL;
 
 	// El nuevo CPU está listo para ejecutar procesos:
 	planificarProceso();
@@ -562,7 +562,7 @@ void finalizarPrograma(int pid, int index){
 		int* exit_pid = malloc(INT);
 		*exit_pid = pid;
 		aplicar_protocolo_enviar(fd_UMC, FINALIZAR_PROGRAMA, exit_pid);
-		free(exit_pid);
+		free(exit_pid); exit_pid = NULL;
 	}
 }
 
@@ -649,6 +649,8 @@ void quitarCpuPorSenialSIGUSR1(cpu* unCpu, int index){
 	log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCpu->id);
 	cerrarSocket(unCpu->fd_cpu);
 	liberarCPU(list_remove(listaCPU, index));
+
+	planificarProceso();
 }
 
 void recorrerListaCPUsYAtenderNuevosMensajes(){
@@ -688,7 +690,10 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 		} else { unCPU->disponibilidad = LIBRE; }
 
-		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
+		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)){
+			free(mensaje); mensaje = NULL;
+			break;
+		}
 
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
@@ -704,7 +709,10 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 		} else { unCPU->disponibilidad = LIBRE; }
 
-		if(seDesconectoConsolaAsociada(*pidEjecutado)) break;
+		if(seDesconectoConsolaAsociada(*pidEjecutado)){
+			free(mensaje); mensaje = NULL;
+			break;
+		}
 
 		int index = pcbListIndex(*pidEjecutado); // indexo el pcb en la lista de procesos
 		// Le informo a UMC que libere la memoria asignada al programa:
@@ -731,13 +739,17 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		void* entrada = NULL;
 		entrada = aplicar_protocolo_recibir(fd, &head);
 		if(head == PCB_ENTRADA_SALIDA) pcbEjecutada = (pcb*) entrada;
+		log_info(logger, "Proceso #%i entrada salida en CPU #%i.", pcbEjecutada->pid, unCPU->id);
 
 		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 		} else { unCPU->disponibilidad = LIBRE; }
 
-		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)) break;
+		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)){
+			free(mensaje); mensaje = NULL;
+			free(entrada); entrada = NULL;
+			break;
+		}
 
-		log_info(logger, "Proceso #%i entrada salida en CPU #%i.", pcbEjecutada->pid, unCPU->id);
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
 		realizarEntradaSalida(pcbEjecutada, datos);
@@ -774,7 +786,10 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 		} else { unCPU->disponibilidad = LIBRE; }
 
-		if(seDesconectoConsolaAsociada(*pid)) break;
+		if(seDesconectoConsolaAsociada(*pid)){
+			free(mensaje); mensaje = NULL;
+			break;
+		}
 
 		// Le informo a UMC que libere la memoria asignada al programa:
 		finalizarPrograma(*pid, index);
@@ -807,7 +822,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			int* respuesta = malloc(INT);
 			*respuesta = CON_BLOQUEO;
 			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, respuesta);
-			free(respuesta);
+			free(respuesta); respuesta = NULL;
 			pcb* waitPcb = NULL;
 			int head;
 			// Recibo la PCB en ejecución que se bloqueó:
@@ -818,7 +833,10 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 			} else { unCPU->disponibilidad = LIBRE; }
 
-			if(seDesconectoConsolaAsociada(waitPcb->pid)) break;
+			if(seDesconectoConsolaAsociada(waitPcb->pid)){
+				free(mensaje); mensaje = NULL;
+				break;
+			}
 
 			 semaforoBloquearProceso(semaforo->bloqueados, waitPcb);
 		}
@@ -826,7 +844,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			int* respuesta = malloc(INT);
 			*respuesta = SIN_BLOQUEO;
 			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, respuesta);
-			free(respuesta);
+			free(respuesta); respuesta = NULL;
 		}
 		free(mensaje); mensaje = NULL;
 
@@ -850,10 +868,18 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		free(mensaje); mensaje = NULL;
 		break;
 	}
-	case SENIAL_SIGUSR1: {
+	case SENIAL_SIGUSR1:{
 
-		printf("Señal SIGUSR1 del CPU #%i. Esperando su PCB en ejecución.\n", unCPU->id);
-		list_add(listaCPU_SIGUSR1, &(unCPU->id));
+		printf("Señal SIGUSR1 en CPU #%i.\n", unCPU->id);
+
+		if(unCPU->disponibilidad == LIBRE){ // saco al cpu del sistema
+			log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCPU->id);
+			cerrarSocket(unCPU->fd_cpu);
+			liberarCPU(list_remove(listaCPU, i));
+		}
+		else{ // el cpu sigue ejecutando (sale después)
+			list_add(listaCPU_SIGUSR1, &(unCPU->id));
+		}
 		free(mensaje); mensaje = NULL;
 
 		break;

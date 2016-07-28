@@ -41,17 +41,23 @@ void liberarPcbActiva(){
 
 void atenderSenialSIGUSR1() {
 		printf("Se recibió señal SIGUSR1. Notificando a Núcleo.\n");
-		int* respuesta = malloc(INT);
-		*respuesta = SENIAL;
-		aplicar_protocolo_enviar(fdNucleo, SENIAL_SIGUSR1, respuesta);
-		free(respuesta);
-		if (cpuOciosa){
+		int* info_senial = malloc(INT);
+		* info_senial = SENIAL;
+		aplicar_protocolo_enviar(fdNucleo, SENIAL_SIGUSR1, info_senial);
+		free( info_senial);  info_senial = NULL;
+
+		if (cpuOciosa){ // cpu sale del sistema
 			printf("Cerrando proceso CPU...\n");
+			cerrarSocket(fdNucleo);
+			cerrarSocket(fdUMC);
 			liberarRecursos();
+
 			exit(EXIT_FAILURE);
 		}
-		finalizarCPU = true;
-		printf("El CPU se cerrará cuando finalice la ráfaga actual.\n");
+		else{ // cpu sigue ejecutando (sale después)
+			finalizarCPU = true;
+			printf("El CPU se cerrará cuando finalice ráfaga actual.\n");
+		}
 }
 
 int conectarConUMC(){
@@ -66,10 +72,10 @@ int conectarConUMC(){
 }
 
 void obtenerTamanioDePagina(){
-	int * tamPagina = (int*)malloc(INT);
+	int * tamPagina = malloc(INT);
 	recibirPorSocket(fdUMC, tamPagina, INT);
 	tamanioPagina = *tamPagina; // Seteo el tamaño de página que recibo de UMC
-	free(tamPagina);
+	free(tamPagina); tamPagina = NULL;
 	printf("Recibí tamanio de página: %d.\n", tamanioPagina);
 }
 
@@ -87,15 +93,17 @@ void conectarConNucleo() {
 		tamanioStack = *((int*) entrada); // Seteo el tamaño de stack que recibo de Núcleo
 	}
 	printf("Recibí tamanio de stack: %d.\n", tamanioStack);
+	free(entrada); entrada = NULL;
 }
 
 void revisarFinalizarCPU(){
 	if (finalizarCPU){
-		if(cpuOciosa) cerrarSocket(fdNucleo);
 		log_debug(logger, "Cerrando CPU por señal SIGUSR1 recibida durante ejecución.");
+		cerrarSocket(fdNucleo);
 		cerrarSocket(fdUMC);
 		liberarRecursos();
-		return;
+
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -108,7 +116,9 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 	entrada = aplicar_protocolo_recibir(fdUMC, &head);
 
 	if(head == RESPUESTA_PEDIDO){
-		estadoDelPedido = (int*)entrada;
+		estadoDelPedido = (int*) entrada;
+
+		free(entrada); entrada = NULL;
 	 if(*estadoDelPedido == NO_PERMITIDO){ // retorno false por pedido rechazado
 		 printf("UMC ha rechazado un pedido del proceso actual.\n");
 		 return FALSE;
@@ -187,7 +197,7 @@ void limpiarInstruccion(char * instruccion){
 }
 
 void liberarRecursos(){
-	free(config->ipUMC);
+	free(config->ipUMC); config->ipUMC = NULL;
 	free(config); config = NULL;
 	log_destroy(logger); logger = NULL;
 	if(pcbActual != NULL) liberarPcbActiva();

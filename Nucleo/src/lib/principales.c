@@ -82,7 +82,7 @@ int conexionConUMC(){
 		// Seteo el tamaño de página que recibo de UMC
 		tamanioPagina = *tamPagina;
 		printf("Recibí tamanio de página: %d.\n", *tamPagina);
-		free(tamPagina);
+		free(tamPagina); tamPagina = NULL;
 
 		return TRUE;
 	}

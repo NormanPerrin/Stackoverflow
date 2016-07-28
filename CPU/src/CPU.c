@@ -93,6 +93,7 @@ int recibirMensajesDeNucleo(){
 				return TRUE;
 		} // fin else head
 		else{
+			log_info(logger, "Mensaje inválido de Núcleo.");
 			return FALSE;
 		} // fin else head pcb
 	} // fin else msj null
