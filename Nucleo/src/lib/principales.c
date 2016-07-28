@@ -94,9 +94,9 @@ void esperar_y_PlanificarProgramas(){
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
 
-	fdEscuchaConsola = nuevoSocket();
-	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
-	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
+	fdEscuchaCPU = nuevoSocket();
+	asociarSocket(fdEscuchaCPU, config->puertoCPU);
+	escucharSocket(fdEscuchaCPU, CONEXIONES_PERMITIDAS);
 
 	// Bucle principal:
 	while(TRUE){
