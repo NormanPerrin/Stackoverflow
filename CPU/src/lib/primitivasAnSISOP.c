@@ -408,4 +408,7 @@ void finalizar(void){
     	printf("Finalizar contexto principal.\n");
     	finalizoPrograma = true;
     }
+    else{
+    	printf("Finalizar contexto actual.\n");
+    }
 }
