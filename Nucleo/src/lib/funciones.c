@@ -459,15 +459,20 @@ void atenderCambiosEnArchivoConfig(){
 	log_info(logger, "Se ha modificado el archivo de configuración.");
 
 	if (length <= 0){
-
 		log_error(logger, "Inotify no pudo leer archivo de configuración.");
-		return;
-
 	} else {
 
 		struct inotify_event *event = (struct inotify_event *) &buffer[i];
 		t_config * new_config = NULL;
 		new_config = config_create(RUTA_CONFIG_NUCLEO);
+
+		if( new_config == NULL ||
+			!config_has_property(new_config, "QUANTUM") ||
+			!config_has_property(new_config, "QUANTUM_SLEEP") ){
+
+			log_error(logger, "Inotify: Archivo NULL o propiedades no encontradas.");
+			return;
+		}
 
 		int aux_quantum = config_get_int_value(new_config, "QUANTUM");
 		int aux_retardo = config_get_int_value(new_config, "QUANTUM_SLEEP");
@@ -489,8 +494,8 @@ void atenderCambiosEnArchivoConfig(){
 
 		max_fd = (max_fd < fd_inotify)? fd_inotify : max_fd;
 		FD_SET(fd_inotify, &readfds);
-		return;
 	} // fin else-if
+	return;
 }
 
 void salvarProcesoEnCPU(int id_cpu){

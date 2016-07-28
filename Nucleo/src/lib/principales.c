@@ -128,9 +128,9 @@ void esperar_y_PlanificarProgramas(){
 
 	    }else{ // fin if nueva conexión --> nuevo msj
 
-	    	verificarDesconexionEnConsolas();
+	    	verificarDesconexionEnConsolas(); // nuevo msj consola
 
-	    	recorrerListaCPUsYAtenderNuevosMensajes();
+	    	recorrerListaCPUsYAtenderNuevosMensajes(); // nuevo msj cpu
 
 	    } // fin else nuevo mensaje CPU o desconexión Consola
 	} // fin del while

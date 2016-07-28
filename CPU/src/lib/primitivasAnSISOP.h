@@ -10,6 +10,7 @@
 bool esArgumento(t_nombre_variable identificador_variable);
 registroStack* reg_stack_create();
 void liberarRegistroStack(registroStack* reg);
+void restaurarContextoDeEjecucion();
 
 t_puntero definirVariable(t_nombre_variable identificador_variable);
 t_puntero obtenerPosicionVariable(t_nombre_variable identificador_variable);
@@ -25,12 +26,15 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 void s_wait(t_nombre_semaforo identificador_semaforo);
 void s_signal(t_nombre_semaforo identificador_semaforo);
-
+void llamarSinRetorno(t_nombre_etiqueta etiqueta);
+void retornar(t_valor_variable retorno);
+void finalizar(void);
 
 // Variables globales provenientes del main:
 extern bool finalizarCPU;
 extern bool cpuOciosa;
 extern bool huboStackOverflow;
 extern int devolvioPcb;
+extern bool finalizoPrograma;
 
 #endif /* CPU_SRC_LIB_PRIMITIVASANSISOP_H_ */

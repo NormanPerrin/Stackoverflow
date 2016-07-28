@@ -271,6 +271,7 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 }
 
 void irAlLabel(t_nombre_etiqueta nombre_etiqueta){
+
 	printf("Llendo a la etiqueta: '%s'.\n", nombre_etiqueta);
 	t_puntero_instruccion posicion_etiqueta = metadata_buscar_etiqueta(nombre_etiqueta, pcbActual->indiceEtiquetas, pcbActual->tamanioIndiceEtiquetas);
 
@@ -298,35 +299,18 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
 
 void retornar(t_valor_variable var_retorno){
 
-	printf("Llamada a función 'retornar'. Restaurando contexto de ejecución.\n");
+	printf("Llamada a función 'retornar'.\n");
 	// Tomo contexto actual:
-	registroStack* registroActual = list_remove(pcbActual->indiceStack, pcbActual->indiceStack->elements_count -1);
-
-	// Limpio los argumentos del registro y descuento el espacio que ocupan en el stack en memoria:
-	int i = 0;
-	for(i = 0; i < registroActual->args->elements_count; i++){
-		variable* arg = list_remove(registroActual->args, i);
-		pcbActual->stackPointer -= INT;
-		free(arg); arg = NULL;
-	}
-	// Limpio las variables del registro y descuento el espacio que ocupan en el stack en memoria:
-	for(i = 0; i < registroActual->vars->elements_count; i++){
-		variable* var = list_remove(registroActual->vars, i);
-		pcbActual->stackPointer -= INT;
-		free(var); var = NULL;
-	}
-
+	registroStack* registroActual = list_get(pcbActual->indiceStack, pcbActual->indiceStack->elements_count -1);
 	// Calculo la dirección de retorno a partir de retVar:
 	t_puntero offset_absoluto = (registroActual->retVar.pagina * tamanioPagina) + registroActual->retVar.offset;
 	asignar(offset_absoluto, var_retorno);
 
-	// Elimino el contexto actual del índice de stack, y seteo el nuevo contexto de ejecución en el index anterior:
-	pcbActual->pc = registroActual->retPos;
-	//liberarRegistroStack(registroActual);
-	free(registroActual); registroActual = NULL;
+	finalizar();
 }
 
 void imprimir(t_valor_variable valor_mostrar){
+
 	printf("Solicitando imprimir variable.\n");
 	int * valor = malloc(INT);
 	*valor = valor_mostrar;
@@ -335,6 +319,7 @@ void imprimir(t_valor_variable valor_mostrar){
 }
 
 void imprimirTexto(char* texto){
+
 	printf("Solicitando imprimir texto.\n");
 	texto = _string_trim(texto);
 	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR_TEXTO, texto);
@@ -378,6 +363,49 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 void s_signal(t_nombre_semaforo nombre_semaforo){
 
 	aplicar_protocolo_enviar(fdNucleo, SIGNAL_REQUEST, nombre_semaforo);
-
 	printf("SIGNAL del semáforo '%s'.\n", nombre_semaforo);
+}
+
+void llamarSinRetorno(t_nombre_etiqueta etiqueta){
+
+	printf("Llamada sin retorno.\n");
+    registroStack* nuevoRegistro = reg_stack_create();
+    nuevoRegistro->retPos = pcbActual->pc; // Guardo el valor actual del program counter
+    list_add(pcbActual->indiceStack, nuevoRegistro);
+
+    irAlLabel(etiqueta);
+}
+
+void restaurarContextoDeEjecucion(){
+
+	printf("Restaurando contexto de ejecución anterior.\n");
+	registroStack* registroActual = list_remove(pcbActual->indiceStack, pcbActual->indiceStack->elements_count -1);
+
+	// Limpio los argumentos del registro y descuento el espacio que ocupan en el stack en memoria:
+	int i;
+	for(i = 0; i < registroActual->args->elements_count; i++){
+		variable* arg = list_remove(registroActual->args, i);
+		pcbActual->stackPointer -= INT;
+		free(arg); arg = NULL;
+	}
+	// Limpio las variables del registro y descuento el espacio que ocupan en el stack en memoria:
+	for(i = 0; i < registroActual->vars->elements_count; i++){
+		variable* var = list_remove(registroActual->vars, i);
+		pcbActual->stackPointer -= INT;
+		free(var); var = NULL;
+	}
+	// Elimino el contexto actual del índice de stack, y seteo el nuevo contexto de ejecución en el index anterior:
+	pcbActual->pc = registroActual->retPos;
+	//liberarRegistroStack(registroActual);
+	free(registroActual); registroActual = NULL;
+}
+
+void finalizar(void){
+
+    restaurarContextoDeEjecucion();
+
+    if(list_is_empty(pcbActual->indiceStack)){
+    	printf("Finalizar contexto principal.\n");
+    	finalizoPrograma = true;
+    }
 }
