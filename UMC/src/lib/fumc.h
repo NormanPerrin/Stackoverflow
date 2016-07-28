@@ -85,6 +85,8 @@
 	pid_activo pids[MAX_CONEXIONES];
 	int *bitmap;
 	t_log *logger;
+	int cont_tlb_miss;
+	int cont_tlb_hit;
 
 	// Cabeceras
 
