@@ -65,7 +65,5 @@
 
 ## Mandar señal SIGUSR1 al proceso CPU:
 
-1) Averigüar el PID desde una nueva consola:
-~$ pidof CPU
-2) Usamos el PID devuelto por el comando anterior para terminar el proceso:
-~$ kill -USR1 1234
+- 1) Averigüar el PID desde una nueva consola: `~$ pidof CPU`.
+- 2) Usamos el PID devuelto por el comando anterior para terminar el proceso: `~$ kill -USR1 1234`.
