@@ -56,6 +56,7 @@
 	int buscarPosOcupadaDesdeLaUltimaLibreEnTablaDeBitMap(int posLibre);
 	int cuantasPaginasTieneElProceso(int arrancaProceso);
 	void mover(int posLibre ,int arrancaProceso , int cantidadDePaginasDelProceso);
+	void crearLoggerSwap();
 
 
 #endif /* FSWAP_H_ */
