@@ -160,11 +160,6 @@ proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos){
 	return proceso;
 }
 
-void encolarPcbAListos(pcb* proceso){
-	printf("Fin de E/S para el proceso #%d. Moviéndolo a cola de Listos.\n", proceso->pid);
-	queue_push(colaListos, proceso);
-}
-
 void* entradaSalidaThread(void* dataHilo){
 	int tiempoDeEspera;
 	dataDispositivo* datos = (dataDispositivo*) dataHilo;
@@ -173,8 +168,9 @@ void* entradaSalidaThread(void* dataHilo){
 			pcb_block = esperarPorProcesoIO(datos); // tomo el primer proceso en la cola de espera del dispositivo
 			tiempoDeEspera = (datos->retardo * pcb_block->espera) * 1000; // duración de la E/S
 			usleep(tiempoDeEspera);
-			encolarPcbAListos(pcb_block->proceso); // agrego al proceso a la cola de listos
+			printf("Fin de E/S para el proceso #%d. Moviéndolo a cola de Listos.\n", pcb_block->proceso->pid);
 
+			queue_push(colaListos, pcb_block->proceso);
 			planificarProceso();
 		}
 		return NULL;
@@ -217,9 +213,20 @@ int obtenerSocketMaximoInicial(){
 	return max_fd_inicial;
 }
 
+void setearQuantumYQuantumSleep(){
+	int i;
+	for (i = 0; i < colaListos->elements->elements_count; i++){
+		pcb* pcb_ready = (pcb*) list_get(colaListos->elements, i);
+		pcb_ready->quantum = config->quantum;
+		pcb_ready->quantum_sleep = config->retardoQuantum;
+	}
+}
+
 void planificarProceso(){
 
 	pthread_mutex_lock(&mutex_planificarProceso);
+
+	setearQuantumYQuantumSleep();
 
 	int i, asignado = 0;
 	for (i = 0; (i < list_size(listaCPU) && asignado == 0); i++){
@@ -291,6 +298,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 		entrada = aplicar_protocolo_recibir(fd_UMC, &head);
 
 		if(entrada == NULL){ // UMC mandó un msj vacío, significa que se desconectó
+			seDesconectoUMC = true;
 			return FALSE;
 		}
 		if(head == RESPUESTA_PEDIDO){
@@ -407,7 +415,6 @@ void aceptarConexionEntranteDeConsola(){
 	// Pongo al nuevo programa en la cola de Listos:
 		list_add(listaProcesos, nuevoPcb);
 		queue_push(colaListos, nuevoPcb);
-
 		planificarProceso();
 
 		  } // fin if head scrpit
@@ -502,7 +509,8 @@ void salvarProcesoEnCPU(int id_cpu){
 
 	bool esLaPcbEnEjecucion(pcb * pcb){ return pcb->id_cpu == id_cpu; }
 
-	pcb * unPcb = (pcb *) list_find(listaProcesos, (void *) esLaPcbEnEjecucion);
+	pcb * unPcb = (pcb *) list_find(listaProcesos, (void*) esLaPcbEnEjecucion);
+
 	if(unPcb != NULL){
 		unPcb->id_cpu = -1; // le desasigno CPU
 		queue_push(colaListos, unPcb); // la mando de nuevo a cola de listos
@@ -584,7 +592,13 @@ void semaforo_signal(t_semaforo* semaforo){
 	semaforo->valor++;
 	if (semaforo->valor <= 0){
 		pcb* procesoBloqueado = queue_pop(semaforo->bloqueados);
-		if (procesoBloqueado != NULL) encolarPcbAListos(procesoBloqueado);
+
+		if (procesoBloqueado != NULL){
+			printf("Proceso #%d desbloqueado por SIGNAL del semáforo '%s'.\n",
+			procesoBloqueado->pid, semaforo->nombre);
+			queue_push(colaListos, procesoBloqueado);
+			planificarProceso();
+		}
     }
 }
 
@@ -626,7 +640,7 @@ void verificarDesconexionEnConsolas(){
 	int i;
 	for (i = 0; i < list_size(listaConsolas); i++){
 
-		consola * unaConsola = (consola *)list_get(listaConsolas, i);
+		consola * unaConsola = (consola*) list_get(listaConsolas, i);
 		int fd = unaConsola->fd_consola;
 
 	if (FD_ISSET(fd , &readfds)){ // nuevo mensaje de consola
@@ -649,8 +663,6 @@ void quitarCpuPorSenialSIGUSR1(cpu* unCpu, int index){
 	log_info(logger, "El CPU #%i fue quitado del sistema por señal SIGUSR1.", unCpu->id);
 	cerrarSocket(unCpu->fd_cpu);
 	liberarCPU(list_remove(listaCPU, index));
-
-	planificarProceso();
 }
 
 void recorrerListaCPUsYAtenderNuevosMensajes(){
@@ -670,12 +682,13 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		    mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
 		    if (mensaje == NULL){ // El CPU se desconectó, lo quito del sistema y salvo su PCB:
+
 		    	log_info(logger,"La CPU #%i se ha desconectado. Salvando PCB en ejecución...", unCPU->id);
 		    	salvarProcesoEnCPU(unCPU->id);
 		    	cerrarSocket(fd);
 		    	liberarCPU(list_remove(listaCPU, i));
-
 		    	planificarProceso();
+
 		    	return;
 
 		    }else{

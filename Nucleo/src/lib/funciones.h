@@ -16,19 +16,19 @@ hiloIO* crearHiloIO(int index);
 int validar_cliente();
 int validar_servidor();
 proceso_bloqueadoIO* esperarPorProcesoIO(dataDispositivo* datos);
-void encolarPcbAListos(pcb* proceso);
 void* entradaSalidaThread(void* dataHilo);
 // Función select + Planificación:
 int obtenerSocketMaximoInicial();
+void setearQuantumYQuantumSleep();
 void planificarProceso();
 pcb* buscarProcesoPorPid(int pid);
 int asignarPid();
 int solicitarSegmentosAUMC(pcb * nuevoPcb, char* programa);
 pcb* crearPcb(char* programa);
-void aceptarConexionEntranteDeConsola(); // --> planificarProceso
-void aceptarConexionEntranteDeCPU(); // --> planificarProceso
+void aceptarConexionEntranteDeConsola();
+void aceptarConexionEntranteDeCPU();
 void atenderCambiosEnArchivoConfig();
-void salvarProcesoEnCPU(int cpuId); // --> planificarProceso
+void salvarProcesoEnCPU(int cpuId);
 int seDesconectoConsolaAsociada(int quantum_pid);
 int envioSenialCPU(int id_cpu);
 void finalizarPrograma(int pid, int index);

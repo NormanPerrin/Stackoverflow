@@ -94,9 +94,9 @@ void esperar_y_PlanificarProgramas(){
 	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
 	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
 
-	fdEscuchaCPU = nuevoSocket();
-	asociarSocket(fdEscuchaCPU, config->puertoCPU);
-	escucharSocket(fdEscuchaCPU, CONEXIONES_PERMITIDAS);
+	fdEscuchaConsola = nuevoSocket();
+	asociarSocket(fdEscuchaConsola, config->puertoPrograma);
+	escucharSocket(fdEscuchaConsola, CONEXIONES_PERMITIDAS);
 
 	// Bucle principal:
 	while(TRUE){
@@ -126,7 +126,8 @@ void esperar_y_PlanificarProgramas(){
 
 	    		atenderCambiosEnArchivoConfig();
 
-	    }else{ // fin if nueva conexión --> nuevo msj
+	    }
+	    else{ // fin if nueva conexión --> nuevo msj
 
 	    	verificarDesconexionEnConsolas(); // nuevo msj consola
 
