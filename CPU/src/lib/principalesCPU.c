@@ -47,11 +47,7 @@ void atenderSenialSIGUSR1() {
 		free( info_senial);  info_senial = NULL;
 
 		if (cpuOciosa){ // cpu sale del sistema
-			printf("Cerrando proceso CPU...\n");
-			cerrarSocket(fdNucleo);
-			cerrarSocket(fdUMC);
-			liberarRecursos();
-
+			exitCPU();
 			exit(EXIT_FAILURE);
 		}
 		else{ // cpu sigue ejecutando (sale después)

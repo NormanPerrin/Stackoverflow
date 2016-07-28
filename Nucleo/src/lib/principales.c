@@ -109,6 +109,7 @@ void esperar_y_PlanificarProgramas(){
 	    FD_SET(fdEscuchaConsola, &readfds);
 	    FD_SET(fdEscuchaCPU, &readfds);
 	    FD_SET(fd_inotify, &readfds);
+	    FD_SET(fd_UMC, &readfds); // TODO !!!!
 	    // Obtengo el descriptor de fichero mayor entre los listeners:
 	    max_fd = obtenerSocketMaximoInicial();
 
@@ -128,7 +129,21 @@ void esperar_y_PlanificarProgramas(){
 
 	    }
 	    else{ // fin if nueva conexión --> nuevo msj
-
+	    	// TODO !!!!
+	    	if(FD_ISSET(fd_UMC, &readfds)){ // nuevo mensaje umc
+	    		int head;
+	    		void * mensaje = NULL;
+	    		mensaje = aplicar_protocolo_recibir(fd_UMC, &head);
+	    		if (mensaje == NULL){ // UMC se desconectó, salgo del sistema:
+	    			log_info(logger,"UMC se ha desconectado.");
+	    		    // Libero memoria y cierro sockets:
+	    		    cerrarSocket(fdEscuchaConsola);
+	    		    cerrarSocket(fdEscuchaCPU);
+	    		    exitNucleo();
+	    		    exit(EXIT_FAILURE);
+	    		}
+	    	}
+	    	// TODO !!!!
 	    	verificarDesconexionEnConsolas(); // nuevo msj consola
 
 	    	recorrerListaCPUsYAtenderNuevosMensajes(); // nuevo msj cpu

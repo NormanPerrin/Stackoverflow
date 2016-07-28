@@ -813,6 +813,7 @@ void liberarConfig() {
 void compararProtocolos(int protocolo1, int protocolo2) {
 	if(protocolo1 != protocolo2) {
 		fprintf(stderr, "Error: se esperaba protocolo #%d y se obtuvo protocolo #%d\n", protocolo2, protocolo1);
+		printf("UMC ha salido del sistema.\n");
 		exit(ERROR);
 	}
 }
@@ -1389,7 +1390,7 @@ void flush(char *argumento) {
 }
 
 void salir() {
-	printf("Saliendo\n");
+	printf("UMC ha salido del sistema.\n");
 	liberarRecusos();
 	close(sockClienteDeSwap);
 	close(sockServidor);
