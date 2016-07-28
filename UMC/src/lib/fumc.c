@@ -47,7 +47,9 @@ void consola() {
 		scanf("%[^\n]%*c", mensaje);
 		funcion_t *mensaje_separado = separarMensaje(mensaje);
 
+		sem_wait(&mutex);
 		void (*funcion)(char*) = direccionarConsola(mensaje_separado->cabeza); // elijo función a ejecutar según mensaje
+		sem_post(&mutex);
 		if(funcion == NULL) {
 			printf("Error: Comando no reconocido \"%s\". Escribe \"ayuda\" para ver los comandos\n", mensaje_separado->cabeza);
 			free(mensaje_separado->cabeza);
