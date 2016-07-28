@@ -184,6 +184,7 @@
 	void limpiarTLB();
 	void salir();
 	void cambiarModificado();
+	void tlb_show(char *argumento);
 	// </CONSOLA_FUNCS>
 
 #endif /* LIB_FUMC_H_ */

@@ -138,7 +138,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	solicitudLeerPagina* pedido = malloc(sizeof(solicitudLeerPagina));
 	pedido->pid = pid;
 	pedido->pagina = pagina;
-	printf("> [PEDIR_PAGINA_SWAP]: (#fd: %d) (#pid: %d) (#pagina: %d)\n", fd, pid, pagina);
+	printf("> [Pedir Pagina Swap]: (#fd: %d) (#pid: %d) (#pagina: %d)\n", fd, pid, pagina);
 	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, pedido);
 	free(pedido); pedido = NULL;
 
@@ -623,7 +623,7 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 		if(config->entradas_tlb != 0)
 			borrar_entrada_tlb(pid, pagina_reemplazar->elegida.pagina);
 
-		printf("[Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: %d)\n", pid, pagina, marco, pagina_reemplazar->elegida.pagina);
+		printf("> [Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: %d)\n", pid, pagina, marco, pagina_reemplazar->elegida.pagina);
 
 	} else if(paginas_asignadas < marcos_asignados) { // se puede buscar marco entre los disponibles
 
@@ -631,7 +631,7 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 		actualizar_tp(pid, pagina, marco, 1, -1, 1);
 		actualizarPuntero(pid, pagina);
 
-		printf("[Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: nadie)\n", pid, pagina, marco);
+		printf("> [Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: nadie)\n", pid, pagina, marco);
 
 	} else { // las paginas asignadas es mayor al número de marcos disponibles
 
@@ -874,6 +874,9 @@ void *direccionarConsola(char *mensaje) {
 		return salir;
 	}
 
+	if(!strcmp(mensaje, "tlb"))
+		return tlb_show;
+
 	if(!strcmp(mensaje, "ayuda"))
 		return help;
 
@@ -905,7 +908,7 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 
 	if(pagina_reemplazar.bit_modificado == 1) { // tengo que escribir en disco
 
-		printf("[Escritura Disco] (#pid: %d) (#pagina: %d)\n", pid, pagina_reemplazar.pagina);
+		printf("> [Escritura Disco] (#pid: %d) (#pagina: %d)\n", pid, pagina_reemplazar.pagina);
 
 		// seteo pedido
 		solicitudEscribirPagina *pedido = reservarMemoria(sizeof(solicitudEscribirPagina));
@@ -1320,11 +1323,26 @@ void help(char *argumento) {
 	printf("\nComandos:\n");
 	printf("> retardo num (en milisegundos. cambia retardo a num)\n");
 	printf("> dump (genera informe tabla paginas y memoria)\n");
-	printf("> flush tlb | memory (tlb: limpia contenido de tlb | memory: marca todas paginas de proceso como modificadas)\n\n");
+	printf("> flush tlb | memory (tlb: limpia contenido de tlb | memory: marca todas paginas de proceso como modificadas)\n");
+	printf("> tlb (muestra el contenido de la tlb)\n\n");
+}
+
+void tlb_show(char *argumento) {
+	int cantidad_elementos = list_size(tlb);
+
+	if(cantidad_elementos == 0)
+		printf("No hay elementos que mostrar\n");
+
+	int i = 0;
+	for(; i < cantidad_elementos; i++) {
+		registro_tlb *elem = list_get(tlb, i);
+		printf("TLB[%d]: (#pid: %d) (#pagina: %d) (#marco: %d)\n", i, elem->pid, elem->pagina, elem->marco);
+	}
 }
 
 void retardo(char *argumento) {
 	config->retardo = atoi(argumento);
+	printf("Se ha cambiado el retardo a %s\n", argumento);
 }
 
 void dump(char *argumento) {
