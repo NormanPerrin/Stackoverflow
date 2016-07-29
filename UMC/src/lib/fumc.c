@@ -1323,8 +1323,11 @@ void tlb_show(char *argumento) {
 	int i = 0;
 	for(; i < cantidad_elementos; i++) {
 		registro_tlb *elem = list_get(tlb, i);
-		log_info(logger, "TLB[%d]: (#pid: %d) (#pagina: %d) (#marco: %d) (#tlb_hit: %d) (#tlb_miss: %d).", i, elem->pid, elem->pagina, elem->marco, cont_tlb_hit, cont_tlb_miss);
+		log_info(logger, "TLB[%d]: (#pid: %d) (#pagina: %d) (#marco: %d).", i, elem->pid, elem->pagina, elem->marco);
 	}
+
+	log_info(logger, "(#tlb_hit: %d) (#tlb_miss: %d)." , cont_tlb_hit, cont_tlb_miss);
+
 }
 
 void retardo(char *argumento) {
