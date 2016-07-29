@@ -12,7 +12,7 @@ void iniciarEscuchaDeInotify(){
 
 int setearValoresDeConfig(t_config * archivoConfig){
 
-	config = (t_configuracion*)malloc(sizeof(t_configuracion));
+	config = (t_configuracion*) malloc(sizeof(t_configuracion));
 
 		if (config_has_property(archivoConfig, "PUERTO_UMC")) {
 			config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");

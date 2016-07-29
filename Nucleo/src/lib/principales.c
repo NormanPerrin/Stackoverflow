@@ -49,14 +49,41 @@ void llenarDiccionarioVarCompartidas(){
 }
 
 void lanzarHilosIO(){
-  int i = 0;
-  while (config->ioID[i] != '\0'){
-      hiloIO *hilo = crearHiloIO(i);
-      pthread_create(&hilo->hiloID, NULL, &entradaSalidaThread, (void*) &hilo->dataHilo);
-      dictionary_put(diccionarioIO, config->ioID[i], hilo);
-      log_info(logger, "Lanzando hilo de E/S #%d del dispositivo '%s'.", i, hilo->dataHilo.nombre);
-    i++;
-    }
+	int i = 0;
+	while (config->ioID[i] != '\0'){
+		hiloIO* hilo = crearHiloIO(i);
+		pthread_create(&hilo->hiloID, NULL, &entradaSalidaThread, (void*) &hilo->dataHilo);
+		dictionary_put(diccionarioIO, config->ioID[i], hilo);
+		log_info(logger, "Lanzando hilo de E/S #%d del dispositivo '%s'.", i, hilo->dataHilo.nombre);
+		i++;
+	}
+}
+
+void unirHilosIO(){
+	int i = 0;
+	while (config->ioID[i] != '\0'){
+		hiloIO* hilo = (hiloIO*) dictionary_get(diccionarioIO, config->ioID[i]);
+		//log_info(logger, "Cerrando hilo de E/S del dispositivo '%s'.", hilo->dataHilo.nombre);
+		//pthread_join(hilo->hiloID, NULL);
+
+		int status;
+		void *res;
+
+		status = pthread_cancel(hilo->hiloID);
+		if (status != 0) log_error(logger, "El hilo del dispositivo '%s' no pudo cancelarse.", hilo->dataHilo.nombre);
+
+		status = pthread_join(hilo->hiloID, &res);
+		if (status != 0) log_error(logger, "El hilo del dispositivo '%s' no pudo unirse.", hilo->dataHilo.nombre);
+
+		if (res == PTHREAD_CANCELED){
+			log_info(logger, "El hilo del dispositivo de E/S '%s' se ha cerrado.", hilo->dataHilo.nombre);
+		}
+		else{
+			log_error(logger, "El hilo del dispositivo de E/s '%s' no pudo cerrarse.", hilo->dataHilo.nombre);
+		}
+
+		i++;
+	}
 }
 
 int conexionConUMC(){
@@ -129,7 +156,6 @@ void esperar_y_PlanificarProgramas(){
 
 	    }
 	    else{ // fin if nueva conexión --> nuevo msj
-	    	// TODO !!!!
 	    	if(FD_ISSET(fd_UMC, &readfds)){ // nuevo mensaje umc
 	    		int head;
 	    		void * mensaje = NULL;
@@ -137,13 +163,15 @@ void esperar_y_PlanificarProgramas(){
 	    		if (mensaje == NULL){ // UMC se desconectó, salgo del sistema:
 	    			log_info(logger,"UMC se ha desconectado.");
 	    		    // Libero memoria y cierro sockets:
+	    			pthread_mutex_destroy(&mutex_planificarProceso);
+	    			unirHilosIO();
 	    		    cerrarSocket(fdEscuchaConsola);
 	    		    cerrarSocket(fdEscuchaCPU);
 	    		    exitNucleo();
+
 	    		    exit(EXIT_FAILURE);
 	    		}
 	    	}
-	    	// TODO !!!!
 	    	verificarDesconexionEnConsolas(); // nuevo msj consola
 
 	    	recorrerListaCPUsYAtenderNuevosMensajes(); // nuevo msj cpu
@@ -151,17 +179,6 @@ void esperar_y_PlanificarProgramas(){
 	    } // fin else nuevo mensaje CPU o desconexión Consola
 	} // fin del while
 } // fin select
-
-void unirHilosIO(){
-	int i = 0;
-	while (config->ioID[i] != '\0'){
-		hiloIO* hilo = (hiloIO*) dictionary_get(diccionarioIO, config->ioID[i]);
-		log_info(logger, "Cerrando hilo de E/S del dispositivo '%s'.", hilo->dataHilo.nombre);
-		pthread_join(hilo->hiloID, NULL);
-		//free(hilo); hilo = NULL;
-		i++;
-	}
-}
 
 void liberarRecursosUtilizados(){
 	limpiarColecciones();
