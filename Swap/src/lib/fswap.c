@@ -132,7 +132,7 @@ void iniciar_programa(void *msj) {
 	inicioPrograma *mensaje = (inicioPrograma*) msj;
 	int pid = mensaje->pid;
 	int paginas = mensaje->paginas;
-	log_info(logger ,"[INICIAR_PROGRAMA]: (#pid: %d) (#paginas: %d).", pid, paginas);
+	log_info(logger, "[INICIAR_PROGRAMA]: (#pid: %d) (#paginas: %d).", pid, paginas);
 
 	if(paginasLibresTotales >= paginas) { // se puede alojar el proceso aunque sea compactando
 
@@ -167,9 +167,13 @@ void iniciar_programa(void *msj) {
 			paginasLibresTotales -= paginas;
 		}
 
-	} else *respuesta = NO_PERMITIDO; // no hay paginas disponibles para satisfacer la demanda
+	} else {
+		log_info(logger, "[Programa Rechazado]");
+		*respuesta = NO_PERMITIDO; // no hay paginas disponibles para satisfacer la demanda
+	}
 
 	if(*respuesta == PERMITIDO) {
+		log_info(logger, "[Programa Aceptado]");
 		int pos = buscarPaginaEnTablaDePaginas(pid, 0);
 		avanzarPaginas(pos);
 		dormir(config->retardoAcceso);

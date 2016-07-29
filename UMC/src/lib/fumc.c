@@ -212,6 +212,9 @@ void inciar_programa(int fd, void *msj) {
 	agregar_paginas_nuevas(mensaje->pid, mensaje->paginas);
 
 	if( asignarMarcos(mensaje->pid) == FALSE ) {
+
+		log_warning(logger, "[Programa rechazado] <Sin marcos disponibles>");
+
 		// borro estructuras que creé
 		int pos = pos_pid(mensaje->pid);
 		int i = 0;
@@ -240,6 +243,9 @@ void inciar_programa(int fd, void *msj) {
 	compararProtocolos(protocolo, RESPUESTA_PEDIDO); // comparo protocolo recibido con esperado
 
 	if(*respuestaDeInicio == NO_PERMITIDO) {
+
+		log_warning(logger, "[Programa rechazado] <Swap no pudo alocar segmentos>");
+
 		// borro estructuras que creé
 		int pos = pos_pid(mensaje->pid);
 		int i = 0;
@@ -247,6 +253,11 @@ void inciar_programa(int fd, void *msj) {
 		tabla_paginas[pos].pid = -1;
 		tabla_paginas[pos].paginas = MAX_PAGINAS;
 		tabla_paginas[pos].puntero = 0;
+
+	} else {
+
+		log_info(logger, "[Programa aceptado]");
+
 	}
 
 	// 4) Respondo a Núcleo como salió la operación
@@ -635,7 +646,7 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 		if(config->entradas_tlb != 0)
 			borrar_entrada_tlb(pid, pagina_reemplazar->elegida.pagina);
 
-		log_info(logger, "[Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: %d).", pid, pagina, marco, pagina_reemplazar->elegida.pagina);
+		log_info(logger, "[Page Fault]: (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: %d).", pid, pagina, marco, pagina_reemplazar->elegida.pagina);
 
 	} else if(paginas_asignadas < marcos_asignados) { // se puede buscar marco entre los disponibles
 
@@ -643,7 +654,7 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 		actualizar_tp(pid, pagina, marco, 1, -1, 1);
 		actualizarPuntero(pid, pagina);
 
-		log_info(logger, "[Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: nadie).", pid, pagina, marco);
+		log_info(logger, "[Page Fault]: (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: nadie).", pid, pagina, marco);
 
 	} else { // las paginas asignadas es mayor al número de marcos disponibles
 
