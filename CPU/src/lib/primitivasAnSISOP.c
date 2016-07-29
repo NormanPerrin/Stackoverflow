@@ -222,16 +222,14 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 	aplicar_protocolo_enviar(fdNucleo, OBTENER_VAR_COMPARTIDA, var_compartida_nombre);
 
 	void* entrada = NULL;
-	int* valor_variable = NULL;
 	int head;
-
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 
 	if(head == DEVOLVER_VAR_COMPARTIDA && entrada != NULL){
-		valor_variable = (int*) entrada;
-		log_trace(logger, "Variable Compartida: '%s' -> Valor: '%d'.", var_compartida_nombre, *valor_variable);
+		t_valor_variable valor = *((int*) entrada);
+		log_trace(logger, "Variable Compartida: '%s' -> Valor: '%d'.", var_compartida_nombre, valor);
 
-		return *valor_variable;
+		return valor;
 	}
 	else{
 		log_error(logger, "No se pudo obtener valor de Variable Compartida '%s'.", var_compartida_nombre);
@@ -246,7 +244,7 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida var_compartida_nombr
 	var_compartida * variableCompartida = malloc(strlen(var_compartida_nombre)+ 5);
 
 	variableCompartida->valor = var_compartida_valor;
-	variableCompartida->nombre = var_compartida_nombre; // TODO: malloc
+	variableCompartida->nombre = var_compartida_nombre;
 
 	aplicar_protocolo_enviar(fdNucleo, GRABAR_VAR_COMPARTIDA, variableCompartida);
 

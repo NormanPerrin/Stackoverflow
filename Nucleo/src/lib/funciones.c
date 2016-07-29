@@ -12,7 +12,7 @@ void iniciarEscuchaDeInotify(){
 
 int setearValoresDeConfig(t_config * archivoConfig){
 
-	config = (t_configuracion*) malloc(sizeof(t_configuracion));
+	config = malloc(sizeof(t_configuracion));
 
 		if (config_has_property(archivoConfig, "PUERTO_UMC")) {
 			config->puertoUMC = config_get_int_value(archivoConfig, "PUERTO_UMC");
@@ -86,7 +86,7 @@ int setearValoresDeConfig(t_config * archivoConfig){
 			log_info(logger, "El archivo de configuracion no contiene la clave STACK_SIZE.");
 			return FALSE;
 		}
-		config_destroy(archivoConfig); // Libero la estructura archivoConfig
+		config_destroy(archivoConfig); archivoConfig = NULL;
 
 	return TRUE;
 }
@@ -287,27 +287,27 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 		inicioPrograma* solicitudDeInicio = (inicioPrograma*) malloc(tamanio_programa+12);
 		solicitudDeInicio->paginas = nuevoPcb->paginas_stack + nuevoPcb->paginas_codigo;
 		solicitudDeInicio->pid = nuevoPcb->pid;
-		solicitudDeInicio->contenido = strdup(programa);
+		solicitudDeInicio->contenido = programa;
 		log_info(logger, "Solicitando segmentos a UMC para el proceso #%d.", nuevoPcb->pid);
 
 		aplicar_protocolo_enviar(fd_UMC, INICIAR_PROGRAMA, solicitudDeInicio);
 		free(solicitudDeInicio); solicitudDeInicio = NULL;
 
-		int* respuestaUMC = NULL;
-		int head;
+		int head, respuestaUMC;
 		void * entrada = NULL;
 
 		entrada = aplicar_protocolo_recibir(fd_UMC, &head);
 
-		if(entrada == NULL){ // UMC mandó un msj vacío, significa que se desconectó
+		if(entrada == NULL || head != RESPUESTA_PEDIDO){ // UMC  se desconectó:
 			seDesconectoUMC = true;
 			return FALSE;
 		}
-		if(head == RESPUESTA_PEDIDO){
-			respuestaUMC = (int*) entrada;
-		}
+
+		respuestaUMC = *((int*) entrada);
+		free(entrada); entrada = NULL;
+
 		// Verifico la respuesta de UMC:
-		if(*respuestaUMC == PERMITIDO){
+		if(respuestaUMC == PERMITIDO){
 			log_info(logger, "Segmentos del proceso #%d alocados.", nuevoPcb->pid);
 
 			return TRUE;
@@ -750,7 +750,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		} else { unCPU->disponibilidad = LIBRE; }
 
 		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)){
-			free(mensaje); mensaje = NULL;
+			liberarPcbNucleo(pcbEjecutada);
 			break;
 		}
 
@@ -762,23 +762,23 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case PCB_FIN_EJECUCION:{
 
-		int* pidEjecutado = (int*) mensaje;
-		log_info(logger, "Proceso #%i fin de ejecución en CPU %i.", *pidEjecutado, unCPU->id);
+		int pidEjecutado = *((int*) mensaje);
+		log_info(logger, "Proceso #%i fin de ejecución en CPU %i.", pidEjecutado, unCPU->id);
 
 		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 		} else { unCPU->disponibilidad = LIBRE; }
 
-		if(seDesconectoConsolaAsociada(*pidEjecutado)){
+		if(seDesconectoConsolaAsociada(pidEjecutado)){
 			free(mensaje); mensaje = NULL;
 			break;
 		}
 
-		int index = pcbListIndex(*pidEjecutado); // indexo el pcb en la lista de procesos
+		int index = pcbListIndex(pidEjecutado); // indexo el pcb en la lista de procesos
 		// Le informo a UMC que libere la memoria asignada al programa:
-		finalizarPrograma(*pidEjecutado, index);
+		finalizarPrograma(pidEjecutado, index);
 		// Le informo a la Consola asociada:
-		bool consolaTieneElPid(consola* unaConsola){ return unaConsola->pid == *pidEjecutado;}
-		consola * consolaAsociada = list_remove_by_condition(listaConsolas, (void*) consolaTieneElPid);
+		bool consolaTieneElPid(consola* unaConsola){ return unaConsola->pid == pidEjecutado;}
+		consola* consolaAsociada = list_remove_by_condition(listaConsolas, (void*) consolaTieneElPid);
 		int respuesta = PERMITIDO;
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, &respuesta);
 		// Libero la Consola asociada y la saco del sistema:
@@ -807,30 +807,35 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		} else { unCPU->disponibilidad = LIBRE; }
 
 		if(seDesconectoConsolaAsociada(pcbEjecutada->pid)){
-			free(mensaje); mensaje = NULL;
-			free(entrada); entrada = NULL;
+			free(datos->nombreDispositivo); datos->nombreDispositivo = NULL;
+			free(datos); datos = NULL;
+			liberarPcbNucleo(pcbEjecutada);
 			break;
 		}
 
 		pcbEjecutada->id_cpu = -1; // le desasigno CPU
 
 		realizarEntradaSalida(pcbEjecutada, datos);
-		free(mensaje); mensaje = NULL;
+
+		free(datos->nombreDispositivo); datos->nombreDispositivo = NULL;
+		free(datos); datos = NULL;
 
 		break;
 	}
 	case IMPRIMIR:{
 
-		consola * consolaAsociada = list_find(listaConsolas, (void*) consolaTieneElPidCPU);
+		consola* consolaAsociada = list_find(listaConsolas, (void*) consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
-		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, string_itoa(*((int*) mensaje)));
+		char* variable = string_itoa(*((int*) mensaje));
+		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, variable);
+		free(variable); variable = NULL;
 		free(mensaje); mensaje = NULL;
 
 		break;
 	}
 	case IMPRIMIR_TEXTO:{
 
-		consola * consolaAsociada = list_find(listaConsolas, (void*) consolaTieneElPidCPU);
+		consola* consolaAsociada = list_find(listaConsolas, (void*) consolaTieneElPidCPU);
 		// Le mando el msj a la Consola asociada:
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
 		free(mensaje); mensaje = NULL;
@@ -839,22 +844,22 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	}
 	case ABORTO_PROCESO:{ // Es lo mismo que para fin de ejecución
 
-		int* pid = (int*) mensaje;
-		int index = pcbListIndex(*pid);
-		log_info(logger, "Proceso #%i abortando ejecución en CPU #%i.", *pid, unCPU->id);
+		int pid = *((int*) mensaje);
+		int index = pcbListIndex(pid);
+		log_info(logger, "Proceso #%i abortando ejecución en CPU #%i.", pid, unCPU->id);
 
 		if(envioSenialCPU(unCPU->id)){ quitarCpuPorSenialSIGUSR1(unCPU, i);
 		} else { unCPU->disponibilidad = LIBRE; }
 
-		if(seDesconectoConsolaAsociada(*pid)){
+		if(seDesconectoConsolaAsociada(pid)){
 			free(mensaje); mensaje = NULL;
 			break;
 		}
 
 		// Le informo a UMC que libere la memoria asignada al programa:
-		finalizarPrograma(*pid, index);
+		finalizarPrograma(pid, index);
 		// Le informo a la Consola asociada:
-		bool consolaTieneElPidProceso(consola* unaConsola){ return unaConsola->pid == *pid;}
+		bool consolaTieneElPidProceso(consola* unaConsola){ return unaConsola->pid == pid;}
 		consola * consolaAsociada = list_remove_by_condition(listaConsolas, (void*) consolaTieneElPidProceso);
 		int respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(consolaAsociada->fd_consola, FINALIZAR_PROGRAMA, &respuesta);
@@ -877,12 +882,13 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	case WAIT_REQUEST:{
 
 		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*) mensaje);
+		free(mensaje); mensaje = NULL;
+
 		if (semaforo_wait(semaforo)){ // El proceso se bloquea al hacer wait del semáforo
 			// Notifico al CPU:
-			int* respuesta = malloc(INT);
-			*respuesta = CON_BLOQUEO;
-			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, respuesta);
-			free(respuesta); respuesta = NULL;
+			int respuesta = CON_BLOQUEO;
+			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, &respuesta);
+
 			pcb* waitPcb = NULL;
 			int head;
 			// Recibo la PCB en ejecución que se bloqueó:
@@ -897,19 +903,16 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			} else { unCPU->disponibilidad = LIBRE; }
 
 			if(seDesconectoConsolaAsociada(waitPcb->pid)){
-				free(mensaje); mensaje = NULL;
+				liberarPcbNucleo(waitPcb);
 				break;
 			}
 
 			 semaforoBloquearProceso(semaforo->bloqueados, waitPcb);
 		}
 		else{ // El proceso no se bloquea y puede seguir ejecutando:
-			int* respuesta = malloc(INT);
-			*respuesta = SIN_BLOQUEO;
-			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, respuesta);
-			free(respuesta); respuesta = NULL;
+			int respuesta = SIN_BLOQUEO;
+			aplicar_protocolo_enviar(fd, RESPUESTA_WAIT, &respuesta);
 		}
-		free(mensaje); mensaje = NULL;
 
 		break;
 	}
@@ -922,7 +925,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		break;
 	}
-	case GRABAR_VAR_COMPARTIDA:{ // TODO:  ver memcpy de mensaje, free, si se envia, qué onda
+	case GRABAR_VAR_COMPARTIDA:{
 
 		var_compartida* var_aGrabar = (var_compartida*) mensaje;
 		// Actualizo el valor de la variable solicitada:
@@ -1047,16 +1050,34 @@ void limpiarColecciones(){
 	}
 	diccionarioVarCompartidas = NULL;
 
+	if(dictionary_size(diccionarioIO) > 0){
+
+		int i = 0;
+		while (config->ioID[i] != '\0'){
+			hiloIO* hilo = (hiloIO*) dictionary_remove(diccionarioIO, config->ioID[i]);
+			free(hilo->dataHilo.nombre); hilo->dataHilo.nombre = NULL;
+
+			if(queue_size(hilo->dataHilo.bloqueados) > 0){
+				int i;
+				for(i=0; i<queue_size(hilo->dataHilo.bloqueados); i++){
+					pcb* proceso = (pcb*) list_remove(hilo->dataHilo.bloqueados->elements, i);
+					if(proceso != NULL) liberarPcbNucleo(proceso);
+				}
+			}
+			queue_destroy(hilo->dataHilo.bloqueados); hilo->dataHilo.bloqueados = NULL;
+			i++;
+		}
+	}
 	dictionary_destroy(diccionarioIO); diccionarioIO = NULL;
 }
 
 void limpiarArchivoConfig(){
-	free(config->ioID);
-	free(config->ipUMC);
-	free(config->retardosIO);
-	free(config->semaforosID);
-	free(config->semaforosValInicial);
-	free(config->variablesCompartidas);
+	free(config->ioID); config->ioID = NULL;
+	free(config->ipUMC); config->ipUMC = NULL;
+	free(config->retardosIO); config->retardosIO = NULL;
+	free(config->semaforosID); config->semaforosID = NULL;
+	free(config->semaforosValInicial); config->semaforosValInicial = NULL;
+	free(config->variablesCompartidas); config->variablesCompartidas = NULL;
 	free(config); config = NULL;
 }
 

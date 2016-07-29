@@ -215,6 +215,7 @@ void limpiarInstruccion(char * instruccion){
 }
 
 void liberarRecursos(){
+	free(config->ipNucleo); config->ipNucleo = NULL;
 	free(config->ipUMC); config->ipUMC = NULL;
 	free(config); config = NULL;
 	log_destroy(logger); logger = NULL;

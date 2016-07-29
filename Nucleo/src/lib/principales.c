@@ -63,8 +63,6 @@ void unirHilosIO(){
 	int i = 0;
 	while (config->ioID[i] != '\0'){
 		hiloIO* hilo = (hiloIO*) dictionary_get(diccionarioIO, config->ioID[i]);
-		//log_info(logger, "Cerrando hilo de E/S del dispositivo '%s'.", hilo->dataHilo.nombre);
-		//pthread_join(hilo->hiloID, NULL);
 
 		int status;
 		void *res;
@@ -136,7 +134,7 @@ void esperar_y_PlanificarProgramas(){
 	    FD_SET(fdEscuchaConsola, &readfds);
 	    FD_SET(fdEscuchaCPU, &readfds);
 	    FD_SET(fd_inotify, &readfds);
-	    FD_SET(fd_UMC, &readfds); // TODO !!!!
+	    FD_SET(fd_UMC, &readfds);
 	    // Obtengo el descriptor de fichero mayor entre los listeners:
 	    max_fd = obtenerSocketMaximoInicial();
 
