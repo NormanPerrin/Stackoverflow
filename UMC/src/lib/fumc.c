@@ -47,9 +47,7 @@ void consola() {
 		scanf("%[^\n]%*c", mensaje);
 		funcion_t *mensaje_separado = separarMensaje(mensaje);
 
-		sem_wait(&mutex);
 		void (*funcion)(char*) = direccionarConsola(mensaje_separado->cabeza); // elijo función a ejecutar según mensaje
-		sem_post(&mutex);
 		if(funcion == NULL) {
 			printf("Error: Comando no reconocido \"%s\". Escribe \"ayuda\" para ver los comandos\n", mensaje_separado->cabeza);
 			free(mensaje_separado->cabeza);
@@ -57,7 +55,9 @@ void consola() {
 			free(mensaje_separado);
 			continue;
 		}
+		sem_wait(&mutex);
 		funcion(mensaje_separado->argumento);
+		sem_post(&mutex);
 		free(mensaje_separado->cabeza);
 		free(mensaje_separado->argumento);
 		free(mensaje_separado);
@@ -109,7 +109,6 @@ void cliente(void* fdCliente) {
 
 	int sockCliente = *((int*)fdCliente);
 	free(fdCliente);
-
 	int head;
 
 	while(!exitFlag) {
@@ -210,7 +209,22 @@ void inciar_programa(int fd, void *msj) {
 	inicioPrograma *mensaje = (inicioPrograma*) msj; // casteo
 	log_info(logger, "[INICIAR_PROGRAMA]: (#fd: %d) (#pid: %d) (#paginas: %d).", fd, mensaje->pid, mensaje->paginas);
 
-	// 1) Agrego a tabla de páginas
+	// 1) Envío a Swap directamente
+	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, msj);
+
+	// 2) Espero respuesta de Swap
+	int protocolo;
+	int *respuestaDeInicio = NULL;
+	respuestaDeInicio = aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
+	compararProtocolos(protocolo, RESPUESTA_PEDIDO); // comparo protocolo recibido con esperado
+
+	if(*respuestaDeInicio == NO_PERMITIDO) {
+		aplicar_protocolo_enviar(sockClienteDeSwap, RESPUESTA_PEDIDO, respuestaDeInicio);
+		free(respuestaDeInicio);
+		return;
+	}
+
+	// 3) Agrego a tabla de páginas
 	iniciar_principales(mensaje->pid, mensaje->paginas);
 	agregar_paginas_nuevas(mensaje->pid, mensaje->paginas);
 	if( asignarMarcos(mensaje->pid) == FALSE ) {
@@ -220,15 +234,6 @@ void inciar_programa(int fd, void *msj) {
 		free(respuesta);
 		return;
 	}
-
-	// 2) Envío a Swap directamente
-	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, msj);
-
-	// 3) Espero respuesta de Swap
-	int protocolo;
-	void *respuestaDeInicio = NULL;
-	respuestaDeInicio = aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
-	compararProtocolos(protocolo, RESPUESTA_PEDIDO); // comparo protocolo recibido con esperado
 
 	// 4) Respondo a Núcleo como salió la operación
 	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaDeInicio);
@@ -1043,7 +1048,7 @@ int asignarMarcos(int pid) {
 		for(; cont_globales < config->marcos; cont_globales++)
 			if(bitmap[cont_globales] == 0) break;
 
-		if(bitmap[cont_globales] != 0) { // no encontro marco
+		if(cont_globales == config->marcos) { // no encontro marco
 			if(!asigno) // no encontro marco dentro de las globales y no asigno antes
 				return FALSE;
 			else // no encontro marco dentro de las globales pero asigno antes
