@@ -251,6 +251,7 @@ void planificarProceso(){
 				}
 			}
 		} // Si no hay CPU libre sigue de largo.
+
 	pthread_mutex_unlock(&mutex_planificarProceso);
 }
 
@@ -423,6 +424,7 @@ void aceptarConexionEntranteDeConsola(){
 		queue_push(colaListos, nuevoPcb);
 		planificarProceso();
 
+		mostrarEstadoDeLasColas();
 		  } // fin if head scrpit
 		  else{
 			  log_error(logger, "Se espera script de la Consola #%d.", nuevaConsola->id);
@@ -461,6 +463,8 @@ void aceptarConexionEntranteDeCPU(){
 
 	// El nuevo CPU está listo para ejecutar procesos:
 	planificarProceso();
+
+	mostrarEstadoDeLasColas();
 }
 
 void atenderCambiosEnArchivoConfig(){
@@ -696,6 +700,7 @@ void verificarDesconexionEnConsolas(){
 			tratarPcbDeConsolaDesconectada(unaConsola->pid);
 			cerrarSocket(fd);
 			liberarConsola(list_remove(listaConsolas, i));
+			mostrarEstadoDeLasColas();
 			return;
 		} // fin if msj null
 	  } // fin if nuevo msj
@@ -714,6 +719,7 @@ void tratarCPUDesconectada(int id_cpu, int fd_cpu, int index){
 	cerrarSocket(fd_cpu);
 	liberarCPU(list_remove(listaCPU, index));
 	planificarProceso();
+	mostrarEstadoDeLasColas();
 }
 
 void recorrerListaCPUsYAtenderNuevosMensajes(){
@@ -1083,7 +1089,7 @@ void limpiarArchivoConfig(){
 
 void mostrarEstadoDeLasColas(){
 
-	printf("Estado de las colas:\n\tEn cola New: '%d'. En cola Listos: '%d'.\n\t",
+	printf("Estado de las colas:\n\tEn cola New: '%d'.\n\tEn cola Listos: '%d'.\n\t",
 					listaProcesos->elements_count,
 					colaListos->elements->elements_count);
 
@@ -1106,6 +1112,14 @@ void mostrarEstadoDeLasColas(){
 				hilo = NULL;
 				j++;
 			}
+
+			int enEjecucion = 0;
+			int g;
+			for(g=0; g<list_size(listaCPU); g++){
+				cpu* unCpu = (cpu*) list_get(listaCPU, g);
+				if(unCpu->disponibilidad == OCUPADO) enEjecucion++;
+			}
+			printf("En ejecución: '%d'.\n", enEjecucion);
 }
 
 void setearValores_config(t_config * archivoConfig){
