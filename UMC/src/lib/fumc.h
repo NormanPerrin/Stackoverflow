@@ -7,7 +7,7 @@
 
 	#define MAX_CONSOLA 50
 	#define MAX_PROCESOS 100
-	#define MAX_PAGINAS 30
+	#define MAX_PAGINAS 100
 	#define MAX_CONEXIONES 30
 	#define RUTA_CONFIG "configUMC.txt"
 
@@ -116,7 +116,6 @@
 	char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla);
 	funcion_t *separarMensaje(char *mensaje);
 	void *direccionarConsola(char *mensaje);
-	t_list *verProcesosDelSistema();
 	// </AUXILIARES>
 
 	// <PRINCIPAL>
@@ -167,7 +166,6 @@
 	int buscarMarcoLibre(int pid);
 	int asignarMarcos(int pid);
 	int contarMarcosAsignados(int pid);
-	int agregarMarcos(int pid);
 	// </MEMORIA_FUNCS>
 
 	// <ALGORITMOS>
