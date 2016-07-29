@@ -917,7 +917,7 @@ char *generarStringInforme(int pid, int paginas, int puntero, subtp_t *tabla) {
 	char *linea = reservarMemoria(CHAR * 1000);
 	mensaje[0] = '\0';
 
-	sprintf(linea, "> #PID: %d;\t#Paginas: %d;\t#Puntero: %d;\n", pid, paginas, puntero);
+	sprintf(linea, "#PID: %d;\t#Paginas: %d;\t#Puntero: %d;\n", pid, paginas, puntero);
 	strcat(mensaje, linea);
 	sprintf(linea, "#Pagina\t#Marco\t#Presencia\t#Uso\t#Modificado\n");
 	strcat(mensaje, linea);

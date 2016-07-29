@@ -49,6 +49,7 @@ void liberarSemaforo(t_semaforo * sem);
 void liberarVarCompartida(var_compartida * var);
 void limpiarColecciones();
 void limpiarArchivoConfig();
+void mostrarEstadoDeLasColas();
 
 extern bool seDesconectoUMC;
 
