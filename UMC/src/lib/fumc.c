@@ -209,30 +209,43 @@ void inciar_programa(int fd, void *msj) {
 	inicioPrograma *mensaje = (inicioPrograma*) msj; // casteo
 	log_info(logger, "[INICIAR_PROGRAMA]: (#fd: %d) (#pid: %d) (#paginas: %d).", fd, mensaje->pid, mensaje->paginas);
 
-	// 1) Envío a Swap directamente
+	// 1) Agrego a tabla de páginas
+	iniciar_principales(mensaje->pid, mensaje->paginas);
+	agregar_paginas_nuevas(mensaje->pid, mensaje->paginas);
+	if( asignarMarcos(mensaje->pid) == FALSE ) {
+
+		// borro estructuras que creé
+		int pos = pos_pid(mensaje->pid);
+		int i = 0;
+		for(; i < MAX_PAGINAS; i++) eliminar_pagina(mensaje->pid, i);
+		tabla_paginas[pos].pid = -1;
+		tabla_paginas[pos].paginas = MAX_PAGINAS;
+		tabla_paginas[pos].puntero = 0;
+
+		int* respuesta = reservarMemoria(INT);
+		*respuesta = NO_PERMITIDO;
+		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+		free(respuesta);
+		return;
+	}
+
+	// 2) Envío a Swap directamente
 	aplicar_protocolo_enviar(sockClienteDeSwap, INICIAR_PROGRAMA, msj);
 
-	// 2) Espero respuesta de Swap
+	// 3) Espero respuesta de Swap
 	int protocolo;
 	int *respuestaDeInicio = NULL;
 	respuestaDeInicio = aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
 	compararProtocolos(protocolo, RESPUESTA_PEDIDO); // comparo protocolo recibido con esperado
 
 	if(*respuestaDeInicio == NO_PERMITIDO) {
-		aplicar_protocolo_enviar(sockClienteDeSwap, RESPUESTA_PEDIDO, respuestaDeInicio);
-		free(respuestaDeInicio);
-		return;
-	}
-
-	// 3) Agrego a tabla de páginas
-	iniciar_principales(mensaje->pid, mensaje->paginas);
-	agregar_paginas_nuevas(mensaje->pid, mensaje->paginas);
-	if( asignarMarcos(mensaje->pid) == FALSE ) {
-		int* respuesta = reservarMemoria(INT);
-		*respuesta = NO_PERMITIDO;
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-		free(respuesta);
-		return;
+		// borro estructuras que creé
+		int pos = pos_pid(mensaje->pid);
+		int i = 0;
+		for(; i < MAX_PAGINAS; i++) eliminar_pagina(mensaje->pid, i);
+		tabla_paginas[pos].pid = -1;
+		tabla_paginas[pos].paginas = MAX_PAGINAS;
+		tabla_paginas[pos].puntero = 0;
 	}
 
 	// 4) Respondo a Núcleo como salió la operación
