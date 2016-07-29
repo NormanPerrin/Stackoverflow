@@ -54,9 +54,9 @@ void conectarCon_Nucleo(){
 }
 
 void exitConsola(){
+	log_info(logger, "Consola ha salido del sistema.");
 	cerrarSocket(fd_nucleo);
 	liberarRecursos(); // Libera memoria asignada
-	printf("Consola ha salido del sistema.\n");
 }
 
 void liberarRecursos() {

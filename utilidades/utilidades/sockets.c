@@ -7,7 +7,7 @@
 // Creación del socket
 int nuevoSocket(){
 	int fileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-	if (fileDescriptor == ERROR) manejarError("Error: No se pudo crear el socket.");
+	if (fileDescriptor == ERROR) printf("[SOCKETS] No se pudo crear el file descriptor.\n");
 
 	return fileDescriptor;
 }
@@ -24,11 +24,11 @@ struct sockaddr_in asociarSocket(int fd_socket, int puerto){
 // Si el puerto ya está siendo utilizado, lanzamos un error
 	int enUso = 1;
 	int puertoYaAsociado = setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char*) &enUso, sizeof(enUso));
-	if (puertoYaAsociado == ERROR) manejarError("Error: El puerto a asociar ya está siendo utilizado.");
+	if (puertoYaAsociado == ERROR) printf("[SOCKETS] El puerto a asociar ya está siendo utilizado.\n");
 
 // Ya comprobado el error de puerto, llamamos a bind
 	int retornoBind = bind(fd_socket, (struct sockaddr *) &miDireccionSocket, sizeof(struct sockaddr));
-	if (retornoBind == ERROR) manejarError("Error: No se pudo asociar el socket al puerto.");
+	if (retornoBind == ERROR) printf("[SOCKETS] No se pudo asociar el socket al puerto.\n");
 
 	return miDireccionSocket;
 }
@@ -36,7 +36,7 @@ struct sockaddr_in asociarSocket(int fd_socket, int puerto){
 // Ponemos al socket a escuchar conexiones entrantes
 void escucharSocket(int fd_socket, int conexionesEntrantesPermitidas){
 	int retornoListen = listen(fd_socket, conexionesEntrantesPermitidas); // SOMAXCONN: máximo tamaño de la cola
-	if (retornoListen == ERROR) manejarError("Error: No se pudo poner al socket a escuchar conexiones.");
+	if (retornoListen == ERROR) printf("[SOCKETS] No se pudo poner al socket a escuchar conexiones.\n");
 }
 
 // Obtención de una conexión entrante pendiente
@@ -45,7 +45,7 @@ int aceptarConexionSocket(int fd_socket) {
 	unsigned int addres_size = sizeof(unCliente);
 
 	int fdCliente = accept(fd_socket, (struct sockaddr*) &unCliente, &addres_size);
-	if(fdCliente == ERROR) manejarError("Error: No se pudo aceptar la conexión entrante.");
+	if(fdCliente == ERROR) printf("[SOCKETS] No se pudo aceptar la conexión entrante.\n");
 
 	return fdCliente;
 }
@@ -65,7 +65,7 @@ int conectarSocket(int fd_socket, const char * ipDestino, int puerto){
 
 	int retornoConnect = connect(fd_socket, (struct sockaddr *) &direccionServidor, sizeof(struct sockaddr));
 	if (retornoConnect == ERROR) {
-		manejarError("Error: No se pudo realizar la conexión entre el socket y el servidor.");
+		printf("[SOCKETS] No se pudo realizar la conexión entre el socket y el servidor.\n");
 		return ERROR;
 	} else {
 		return 0;
@@ -91,7 +91,7 @@ int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes) {
 		totalBytes += bytes_enviados;
 		tamanioBytes -= bytes_enviados;
 	}
-	if (bytes_enviados == ERROR) manejarError("Error: No se pudo enviar correctamente los datos.");
+	if (bytes_enviados == ERROR) printf("[SOCKETS] No se pudo enviar correctamente los datos.\n");
 
 	return bytes_enviados; // En caso de éxito, se retorna la cantidad de bytes realmente enviada
 }
@@ -107,12 +107,12 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 	// MSG_WAITALL: el recv queda completamente bloqueado hasta que el paquete sea recibido completamente
 
 	if (bytes_recibidos == ERROR) { // Error al recibir mensaje
-		perror("Error: No se pudo recibir correctamente los datos.");
+		perror("[SOCKETS] No se pudo recibir correctamente los datos.\n");
 		break;
 			}
 
 	if (bytes_recibidos == 0) { // Conexión cerrada
-		printf("Error: La conexión fd #%d se ha cerrado.\n", fdServidor);
+		printf("[SOCKETS] La conexión fd #%d se ha cerrado.\n", fdServidor);
 		break;
 	}
 	total += bytes_recibidos;
@@ -128,7 +128,7 @@ int recibirPorSocket(int fdServidor, void * buffer, int tamanioBytes) {
 // Cierre de la conexión del file descriptor del socket
 void cerrarSocket(int fd_socket) {
 	int retornoClose = close(fd_socket);
-	if (retornoClose == ERROR) manejarError("Error: No se pudo cerrar el socket.");
+	if (retornoClose == ERROR) printf("[SOCKETS] No se pudo cerrar el file descriptor.\n");
 }
 
 // ******************************************
@@ -150,7 +150,7 @@ void seleccionarSocket(int mayorValorDeFD,
 
 	int retornoSelect = select((mayorValorDeFD + 1), fdListosParaLectura, fdListosParaEscritura, fdListosParaEjecucion, NULL);
 
-	if(retornoSelect == ERROR && errno != EINTR) manejarError("Error: No se pudo seleccionar ningún socket del conjunto.");
+	if(retornoSelect == ERROR && errno != EINTR) printf("[SOCKETS] No se pudo seleccionar ningún fd del conjunto.\n");
 
 	}else{
 /* Si segundos y microsegundos valen cero:
@@ -165,7 +165,7 @@ select regresará inmediatamente después de interrogar a todos los FD incluidos
 
 		int selectConLimiteDeTiempo = select((mayorValorDeFD + 1), fdListosParaLectura,
 								  fdListosParaEscritura, fdListosParaEjecucion, &periodoMaximoDeEspera);
-		if(selectConLimiteDeTiempo == ERROR && errno != EINTR) manejarError("Error: El temporizador del select() ha expirado.");
+		if(selectConLimiteDeTiempo == ERROR && errno != EINTR)printf("[SOCKETS] El temporizador del select() ha expirado.\n");
 	}
 
 	if (errno == EINTR){

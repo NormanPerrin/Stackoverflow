@@ -60,10 +60,10 @@ int main(void) {
 }
 
 void exitCPU(){
+	log_info(logger, "CPU ha salido del sistema.");
 	liberarRecursos(); // Libero memoria utilizada
 	cerrarSocket(fdUMC);
 	cerrarSocket(fdNucleo);
-	printf("CPU ha salido del sistema.\n");
 }
 
 // Funciones CPU:

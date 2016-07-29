@@ -117,3 +117,32 @@ int validar_recive(int status, int modo) {
 void dormir(float miliseconds) {
 	usleep(miliseconds * 1000);
 }
+
+void liberarRegistroStack(registroStack* reg){
+
+	if(reg->args != NULL){
+		if(list_size(reg->args) > 0){
+			int i;
+			for(i=0; i<list_size(reg->args); i++){
+				variable* arg = (variable*) list_remove(reg->args, i);
+				if(arg != NULL){ free(arg); arg = NULL; }
+			}
+		}
+		free(reg->args); reg->args = NULL;
+	}
+
+	if(reg->vars != NULL){
+		if(list_size(reg->vars) > 0){
+			int i;
+			for(i=0; i<list_size(reg->vars); i++){
+				variable* var = (variable*) list_remove(reg->vars, i);
+				if(var != NULL){ free(var); var = NULL; }
+			}
+		}
+		free(reg->args); reg->args = NULL;
+	}
+
+	if(reg != NULL){
+		free(reg); reg = NULL;
+	}
+}

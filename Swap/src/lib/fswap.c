@@ -42,7 +42,7 @@ void escucharUMC() {
 		if(mensaje == NULL) {
 			cerrarSocket(sockUMC);
 			cerrarSocket(sockServidor);
-			printf("Swap ha salido del sistema.\n");
+			log_info(logger, "Swap ha salido del sistema.");
 			return;
 		}
 		void (*funcion)(void*) = elegirFuncion(head); // elijo función a ejecutar según protocolo
@@ -53,7 +53,7 @@ void escucharUMC() {
 
 	cerrarSocket(sockUMC);
 	cerrarSocket(sockServidor);
-	printf("Swap ha salido del sistema.\n");
+	log_info(logger, "Swap ha salido del sistema.");
 }
 
 void liberarEstructura() {
@@ -66,6 +66,7 @@ void liberarRecusos() {
 	liberarEstructura();
 	free(tablaPaginas); tablaPaginas = NULL;
 	free(tablaDeBitMap); tablaDeBitMap = NULL;
+	log_destroy(logger); logger = NULL;
 	fclose(archivoSwap);
 }
 
@@ -132,7 +133,7 @@ void iniciar_programa(void *msj) {
 	inicioPrograma *mensaje = (inicioPrograma*) msj;
 	int pid = mensaje->pid;
 	int paginas = mensaje->paginas;
-	log_info(logger ,"> [INICIAR_PROGRAMA]: (#pid: %d) (#paginas: %d)\n", pid, paginas);
+	log_info(logger ,"[INICIAR_PROGRAMA]: (#pid: %d) (#paginas: %d).", pid, paginas);
 
 	if(paginasLibresTotales >= paginas) { // se puede alojar el proceso aunque sea compactando
 
@@ -185,7 +186,7 @@ void escribir_pagina(void *msj){
 
 	solicitudEscribirPagina *mensaje = (solicitudEscribirPagina*) msj;
 
-	log_info(logger ,"> [ESCRIBIR_PAGINA]: (#pid: %d) (#pagina: %d)\n", mensaje->pid, mensaje->pagina);
+	log_info(logger, "[ESCRIBIR_PAGINA]: (#pid: %d) (#pagina: %d).", mensaje->pid, mensaje->pagina);
 	int numeroDePagina = buscarPaginaEnTablaDePaginas(mensaje->pid, mensaje->pagina);
 	int *respuesta = reservarMemoria(INT);
 
@@ -351,7 +352,7 @@ void eliminar_programa(void *msj){
 
 	// casteo pid
 	int pid = *((int*) msj);
-	log_info(logger ,"> [ELIMINAR_PROGRAMA]: (#pid: %d)\n", pid);
+	log_info(logger ,"[ELIMINAR_PROGRAMA]: (#pid: %d).", pid);
 
 	// busco primer aparición del pid en tabla de páginas
 	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
@@ -401,7 +402,7 @@ void leer_pagina(void *msj) {
 	solicitudLeerPagina *mensaje = (solicitudLeerPagina*) msj;
 	int pid = mensaje->pid;
 	int pagina = mensaje->pagina;
-	log_info(logger ,"> [LEER_PAGINA]: (#pid: %d) (#pagina: %d)\n", pid, pagina);
+	log_info(logger ,"[LEER_PAGINA]: (#pid: %d) (#pagina: %d).", pid, pagina);
 
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
 
@@ -468,7 +469,7 @@ int hayFragmentacion() {
 
 int compactar() {
 
-	log_info(logger ,"> [COMPACTACIÓN]\n");
+	log_info(logger ,"[COMPACTACIÓN].");
 
 	while(hayFragmentacion()){
 
@@ -521,7 +522,7 @@ void *elegirFuncion(int head) {
 			break;
 
 		default:
-			log_error(logger, "No existe protocolo definido para %d\n", head);
+			log_error(logger, "No existe protocolo definido para %d.", head);
 			break;
 	}
 

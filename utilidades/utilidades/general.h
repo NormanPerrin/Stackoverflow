@@ -30,6 +30,6 @@
 	int validar_conexion(int socket, int modo); // Decide si termina o no el programa ante un error, según el modo. Modo 1 es terminante. Con modo no terminante retorna: 0 en ERROR. 1 en éxito
 	int validar_recive(int bytes, int modo); // Decide si ante una desconexión o error en mensaje termina el programa o sigue, según el modo. Modo 1 es terminante. Retorno: 0 en desconexión o error. 1 en éxito
 	void dormir(float miliseconds); // Duerme el hilo del que se está ejecutando milisegundos (más preciso y consistente que sleep y usleep)
-	registroStack* reg_stack_create();
+	void liberarRegistroStack(registroStack* reg);
 
 #endif

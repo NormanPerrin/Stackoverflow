@@ -138,7 +138,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	solicitudLeerPagina* pedido = malloc(sizeof(solicitudLeerPagina));
 	pedido->pid = pid;
 	pedido->pagina = pagina;
-	log_info(logger, "> [Pedir Pagina Swap]: (#fd: %d) (#pid: %d) (#pagina: %d)\n", fd, pid, pagina);
+	log_info(logger, "[Pedir Pagina Swap]: (#fd: %d) (#pid: %d) (#pagina: %d).", fd, pid, pagina);
 	aplicar_protocolo_enviar(sockClienteDeSwap, LEER_PAGINA, pedido);
 	free(pedido); pedido = NULL;
 
@@ -208,7 +208,7 @@ void inciar_programa(int fd, void *msj) {
 	dormir(config->retardo); // retardo por escritura en tabla páginas
 
 	inicioPrograma *mensaje = (inicioPrograma*) msj; // casteo
-	log_info(logger, "> [INICIAR_PROGRAMA]: (#fd: %d) (#pid: %d) (#paginas: %d)\n", fd, mensaje->pid, mensaje->paginas);
+	log_info(logger, "[INICIAR_PROGRAMA]: (#fd: %d) (#pid: %d) (#paginas: %d).", fd, mensaje->pid, mensaje->paginas);
 
 	// 1) Agrego a tabla de páginas
 	iniciar_principales(mensaje->pid, mensaje->paginas);
@@ -243,7 +243,7 @@ void leer_instruccion(int fd, void *msj) {
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
 	int pid = pids[pos].pid;
-	log_info(logger, "> [LEER_INSTRUCCION]: (#fd: %d) (#pid: %d) (#pagina: %d) (#offset: %d) (#tamanio: %d)\n", fd, pid, mensaje->pagina, mensaje->offset, mensaje->tamanio);
+	log_info(logger, "[LEER_INSTRUCCION]: (#fd: %d) (#pid: %d) (#pagina: %d) (#offset: %d) (#tamanio: %d).", fd, pid, mensaje->pagina, mensaje->offset, mensaje->tamanio);
 
 	// busco el marco de la página en TLB TP y Swap
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
@@ -302,7 +302,7 @@ void leer_variable(int fd, void *msj) {
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
 	int pid = pids[pos].pid;
-	log_info(logger, "> [LEER_VARIABLE]: (#fd: %d) (#pid: %d) (#pagina: %d) (#offset: %d)\n", fd, pid, mensaje->pagina, mensaje->offset);
+	log_info(logger, "[LEER_VARIABLE]: (#fd: %d) (#pid: %d) (#pagina: %d) (#offset: %d).", fd, pid, mensaje->pagina, mensaje->offset);
 
 	// busco el marco de la página en TLB TP y Swap
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
@@ -336,7 +336,7 @@ void escribir_bytes(int fd, void *msj) {
 	// veo cual es el pid activo de esta CPU
 	int pos = buscarPosPid(fd);
 	int pid = pids[pos].pid;
-	log_info(logger, "> [ESCRIBIR_BYTES]: (#fd: %d) (#pid: %d) (#pagina: %d) (#offset: %d) (#contenido: %s)\n", fd, pid, mensaje->pagina, mensaje->offset, mensaje->contenido);
+	log_info(logger, "[ESCRIBIR_BYTES]: (#fd: %d) (#pid: %d) (#pagina: %d) (#offset: %d) (#contenido: %s).", fd, pid, mensaje->pagina, mensaje->offset, mensaje->contenido);
 
 	// busco el marco de la página en TLB TP y Swap
 	int marco = buscarPagina(fd, pid, mensaje->pagina);
@@ -364,7 +364,7 @@ void finalizar_programa(int fd, void *msj) {
 	dormir(config->retardo * 2); // retardo por borrar entradas en tabla páginas y memoria
 
 	int pid = *((int*)msj);
-	log_info(logger, "> [FINALIZAR_PROGRAMA]: (#fd: %d) (#pid: %d)\n", fd, pid);
+	log_info(logger, "[FINALIZAR_PROGRAMA]: (#fd: %d) (#pid: %d).", fd, pid);
 
 	// aviso a Swap
 	aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, msj);
@@ -425,7 +425,7 @@ void finalizar_programa(int fd, void *msj) {
 // | int pid |
 void cambiarPid(int fd, void *mensaje) {
 	int *pid = (int*)mensaje;
-	log_info(logger, "> [INDICAR_PID]: (#fd: %d) (#pid: %d)\n", fd, *pid);
+	log_info(logger, "[INDICAR_PID]: (#fd: %d) (#pid: %d).", fd, *pid);
 	actualizarPid(fd, *pid);
 }
 
@@ -611,7 +611,7 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 		if(config->entradas_tlb != 0)
 			borrar_entrada_tlb(pid, pagina_reemplazar->elegida.pagina);
 
-		log_info(logger, "> [Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: %d)\n", pid, pagina, marco, pagina_reemplazar->elegida.pagina);
+		log_info(logger, "[Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: %d).", pid, pagina, marco, pagina_reemplazar->elegida.pagina);
 
 	} else if(paginas_asignadas < marcos_asignados) { // se puede buscar marco entre los disponibles
 
@@ -619,7 +619,7 @@ int cargar_pagina(int pid, int pagina, char *contenido) {
 		actualizar_tp(pid, pagina, marco, 1, -1, 1);
 		actualizarPuntero(pid, pagina);
 
-		log_info(logger, "> [Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: nadie)\n", pid, pagina, marco);
+		log_info(logger, "[Page Fault] (#pid: %d) (#pagina: %d) (#marco: %d) (#victima: nadie).", pid, pagina, marco);
 
 	} else { // las paginas asignadas es mayor al número de marcos disponibles
 
@@ -803,8 +803,9 @@ void liberarConfig() {
 
 void compararProtocolos(int protocolo1, int protocolo2) {
 	if(protocolo1 != protocolo2) {
-		log_error(logger, "Error: se esperaba protocolo #%d y se obtuvo protocolo #%d\n", protocolo2, protocolo1);
-		log_info(logger, "UMC ha salido del sistema.\n");
+		log_error(logger, "Se esperaba protocolo #%d y se obtuvo protocolo #%d.", protocolo2, protocolo1);
+		log_info(logger, "UMC ha salido del sistema.");
+		liberarRecusos();
 		exit(ERROR);
 	}
 }
@@ -842,7 +843,7 @@ void *elegirFuncion(protocolo head) {
 			return cambiarPid;
 
 		default:
-			log_error(logger, "No existe protocolo definido para %d\n", head);
+			log_error(logger, "No existe protocolo definido para %d.", head);
 			break;
 
 	}
@@ -900,7 +901,7 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 
 	if(pagina_reemplazar.bit_modificado == 1) { // tengo que escribir en disco
 
-		log_info(logger, "> [Escritura Disco] (#pid: %d) (#pagina: %d)\n", pid, pagina_reemplazar.pagina);
+		log_info(logger, "[Escritura Disco] (#pid: %d) (#pagina: %d).", pid, pagina_reemplazar.pagina);
 
 		// seteo pedido
 		solicitudEscribirPagina *pedido = reservarMemoria(sizeof(solicitudEscribirPagina));
@@ -922,7 +923,7 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 		respuesta = (int*) aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
 
 		if(*respuesta == NO_PERMITIDO)
-			log_error(logger, "Error: no se pudo escribir pagina en Swap (%d) de pid #%d\n", pagina_reemplazar.pagina, pid);
+			log_error(logger, "Error: no se pudo escribir pagina en Swap (%d) de pid #%d.", pagina_reemplazar.pagina, pid);
 
 	} // sino se puede reemplazar tranquilamente
 }
@@ -1317,31 +1318,31 @@ void tlb_show(char *argumento) {
 	int cantidad_elementos = list_size(tlb);
 
 	if(cantidad_elementos == 0)
-		log_info(logger, "No hay elementos que mostrar\n");
+		log_info(logger, "No hay elementos que mostrar.");
 
 	int i = 0;
 	for(; i < cantidad_elementos; i++) {
 		registro_tlb *elem = list_get(tlb, i);
-		log_info(logger, "TLB[%d]: (#pid: %d) (#pagina: %d) (#marco: %d) (#tlb_hit: %d) (#tlb_miss: %d)\n", i, elem->pid, elem->pagina, elem->marco, cont_tlb_hit, cont_tlb_miss);
+		log_info(logger, "TLB[%d]: (#pid: %d) (#pagina: %d) (#marco: %d) (#tlb_hit: %d) (#tlb_miss: %d).", i, elem->pid, elem->pagina, elem->marco, cont_tlb_hit, cont_tlb_miss);
 	}
 }
 
 void retardo(char *argumento) {
 	config->retardo = atoi(argumento);
-	log_info(logger, "Se ha cambiado el retardo a %s\n", argumento);
+	log_info(logger, "Se ha cambiado el retardo a '%s'.", argumento);
 }
 
 void dump(char *argumento) {
 
-	char *mensaje;
+	char *mensaje = NULL;
 
 	// 1) Generar reporte Tabla Paginas
 	int i = 0;
 	for(; i < MAX_PROCESOS; i++) {
 		if(tabla_paginas[i].pid == -1) continue; // me salteo las entradas sin procesos
 		mensaje = generarStringInforme(tabla_paginas[i].pid, tabla_paginas[i].paginas, tabla_paginas[i].puntero, tabla_paginas[i].tabla);
-		log_info(logger, "Tabla Paginas:\n%s", mensaje);
-		free(mensaje);
+		log_info(logger, "Tabla de Páginas:\n%s", mensaje);
+		free(mensaje); mensaje = NULL;
 	}
 
 	char *marco = reservarMemoria(CHAR * config->marco_size);
@@ -1352,7 +1353,7 @@ void dump(char *argumento) {
 	for(; j < config->marcos; j++) {
 		char *posicion_mp = memoria + (j * config->marco_size);
 		memcpy(marco, posicion_mp, config->marco_size);
-		log_info(logger, "Contenido pagina #%d:\n%s\n", j, marco);
+		log_info(logger, "Contenido de página #%d:\n%s", j, marco);
 	}
 
 	free(marco);
@@ -1362,20 +1363,20 @@ void flush(char *argumento) {
 
 	if(!strcmp(argumento, "tlb")) {
 		list_clean(tlb);
-		log_info(logger, "Se ha limpiado la tlb\n");
+		log_info(logger, "Se ha limpiado la TLB.");
 	}
 
 	if(!strcmp(argumento, "memory")) {
 		cambiarModificado();
-		log_info(logger, "Se ha cambiado las paginas de modificado\n");
+		log_info(logger, "Se ha cambiado las páginas de modificado.");
 	}
 
 	if( strcmp(argumento, "tlb") && strcmp(argumento, "memory") )
-		log_error(logger, "Error: argumento \"%s\" invalido.\n- flush tlb\n- flush memory\n", argumento);
+		log_error(logger, "Argumento \"%s\" inválido.\n- flush tlb\n- flush memory.", argumento);
 }
 
 void salir() {
-	log_info(logger, "Saliendo\n");
+	log_info(logger, "UMC ha salido del sistema.");
 	liberarRecusos();
 	close(sockClienteDeSwap);
 	close(sockServidor);

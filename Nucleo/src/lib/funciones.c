@@ -168,7 +168,7 @@ void* entradaSalidaThread(void* dataHilo){
 			pcb_block = esperarPorProcesoIO(datos); // tomo el primer proceso en la cola de espera del dispositivo
 			tiempoDeEspera = (datos->retardo * pcb_block->espera) * 1000; // duración de la E/S
 			usleep(tiempoDeEspera);
-			log_info("Fin de E/S para el proceso #%d. Moviéndolo a cola de Listos.", pcb_block->proceso->pid);
+			log_info(logger, "Fin de E/S para el proceso #%d. Moviéndolo a cola de Listos.", pcb_block->proceso->pid);
 
 			queue_push(colaListos, pcb_block->proceso);
 			planificarProceso();
@@ -308,7 +308,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 		}
 		// Verifico la respuesta de UMC:
 		if(*respuestaUMC == PERMITIDO){
-			log_info("Segmentos del proceso #%d alocados.", nuevoPcb->pid);
+			log_info(logger, "Segmentos del proceso #%d alocados.", nuevoPcb->pid);
 
 			return TRUE;
 		}
@@ -535,18 +535,19 @@ int envioSenialCPU(int id_cpu){
 	return FALSE; // no mandó señal
 }
 
-int seDesconectoConsolaAsociada(int quantum_pid){
+int seDesconectoConsolaAsociada(int pid){
 	int i;
 	for(i=0; i<list_size(listaProcesosAbortivos); i++){
 		int* exec_pid = (int*) list_get(listaProcesosAbortivos, i);
 
-		if(*exec_pid == quantum_pid){ // se desconectó la consola asociada
+		if(*exec_pid == pid){ // se desconectó la consola asociada:
 
 			free(list_remove(listaProcesosAbortivos, i));
-			log_info(logger, "Removiendo proceso #%i porque se desconectó su Consola.", quantum_pid);
+			exec_pid = NULL;
+			log_info(logger, "Removiendo proceso #%i porque se desconectó su Consola.", pid);
 			// Le informo a UMC que libere la memoria asignada al programa:
-			int index = pcbListIndex(quantum_pid); // indexo el pcb en la lista de procesos
-			finalizarPrograma(quantum_pid, index);
+			int index = pcbListIndex(pid); // indexo el pcb en la lista de procesos
+			finalizarPrograma(pid, index);
 			// Libero el PCB del proceso y lo saco del sistema:
 			liberarPcbNucleo(list_remove(listaProcesos, index));
 
@@ -625,37 +626,56 @@ void tratarPcbDeConsolaDesconectada(int pid){
 	bool cpuTieneElPidConsola(cpu* unCpu){ return unCpu->pid == pid; }
 	bool esPcbAbortada(pcb* proceso){ return proceso->pid == pid; }
 
-	cpu* execCPU = list_find(listaCPU, (void*) cpuTieneElPidConsola);
+	cpu* execCPU = (cpu*) list_find(listaCPU, (void*) cpuTieneElPidConsola);
 
-	if(execCPU == NULL){
+	if(execCPU == NULL){ // el proceso no se está ejecutando:
+
 		log_info(logger, "Removiendo proceso #%i porque se desconectó su Consola.", pid);
 		// Le informo a UMC que libere la memoria asignada al programa:
 		int index = pcbListIndex(pid); // indexo el pcb en la lista de procesos
 		finalizarPrograma(pid, index);
+
 		// Libero el PCB del proceso y lo saco del sistema:
-
-		pcb* remove_from_ready = list_remove_by_condition(colaListos->elements, (void*) esPcbAbortada);
-		if(remove_from_ready != NULL){
-			liberarPcbNucleo(remove_from_ready);
-		}
-
-		pcb* remove_from_system = list_remove(listaProcesos, index);
+		pcb* remove_from_system = (pcb*) list_remove(listaProcesos, index);
 		if(remove_from_system != NULL){
 			liberarPcbNucleo(remove_from_system);
 		}
 
-		// TODO: Ver cola bloqueados E/S
+		pcb* remove_from_ready = (pcb*) list_remove_by_condition(colaListos->elements, (void*) esPcbAbortada);
+		if(remove_from_ready != NULL){
+			liberarPcbNucleo(remove_from_ready);
+		}
 
-		int i;
-		for(i=0; i<dictionary_size(diccionarioSemaforos); i++){
+		int i = 0;
+		while (config->semaforosID[i] != '\0'){
+			t_semaforo* sem = dictionary_get(diccionarioSemaforos, config->semaforosID[i]);
 
+			pcb* remove_from_sem_block = (pcb*) list_remove_by_condition(sem->bloqueados->elements, (void*) esPcbAbortada);
+			if(remove_from_sem_block != NULL){
+				liberarPcbNucleo(remove_from_sem_block);
+			}
+			sem = NULL;
+		    i++;
+		}
+
+		int j = 0;
+		while (config->ioID[j] != '\0'){
+			hiloIO* hilo = dictionary_get(diccionarioIO, config->ioID[j]);
+
+			pcb* remove_from_io_block = (pcb*) list_remove_by_condition(hilo->dataHilo.bloqueados->elements, (void*) esPcbAbortada);
+			if(remove_from_io_block != NULL){
+				liberarPcbNucleo(remove_from_io_block);
+			}
+			hilo = NULL;
+			j++;
 		}
 
 	}
-	else{
+	else{ // el proceso se está ejecutando:
+
 		log_error(logger, "Proceso #%i se removerá cuando finalice ráfaga en CPU #%i porque se desconectó su Consola.",
 				pid, execCPU->id);
-		int * exit_pid = malloc(INT);
+		int* exit_pid = malloc(INT);
 		*exit_pid = pid;
 		list_add(listaProcesosAbortivos, exit_pid);
 	}
@@ -673,7 +693,7 @@ void verificarDesconexionEnConsolas(){
 		void * mensaje = NULL;
 		mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
-		if (mensaje == NULL){ // La Consla se desconectó, la quito del sistema y saco su PCB de ejecución:
+		if (mensaje == NULL){ // La Consola se desconectó, la quito del sistema y saco su PCB de ejecución:
 			log_info(logger,"La Consola #%i se ha desconectado.", unaConsola->id);
 			tratarPcbDeConsolaDesconectada(unaConsola->pid);
 			cerrarSocket(fd);
@@ -937,15 +957,30 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 }
 
 void liberarPcbNucleo(pcb* unPcb){
-	free(unPcb->indiceCodigo); unPcb->indiceCodigo = NULL;
+	if(unPcb->indiceCodigo != NULL){
+		free(unPcb->indiceCodigo); unPcb->indiceCodigo = NULL;
+	}
 
 	if(unPcb->indiceEtiquetas != NULL){
 		free(unPcb->indiceEtiquetas); unPcb->indiceEtiquetas = NULL;
 	}
 
-	list_destroy(unPcb->indiceStack); unPcb->indiceStack = NULL;
+	if(unPcb->indiceStack != NULL){
+		if(list_size(unPcb->indiceStack) > 0){
+			int i;
+			for(i=0; i<list_size(unPcb->indiceStack); i++){
+				registroStack* reg = (registroStack*) list_remove(unPcb->indiceStack, i);
+				if(reg != NULL){
+					liberarRegistroStack(reg);
+				}
+			}
+		}
+		list_destroy(unPcb->indiceStack); unPcb->indiceStack = NULL;
+	}
 
-	free(unPcb); unPcb = NULL;
+	if(unPcb != NULL){
+		free(unPcb); unPcb = NULL;
+	}
 }
 
 void liberarCPU(cpu * cpu){ free(cpu); cpu = NULL; }
@@ -963,7 +998,7 @@ void liberarVarCompartida(var_compartida * var){ free(var->nombre); var->nombre 
 void limpiarColecciones(){
 
 	if(list_size(listaProcesos) > 0){
-		list_destroy_and_destroy_elements(listaProcesos,(void *) liberarPcbNucleo);
+		list_destroy_and_destroy_elements(listaProcesos,(void*) liberarPcbNucleo);
 	}
 	else{
 		list_destroy(listaProcesos);
@@ -971,7 +1006,7 @@ void limpiarColecciones(){
 	listaProcesos = NULL;
 
 	if(list_size(listaCPU) > 0){
-		list_destroy_and_destroy_elements(listaCPU,(void *) liberarCPU);
+		list_destroy_and_destroy_elements(listaCPU,(void*) liberarCPU);
 	}
 	else{
 		list_destroy(listaCPU);
@@ -985,7 +1020,7 @@ void limpiarColecciones(){
 	listaProcesosAbortivos = NULL;
 
 	if(list_size(listaConsolas) > 0){
-		list_destroy_and_destroy_elements(listaCPU,(void *) liberarConsola);
+		list_destroy_and_destroy_elements(listaConsolas, (void*) liberarConsola);
 	}
 	else{
 		list_destroy(listaConsolas);
@@ -993,15 +1028,16 @@ void limpiarColecciones(){
 	listaConsolas = NULL;
 
 	if(queue_size(colaListos) > 0){
-		queue_destroy_and_destroy_elements(colaListos, (void *) liberarPcbNucleo);
+		int i;
+		for(i=0; i<queue_size(colaListos); i++){
+			pcb* proceso = (pcb*) list_remove(colaListos->elements, i);
+			if(proceso != NULL) liberarPcbNucleo(proceso);
+		}
 	}
-	else{
-		queue_destroy(colaListos);
-	}
-	colaListos = NULL;
+	queue_destroy(colaListos); colaListos = NULL;
 
 	if(dictionary_size(diccionarioSemaforos) > 0){
-		dictionary_destroy_and_destroy_elements(diccionarioSemaforos, (void *) liberarSemaforo);
+		dictionary_destroy_and_destroy_elements(diccionarioSemaforos, (void*) liberarSemaforo);
 	}
 	else{
 		dictionary_destroy(diccionarioSemaforos);
@@ -1009,15 +1045,14 @@ void limpiarColecciones(){
 	diccionarioSemaforos = NULL;
 
 	if(dictionary_size(diccionarioVarCompartidas) > 0){
-		dictionary_destroy_and_destroy_elements(diccionarioVarCompartidas, (void *) liberarVarCompartida);
+		dictionary_destroy_and_destroy_elements(diccionarioVarCompartidas, (void*) liberarVarCompartida);
 		}
 	else{
 		dictionary_destroy(diccionarioVarCompartidas);
 	}
 	diccionarioVarCompartidas = NULL;
 
-	dictionary_destroy(diccionarioIO);
-	diccionarioIO = NULL;
+	dictionary_destroy(diccionarioIO); diccionarioIO = NULL;
 }
 
 void limpiarArchivoConfig(){

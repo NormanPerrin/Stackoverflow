@@ -23,12 +23,6 @@ registroStack* reg_stack_create(){
 	return reg;
 }
 
-void liberarRegistroStack(registroStack* reg){
-	list_destroy(reg->args); reg->args = NULL;
-	list_destroy(reg->vars); reg->vars = NULL;
-	free(reg); reg = NULL;
-}
-
 /* --- PRIMITIVAS --- */
 t_puntero definirVariable(t_nombre_variable var_nombre){
 
@@ -88,8 +82,6 @@ t_puntero definirVariable(t_nombre_variable var_nombre){
 			pcbActual->stackPointer += INT;
 			pcbActual->paginaActualStack = (total_heap_offset + INT) / tamanioPagina;
 
-			//printf("'%c' -> Offset absoluto definido: %i.\n", var_nombre, total_heap_offset);
-
 			return total_heap_offset;
 		} // fin else ERROR
 }
@@ -117,11 +109,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 				variable* variable = list_get(regStack->vars, i);
 				if(variable->nombre == var_nombre){
 
-					//printf("'%c' -> Dirección lógica obtenida: %i, %i, %i.\n", var_nombre,
-							//variable->direccion.pagina, variable->direccion.offset, variable->direccion.size);
-
 					int var_offset_absoluto = (variable->direccion.pagina * tamanioPagina) + variable->direccion.offset;
-					//printf("'%c' -> Offset absoluto obtenido: %i.\n", var_nombre, var_offset_absoluto);
 
 					return var_offset_absoluto;
 				} // fin if equals
@@ -140,11 +128,7 @@ t_puntero obtenerPosicionVariable(t_nombre_variable var_nombre){
 				variable* argumento = list_get(regStack->args, j);
 				if(argumento->nombre == var_nombre){
 
-					//printf("'%c' -> Dirección lógica obtenida: %i, %i, %i.\n", var_nombre,
-							//argumento->direccion.pagina, argumento->direccion.offset, argumento->direccion.size);
-
 					int arg_offset_absoluto = (argumento->direccion.pagina * tamanioPagina) + argumento->direccion.offset;
-					//printf("'%c' -> Offset absoluto obtenido: %i.\n", var_nombre, arg_offset_absoluto);
 
 					return arg_offset_absoluto;
 				} // fin if equals
@@ -163,7 +147,7 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 	var_direccion->offset = total_heap_offset % tamanioPagina;
 	var_direccion->tamanio = INT;
 
-	log_trace(logger, "Solicitud Lectura Variable -> Página: %i, Offset: %i, Size: %i.",
+	log_trace(logger, "Solicitud Lectura -> Página: %i, Offset: %i, Size: %i.",
 			var_direccion->pagina, var_direccion->offset, INT);
 	aplicar_protocolo_enviar(fdUMC, PEDIDO_LECTURA_VARIABLE, var_direccion);
 	free(var_direccion); var_direccion = NULL;
@@ -181,15 +165,15 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 		entrada = aplicar_protocolo_recibir(fdUMC, &head);  // respuesta OK de UMC, recibo la variable leída
 
 		if(head == DEVOLVER_VARIABLE){
-			/*int valor = atoi((char*) entrada);
-			printf("Variable dereferenciada -> Valor: %d\n.", valor);
-			free(entrada); entrada = NULL;
+			//int valor = atoi((char*) entrada);
 
-			return valor;*/
 			int valor = 0;
 			char *aux = malloc(INT);
 			memcpy(aux, entrada, INT);
 			valor = (int)*(aux);
+			log_trace(logger, "Variable dereferenciada -> Valor: %d.", valor);
+			free(entrada); entrada = NULL;
+
 			return valor;
 		}
 		else{
@@ -203,15 +187,15 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 
 void asignar(t_puntero total_heap_offset, t_valor_variable valor){
 
-	solicitudEscritura * var_escritura = malloc(sizeof(solicitudEscritura));
+	solicitudEscritura* var_escritura = malloc(sizeof(solicitudEscritura));
 
 		var_escritura->pagina = total_heap_offset / tamanioPagina;
 		var_escritura->offset = total_heap_offset % tamanioPagina;
-		/*var_escritura->contenido = malloc(INT); // --> 4 bytes
+		/*var_escritura->contenido = malloc(INT);
 		sprintf(var_escritura->contenido, "%d", valor);
 
 	// Relleno con barra cero los espacios vacíos:
-		int chars_numericos = strlen(var_escritura->contenido); // cantidad caracteres numéricos
+		int chars_numericos = strlen(var_escritura->contenido);
 		int i;
 		for(i = chars_numericos+1; i <= INT-1; i++){
 			var_escritura->contenido[i] = '\0';
