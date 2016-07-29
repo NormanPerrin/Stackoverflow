@@ -1338,7 +1338,7 @@ void cambiarModificado() {
 	for(; i < MAX_PROCESOS; i++) {
 		if( tabla_paginas[i].pid != -1 ) { // Hay un proceso asignado en esta posicion
 			int j = 0;
-			for(; j < tabla_paginas[i].paginas; i++)
+			for(; j < tabla_paginas[i].paginas; j++)
 				tabla_paginas[i].tabla[j].bit_modificado = 1;
 		}
 	}
