@@ -25,7 +25,7 @@ int main(void){
 		// Cierro hilos abiertos
 		pthread_mutex_destroy(&mutex_planificarProceso);
 
-		//unirHilosIO();
+		unirHilosIO();
 		// Libero memoria y cierro sockets:
 		cerrarSocket(fdEscuchaConsola);
 		cerrarSocket(fdEscuchaCPU);
@@ -33,7 +33,7 @@ int main(void){
 
 		return EXIT_SUCCESS;
 	} else{ // fin else conexión UMC
-		//unirHilosIO();
+		unirHilosIO();
 		// Libero memoria y cierro sockets:
 		exitNucleo();
 
