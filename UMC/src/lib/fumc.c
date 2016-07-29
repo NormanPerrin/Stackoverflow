@@ -414,12 +414,6 @@ void finalizar_programa(int fd, void *msj) {
 		tabla_paginas[pos].marcos_reservados[m] = -1;
 	}
 
-	t_list *posiciones = verProcesosDelSistema();
-	int cant_pos = 0;
-	for(; cant_pos < list_size(posiciones); cant_pos++) {
-		int *pos = (int*)list_get(posiciones, cant_pos);
-		agregarMarcos(tabla_paginas[*pos].pid);
-	}
 }
 
 // | int pid |
@@ -737,22 +731,6 @@ void borrar_tlb(int pid) {
 
 // <AUXILIARES>
 
-t_list *verProcesosDelSistema() {
-
-	t_list *procesos = list_create();
-
-	int i = 0;
-	for(; i < MAX_PROCESOS; i++) {
-		if(tabla_paginas[i].pid != -1) { // hay un proceso que se inicializó
-			int *pos = (int*)reservarMemoria(INT);
-			*pos = i;
-			list_add(procesos, pos);
-		}
-	}
-
-	return procesos;
-}
-
 int validarPagina(int pid, int pagina) {
 	int pos = pos_pid(pid);
 	int paginas = tabla_paginas[pos].paginas;
@@ -773,7 +751,7 @@ void iniciarEstructuras() {
 
 	// memoria
 	int sizeof_memoria = config->marcos * config->marco_size;
-	memoria = reservarMemoria(sizeof_memoria); // Google Chrome be like
+	memoria = reservarMemoria(sizeof_memoria);
 	memset(memoria, '\0', sizeof_memoria);
 
 	// bitmap
@@ -1089,42 +1067,6 @@ int contarMarcosAsignados(int pid) {
 		if(tabla_paginas[pos].marcos_reservados[cont] == -1) break;
 
 	return cont;
-}
-
-int agregarMarcos(int pid) {
-
-	int pos = pos_pid(pid);
-	int marcos_asignados = contarMarcosAsignados(pid);
-
-	if(marcos_asignados == config->marco_x_proceso) { // no hace falta agregarle marcos
-
-		return FALSE;
-
-	} else { // me jodieron un poco mas el tp
-
-		int asigno = TRUE;
-		int marcos_faltantes = config->marco_x_proceso - marcos_asignados;
-		int cont_locales = 0, cont_globales = 0;
-
-		for(; cont_locales < marcos_faltantes; cont_locales++) {
-
-			for(; cont_globales < config->marcos; cont_globales++)
-				if(bitmap[cont_globales] == 0) break;
-
-			if(bitmap[cont_globales] != 0) { // no encontro marco
-				if(!asigno) // no encontro marco dentro de las globales y no asigno antes
-					return FALSE;
-				else // no encontro marco dentro de las globales pero asigno antes
-					return TRUE;
-			}
-
-			tabla_paginas[pos].marcos_reservados[marcos_asignados + cont_locales] = cont_globales;
-			bitmap[cont_globales] = 1;
-			asigno = TRUE;
-		}
-	}
-
-	return TRUE;
 }
 
 // </MEMORIA_FUNCS>
