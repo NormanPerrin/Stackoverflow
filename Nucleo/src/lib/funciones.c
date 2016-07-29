@@ -636,15 +636,12 @@ void tratarPcbDeConsolaDesconectada(int pid){
 		finalizarPrograma(pid, index);
 
 		// Libero el PCB del proceso y lo saco del sistema:
-		pcb* remove_from_system = (pcb*) list_remove(listaProcesos, index);
-		if(remove_from_system != NULL){
-			liberarPcbNucleo(remove_from_system);
-		}
+		list_remove(listaProcesos, index);
+		/*pcb* remove_from_system = (pcb*) list_remove(listaProcesos, index);
+		if(remove_from_system != NULL) liberarPcbNucleo(remove_from_system);*/
 
 		pcb* remove_from_ready = (pcb*) list_remove_by_condition(colaListos->elements, (void*) esPcbAbortada);
-		if(remove_from_ready != NULL){
-			liberarPcbNucleo(remove_from_ready);
-		}
+		if(remove_from_ready != NULL) liberarPcbNucleo(remove_from_ready);
 
 		int i = 0;
 		while (config->semaforosID[i] != '\0'){
@@ -957,25 +954,22 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 }
 
 void liberarPcbNucleo(pcb* unPcb){
+
+	if(unPcb->indiceStack != NULL){
+		int i;
+		for(i = 0; i < list_size(unPcb->indiceStack); i++){
+			registroStack* reg = (registroStack*) list_get(unPcb->indiceStack, i);
+			if(reg != NULL) liberarRegistroStack(reg);
+		}
+		free(unPcb->indiceStack); unPcb->indiceStack = NULL;
+	}
+
 	if(unPcb->indiceCodigo != NULL){
 		free(unPcb->indiceCodigo); unPcb->indiceCodigo = NULL;
 	}
 
 	if(unPcb->indiceEtiquetas != NULL){
 		free(unPcb->indiceEtiquetas); unPcb->indiceEtiquetas = NULL;
-	}
-
-	if(unPcb->indiceStack != NULL){
-		if(list_size(unPcb->indiceStack) > 0){
-			int i;
-			for(i=0; i<list_size(unPcb->indiceStack); i++){
-				registroStack* reg = (registroStack*) list_remove(unPcb->indiceStack, i);
-				if(reg != NULL){
-					liberarRegistroStack(reg);
-				}
-			}
-		}
-		list_destroy(unPcb->indiceStack); unPcb->indiceStack = NULL;
 	}
 
 	if(unPcb != NULL){
@@ -1063,6 +1057,33 @@ void limpiarArchivoConfig(){
 	free(config->semaforosValInicial);
 	free(config->variablesCompartidas);
 	free(config); config = NULL;
+}
+
+void mostrarEstadoDeLasColas(){
+
+	printf("Estado de las colas:\n\tEn cola New: '%d'. En cola Listos: '%d'.\n\t",
+					listaProcesos->elements_count,
+					colaListos->elements->elements_count);
+
+			int i = 0;
+			while (config->semaforosID[i] != '\0'){
+				t_semaforo* sem = dictionary_get(diccionarioSemaforos, config->semaforosID[i]);
+				printf("Bloqueados semáforo '%s': '%d'.\n\t",
+						config->semaforosID[i],
+						sem->bloqueados->elements->elements_count);
+				sem = NULL;
+			    i++;
+			}
+
+			int j = 0;
+			while (config->ioID[j] != '\0'){
+				hiloIO* hilo = dictionary_get(diccionarioIO, config->ioID[j]);
+				printf("Bloqueados dispositivo E/S '%s': '%d'.\n\t",
+						config->ioID[j],
+						hilo->dataHilo.bloqueados->elements->elements_count);
+				hilo = NULL;
+				j++;
+			}
 }
 
 void setearValores_config(t_config * archivoConfig){

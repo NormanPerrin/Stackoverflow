@@ -120,29 +120,32 @@ void dormir(float miliseconds) {
 
 void liberarRegistroStack(registroStack* reg){
 
-	if(reg->args != NULL){
-		if(list_size(reg->args) > 0){
-			int i;
-			for(i=0; i<list_size(reg->args); i++){
-				variable* arg = (variable*) list_remove(reg->args, i);
-				if(arg != NULL){ free(arg); arg = NULL; }
-			}
-		}
-		free(reg->args); reg->args = NULL;
-	}
-
-	if(reg->vars != NULL){
-		if(list_size(reg->vars) > 0){
-			int i;
-			for(i=0; i<list_size(reg->vars); i++){
-				variable* var = (variable*) list_remove(reg->vars, i);
-				if(var != NULL){ free(var); var = NULL; }
-			}
-		}
-		free(reg->args); reg->args = NULL;
-	}
-
 	if(reg != NULL){
+
+		int a, b;
+
+		if(reg->args != NULL){
+
+			for(a = 0; a < list_size(reg->args); a++){
+				variable* arg = list_remove(reg->args, a);
+				if(arg != NULL){
+					free(arg); arg = NULL;
+				}
+			}
+			free(reg->args); reg->args = NULL;
+		}
+
+		if(reg->vars != NULL){
+
+			for(b = 0; b < list_size(reg->vars); b++){
+				variable* var = list_remove(reg->vars, b);
+				if(var != NULL){
+					free(var); var = NULL;
+				}
+			}
+			free(reg->vars); reg->vars = NULL;
+		}
+
 		free(reg); reg = NULL;
 	}
 }

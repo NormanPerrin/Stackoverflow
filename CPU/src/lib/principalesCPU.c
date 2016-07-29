@@ -37,7 +37,16 @@ void liberarPcbActiva(){
 	}
 
 	if(pcbActual->indiceStack != NULL){
-		list_destroy(pcbActual->indiceStack); pcbActual->indiceStack = NULL;
+		if(list_size(pcbActual->indiceStack) > 0){
+			int i;
+			for(i=0; i<list_size(pcbActual->indiceStack); i++){
+				registroStack* reg = (registroStack*) list_remove(pcbActual->indiceStack, i);
+				if(reg != NULL){
+					liberarRegistroStack(reg);
+				}
+			}
+		}
+		free(pcbActual->indiceStack); pcbActual->indiceStack = NULL;
 	}
 
 	if(pcbActual != NULL){
@@ -111,24 +120,31 @@ void revisarFinalizarCPU(){
 
 int recibirYvalidarEstadoDelPedidoAUMC(){
 
-	int head;
 	void* entrada = NULL;
-	int* estadoDelPedido = NULL;
+	int head, estadoDelPedido;
 
 	entrada = aplicar_protocolo_recibir(fdUMC, &head);
 
-	if(head == RESPUESTA_PEDIDO){
-		estadoDelPedido = (int*) entrada;
+	if(head == RESPUESTA_PEDIDO && entrada != NULL){
 
+		estadoDelPedido = *((int*) entrada);
 		free(entrada); entrada = NULL;
-	 if(*estadoDelPedido == NO_PERMITIDO){ // retorno false por pedido rechazado
-		 log_info(logger, "UMC ha rechazado pedido del proceso actual.");
-		 return FALSE;
-		 } // retorno true por pedido acpetado
-	 return TRUE;
-	} // retorno false por error en el head
-	log_error(logger, "No se pudo completar pedido a UMC.");
-	return FALSE;
+
+		if(estadoDelPedido == NO_PERMITIDO){ // retorno false por pedido rechazado:
+
+			log_info(logger, "UMC ha rechazado pedido del proceso actual.");
+			return FALSE;
+		} // retorno true por pedido acpetado:
+		else{
+
+			return TRUE;
+		}
+	} // retorno false por error conexión UMC:
+	else{
+
+		log_error(logger, "No se pudo completar pedido a UMC.");
+		return FALSE;
+	}
 }
 
 void exitProceso(){
