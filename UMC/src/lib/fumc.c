@@ -5,7 +5,6 @@ int exitFlag = FALSE; // exit del programa
 
 void setearValores_config(t_config * archivoConfig) {
 	config = reservarMemoria(sizeof(t_configuracion));
-	config->ip_swap = reservarMemoria(CHAR*20);
 	config->backlog = config_get_int_value(archivoConfig, "BACKLOG");
 	config->puerto = config_get_int_value(archivoConfig, "PUERTO");
 	config->ip_swap = strdup(config_get_string_value(archivoConfig, "IP_SWAP"));
@@ -113,15 +112,12 @@ void cliente(void* fdCliente) {
 
 	while(!exitFlag) {
 		void *mensaje = aplicar_protocolo_recibir(sockCliente, &head); // recibos mensaje
-		if(mensaje == NULL) {
-			free(mensaje);
-			break;
-		}
+		if(mensaje == NULL) break;
+
 		void (*funcion)(int, void*) = elegirFuncion(head); // elijo función a ejecutar según protocolo
 		sem_wait(&mutex);
 		funcion(sockCliente, mensaje); // ejecuto función
 		sem_post(&mutex);
-		free(mensaje); // aplicar_protocolo_recibir pide memoria, por lo tanto hay que liberarla
 	}
 
 	cerrarSocket(sockCliente);
@@ -149,22 +145,24 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	if(*respuesta == NO_PERMITIDO || protocolo != RESPUESTA_PEDIDO){
 		*respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-		free(respuesta);
+		free(respuesta); respuesta = NULL;
 	}
 	else{ // espero respuesta de Swap:
 		int head;
-		void *entrada_swap = NULL;
-		entrada_swap = aplicar_protocolo_recibir(sockClienteDeSwap, &head);
+		void *entrada = NULL;
+		entrada = aplicar_protocolo_recibir(sockClienteDeSwap, &head);
 
 		if(head != DEVOLVER_PAGINA){ // hubo un fallo
 			int* estadoDelPedido = reservarMemoria(INT);
 			*estadoDelPedido= NO_PERMITIDO;
 			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, estadoDelPedido);
-			free(estadoDelPedido);
+			free(estadoDelPedido); estadoDelPedido = NULL;
 		}
 		else{ // tengo que cargar la página a MP
-			marco = cargar_pagina(pid, pagina, ((paginaSwap*) entrada_swap)->contenido);
+			paginaSwap* entrada_swap = (paginaSwap*) entrada;
+			marco = cargar_pagina(pid, pagina, entrada_swap->contenido);
 		}
+		free(entrada); entrada = NULL;
 	}
 
 	return marco;
@@ -220,7 +218,10 @@ void inciar_programa(int fd, void *msj) {
 
 	if(*respuestaDeInicio == NO_PERMITIDO) {
 		aplicar_protocolo_enviar(sockClienteDeSwap, RESPUESTA_PEDIDO, respuestaDeInicio);
-		free(respuestaDeInicio);
+
+		free(respuestaDeInicio); respuestaDeInicio = NULL;
+		free(mensaje->contenido); mensaje->contenido = NULL;
+		free(mensaje); mensaje = NULL;
 		return;
 	}
 
@@ -231,12 +232,20 @@ void inciar_programa(int fd, void *msj) {
 		int* respuesta = reservarMemoria(INT);
 		*respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-		free(respuesta);
+		free(respuesta); respuesta = NULL;
+
+		free(respuestaDeInicio); respuestaDeInicio = NULL;
+		free(mensaje->contenido); mensaje->contenido = NULL;
+		free(mensaje); mensaje = NULL;
 		return;
 	}
 
 	// 4) Respondo a Núcleo como salió la operación
 	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaDeInicio);
+
+	free(respuestaDeInicio); respuestaDeInicio = NULL;
+	free(mensaje->contenido); mensaje->contenido = NULL;
+	free(mensaje); mensaje = NULL;
 }
 
 void leer_instruccion(int fd, void *msj) {
@@ -289,13 +298,14 @@ void leer_instruccion(int fd, void *msj) {
 	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
 	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-	free(respuesta);
+	free(respuesta); respuesta = NULL;
 
 	// devuelvo el contenido solicitado
 	memset(contenido + mensaje->tamanio, '\0', CHAR);
 	aplicar_protocolo_enviar(fd, DEVOLVER_INSTRUCCION, contenido);
 
-	free(contenido);
+	free(contenido); contenido = NULL;
+	free(mensaje); mensaje = NULL;
 }
 
 void leer_variable(int fd, void *msj) {
@@ -330,6 +340,7 @@ void leer_variable(int fd, void *msj) {
 	// devuelvo el contenido solicitado
 	aplicar_protocolo_enviar(fd, DEVOLVER_VARIABLE, contenido);
 	free(contenido); contenido = NULL;
+	free(mensaje); mensaje = NULL;
 }
 
 void escribir_bytes(int fd, void *msj) {
@@ -359,38 +370,42 @@ void escribir_bytes(int fd, void *msj) {
 		int *respuesta = reservarMemoria(INT);
 		*respuesta = PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-		free(respuesta);
+		free(respuesta); respuesta = NULL;
 	}
-
+	free(mensaje->contenido); mensaje->contenido = NULL;
+	free(mensaje); mensaje = NULL;
 }
 
 void finalizar_programa(int fd, void *msj) {
 
 	dormir(config->retardo * 2); // retardo por borrar entradas en tabla páginas y memoria
 
-	int pid = *((int*)msj);
+	int pid = *((int*) msj);
 	log_info(logger, "[FINALIZAR_PROGRAMA]: (#fd: %d) (#pid: %d).", fd, pid);
 
 	// aviso a Swap
 	aplicar_protocolo_enviar(sockClienteDeSwap, FINALIZAR_PROGRAMA, msj);
+	free(msj); msj = NULL;
 
 	// recibo respuesta de Swap
-	int *protocolo = (int*)reservarMemoria(INT);
+	int head;
 	int *respuestaSwap = NULL;
-	respuestaSwap = (int*)aplicar_protocolo_recibir(sockClienteDeSwap, protocolo);
-	if(*respuestaSwap == NO_PERMITIDO || *protocolo != RESPUESTA_PEDIDO) {
+	respuestaSwap = (int*) aplicar_protocolo_recibir(sockClienteDeSwap, &head);
+
+	if(*respuestaSwap == NO_PERMITIDO || head != RESPUESTA_PEDIDO) {
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaSwap);
-		free(respuestaSwap);
+		free(respuestaSwap); respuestaSwap = NULL;
 		return;
 	}
+	free(respuestaSwap); respuestaSwap = NULL;
 
 	// recorro páginas de pid
 	int pos = pos_pid(pid);
 	if(pos == ERROR) {
-		int *respuestaCPU = (int*)reservarMemoria(INT);
+		int *respuestaCPU = reservarMemoria(INT);
 		*respuestaCPU = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaCPU);
-		free(respuestaCPU);
+		free(respuestaCPU); respuestaCPU = NULL;
 		return;
 	}
 
@@ -423,9 +438,10 @@ void finalizar_programa(int fd, void *msj) {
 
 // | int pid |
 void cambiarPid(int fd, void *mensaje) {
-	int *pid = (int*)mensaje;
-	log_info(logger, "[INDICAR_PID]: (#fd: %d) (#pid: %d).", fd, *pid);
-	actualizarPid(fd, *pid);
+	int pid = *((int*) mensaje);
+	log_info(logger, "[INDICAR_PID]: (#fd: %d) (#pid: %d).", fd, pid);
+	actualizarPid(fd, pid);
+	free(mensaje); mensaje = NULL;
 }
 
 // </PRINCIPAL>

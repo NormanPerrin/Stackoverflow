@@ -11,8 +11,7 @@ t_log *logger;
 
 // Funciones
 void setearValores_config(t_config * archivoConfig) {
-	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
-	config->nombreSwap = (char*)reservarMemoria(CHAR*30);
+	config = reservarMemoria(sizeof(t_configuracion));
 	config->puerto = config_get_int_value(archivoConfig, "PUERTO_ESCUCHA");
 	config->nombreSwap = strdup(config_get_string_value (archivoConfig, "NOMBRE_SWAP"));
 	config->cantidadPaginas = config_get_int_value(archivoConfig, "CANTIDAD_PAGINAS");
@@ -178,6 +177,9 @@ void iniciar_programa(void *msj) {
 		fwrite(mensaje->contenido, CHAR, strlen(mensaje->contenido), archivoSwap);
 	}
 
+	free(mensaje->contenido); mensaje->contenido = NULL;
+	free(mensaje); mensaje = NULL;
+
 	aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 	free(respuesta); respuesta = NULL;
 }
@@ -203,6 +205,8 @@ void escribir_pagina(void *msj){
 		aplicar_protocolo_enviar(sockUMC, RESPUESTA_PEDIDO, respuesta);
 	}
 
+	free(mensaje->contenido); mensaje->contenido = NULL;
+	free(mensaje); mensaje = NULL;
 	free(respuesta); respuesta = NULL;
 }
 
@@ -353,6 +357,7 @@ void eliminar_programa(void *msj){
 	// casteo pid
 	int pid = *((int*) msj);
 	log_info(logger ,"[ELIMINAR_PROGRAMA]: (#pid: %d).", pid);
+	free(msj); msj = NULL;
 
 	// busco primer aparición del pid en tabla de páginas
 	int aPartirDe = buscarAPartirDeEnTablaDePaginas(pid);
@@ -403,6 +408,7 @@ void leer_pagina(void *msj) {
 	int pid = mensaje->pid;
 	int pagina = mensaje->pagina;
 	log_info(logger ,"[LEER_PAGINA]: (#pid: %d) (#pagina: %d).", pid, pagina);
+	free(mensaje); mensaje = NULL;
 
 	int pagABuscar = buscarPaginaEnTablaDePaginas(pid , pagina);
 

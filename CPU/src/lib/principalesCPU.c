@@ -19,7 +19,7 @@ void crearLoggerCPU(){
 }
 
 void setearValores_config(t_config * archivoConfig){
-	config = (t_configuracion*)reservarMemoria(sizeof(t_configuracion));
+	config = reservarMemoria(sizeof(t_configuracion));
 	config->ipNucleo = strdup(config_get_string_value(archivoConfig, "IP_NUCLEO"));
 	config->ipUMC = strdup(config_get_string_value(archivoConfig, "IP_UMC"));
 	config->puertoNucleo = config_get_int_value(archivoConfig, "PUERTO_NUCLEO");

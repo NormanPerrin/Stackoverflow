@@ -401,6 +401,7 @@ void aceptarConexionEntranteDeConsola(){
 	if(head == ENVIAR_SCRIPT){
 	 // Creo la PCB del programa y pido espacio para los segmentos a UMC:
 		pcb * nuevoPcb = crearPcb((char*) entrada);
+		free(entrada); entrada = NULL;
 
 		if(nuevoPcb == NULL){ //  UMC no pudo alocar los segmentos del programa, entonces lo rachazo:
 			*respuesta = RECHAZADO;

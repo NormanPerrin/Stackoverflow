@@ -43,7 +43,7 @@ int main(int argc, char **argv){
 			} // fin case error conexión
 
 	case ACEPTADO:{ // programa aceptado
-				log_info(logger, "Programa aceptado. Escuchando nuevos mensajes de Núcleo...");
+				log_info(logger, "Programa aceptado. Escuchando nuevos mensajes de Núcleo.");
 
 		while(TRUE){ // Espera activa de mensajes
 
