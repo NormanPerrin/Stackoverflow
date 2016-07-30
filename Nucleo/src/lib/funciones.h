@@ -50,6 +50,7 @@ void liberarVarCompartida(var_compartida * var);
 void limpiarColecciones();
 void limpiarArchivoConfig();
 void mostrarEstadoDeLasColas();
+void quitarProcesoDelSistema(int pid);
 
 extern bool seDesconectoUMC;
 
