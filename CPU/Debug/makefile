@@ -24,22 +24,22 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: Nucleo
+all: CPU
 
 dependents:
 	-cd /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug && $(MAKE) all
 
 # Tool invocations
-Nucleo: $(OBJS) $(USER_OBJS) /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug/libutilidades.so
+CPU: $(OBJS) $(USER_OBJS) /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug/libutilidades.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -L"/home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug" -o "Nucleo" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -L"/home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug" -o "CPU" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) Nucleo
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) CPU
 	-@echo ' '
 
 .PHONY: all clean dependents
