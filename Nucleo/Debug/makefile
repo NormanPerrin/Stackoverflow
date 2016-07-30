@@ -27,7 +27,7 @@ endif
 all: Nucleo
 
 dependents:
-	-cd /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug && $(MAKE) all
+	-cd /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug && $(MAKE) clean all
 
 # Tool invocations
 Nucleo: $(OBJS) $(USER_OBJS) /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug/libutilidades.so
