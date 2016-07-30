@@ -81,7 +81,7 @@ int enviarPorSocket(int fdCliente, const void * mensaje, int tamanioBytes) {
 	int totalBytes = 0;
 
 	while (totalBytes < tamanioBytes) {
-		bytes_enviados = send(fdCliente, mensaje + totalBytes, tamanioBytes, 0); // El 0 significa que no le paso ningún Flag
+		bytes_enviados = send(fdCliente, mensaje + totalBytes, tamanioBytes, MSG_NOSIGNAL); // El 0 significa que no le paso ningún Flag
 /* send: devuelve el múmero de bytes que se enviaron en realidad, pero como estos podrían ser menos
  * de los que pedimos que se enviaran, realizamos la siguiente validación: */
 

@@ -29,8 +29,8 @@ void conectarConSwap() {
 
 void crearHilos() {
 	pthread_t hilo_servidor, hilo_consola;
-	pthread_create(&hilo_servidor, NULL, (void*)servidor, NULL);
-	pthread_create(&hilo_consola, NULL, (void*)consola, NULL);
+	pthread_create(&hilo_servidor, NULL, (void*) servidor, NULL);
+	pthread_create(&hilo_consola, NULL, (void*) consola, NULL);
 	pthread_join(hilo_consola, NULL);
 	pthread_join(hilo_servidor, NULL);
 }
@@ -95,8 +95,8 @@ void servidor() {
 		verificarDesconexionDeClientes();
 	} // cuando sale indicaron cierre del programa
 
-	close(sockClienteDeSwap);
-	close(sockServidor);
+	cerrarSocket(sockClienteDeSwap);
+	cerrarSocket(sockServidor);
 }
 
 
@@ -104,20 +104,30 @@ void crearHiloCliente(int *sockCliente) {
 	t_cliente* unCliente = malloc(sizeof(t_cliente));
 	unCliente->fd = *sockCliente;
 	unCliente->estado = CONECTADO;
-	pthread_create(&unCliente->hilo, NULL, (void*)cliente, sockCliente);
+	pthread_create(&unCliente->hilo, NULL, &cliente, (void*) sockCliente);
 	list_add(listaClientes, unCliente);
 }
 
 
-void cliente(void* fdCliente) {
+void* cliente(void* fdCliente) {
 
-	int sockCliente = *((int*)fdCliente);
-	free(fdCliente);
-	int head;
+	int sockCliente = *((int*) fdCliente);
+	free(fdCliente); fdCliente = NULL;
 
 	while(!exitFlag) {
-		void *mensaje = aplicar_protocolo_recibir(sockCliente, &head); // recibo mensajes
-		if(mensaje == NULL) break;
+
+		int head;
+		void *mensaje = NULL;
+		mensaje = aplicar_protocolo_recibir(sockCliente, &head); // recibo mensajes
+
+		if(mensaje == NULL){
+			bool esElCliente(t_cliente* alguien){ return alguien->fd == sockCliente; }
+			t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+			if(unCliente != NULL){
+				cerrarSocket(sockCliente);
+				unCliente->estado = DESCONECTADO;
+			}
+		}
 
 		void (*funcion)(int, void*) = elegirFuncion(head); // elijo función a ejecutar según protocolo
 		sem_wait(&mutex);
@@ -125,12 +135,7 @@ void cliente(void* fdCliente) {
 		sem_post(&mutex);
 	}
 
-	bool esElCliente(t_cliente* alguien){ return alguien->fd == sockCliente; }
-	t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
-	if(unCliente != NULL){
-		cerrarSocket(sockCliente);
-		unCliente->estado = DESCONECTADO;
-	}
+	return NULL;
 }
 
 void verificarDesconexionDeClientes(){
@@ -140,6 +145,7 @@ void verificarDesconexionDeClientes(){
 		t_cliente* unCliente = (t_cliente*) list_get(listaClientes, i);
 
 		if(unCliente->estado == DESCONECTADO){ // cierro el hilo del cliente desconectado:
+
 			int status;
 			void *res;
 
@@ -180,10 +186,22 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	int protocolo;
 	int *respuesta = NULL;
 	respuesta = (int*) aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
+	int enviado = 0;
 
 	if(*respuesta == NO_PERMITIDO || protocolo != RESPUESTA_PEDIDO){
 		*respuesta = NO_PERMITIDO;
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+		enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+		if(enviado == 0){
+			bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+			t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+			if(unCliente != NULL){
+				cerrarSocket(fd);
+				unCliente->estado = DESCONECTADO;
+			}
+			return ERROR;
+		}
 	}
 	else{ // espero respuesta de Swap:
 		int head;
@@ -193,7 +211,18 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 		if(head != DEVOLVER_PAGINA){ // hubo un fallo
 			int* estadoDelPedido = reservarMemoria(INT);
 			*estadoDelPedido= NO_PERMITIDO;
-			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, estadoDelPedido);
+			enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, estadoDelPedido);
+
+			if(enviado == 0){
+				bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+				t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+				if(unCliente != NULL){
+					cerrarSocket(fd);
+					unCliente->estado = DESCONECTADO;
+				}
+				return ERROR;
+			}
+
 			free(estadoDelPedido); estadoDelPedido = NULL;
 		}
 		else{ // tengo que cargar la página a MP
@@ -264,7 +293,19 @@ void inciar_programa(int fd, void *msj) {
 
 		int* respuesta = reservarMemoria(INT);
 		*respuesta = NO_PERMITIDO;
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+		int enviado = 0;
+		enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+		if(enviado == 0){
+			bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+			t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+			if(unCliente != NULL){
+				cerrarSocket(fd);
+				unCliente->estado = DESCONECTADO;
+			}
+			return;
+		}
+
 		free(respuesta); respuesta = NULL;
 
 		free(mensaje->contenido); mensaje->contenido = NULL;
@@ -300,7 +341,18 @@ void inciar_programa(int fd, void *msj) {
 	}
 
 	// 4) Respondo a Núcleo como salió la operación
-	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaDeInicio);
+	int enviado = 0;
+	enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaDeInicio);
+
+	if(enviado == 0){
+		bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+		t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+		if(unCliente != NULL){
+			cerrarSocket(fd);
+			unCliente->estado = DESCONECTADO;
+		}
+		return;
+	}
 
 	free(respuestaDeInicio); respuestaDeInicio = NULL;
 	free(mensaje->contenido); mensaje->contenido = NULL;
@@ -356,12 +408,35 @@ void leer_instruccion(int fd, void *msj) {
 	// respondo que el pedido fue válido
 	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
-	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+	int enviado = 0;
+	enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+	if(enviado == 0){
+		bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+		t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+		if(unCliente != NULL){
+			cerrarSocket(fd);
+			unCliente->estado = DESCONECTADO;
+		}
+		return;
+	}
+
 	free(respuesta); respuesta = NULL;
 
 	// devuelvo el contenido solicitado
 	memset(contenido + mensaje->tamanio, '\0', CHAR);
-	aplicar_protocolo_enviar(fd, DEVOLVER_INSTRUCCION, contenido);
+
+	enviado = aplicar_protocolo_enviar(fd, DEVOLVER_INSTRUCCION, contenido);
+
+	if(enviado == 0){
+		bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+		t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+		if(unCliente != NULL){
+			cerrarSocket(fd);
+			unCliente->estado = DESCONECTADO;
+		}
+		return;
+	}
 
 	free(contenido); contenido = NULL;
 	free(mensaje); mensaje = NULL;
@@ -393,11 +468,35 @@ void leer_variable(int fd, void *msj) {
 	// respondo que el pedido fue válido
 	int *respuesta = reservarMemoria(INT);
 	*respuesta = PERMITIDO;
-	aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+	int enviado = 0;
+	enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+	if(enviado == 0){
+		bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+		t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+		if(unCliente != NULL){
+			cerrarSocket(fd);
+			unCliente->estado = DESCONECTADO;
+		}
+		return;
+	}
+
 	free(respuesta); respuesta = NULL;
 
 	// devuelvo el contenido solicitado
-	aplicar_protocolo_enviar(fd, DEVOLVER_VARIABLE, contenido);
+	enviado = aplicar_protocolo_enviar(fd, DEVOLVER_VARIABLE, contenido);
+
+	if(enviado == 0){
+		bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+		t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+		if(unCliente != NULL){
+			cerrarSocket(fd);
+			unCliente->estado = DESCONECTADO;
+		}
+		return;
+	}
+
 	free(contenido); contenido = NULL;
 	free(mensaje); mensaje = NULL;
 }
@@ -428,7 +527,19 @@ void escribir_bytes(int fd, void *msj) {
 		// respondo a CPU
 		int *respuesta = reservarMemoria(INT);
 		*respuesta = PERMITIDO;
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+		int enviado = 0;
+		enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+		if(enviado == 0){
+			bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+			t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+			if(unCliente != NULL){
+				cerrarSocket(fd);
+				unCliente->estado = DESCONECTADO;
+			}
+			return;
+		}
+
 		free(respuesta); respuesta = NULL;
 	}
 	free(mensaje->contenido); mensaje->contenido = NULL;
@@ -452,7 +563,19 @@ void finalizar_programa(int fd, void *msj) {
 	respuestaSwap = (int*) aplicar_protocolo_recibir(sockClienteDeSwap, &head);
 
 	if(*respuestaSwap == NO_PERMITIDO || head != RESPUESTA_PEDIDO) {
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaSwap);
+		int enviado = 0;
+		enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaSwap);
+
+		if(enviado == 0){
+			bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+			t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+			if(unCliente != NULL){
+				cerrarSocket(fd);
+				unCliente->estado = DESCONECTADO;
+			}
+			return;
+		}
+
 		free(respuestaSwap); respuestaSwap = NULL;
 		return;
 	}
@@ -463,7 +586,19 @@ void finalizar_programa(int fd, void *msj) {
 	if(pos == ERROR) {
 		int *respuestaCPU = reservarMemoria(INT);
 		*respuestaCPU = NO_PERMITIDO;
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaCPU);
+		int enviado = 0;
+		enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuestaCPU);
+
+		if(enviado == 0){
+			bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+			t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+			if(unCliente != NULL){
+				cerrarSocket(fd);
+				unCliente->estado = DESCONECTADO;
+			}
+			return;
+		}
+
 		free(respuestaCPU); respuestaCPU = NULL;
 		return;
 	}
@@ -631,8 +766,20 @@ int buscarPagina(int fd, int pid, int pagina) {
 	if(validarPagina(pid, pagina) == FALSE) {
 		int *respuesta = reservarMemoria(INT);
 		*respuesta = NO_PERMITIDO;
-		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-		free(respuesta);
+		int enviado = 0;
+		enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+		if(enviado == 0){
+			bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+			t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+			if(unCliente != NULL){
+				cerrarSocket(fd);
+				unCliente->estado = DESCONECTADO;
+			}
+			return ERROR;
+		}
+
+		free(respuesta); respuesta = NULL;
 		return ERROR;
 	}
 
@@ -653,8 +800,20 @@ int buscarPagina(int fd, int pid, int pagina) {
 		if(pos_tp == ERROR) { // no se inicializó el proceso
 			int *respuesta = reservarMemoria(INT);
 			*respuesta = NO_PERMITIDO;
-			aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-			free(respuesta);
+			int enviado = 0;
+			enviado = aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
+
+			if(enviado == 0){
+				bool esElCliente(t_cliente* alguien){ return alguien->fd == fd; }
+				t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+				if(unCliente != NULL){
+					cerrarSocket(fd);
+					unCliente->estado = DESCONECTADO;
+				}
+				return ERROR;
+			}
+
+			free(respuesta); respuesta = NULL;
 			return ERROR;
 		}
 

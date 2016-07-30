@@ -49,7 +49,7 @@ typedef enum {
 
 /*** PROTOTIPOS ***/
 // -- Funciones definitivas para enviar y recibir PAQUETES:
-void aplicar_protocolo_enviar(int fdReceptor, int head, void * mensaje);
+int aplicar_protocolo_enviar(int fdReceptor, int head, void * mensaje);
 void* aplicar_protocolo_recibir(int fdEmisor, int* head);
 
 // -- Calcula tamaño mensaje para serealización:

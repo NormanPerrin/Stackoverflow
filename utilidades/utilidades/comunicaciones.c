@@ -1,6 +1,6 @@
 #include "comunicaciones.h"
 
-void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
+int aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 
 	int desplazamiento = 0, tamanioMensaje, tamanioTotalAEnviar;
 
@@ -23,13 +23,15 @@ void aplicar_protocolo_enviar(int fdReceptor, int head, void *mensaje){
 	memcpy(buffer + desplazamiento, mensajeSerealizado, tamanioMensaje);
 
 	// Envío la totalidad del paquete (lo contenido en el buffer):
-	enviarPorSocket(fdReceptor, buffer, tamanioTotalAEnviar);
+	int enviados = enviarPorSocket(fdReceptor, buffer, tamanioTotalAEnviar);
 
 	free(mensajeSerealizado); mensajeSerealizado = NULL;
 	free(buffer); buffer = NULL;
+
+	return enviados;
 }
 
-void * aplicar_protocolo_recibir(int fdEmisor, int* head){
+void* aplicar_protocolo_recibir(int fdEmisor, int* head){
 
 	// Validar contra NULL al recibir en cada módulo.
 	// Recibo primero el head:
@@ -51,8 +53,8 @@ void * aplicar_protocolo_recibir(int fdEmisor, int* head){
 	// Deserealizo el mensaje según el protocolo:
 	void* buffer = deserealizar(*head, mensaje, *tamanioMensaje);
 
-	free(tamanioMensaje);
-	free(mensaje);
+	free(tamanioMensaje); tamanioMensaje = NULL;
+	free(mensaje); mensaje = NULL;
 
 	return buffer;
 } // Se debe castear el mensaje al recibirse (indicar el tipo de dato que debe matchear con el void*)
