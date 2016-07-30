@@ -145,7 +145,6 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 	if(*respuesta == NO_PERMITIDO || protocolo != RESPUESTA_PEDIDO){
 		*respuesta = NO_PERMITIDO;
 		aplicar_protocolo_enviar(fd, RESPUESTA_PEDIDO, respuesta);
-		free(respuesta); respuesta = NULL;
 	}
 	else{ // espero respuesta de Swap:
 		int head;
@@ -164,6 +163,7 @@ int pedir_pagina_swap(int fd, int pid, int pagina) {
 		}
 		free(entrada); entrada = NULL;
 	}
+	free(respuesta); respuesta = NULL;
 
 	return marco;
 }
@@ -942,8 +942,9 @@ void verificarEscrituraDisco(subtp_t pagina_reemplazar, int pid) {
 		respuesta = (int*) aplicar_protocolo_recibir(sockClienteDeSwap, &protocolo);
 
 		if(*respuesta == NO_PERMITIDO)
-			log_error(logger, "Error: no se pudo escribir pagina en Swap (%d) de pid #%d.", pagina_reemplazar.pagina, pid);
+			log_error(logger, "Error: no se pudo escribir página en Swap (%d) de pid #%d.", pagina_reemplazar.pagina, pid);
 
+		free(respuesta); respuesta = NULL;
 	} // sino se puede reemplazar tranquilamente
 }
 

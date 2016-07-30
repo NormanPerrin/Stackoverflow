@@ -473,11 +473,10 @@ void atenderCambiosEnArchivoConfig(){
 	char buffer[EVENT_BUF_LEN];
 	length = read(fd_inotify, buffer, EVENT_BUF_LEN);
 
-	log_info(logger, "Se ha modificado el archivo de configuración.");
-
 	if (length <= 0){
 		log_error(logger, "Inotify no pudo leer archivo de configuración.");
 	} else {
+		log_info(logger, "Se ha modificado el archivo de configuración.");
 
 		struct inotify_event *event = (struct inotify_event *) &buffer[i];
 		t_config * new_config = NULL;
@@ -487,7 +486,7 @@ void atenderCambiosEnArchivoConfig(){
 			!config_has_property(new_config, "QUANTUM") ||
 			!config_has_property(new_config, "QUANTUM_SLEEP") ){
 
-			log_error(logger, "Inotify: Archivo NULL o propiedades no encontradas.");
+			//log_error(logger, "Inotify: Archivo NULL o propiedades no encontradas.");
 			return;
 		}
 
@@ -512,17 +511,16 @@ void atenderCambiosEnArchivoConfig(){
 		max_fd = (max_fd < fd_inotify)? fd_inotify : max_fd;
 		FD_SET(fd_inotify, &readfds);
 	} // fin else-if
-	return;
 }
 
-void salvarProcesoEnCPU(int id_cpu){
+void salvarProcesoEnCPU(int pid, int id){
 
-	bool esLaPcbEnEjecucion(pcb * pcb){ return pcb->id_cpu == id_cpu; }
+	bool esLaPcbEnEjecucion(pcb* pcb){ return pcb->pid == pid; }
 
-	pcb * unPcb = (pcb *) list_find(listaProcesos, (void*) esLaPcbEnEjecucion);
+	pcb* unPcb = (pcb*) list_find(listaProcesos, (void*) esLaPcbEnEjecucion);
 
 	if(unPcb != NULL){
-		log_info(logger, "Salvando PCB en ejecución del CPU #%d por desconexión.", id_cpu);
+		log_info(logger, "Salvando PCB en ejecución del CPU #%d por desconexión.", id);
 		unPcb->id_cpu = -1; // le desasigno CPU
 		queue_push(colaListos, unPcb); // la mando de nuevo a cola de listos
 	}
@@ -719,10 +717,10 @@ void quitarCpuPorSenialSIGUSR1(cpu* unCpu, int index){
 	mostrarEstadoDeLasColas();
 }
 
-void tratarCPUDesconectada(int id_cpu, int fd_cpu, int index){
-	log_info(logger,"La CPU #%i se ha desconectado.", id_cpu);
-	salvarProcesoEnCPU(id_cpu);
-	cerrarSocket(fd_cpu);
+void tratarCPUDesconectada(cpu* unCpu, int index){
+	log_info(logger,"La CPU #%i se ha desconectado.", unCpu->id);
+	salvarProcesoEnCPU(unCpu->pid, unCpu->id);
+	cerrarSocket(unCpu->fd_cpu);
 	liberarCPU(list_remove(listaCPU, index));
 	planificarProceso();
 	mostrarEstadoDeLasColas();
@@ -746,7 +744,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 
 		    if (mensaje == NULL){ // El CPU se desconectó, lo quito del sistema y salvo su PCB:
 
-		    	tratarCPUDesconectada(unCPU->id, fd, i);
+		    	tratarCPUDesconectada(unCPU, i);
 		    	return; // TODO: rompe el for para respetar el select()
 
 		    }else{
@@ -810,7 +808,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		void* entrada = NULL;
 		entrada = aplicar_protocolo_recibir(fd, &head);
 
-		if(entrada == NULL) tratarCPUDesconectada(unCPU->id, fd, i);
+		if(entrada == NULL) tratarCPUDesconectada(unCPU, i);
 
 		if(head == PCB_ENTRADA_SALIDA) pcbEjecutada = (pcb*) entrada;
 		log_info(logger, "Proceso #%i entrada salida en CPU #%i.", pcbEjecutada->pid, unCPU->id);
@@ -837,20 +835,24 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	case IMPRIMIR:{
 
 		consola* consolaAsociada = list_find(listaConsolas, (void*) consolaTieneElPidCPU);
-		// Le mando el msj a la Consola asociada:
-		char* variable = string_itoa(*((int*) mensaje));
-		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, variable);
-		free(variable); variable = NULL;
-		free(mensaje); mensaje = NULL;
+		if(consolaAsociada != NULL){
+			// Le mando el msj a la Consola asociada:
+			char* variable = string_itoa(*((int*) mensaje));
+			aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, variable);
+			free(variable); variable = NULL;
+			free(mensaje); mensaje = NULL;
+		}
 
 		break;
 	}
 	case IMPRIMIR_TEXTO:{
 
 		consola* consolaAsociada = list_find(listaConsolas, (void*) consolaTieneElPidCPU);
-		// Le mando el msj a la Consola asociada:
-		aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
-		free(mensaje); mensaje = NULL;
+		if(consolaAsociada != NULL){
+			// Le mando el msj a la Consola asociada:
+			aplicar_protocolo_enviar(consolaAsociada->fd_consola, IMPRIMIR_TEXTO, mensaje);
+			free(mensaje); mensaje = NULL;
+		}
 
 		break;
 	}
@@ -907,7 +909,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 			void* entrada = NULL;
 			entrada = aplicar_protocolo_recibir(fd, &head);
 
-			if(entrada == NULL) tratarCPUDesconectada(unCPU->id, fd, i);
+			if(entrada == NULL) tratarCPUDesconectada(unCPU, i);
 
 			if(head == PCB_WAIT){ waitPcb = (pcb*) entrada; }
 
