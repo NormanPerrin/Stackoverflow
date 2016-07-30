@@ -39,7 +39,7 @@ CPU: $(OBJS) $(USER_OBJS) /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/D
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) CPU
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) CPU
 	-@echo ' '
 
 .PHONY: all clean dependents

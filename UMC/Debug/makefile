@@ -39,7 +39,7 @@ UMC: $(OBJS) $(USER_OBJS) /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/D
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) UMC
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) UMC
 	-@echo ' '
 
 .PHONY: all clean dependents

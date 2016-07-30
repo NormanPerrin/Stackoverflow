@@ -39,7 +39,7 @@ Consola: $(OBJS) $(USER_OBJS) /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidad
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Consola
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) Consola
 	-@echo ' '
 
 .PHONY: all clean dependents

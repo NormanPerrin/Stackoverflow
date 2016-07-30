@@ -39,7 +39,7 @@ Swap: $(OBJS) $(USER_OBJS) /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Swap
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) Swap
 	-@echo ' '
 
 .PHONY: all clean dependents
