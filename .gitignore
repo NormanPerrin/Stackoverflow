@@ -29,13 +29,11 @@
 *.hex
 
 # Debug files
-Debug/
 *.dSYM/
 
 #Other files
 .metadata
 *.log
 *.data
-*.txt
 RemoteSystemsTempFiles/
 Release/
