@@ -126,6 +126,8 @@ void esperar_y_PlanificarProgramas(){
 	// Bucle principal:
 	while(TRUE){
 
+		planificarProceso();
+
 		if(seDesconectoUMC) break; // salgo del bucle si UMC se ha desconectado
 
 		// Borra el conjunto maestro:
@@ -143,14 +145,17 @@ void esperar_y_PlanificarProgramas(){
 	    if (FD_ISSET(fdEscuchaConsola, &readfds)){ // nueva conexión consola
 
 	    		aceptarConexionEntranteDeConsola();
+	    		planificarProceso();
 
 	    } else if(FD_ISSET(fdEscuchaCPU, &readfds)){ // nueva conexión cpu
 
 	    		aceptarConexionEntranteDeCPU();
+	    		planificarProceso();
 
 	    } else if(FD_ISSET(fd_inotify, &readfds)){ // nueva conexión inotify
 
 	    		atenderCambiosEnArchivoConfig();
+	    		planificarProceso();
 
 	    }
 	    else{ // fin if nueva conexión --> nuevo msj
@@ -170,9 +175,13 @@ void esperar_y_PlanificarProgramas(){
 	    		    exit(EXIT_FAILURE);
 	    		}
 	    	}
+	    	planificarProceso();
+
 	    	verificarDesconexionEnConsolas(); // nuevo msj consola
+	    	planificarProceso();
 
 	    	recorrerListaCPUsYAtenderNuevosMensajes(); // nuevo msj cpu
+	    	planificarProceso();
 
 	    } // fin else nuevo mensaje CPU o desconexión Consola
 	} // fin del while
