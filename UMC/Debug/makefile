@@ -27,23 +27,23 @@ endif
 all: UMC
 
 dependents:
-	-cd /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug && $(MAKE) all
+	-cd /home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug && $(MAKE) all
 
 # Tool invocations
-UMC: $(OBJS) $(USER_OBJS) /home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug/libutilidades.so
+UMC: $(OBJS) $(USER_OBJS) /home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug/libutilidades.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -L"/home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug" -o "UMC" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -L"/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug" -o "UMC" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) UMC
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) UMC
 	-@echo ' '
 
 .PHONY: all clean dependents
 .SECONDARY:
-/home/utnso/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug/libutilidades.so:
+/home/utnso/Escritorio/projects/tp-2016-1c-Cazadores-de-cucos/utilidades/Debug/libutilidades.so:
 
 -include ../makefile.targets

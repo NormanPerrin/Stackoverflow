@@ -126,8 +126,6 @@ void esperar_y_PlanificarProgramas(){
 	// Bucle principal:
 	while(TRUE){
 
-		planificarProceso();
-
 		if(seDesconectoUMC) break; // salgo del bucle si UMC se ha desconectado
 
 		// Borra el conjunto maestro:
