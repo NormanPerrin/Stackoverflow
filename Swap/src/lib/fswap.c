@@ -159,7 +159,7 @@ void iniciar_programa(void *msj) {
 			int pagina;
 			for(pagina=0; pagina < paginas; pagina++) {
 				tablaPaginas[posLibre].pid= pid;
-				tablaPaginas[posLibre].pagina = posLibre;
+				tablaPaginas[posLibre].pagina = pagina;
 				tablaDeBitMap[posLibre].ocupada=1;
 				posLibre++;
 			}
@@ -266,7 +266,10 @@ int buscarPosLibresEnBitMap(int paginas) {
 
 	} // (for) i < cantidad paginas
 
-	if(encontro) return i;
+	if(encontro) {
+		return i;
+	}
+
 	return ERROR;
 }
 
