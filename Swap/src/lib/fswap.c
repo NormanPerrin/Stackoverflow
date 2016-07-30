@@ -39,6 +39,7 @@ void escucharUMC() {
 	while(TRUE) {
 		void *mensaje = aplicar_protocolo_recibir(sockUMC, &head);
 		if(mensaje == NULL) {
+			log_info(logger, "UMC se ha desconectado.");
 			cerrarSocket(sockUMC);
 			cerrarSocket(sockServidor);
 			log_info(logger, "Swap ha salido del sistema.");

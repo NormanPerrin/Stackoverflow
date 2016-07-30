@@ -126,8 +126,6 @@ void esperar_y_PlanificarProgramas(){
 	// Bucle principal:
 	while(TRUE){
 
-		if(seDesconectoUMC) break; // salgo del bucle si UMC se ha desconectado
-
 		// Borra el conjunto maestro:
 	    FD_ZERO(&readfds);
 	    // Añadir listeners al conjunto maestro:
@@ -143,7 +141,12 @@ void esperar_y_PlanificarProgramas(){
 	    if (FD_ISSET(fdEscuchaConsola, &readfds)){ // nueva conexión consola
 
 	    		aceptarConexionEntranteDeConsola();
-	    		planificarProceso();
+	    		if(seDesconectoUMC){
+	    			exitFailureNucleo();
+	    		}
+	    		else{
+	    			planificarProceso();
+	    		}
 
 	    } else if(FD_ISSET(fdEscuchaCPU, &readfds)){ // nueva conexión cpu
 
@@ -155,25 +158,13 @@ void esperar_y_PlanificarProgramas(){
 	    		atenderCambiosEnArchivoConfig();
 	    		planificarProceso();
 
-	    }
-	    else{ // fin if nueva conexión --> nuevo msj
-	    	if(FD_ISSET(fd_UMC, &readfds)){ // nuevo mensaje umc
+	    } else if(FD_ISSET(fd_UMC, &readfds)){ // umc se desconectó
 	    		int head;
 	    		void * mensaje = NULL;
 	    		mensaje = aplicar_protocolo_recibir(fd_UMC, &head);
-	    		if (mensaje == NULL){ // UMC se desconectó, salgo del sistema:
-	    			log_info(logger,"UMC se ha desconectado.");
-	    		    // Libero memoria y cierro sockets:
-	    			pthread_mutex_destroy(&mutex_planificarProceso);
-	    			unirHilosIO();
-	    		    cerrarSocket(fdEscuchaConsola);
-	    		    cerrarSocket(fdEscuchaCPU);
-	    		    exitNucleo();
+	    		if (mensaje == NULL) exitFailureNucleo();
 
-	    		    exit(EXIT_FAILURE);
-	    		}
-	    	}
-	    	planificarProceso();
+	    } else{
 
 	    	verificarDesconexionEnConsolas(); // nuevo msj consola
 	    	planificarProceso();
@@ -197,4 +188,16 @@ void exitNucleo(){
 	cerrarSocket(fd_UMC);
 	inotify_rm_watch(fd_inotify, watch_descriptor);
 	cerrarSocket(fd_inotify);
+}
+
+void exitFailureNucleo(){
+	log_info(logger,"UMC se ha desconectado.");
+	// Libero memoria y cierro sockets:
+	pthread_mutex_destroy(&mutex_planificarProceso);
+	unirHilosIO();
+	cerrarSocket(fdEscuchaConsola);
+	cerrarSocket(fdEscuchaCPU);
+	exitNucleo();
+
+	exit(EXIT_FAILURE);
 }

@@ -164,6 +164,11 @@ t_valor_variable dereferenciar(t_puntero total_heap_offset){
 		void* entrada = NULL;
 		entrada = aplicar_protocolo_recibir(fdUMC, &head);  // respuesta OK de UMC, recibo la variable leída
 
+		if(entrada == NULL){
+			log_error(logger, "UMC se ha desconectado.");
+			exitFailureCPU();
+		}
+
 		if(head == DEVOLVER_VARIABLE){
 			//int valor = atoi((char*) entrada);
 
@@ -225,7 +230,12 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida var_compartida_nombr
 	int head;
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 
-	if(head == DEVOLVER_VAR_COMPARTIDA && entrada != NULL){
+	if(entrada == NULL){
+		log_error(logger, "Núcleo se ha desconectado.");
+		exitFailureCPU();
+	}
+
+	if(head == DEVOLVER_VAR_COMPARTIDA){
 		t_valor_variable valor = *((int*) entrada);
 		log_trace(logger, "Variable Compartida: '%s' -> Valor: '%d'.", var_compartida_nombre, valor);
 
@@ -290,13 +300,10 @@ void retornar(t_valor_variable var_retorno){
 	finalizar();
 }
 
-void imprimir(t_valor_variable valor_mostrar){
+void imprimir(t_valor_variable valor){
 
 	log_trace(logger, "Solicitando imprimir variable.");
-	int * valor = malloc(INT);
-	*valor = valor_mostrar;
-	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR, valor);
-	free(valor); valor = NULL;
+	aplicar_protocolo_enviar(fdNucleo, IMPRIMIR, &valor);
 }
 
 void imprimirTexto(char* texto){
@@ -313,7 +320,7 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 	pedidoEntradaSalida->tiempo = tiempo;
 	pedidoEntradaSalida->nombreDispositivo = dispositivo;
 
-	aplicar_protocolo_enviar(fdNucleo,ENTRADA_SALIDA, pedidoEntradaSalida);
+	aplicar_protocolo_enviar(fdNucleo, ENTRADA_SALIDA, pedidoEntradaSalida);
 	free(pedidoEntradaSalida); pedidoEntradaSalida = NULL;
 
 	devolvioPcb = POR_IO;
@@ -327,9 +334,10 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 	void* entrada = NULL;
 	entrada = aplicar_protocolo_recibir(fdNucleo, &head);
 
-	if(head == RESPUESTA_WAIT){
-		int* respuesta = (int*) entrada;
-		if(*respuesta == CON_BLOQUEO){
+	if(head == RESPUESTA_WAIT && entrada != NULL){
+
+		int respuesta = *((int*) entrada);
+		if(respuesta == CON_BLOQUEO){
 			// Mando la pcb bloqueada y la saco de ejecución:
 			devolvioPcb = POR_WAIT;
 			log_trace(logger, "Proceso #%d bloqueado al hacer WAIT del semáforo: '%s'.", pcbActual->pid, nombre_semaforo);
@@ -337,6 +345,10 @@ void s_wait(t_nombre_semaforo nombre_semaforo){
 		else{
 			log_trace(logger, "WAIT del semáforo: '%s'. No hubo bloqueo.", pcbActual->pid, nombre_semaforo);
 		}
+	}
+	else{
+		log_error(logger, "Núcleo se ha desconectado.");
+		exitFailureCPU();
 	}
 }
 

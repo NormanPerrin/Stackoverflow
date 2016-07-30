@@ -125,7 +125,12 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 
 	entrada = aplicar_protocolo_recibir(fdUMC, &head);
 
-	if(head == RESPUESTA_PEDIDO && entrada != NULL){
+	if(entrada == NULL){
+		log_error(logger, "UMC se ha desconectado.");
+		exitFailureCPU();
+	}
+
+	if(head == RESPUESTA_PEDIDO){
 
 		estadoDelPedido = *((int*) entrada);
 		free(entrada); entrada = NULL;
@@ -136,7 +141,6 @@ int recibirYvalidarEstadoDelPedidoAUMC(){
 			return FALSE;
 		} // retorno true por pedido acpetado:
 		else{
-
 			return TRUE;
 		}
 	} // retorno false por error conexión UMC:
@@ -220,4 +224,12 @@ void liberarRecursos(){
 	free(config); config = NULL;
 	log_destroy(logger); logger = NULL;
 	if(pcbActual != NULL) liberarPcbActiva();
+}
+
+void exitFailureCPU(){
+	log_info(logger, "CPU ha salido del sistema.");
+	liberarRecursos(); // Libero memoria utilizada
+	cerrarSocket(fdUMC);
+	cerrarSocket(fdNucleo);
+	exit(EXIT_FAILURE);
 }

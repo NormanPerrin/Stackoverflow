@@ -15,5 +15,6 @@ void esperar_y_PlanificarProgramas();
 void unirHilosIO();
 void liberarRecursosUtilizados();
 void exitNucleo();
+void exitFailureNucleo();
 
 #endif /* NUCLEOVIEJOMALDITO_SRC_LIB_PRINCIPALES_H_ */

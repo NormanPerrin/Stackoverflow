@@ -287,7 +287,7 @@ int solicitarSegmentosAUMC(pcb* nuevoPcb, char* programa){
 	nuevoPcb->paginas_stack = config->cantidadPaginasStack;
 
 	// Le solicito a UMC espacio para el heap del programa y verifico su respuesta:
-		inicioPrograma* solicitudDeInicio = (inicioPrograma*) malloc(tamanio_programa+12);
+		inicioPrograma* solicitudDeInicio = malloc(tamanio_programa + 8);
 		solicitudDeInicio->paginas = nuevoPcb->paginas_stack + nuevoPcb->paginas_codigo;
 		solicitudDeInicio->pid = nuevoPcb->pid;
 		solicitudDeInicio->contenido = programa;
@@ -501,10 +501,11 @@ void atenderCambiosEnArchivoConfig(){
 			log_info(logger, "Nuevo valor de Quantum Sleep: %d.", config->retardoQuantum);
 		}
 
-		i += EVENT_SIZE + event->len;
 		free(new_config); new_config = NULL;
 
+		i += EVENT_SIZE + event->len;
 		FD_CLR(fd_inotify, &readfds);
+
 		iniciarEscuchaDeInotify();
 
 		max_fd = (max_fd < fd_inotify)? fd_inotify : max_fd;
@@ -691,7 +692,7 @@ void verificarDesconexionEnConsolas(){
 
 	if (FD_ISSET(fd , &readfds)){ // nuevo mensaje de consola
 		int protocolo;
-		void * mensaje = NULL;
+		void* mensaje = NULL;
 		mensaje = aplicar_protocolo_recibir(fd, &protocolo);
 
 		if (mensaje == NULL){ // La Consola se desconectó, la quito del sistema y saco su PCB de ejecución:
@@ -893,7 +894,10 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 	case SIGNAL_REQUEST:{
 
 		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*) mensaje);
-		if(semaforo != NULL) semaforo_signal(semaforo);
+		if(semaforo != NULL){
+			log_info(logger, "SIGNAL del semáforo: '%s'.", semaforo->nombre);
+			semaforo_signal(semaforo);
+		}
 
 		free(mensaje); mensaje = NULL;
 
@@ -904,6 +908,8 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 		t_semaforo* semaforo = dictionary_get(diccionarioSemaforos, (char*) mensaje);
 
 		if(semaforo != NULL){
+
+			log_info(logger, "WAIT del semáforo: '%s'.", semaforo->nombre);
 
 			if (semaforo_wait(semaforo)){ // El proceso se bloquea al hacer wait del semáforo
 				// Notifico al CPU:
@@ -928,6 +934,7 @@ void recorrerListaCPUsYAtenderNuevosMensajes(){
 					break;
 				}
 
+				log_info(logger, "Proceso #%i bloqueado por operación WAIT en CPU #%i.", waitPcb->pid, unCPU->id);
 				semaforoBloquearProceso(semaforo->bloqueados, waitPcb);
 			}
 			else{ // El proceso no se bloquea y puede seguir ejecutando:

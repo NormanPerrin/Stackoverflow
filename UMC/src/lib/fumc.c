@@ -87,10 +87,12 @@ void servidor() {
 				enviarTamanioMarco(*sockCliente, config->marco_size);
 			}
 
+			verificarDesconexionDeClientes();
 		} // cuando sale hay un cliente válido
 
 		crearHiloCliente(sockCliente);
 
+		verificarDesconexionDeClientes();
 	} // cuando sale indicaron cierre del programa
 
 	close(sockClienteDeSwap);
@@ -99,8 +101,11 @@ void servidor() {
 
 
 void crearHiloCliente(int *sockCliente) {
-	pthread_t hilo_cliente;
-	pthread_create(&hilo_cliente, NULL, (void*)cliente, sockCliente);
+	t_cliente* unCliente = malloc(sizeof(t_cliente));
+	unCliente->fd = *sockCliente;
+	unCliente->estado = CONECTADO;
+	pthread_create(&unCliente->hilo, NULL, (void*)cliente, sockCliente);
+	list_add(listaClientes, unCliente);
 }
 
 
@@ -111,7 +116,7 @@ void cliente(void* fdCliente) {
 	int head;
 
 	while(!exitFlag) {
-		void *mensaje = aplicar_protocolo_recibir(sockCliente, &head); // recibos mensaje
+		void *mensaje = aplicar_protocolo_recibir(sockCliente, &head); // recibo mensajes
 		if(mensaje == NULL) break;
 
 		void (*funcion)(int, void*) = elegirFuncion(head); // elijo función a ejecutar según protocolo
@@ -120,7 +125,41 @@ void cliente(void* fdCliente) {
 		sem_post(&mutex);
 	}
 
-	cerrarSocket(sockCliente);
+	bool esElCliente(t_cliente* alguien){ return alguien->fd == sockCliente; }
+	t_cliente* unCliente = (t_cliente*) list_find(listaClientes, (void*) esElCliente);
+	if(unCliente != NULL){
+		cerrarSocket(sockCliente);
+		unCliente->estado = DESCONECTADO;
+	}
+}
+
+void verificarDesconexionDeClientes(){
+
+	int i;
+	for(i=0; i<list_size(listaClientes); i++){
+		t_cliente* unCliente = (t_cliente*) list_get(listaClientes, i);
+
+		if(unCliente->estado == DESCONECTADO){ // cierro el hilo del cliente desconectado:
+			int status;
+			void *res;
+
+			status = pthread_cancel(unCliente->hilo);
+			if (status != 0) log_error(logger, "El hilo del cliente #%d no pudo cancelarse.", unCliente->fd);
+
+			status = pthread_join(unCliente->hilo, &res);
+			if (status != 0) log_error(logger, "El hilo del cliente #%d no pudo unirse.", unCliente->fd);
+
+			if (res == PTHREAD_CANCELED){
+				log_info(logger, "El hilo del cliente %d se ha cerrado.", unCliente->fd);
+			}
+			else{
+				log_error(logger, "El hilo del cliente #%d no pudo cerrarse.", unCliente->fd);
+			}
+
+			free(list_remove(listaClientes, i));
+		}
+		unCliente = NULL;
+	}
 }
 
 int pedir_pagina_swap(int fd, int pid, int pagina) {
@@ -813,6 +852,8 @@ void iniciarEstructuras() {
 		pids[j].fd = -1;
 		pids[j].pid = -1;
 	}
+
+	listaClientes = list_create();
 }
 
 void liberarConfig() {
@@ -833,6 +874,7 @@ void liberarRecusos() {
 	// liberar otros recursos
 	free(memoria); memoria = NULL;
 	list_destroy(tlb); tlb = NULL;
+	list_destroy(listaClientes); listaClientes = NULL;
 	free(bitmap); bitmap = NULL;
 	sem_destroy(&mutex);
 	liberarConfig();

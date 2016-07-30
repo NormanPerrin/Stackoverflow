@@ -74,6 +74,14 @@
 		subtp_t elegida;
 	} respuesta_algoritmo;
 
+	typedef enum {
+		CONECTADO = 1, DESCONECTADO
+	} estado_cliente;
+
+	typedef struct {
+		int fd, estado;
+		pthread_t hilo;
+	} t_cliente;
 
 	// Globales
 	t_configuracion *config; // guarda valores del config
@@ -81,6 +89,7 @@
 	char *memoria; // tha memory
 	tp_t tabla_paginas[MAX_PROCESOS];
 	t_list *tlb;
+	t_list* listaClientes;
 	sem_t mutex;
 	pid_activo pids[MAX_CONEXIONES];
 	int *bitmap;
@@ -103,6 +112,7 @@
 	void enviarTamanioMarco(int fd, int tamanio);
 	int validar_cliente(char *id);
 	int validar_servidor(char *id);
+	void verificarDesconexionDeClientes();
 	// </CONEXIONES_FUNCS>
 
 	// <AUXILIARES>

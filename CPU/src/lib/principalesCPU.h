@@ -22,6 +22,7 @@ void limpiarInstruccion(char * instruccion);
 char* solicitarProximaInstruccionAUMC();
 void liberarRecursos();
 void exitCPU();
+void exitFailureCPU();
 // conexiones
 int validar_cliente(char *id);
 int validar_servidor(char *id);
