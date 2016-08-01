@@ -32,6 +32,7 @@ Sistema que simula el funcionamiento de un SO mediante la ejecución de scripts
 - Se puede finalizar un script de forma abortiva o esperando a que termine (si tiene fin)
 - Se deben poner los archivos de configuración en las carpetas Debug ya que la ruta que leen es relativa con el nombre "configUMC.txt" para el caso de UMC
 - Se pueden ver los resultados de la ejecución en tiempo real por la terminal o en los logs que generan
+- Puede que haya problemas al abortar una CPU en ejecución
 
 ## Comandos útiles:
 - `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:directorio/utilidades/Debug` linkear librería
