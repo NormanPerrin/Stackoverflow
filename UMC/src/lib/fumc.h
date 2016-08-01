@@ -107,7 +107,7 @@
 	void consola();
 	void servidor();
 	void crearHiloCliente(int *sockCliente);
-	void* cliente(void* fdCliente);
+	void cliente(void* fdCliente);
 	int pedir_pagina_swap(int fd, int pid, int pagina);
 	void enviarTamanioMarco(int fd, int tamanio);
 	int validar_cliente(char *id);
